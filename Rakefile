@@ -31,6 +31,16 @@ Spec::Rake::SpecTask.new(:rcov) do |spec|
   spec.rcov = true
 end
 
+begin
+  require 'wool'
+rescue LoadError => err
+  task :wool do
+    p err
+    abort 'Wool is not available. In order to run wool, you must: sudo gem install wool'
+    
+  end
+end
+
 task :spec => :check_dependencies
 
 task :default => :spec
@@ -40,6 +50,6 @@ begin
   YARD::Rake::YardocTask.new
 rescue LoadError
   task :yardoc do
-    abort "YARD is not available. In order to run yardoc, you must: sudo gem install yard"
+    abort 'YARD is not available. In order to run yardoc, you must: sudo gem install yard'
   end
 end

@@ -1,3 +1,5 @@
+require 'wool/runner'
+require 'wool/rake/task'
 require 'wool/warning'
 require 'wool/scanner'
 
