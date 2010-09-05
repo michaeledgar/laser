@@ -5,13 +5,13 @@ module Wool
     end
     
     def run
-      settings = {:fix => true}
+      settings = {:fix => false}
       scanner = Wool::Scanner.new(settings)
       
-      warnings = nil
+      warnings = []
       if @argv.any?
         @argv.each do |arg|
-          warnings = scanner.scan(File.read(arg), arg)
+          warnings.concat scanner.scan(File.read(arg), arg)
         end
       else
         warnings = scanner.scan(STDIN.read(), '(stdin)')

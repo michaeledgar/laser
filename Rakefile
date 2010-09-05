@@ -33,11 +33,13 @@ end
 
 begin
   require 'wool'
+  Wool::Rake::WoolTask.new(:wool) do |spec|
+    spec.libs << 'lib' << 'spec'
+#    spec.extras << Wool.LineLengthMaximum(100) << Wool::LineLengthWarning(80)
+  end
 rescue LoadError => err
   task :wool do
-    p err
     abort 'Wool is not available. In order to run wool, you must: sudo gem install wool'
-    
   end
 end
 

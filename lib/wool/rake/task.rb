@@ -1,7 +1,7 @@
 module Wool
   module Rake
     class WoolTask
-      class Settings < Struct.new(:libs)
+      class Settings < Struct.new(:libs, :extras)
         def initialize(*args)
           super
           self.libs ||= []
@@ -25,7 +25,8 @@ module Wool
             end
           end
         end
-        %x(wool #{files.join(' ')})
+        p "Running on files: #{files.inspect}"
+        Wool::Runner.new(files).run
       end
     end
   end
