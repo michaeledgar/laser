@@ -13,6 +13,10 @@ describe Wool::ExtraWhitespaceWarning do
     Wool::ExtraWhitespaceWarning.match?("a + b", nil).should be_false
   end
   
+  it 'has a remotely useful description' do
+    Wool::ExtraWhitespaceWarning.new('(stdin)', 'hello  ').desc.should =~ /whitespace/
+  end
+  
   context 'when fixing' do
     before do
       @warning = Wool::ExtraWhitespaceWarning.new('(stdin)', 'a + b  ')

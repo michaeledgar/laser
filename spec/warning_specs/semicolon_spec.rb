@@ -20,4 +20,13 @@ describe Wool::SemicolonWarning do
   it "doesn't match when a semicolon is used in an Exception definition" do
     Wool::SemicolonWarning.match?('class AError < BError; end"', nil).should be_false
   end
+  
+  it 'has a lower severity when quotes are involved due to unsure-ness' do
+    Wool::SemicolonWarning.new('(stdin)', "hello' world' ; there").severity.should <
+        Wool::SemicolonWarning.new('(stdin)', 'hello world ; there').severity
+  end
+  
+  it 'has a remotely descriptive description' do
+    Wool::SemicolonWarning.new('(stdin)', 'hello ; world').desc.should =~ /semicolon/
+  end
 end

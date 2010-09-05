@@ -5,6 +5,7 @@ module Wool
         def initialize(*args)
           super
           self.libs ||= []
+          self.extras ||= []
         end
       end
       
@@ -25,7 +26,6 @@ module Wool
             end
           end
         end
-        p "Running on files: #{files.inspect}"
         Wool::Runner.new(files).run
       end
     end

@@ -1,7 +1,7 @@
 module Wool
   class Warning < Struct.new(:name, :file, :line, :line_number, :severity)
     def self.all_warnings
-      @all_warnings ||= []
+      @@all_warnings ||= []
     end
     
     def self.inherited(klass)
