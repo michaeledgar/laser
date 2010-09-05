@@ -1,7 +1,8 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 
-describe "Wool" do
-  it "fails" do
-    fail "hey buddy, you should probably rename this file and start specing for real"
+describe Wool do
+  it "has a version" do
+    Wool::VERSION.should_not be_nil
+    Wool::VERSION.should >= "0.3.0"
   end
 end
