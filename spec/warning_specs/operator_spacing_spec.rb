@@ -5,6 +5,13 @@ describe Wool::OperatorSpacing do
     Wool::OperatorSpacing.new('(stdin)', 'hello').should be_a(Wool::LineWarning)
   end
   
+  it "doesn't match block declarations" do
+    Wool::OperatorSpacing.match?('(stdin)', '[1, 2].each { |x| p x }').should be_false
+    Wool::OperatorSpacing.match?('(stdin)', '[1, 2].each {| y | p x }').should be_false
+    Wool::OperatorSpacing.match?('(stdin)', "[1, 2].each do |x|\n p x\nend").should be_false
+    Wool::OperatorSpacing.match?('(stdin)', "[1, 2].each do|x|\n p x\nend").should be_false
+  end
+  
   Wool::OperatorSpacing::OPERATORS.each do |operator|
     context "with #{operator}" do
       it "matches when there is no space on the left side" do

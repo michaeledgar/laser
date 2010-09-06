@@ -8,15 +8,23 @@ module Wool
       settings = {:fix => false}
       scanner = Wool::Scanner.new(settings)
       
-      warnings = []
-      if @argv.any?
-        @argv.each do |arg|
+      warnings = collect_warnings(@argv, scanner)
+      display_warnings(warnings)
+    end
+    
+    def collect_warnings(argv, scanner)
+      if argv.any?
+        warnings = []
+        argv.each do |arg|
           warnings.concat scanner.scan(File.read(arg), arg)
         end
+        warnings
       else
-        warnings = scanner.scan(STDIN.read(), '(stdin)')
+        scanner.scan(STDIN.read(), '(stdin)')
       end
-
+    end
+    
+    def display_warnings(warnings)
       num_fixable = warnings.select { |warning| warning.line != warning.fix(nil) }.size
       num_total = warnings.size
 

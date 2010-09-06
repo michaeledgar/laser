@@ -8,7 +8,7 @@ module Wool
           self.extras ||= []
         end
       end
-      
+
       def initialize(task_name)
         @settings = Settings.new
         yield @settings
@@ -16,7 +16,7 @@ module Wool
           run
         end
       end
-      
+
       def run
         files = []
         if @settings.libs.any?
