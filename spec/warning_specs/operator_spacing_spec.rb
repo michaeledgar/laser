@@ -1,6 +1,10 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 
 describe Wool::OperatorSpacing do
+  it 'is a line-based warning' do
+    Wool::OperatorSpacing.new('(stdin)', 'hello').should be_a(Wool::LineWarning)
+  end
+  
   Wool::OperatorSpacing::OPERATORS.each do |operator|
     context "with #{operator}" do
       it "matches when there is no space on the left side" do

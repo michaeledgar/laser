@@ -16,7 +16,7 @@ describe Wool::Warning do
   it 'does not change lines when it fixes them' do
     warning = Wool::Warning.new('None', '(stdin)', 'a+b', 1, 0)
     warning.fix(nil).should == 'a+b'
-    warning.line = ' b **   c+1 eval(string) '
+    warning.body = ' b **   c+1 eval(string) '
     warning.fix(nil).should == ' b **   c+1 eval(string) '
   end
   

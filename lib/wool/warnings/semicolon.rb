@@ -1,5 +1,5 @@
 # Warning for using semicolons outside of class declarations.
-class Wool::SemicolonWarning < Wool::Warning
+class Wool::SemicolonWarning < Wool::LineWarning
   def self.match?(line, context_stack)
     line = line.dup
     # Strip out strings dumbly to 

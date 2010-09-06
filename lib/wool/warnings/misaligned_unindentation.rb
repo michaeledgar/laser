@@ -1,5 +1,5 @@
 # This warning is used when 
-class Wool::MisalignedUnindentationWarning < Wool::Warning
+class Wool::MisalignedUnindentationWarning < Wool::LineWarning
   def self.match?(line, context_stack)
     false
   end
@@ -9,7 +9,7 @@ class Wool::MisalignedUnindentationWarning < Wool::Warning
     @expectation = expectation
   end
   
-  def fix(context_stack)
+  def fix(context_stack = nil)
     ' ' * @expectation + self.line.lstrip
   end
   

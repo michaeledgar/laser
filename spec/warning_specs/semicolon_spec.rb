@@ -1,6 +1,10 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 
 describe Wool::SemicolonWarning do
+  it 'is a line-based warning' do
+    Wool::SemicolonWarning.new('(stdin)', 'hello').should be_a(Wool::LineWarning)
+  end
+  
   it 'matches when a semicolon splits two expressions' do
     Wool::SemicolonWarning.match?('puts x; puts y', nil).should be_true
   end

@@ -1,6 +1,10 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 
 describe Wool::ExtraWhitespaceWarning do
+  it 'is a line-based warning' do
+    Wool::ExtraWhitespaceWarning.new('(stdin)', 'hello').should be_a(Wool::LineWarning)
+  end
+  
   it 'matches when there are spaces at the end of a line' do
     Wool::ExtraWhitespaceWarning.match?('a + b  ', nil).should be_true
     Wool::ExtraWhitespaceWarning.match?('a + b ', nil).should be_true

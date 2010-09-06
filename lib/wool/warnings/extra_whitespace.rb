@@ -1,5 +1,5 @@
 # Warning for having extra space at the end of a line.
-class Wool::ExtraWhitespaceWarning < Wool::Warning
+class Wool::ExtraWhitespaceWarning < Wool::LineWarning
   def self.match?(line, context_stack)
     /\s+$/ === line
   end
@@ -12,7 +12,7 @@ class Wool::ExtraWhitespaceWarning < Wool::Warning
     'The line has trailing whitespace.'
   end
   
-  def fix(context_stack)
+  def fix(context_stack = nil)
     self.line.gsub(/\s+$/, '')
   end
 end

@@ -1,4 +1,4 @@
-class Wool::GenericLineLengthWarning < Wool::Warning
+class Wool::GenericLineLengthWarning < Wool::LineWarning
   def self.line_length_limit
     @line_length_limit ||= 80000
   end

@@ -6,6 +6,10 @@ describe Wool::GenericLineLengthWarning do
     @eighty_cap.line_length_limit = 80
   end
   
+  it 'is a line-based warning' do
+    Wool::GenericLineLengthWarning.new('(stdin)', 'hello').should be_a(Wool::LineWarning)
+  end
+  
   it 'initializes to a file and line' do
     warning = @eighty_cap.new('(stdin)', 'x' * 81)
     warning.severity.should == @eighty_cap.severity

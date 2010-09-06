@@ -8,6 +8,10 @@ describe Wool::MisalignedUnindentationWarning do
       @warning_3 = Wool::MisalignedUnindentationWarning.new('(stdin)', 'a + b', 4)
     end
     
+    it 'is a line-based warning' do
+      Wool::MisalignedUnindentationWarning.new('(stdin)', 'hello', 80).should be_a(Wool::LineWarning)
+    end
+    
     it 'matches nothing' do
       Wool::MisalignedUnindentationWarning.match?('(stdin)', ' a + b').should be_false
     end

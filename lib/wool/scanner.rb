@@ -33,7 +33,7 @@ module Wool
       text.split(/\n/).each do |line|
         update_context! line
         new_warnings = check_for_indent_warnings!(line, filename)
-        new_warnings.concat scan_for_warnings(line, filename)
+        new_warnings.concat scan_for_line_warnings(line, filename)
         new_warnings.each {|warning| warning.line_number = line_number}
         if new_warnings.size == 1 && @settings[:fix]
           @settings[:output].puts new_warnings.first.fix(self.context_stack)
@@ -84,11 +84,24 @@ module Wool
       end
     end
 
-    # Goes through all warning subclasses and checks if we got some new warnings.
-    def scan_for_warnings(line, filename)
-      warnings = Warning.all_warnings.inject([]) do |acc, warning|
-        if warning.match?(line, self.context_stack)
-          acc << warning.new(filename, line)
+    # Goes through all file warning subclasses and see what warnings the file
+    # generates as a whole.
+    def scan_for_file_warnings(file, filename)
+      scan_for_warnings(FileWarning.all_warnings, file, filename)
+    end
+
+    # Goes through all line warning subclasses and checks if we got some new warnings
+    # for a given line
+    def scan_for_line_warnings(line, filename)
+      scan_for_warnings(LineWarning.all_warnings, line, filename)
+    end
+    
+    private
+    
+    def scan_for_warnings(warnings, content, filename)
+      warnings.inject([]) do |acc, warning|
+        if warning.match?(content, self.context_stack)
+          acc << warning.new(filename, content)
         end
         acc
       end
