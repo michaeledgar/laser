@@ -12,6 +12,10 @@ describe Wool::OperatorSpacing do
     Wool::OperatorSpacing.match?('(stdin)', "[1, 2].each do|x|\n p x\nend").should be_false
   end
   
+  it "doesn't match in a comment" do
+    Wool::OperatorSpacing.match?('(stdin)', "hello # a+b").should be_false
+  end
+  
   context '#remove_regexes' do
     it 'removes a simple regex' do
       Wool::OperatorSpacing.remove_regexes('/a+b/').should == 'nil'

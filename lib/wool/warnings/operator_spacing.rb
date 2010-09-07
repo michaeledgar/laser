@@ -1,5 +1,6 @@
 # Warning for not putting space around operators
 class Wool::OperatorSpacing < Wool::LineWarning
+  extend Wool::Advice::CommentAdvice
   OPERATORS = %w(+ - / * != !== = == === ~= !~ += -= *= /= ** **= ||= || && &&= &= |= | & ^)
 
   def self.matches_operator?(line, op)
@@ -35,6 +36,7 @@ class Wool::OperatorSpacing < Wool::LineWarning
   def self.match?(line, context_stack)
     !!self.matching_operator(line)
   end
+  remove_comments
   
   def initialize(file, line)
     super("No operator spacing", file, line, 0, 5)
