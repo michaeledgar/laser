@@ -12,6 +12,34 @@ describe Wool::OperatorSpacing do
     Wool::OperatorSpacing.match?('(stdin)', "[1, 2].each do|x|\n p x\nend").should be_false
   end
   
+  context '#remove_regexes' do
+    it 'removes a simple regex' do
+      Wool::OperatorSpacing.remove_regexes('/a+b/').should == 'nil'
+    end
+
+    it 'does not remove a simple division' do
+      Wool::OperatorSpacing.remove_regexes('3 / 4 / 5').should == '3 / 4 / 5'
+    end
+
+    with_examples ['{:a => /hello/}', '{:a => nil}'], [', /hello/', ', nil'],
+                  ['say(/hello/)', 'say(nil)'], ['say(/hello/)', 'say(nil)'],
+                  ['say /hello/', 'say nil'], ['say! /hello/', 'say! nil'] do |input, output|
+      it "removes the regex in #{input.inspect}" do
+        Wool::OperatorSpacing.remove_regexes(input).should == output
+      end
+    end
+
+    it 'removes a simple %r regex' do
+      Wool::OperatorSpacing.remove_regexes('%r|a+b|').should == 'nil'
+    end
+
+    with_examples ['[', ']'], ['{', '}'], ['(', ')'], ['!', '!'] do |left, right|
+      it "removes a %r#{left}#{right} regex" do
+        Wool::OperatorSpacing.remove_regexes("%r#{left}a+b#{right}").should == 'nil'
+      end
+    end
+  end
+  
   Wool::OperatorSpacing::OPERATORS.each do |operator|
     context "with #{operator}" do
       it "matches when there is no space on the left side" do

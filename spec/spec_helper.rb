@@ -7,3 +7,9 @@ require 'spec/autorun'
 Spec::Runner.configure do |config|
   
 end
+
+def with_examples(*args)
+  args.each do |arg|
+    yield arg
+  end
+end

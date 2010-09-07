@@ -12,16 +12,26 @@ class Wool::OperatorSpacing < Wool::LineWarning
   def self.matching_operator(line)
     return false if line =~ /^\s*def /
     working_line = line.gsub(/'[^']*'/, "''").gsub(/"[^"]*"/, '""')
+    working_line = remove_regexes working_line
     OPERATORS.each do |op|
       return op if matches_operator?(working_line, op)
     end
     nil
   end
   
+  def self.remove_regexes(line)
+    working_line = line.gsub(%r!((^|[^0-9 \t\n])\s*)/.*[^\\]/!, '\\1nil')
+    working_line.gsub!(/%r(.).*[^\\]\1/, 'nil')
+    working_line.gsub!(/%r\[.*[^\\]\]/, 'nil')
+    working_line.gsub!(/%r\{.*[^\\]\}/, 'nil')
+    working_line.gsub!(/%r\(.*[^\\]\)/, 'nil')
+    working_line
+  end
+  
   def self.is_block_line?(line)
     line =~ /do\s*\|/ || line =~ /\{\s*\|/
   end
-  
+
   def self.match?(line, context_stack)
     !!self.matching_operator(line)
   end
