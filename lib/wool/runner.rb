@@ -1,4 +1,3 @@
-require 'wool/third_party/trollop'
 module Wool
   class Runner
     def initialize(argv)
@@ -19,7 +18,7 @@ module Wool
         [settings, files]
       end
     end
-    
+
     # Parses the command-line options using Trollop
     #
     # @return [Hash{Symbol => Object}] the settings entered by the user

@@ -9,7 +9,7 @@ module Wool
 
     attr_accessor :context_stack
     attr_accessor :indent_stack
-    
+
     DEFAULT_SETTINGS = {:fix => false, :output => STDOUT}
 
     # Initializes the scanner with the given settings
@@ -96,9 +96,9 @@ module Wool
     def scan_for_line_warnings(line, filename)
       scan_for_warnings(LineWarning.all_warnings, line, filename)
     end
-    
+
     private
-    
+
     def scan_for_warnings(warnings, content, filename)
       warnings.inject([]) do |acc, warning|
         if warning.match?(content, self.context_stack)

@@ -1,5 +1,7 @@
 module Wool
   class Warning < Struct.new(:name, :file, :body, :line_number, :severity)
+    extend Advice
+    
     def self.all_warnings
       @@all_warnings ||= []
     end
