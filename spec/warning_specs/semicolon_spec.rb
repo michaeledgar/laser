@@ -33,4 +33,8 @@ describe Wool::SemicolonWarning do
   it 'has a remotely descriptive description' do
     Wool::SemicolonWarning.new('(stdin)', 'hello ; world').desc.should =~ /semicolon/
   end
+
+  it "doesn't match when a semicolon is in a comment" do
+    Wool::SemicolonWarning.match?("hello # indeed; i agree", nil).should be_false
+  end
 end

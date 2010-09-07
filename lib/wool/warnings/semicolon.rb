@@ -1,5 +1,7 @@
 # Warning for using semicolons outside of class declarations.
 class Wool::SemicolonWarning < Wool::LineWarning
+  extend Wool::Advice::CommentAdvice
+  
   def self.match?(line, context_stack)
     line = line.dup
     # Strip out strings dumbly to 
@@ -7,6 +9,7 @@ class Wool::SemicolonWarning < Wool::LineWarning
     line.gsub!(/".*?"/, '')
     line =~ /;/ && line !~ /^\s*class\b/
   end
+  remove_comments
   
   def initialize(file, line)
     severity = line =~ /['"]/ ? 2 : 4
