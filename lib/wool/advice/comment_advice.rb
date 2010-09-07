@@ -15,7 +15,14 @@ module Wool
       def remove_comments
         class << self
           extend Advice
-          "hello \\#"
+          # This twiddler aims to remove comments and trailing whitespace
+          # from the ruby source input, so that warnings that aren't concerned
+          # with the implications of comments in their source can safely
+          # discard them. This is a bit more complicated than simply
+          # gsub(/#.*$/,''), because there are strings with # in them too.
+          #
+          # Like all twiddlers, is conservative. It might get tripped up by
+          # a comment embedded code in a string.
           def comment_removing_twiddler(body, context)
             in_string = was_slash = false
             1.upto(body.size) do |len|
