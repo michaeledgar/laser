@@ -8,7 +8,9 @@ module Wool
           self.extras ||= []
         end
       end
-
+      
+      attr_accessor :settings
+      
       def initialize(task_name)
         @settings = Settings.new
         yield @settings
