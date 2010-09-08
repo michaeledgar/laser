@@ -37,7 +37,7 @@ describe Wool::Rake::WoolTask do
     
     it 'scans the matching files' do
       test_file = File.open(File.join(Dir.tmpdir, 'test_input'), 'w') do |fp|
-        fp.puts 'a + b  '
+        fp << 'a + b  '
       end
       Dir.should_receive(:[]).with('lib/**/*.rb').and_return([File.join(Dir.tmpdir, 'test_input')])
       Dir.should_receive(:[]).with('spec/**/*.rb').and_return([])
