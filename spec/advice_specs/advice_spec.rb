@@ -19,11 +19,7 @@ describe Wool::Advice do
     end
     
     it 'causes the advised method to run the suggested advice before running' do
-      @class.new.silly.should_not == 6
-    end
-    
-    it 'causes the advice to run *before* the advised method' do
-      @class.new.silly.should_not == 12
+      @class.new.silly.should == 7
     end
   end
   
@@ -40,16 +36,14 @@ describe Wool::Advice do
           self.closed_over ||= 1
           self.closed_over *= 2
         end
-        before_advice :silly, :checkout
+        after_advice :silly, :checkout
       end
     end
     
     it 'causes the advised method to run the suggested advice after running' do
-      @class.new.silly.should_not == 12
-    end
-    
-    it 'causes the advice to run *after* the advised method' do
-      @class.new.silly.should_not == 6
+      object = @class.new
+      object.silly
+      object.closed_over.should == 12
     end
   end
   

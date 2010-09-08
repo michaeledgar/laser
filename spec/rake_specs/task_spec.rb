@@ -1,6 +1,7 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 require 'rubygems'
 require 'rake'
+require 'tmpdir'
 require 'wool/rake/task'
 
 describe Wool::Rake::WoolTask do
@@ -28,10 +29,24 @@ describe Wool::Rake::WoolTask do
     it 'searches the listed libraries for files' do
       Dir.should_receive(:[]).with('lib/**/*.rb').and_return([])
       Dir.should_receive(:[]).with('spec/**/*.rb').and_return([])
-      task = Wool::Rake::WoolTask.new("temptask1-#{rand(65329)}".to_sym) do |wool|
+      task = Wool::Rake::WoolTask.new("temptask3-#{rand(65329)}".to_sym) do |wool|
         wool.libs << 'lib' << 'spec'
       end
       swizzling_io { task.run }
+    end
+    
+    it 'scans the matching files' do
+      test_file = File.open(File.join(Dir.tmpdir, 'test_input'), 'w') do |fp|
+        fp.puts 'a + b  '
+      end
+      Dir.should_receive(:[]).with('lib/**/*.rb').and_return([File.join(Dir.tmpdir, 'test_input')])
+      Dir.should_receive(:[]).with('spec/**/*.rb').and_return([])
+      task = Wool::Rake::WoolTask.new("temptask4-#{rand(65329)}".to_sym) do |wool|
+        wool.libs << 'lib' << 'spec'
+      end
+      printout = swizzling_io { task.run }
+      printout.should =~ /whitespace/
+      printout.should =~ /1 are fixable/
     end
   end
 end
