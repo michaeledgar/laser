@@ -30,19 +30,29 @@ module Wool
     #   If the code is clean, an empty array is returned.
     def scan(text, filename='(none)')
       warnings = scan_for_file_warnings(text, filename)
-      line_number = 1
-      text.split(/\n/).each do |line|
-        update_context! line
-        new_warnings = check_for_indent_warnings!(line, filename)
-        new_warnings.concat scan_for_line_warnings(line, filename)
-        new_warnings.each {|warning| warning.line_number = line_number}
-        if new_warnings.size == 1 && @settings[:fix]
-          self.settings[:output_file].puts new_warnings.first.fix(self.context_stack)
-        elsif @settings[:fix]
-          self.settings[:output_file].puts line
-        end
+      text.split(/\n/).each_with_index do |line, number|
+        warnings.concat process_line(line, number + 1, filename)
+      end
+      warnings
+    end
+    
+    def process_line(line, line_number, filename)
+      warnings = []
+      update_context! line
+      new_warnings = check_for_indent_warnings!(line, filename)
+      new_warnings.concat scan_for_line_warnings(line, filename)
+      new_warnings.each {|warning| warning.line_number = line_number}
+      fixable_warnings = new_warnings.select {|warning| warning.fixable? }
+      if fixable_warnings.size == 1 && @settings[:fix]
+        self.settings[:output_file].puts fixable_warnings.first.fix(self.context_stack)
+        warnings << fixable_warnings.first
+      elsif fixable_warnings.size > 1 && @settings[:fix]
+        warnings << fixable_warnings.first
+        warnings.concat process_line(fixable_warnings.first.fix(self.context_stack), line_number, filename)
+      elsif @settings[:fix]
+        self.settings[:output_file].puts line
+      else
         warnings.concat new_warnings
-        line_number += 1
       end
       warnings
     end

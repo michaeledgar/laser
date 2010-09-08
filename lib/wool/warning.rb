@@ -18,6 +18,10 @@ module Wool
       self.body
     end
     
+    def fixable?
+      self.fix != self.body
+    end
+    
     def desc
       "#{self.class.name} #{file}:#{line_number} (#{severity})"
     end

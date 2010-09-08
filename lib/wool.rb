@@ -7,5 +7,5 @@ require 'wool/warning'
 require 'wool/scanner'
 
 module Wool
-  VERSION = "0.4.0"
+  VERSION = "0.5.0"
 end

@@ -7,7 +7,7 @@ Feature: Find Warnings
     Given the following inputs and outputs:
       | input     | output  |
       | 1_input   | 1       |
-      | 2_input   | 3       |
+      | 2_input   | 4       |
     When I scan for warnings
     Then the input and output tables should match
 
