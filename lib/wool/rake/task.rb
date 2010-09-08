@@ -13,7 +13,7 @@ module Wool
       
       def initialize(task_name)
         @settings = Settings.new
-        yield @settings
+        yield @settings if block_given?
         task task_name do
           run
         end
