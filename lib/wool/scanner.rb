@@ -7,6 +7,7 @@ module Wool
       end
     end
 
+    attr_accessor :settings
     attr_accessor :context_stack
     attr_accessor :indent_stack
 
@@ -36,9 +37,9 @@ module Wool
         new_warnings.concat scan_for_line_warnings(line, filename)
         new_warnings.each {|warning| warning.line_number = line_number}
         if new_warnings.size == 1 && @settings[:fix]
-          @settings[:output].puts new_warnings.first.fix(self.context_stack)
+          self.settings[:output_file].puts new_warnings.first.fix(self.context_stack)
         elsif @settings[:fix]
-          @settings[:output].puts line
+          self.settings[:output_file].puts line
         end
         warnings.concat new_warnings
         line_number += 1

@@ -27,20 +27,12 @@ module Wool
     def self.all_warnings
       @@all_line_warnings ||= []
     end
-    
-    def self.inherited(klass)
-      self.all_warnings << klass
-    end
     alias_method :line, :body
   end
   
   class FileWarning < Warning
     def self.all_warnings
       @@all_file_warnings ||= []
-    end
-    
-    def self.inherted(klass)
-      self.all_warnings << klass
     end
   end
 end

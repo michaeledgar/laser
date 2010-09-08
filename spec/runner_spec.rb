@@ -7,19 +7,22 @@ describe Wool::Runner do
   
   context '#run' do
     it 'collects options and arguments, decides what to scan, scans, and displays' do
-      runner = Wool::Runner.new(['--fix', 'hello', 'world'])
-      expected_settings = {:fix_given=>true, :fix=>true, :"report-fixed"=>false, :help=>false}
+      runner = Wool::Runner.new(['--report-fixed', 'hello', 'world'])
+      expected_settings = {:"report-fixed_given"=>true, :"report-fixed"=>true, :fix => false, :help=>false}
       scanner = mock(:scanner)
       Wool::Scanner.should_receive(:new, expected_settings).and_return(scanner)
       
       data1, data2 = mock(:data1), mock(:data2)
       warning1, warning2 = mock(:warning1), mock(:warning2)
+      file1, file2 = mock(:file1), mock(:file2)
       
+      scanner.should_receive(:settings).exactly(3).times.and_return({:"report-fixed" => true})
       File.should_receive(:read).with('hello').and_return(data1)
       scanner.should_receive(:scan).
               with(data1, 'hello').
               and_return([warning1])
-              
+      
+      scanner.should_receive(:settings).and_return({})
       File.should_receive(:read).with('world').and_return(data2)
       scanner.should_receive(:scan).
               with(data2, 'world').
@@ -87,6 +90,7 @@ describe Wool::Runner do
       data1, data2 = mock(:data1), mock(:data2)
       warning_list1, warning_list2 = mock(:wl1), mock(:wl2)
       File.should_receive(:read, 'abc').and_return(data1)
+      scanner.should_receive(:settings).exactly(4).times.and_return({})
       scanner.should_receive(:scan).with(data1, 'abc').and_return(warning_list1)
       File.should_receive(:read, 'def').and_return(data2)
       scanner.should_receive(:scan).with(data2, 'def').and_return(warning_list2)
