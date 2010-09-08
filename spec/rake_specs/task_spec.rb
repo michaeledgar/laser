@@ -31,7 +31,7 @@ describe Wool::Rake::WoolTask do
       task = Wool::Rake::WoolTask.new("temptask1-#{rand(65329)}".to_sym) do |wool|
         wool.libs << 'lib' << 'spec'
       end
-      task.run
+      swizzling_io { task.run }
     end
   end
 end
