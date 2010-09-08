@@ -23,4 +23,15 @@ describe Wool::Rake::WoolTask do
       Rake::Task[task_name].invoke
     end
   end
+  
+  context '#run' do
+    it 'searches the listed libraries for files' do
+      Dir.should_receive(:[]).with('lib/**/*.rb').and_return([])
+      Dir.should_receive(:[]).with('spec/**/*.rb').and_return([])
+      task = Wool::Rake::WoolTask.new("temptask1-#{rand(65329)}".to_sym) do |wool|
+        wool.libs << 'lib' << 'spec'
+      end
+      task.run
+    end
+  end
 end
