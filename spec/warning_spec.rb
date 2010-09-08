@@ -21,8 +21,8 @@ describe Wool::Warning do
   end
 
   context '#desc' do
-    it "defaults to the class's name" do
-      Wool::Warning.new.desc.should == 'Wool::Warning'
+    it "defaults to the class's name with all info" do
+      Wool::Warning.new('temp', 'hello.rb', 'a+b', 3, 7).desc.should == 'Wool::Warning hello.rb:3 (7)'
     end
   end
 end

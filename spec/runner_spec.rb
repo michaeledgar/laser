@@ -84,6 +84,21 @@ describe Wool::Runner do
     end
   end
   
+  context '#display_warnings' do
+    it 'prints the lines and files where there are warnings' do
+      warnings = [Wool::Warning.new('temp', 'hello', 'a+b', 4, 3)]
+      runner = Wool::Runner.new(['temp', 'hello'])
+      output = swizzling_io do
+        runner.display_warnings(warnings, {})
+      end
+      output.should =~ /hello:4/
+      output.should =~ /(3)/
+      output.should =~ /Wool::Warning/
+      output.should =~ /1 warning/
+      output.should =~ /0 are fixable/
+    end
+  end
+  
   context '#collect_warnings' do
     it 'scans each file provided' do
       scanner = mock(:scanner)

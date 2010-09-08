@@ -26,8 +26,8 @@ Spec::Rake::SpecTask.new(:spec) do |spec|
 end
 
 Spec::Rake::SpecTask.new(:rcov) do |spec|
-  spec.libs << 'lib' << 'spec'
-  spec.pattern = 'spec/**/*_spec.rb'
+  spec.libs << 'lib' << 'spec' << 'test'
+  spec.spec_files = FileList['spec/**/*_spec.rb'] + FileList['test/**/test_*.rb']
   spec.rcov = true
 end
 

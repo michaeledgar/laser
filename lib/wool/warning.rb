@@ -19,7 +19,7 @@ module Wool
     end
     
     def desc
-      self.class.name
+      "#{self.class.name} #{file}:#{line_number} (#{severity})"
     end
   end
   

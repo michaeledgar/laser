@@ -49,13 +49,14 @@ module Wool
     #   in the source text.
     # @return [Array<Wool::Warning>] a set of warnings, ordered by file.
     def collect_warnings(files, scanner)
-      files.map do |file|
+      full_list = files.map do |file|
         data = file == '(stdin)' ? STDIN.read : File.read(file)
         scanner.settings[:output_file] = File.open(file, 'w') if scanner.settings[:fix]
         results = scanner.scan(data, file)
         scanner.settings[:output_file].close if scanner.settings[:fix]
         results
-      end.flatten
+      end
+      full_list.flatten
     end
 
     # Displays warnings using user-provided settings.
@@ -64,7 +65,7 @@ module Wool
     #   files, ordered by file
     # @param [Hash{Symbol => Object}] settings the user-set display settings
     def display_warnings(warnings, settings)
-      num_fixable = warnings.select { |warning| warning.line != warning.fix(nil) }.size
+      num_fixable = warnings.select { |warning| warning.body != warning.fix(nil) }.size
       num_total = warnings.size
 
       results = "#{num_total} warnings found. #{num_fixable} are fixable."

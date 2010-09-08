@@ -16,6 +16,10 @@ describe Wool::OperatorSpacing do
     Wool::OperatorSpacing.match?('(stdin)', "hello # a+b").should be_false
   end
   
+  it 'has a reasonable description' do
+    Wool::OperatorSpacing.new('(stdin)', 'a+ b').desc.should =~ /spacing/
+  end
+  
   context '#remove_regexes' do
     it 'removes a simple regex' do
       Wool::OperatorSpacing.remove_regexes('/a+b/').should == 'nil'
