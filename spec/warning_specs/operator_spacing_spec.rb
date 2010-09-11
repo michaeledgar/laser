@@ -73,9 +73,9 @@ describe Wool::OperatorSpacing do
     with_examples ['{:a => /hello/}', '{:a => nil}'], [', /hello/', ', nil'],
                   ['say(/hello/)', 'say(nil)'], ['say(/hello/)', 'say(nil)'],
                   ['say /hello/', 'say nil'], ['say! /hello/', 'say! nil'] do |input, output|
-    it "removes the regex in #{input.inspect}" do
-        Wool::OperatorSpacing.remove_regexes(input).should == output
-    end
+      it "removes the regex in #{input.inspect}" do
+          Wool::OperatorSpacing.remove_regexes(input).should == output
+      end
     end
 
     it 'removes a simple %r regex' do
@@ -97,8 +97,7 @@ describe Wool::OperatorSpacing do
 
       it "matches when there is no space on the right side" do
         Wool::OperatorSpacing.match?("a #{operator}b", nil).should be_true
-      end unless operator == '&' or operator == '*'
-      # ^~~ a &b means a(&b) if a is a method!
+      end
 
       it "matches when there is no space on both sides" do
         Wool::OperatorSpacing.match?("a#{operator}b", nil).should be_true
