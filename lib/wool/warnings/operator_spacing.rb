@@ -7,16 +7,23 @@ class Wool::OperatorSpacing < Wool::LineWarning
     return false if line =~ /^\s*def /
     return false if op == '|' && is_block_line?(line)
     embed = op.gsub(/(\+|\-|\*|\||\^)/, '\\\\\\1')
-    op if line =~ /([A-Za-z0-9_]!|[A-Za-z0-9_?])#{embed}/ || line =~ /(#{embed})[$A-Za-z0-9_?!]/
+    if op == '-'
+      op if line =~ /([A-Za-z0-9_]!|[A-Za-z0-9_?])#{embed}/ || line =~ /(#{embed})[$A-Za-z_?!]/
+    else
+      op if line =~ /([A-Za-z0-9_]!|[A-Za-z0-9_?])#{embed}/ || line =~ /(#{embed})[$A-Za-z0-9_?!]/
+    end
   end
   
   def self.matching_operator(line, settings = {})
     working_line = line.gsub(/'[^']*'/, "''").gsub(/"[^"]*"/, '""')
     working_line = working_line.gsub(/<<\-?[A-Za-b0-9_]+/, "''")
     working_line = remove_regexes working_line
+    working_line = ignore_block_params working_line
+    working_line = ignore_splat_args working_line
     
     OPERATORS.each do |op|
       if matches_operator?(working_line, op)
+        puts "Original line: #{line}" if settings[:debug]
         puts "Working line: #{working_line}" if settings[:debug]
         return op
       end
@@ -31,6 +38,14 @@ class Wool::OperatorSpacing < Wool::LineWarning
     working_line.gsub!(/%r\{.*[^\\]\}/, 'nil')
     working_line.gsub!(/%r\(.*[^\\]\)/, 'nil')
     working_line
+  end
+  
+  def self.ignore_block_params(line)
+    line.gsub(/(\{|(do))\s*\|.*\|/, '\\1')
+  end
+  
+  def self.ignore_splat_args(line)
+    line.gsub(/(\(|(, ))\*([a-z][A-Za-z0-9]*)(,|\))/, '\\1')
   end
   
   def self.is_block_line?(line)

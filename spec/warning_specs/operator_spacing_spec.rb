@@ -6,22 +6,38 @@ describe Wool::OperatorSpacing do
   end
 
   it "doesn't match block declarations" do
-    Wool::OperatorSpacing.match?('(stdin)', '[1, 2].each { |x| p x }').should be_false
-    Wool::OperatorSpacing.match?('(stdin)', '[1, 2].each {| y | p x }').should be_false
-    Wool::OperatorSpacing.match?('(stdin)', "[1, 2].each do |x|\n p x\nend").should be_false
-    Wool::OperatorSpacing.match?('(stdin)', "[1, 2].each do|x|\n p x\nend").should be_false
+    Wool::OperatorSpacing.match?('[1, 2].each { |x| p x }', '(stdin)').should be_false
+    Wool::OperatorSpacing.match?('[1, 2].each {| y | p x }', '(stdin)').should be_false
+    Wool::OperatorSpacing.match?("[1, 2].each do |x|\n p x\nend", '(stdin)').should be_false
+    Wool::OperatorSpacing.match?("[1, 2].each do|x|\n p x\nend", '(stdin)').should be_false
   end
 
   it "doesn't match in a comment" do
-    Wool::OperatorSpacing.match?('(stdin)', 'hello # a+b').should be_false
+    Wool::OperatorSpacing.match?('hello # a+b', '(stdin)').should be_false
   end
 
   it "doesn't match a <<- heredoc" do
-    Wool::OperatorSpacing.match?('(stdin)', '@original = <<-EOF').should be_false
+    Wool::OperatorSpacing.match?('@original = <<-EOF', '(stdin)').should be_false
   end
   
   it "doesn't match a << heredoc" do
-    Wool::OperatorSpacing.match?('(stdin)', '@original = <<EOF').should be_false
+    Wool::OperatorSpacing.match?('@original = <<EOF', '(stdin)').should be_false
+  end
+  
+  it "doesn't match adjacent negative numbers" do
+    Wool::OperatorSpacing.match?('  exit(-1)', '(stdin)').should be_false
+  end
+  
+  it "doesn't match *args in block parameters" do
+    Wool::OperatorSpacing.match?('list.each do |*args|', '(stdin)').should be_false
+    Wool::OperatorSpacing.match?('list.each { |*args| }', '(stdin)').should be_false
+  end
+  
+  it "doesn't match splat arguments" do
+    Wool::OperatorSpacing.match?('x.call(*args)', '(stdin)').should be_false
+    Wool::OperatorSpacing.match?('x.call(a, *args)', '(stdin)').should be_false
+    Wool::OperatorSpacing.match?('x.call(*args, b)', '(stdin)').should be_false
+    Wool::OperatorSpacing.match?('x.call(a, *args, b)', '(stdin)').should be_false
   end
 
   it 'has a reasonable description' do
