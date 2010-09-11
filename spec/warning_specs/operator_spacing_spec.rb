@@ -38,7 +38,12 @@ describe Wool::OperatorSpacing do
     Wool::OperatorSpacing.match?('x.call(a, *args)', '(stdin)').should be_false
     Wool::OperatorSpacing.match?('x.call(*args, b)', '(stdin)').should be_false
     Wool::OperatorSpacing.match?('x.call(a, *args, b)', '(stdin)').should be_false
-    Wool::OperatorSpacing.match?('x.call *args', '(stdin)').should be_false
+  end
+  
+  it "does match multiplication in an argument list" do
+    Wool::OperatorSpacing.match?('x.call(a *b)', '(stdin)').should be_true
+    Wool::OperatorSpacing.match?('x.call(x, a *b)', '(stdin)').should be_true
+    Wool::OperatorSpacing.match?('x.call(a *b, z)', '(stdin)').should be_true
   end
   
   it "doesn't match block arguments" do
@@ -46,6 +51,10 @@ describe Wool::OperatorSpacing do
     Wool::OperatorSpacing.match?('x.call(a, &b)', '(stdin)').should be_false
     Wool::OperatorSpacing.match?('x.call(&b, b)', '(stdin)').should be_false
     Wool::OperatorSpacing.match?('x.call(a, &b, b)', '(stdin)').should be_false
+  end
+  
+  it "doesn't match the [*item] idiom" do
+    Wool::OperatorSpacing.match?('[*args]', '(stdin)').should be_false
   end
 
   it 'has a reasonable description' do
