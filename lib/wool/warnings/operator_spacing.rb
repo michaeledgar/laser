@@ -10,12 +10,16 @@ class Wool::OperatorSpacing < Wool::LineWarning
     op if line =~ /([A-Za-z0-9_]!|[A-Za-z0-9_?])#{embed}/ || line =~ /(#{embed})[$A-Za-z0-9_?!]/
   end
   
-  def self.matching_operator(line)
-    return false if line =~ /^\s*def /
+  def self.matching_operator(line, settings = {})
     working_line = line.gsub(/'[^']*'/, "''").gsub(/"[^"]*"/, '""')
+    working_line = working_line.gsub(/<<\-?[A-Za-b0-9_]+/, "''")
     working_line = remove_regexes working_line
+    
     OPERATORS.each do |op|
-      return op if matches_operator?(working_line, op)
+      if matches_operator?(working_line, op)
+        puts "Working line: #{working_line}" if settings[:debug]
+        return op
+      end
     end
     nil
   end
@@ -33,8 +37,8 @@ class Wool::OperatorSpacing < Wool::LineWarning
     line =~ /do\s*\|/ || line =~ /\{\s*\|/
   end
 
-  def self.match?(line, context_stack)
-    !!self.matching_operator(line)
+  def self.match?(line, context_stack, settings = {})
+    !!self.matching_operator(line, settings)
   end
   remove_comments
   

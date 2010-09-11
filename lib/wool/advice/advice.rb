@@ -25,11 +25,11 @@ module Wool
     def with_advice(meth, settings)
       counter = advice_counter
       alias_method "#{meth}_old#{counter}".to_sym, meth
-      define_method meth do |* args|
-        identity = lambda {|* x| x}
+      define_method meth do |*args|
+        identity = lambda {|*x| x}
         instance_eval(&(settings[:before] || identity))
-        new_args = instance_eval(& lambda { send(settings[:args], * args)}) if settings[:args]
-        result = send("#{meth}_old#{counter}", * new_args)
+        new_args = instance_eval(& lambda { send(settings[:args], *args)}) if settings[:args]
+        result = send("#{meth}_old#{counter}", *new_args)
         instance_eval(&(settings[:after] || identity))
         result
       end

@@ -1,16 +1,17 @@
 module Wool
   module Rake
     class WoolTask
-      class Settings < Struct.new(:libs, :extras)
+      class Settings < Struct.new(:libs, :extras, :options)
         def initialize(*args)
           super
           self.libs ||= []
           self.extras ||= []
+          self.options ||= ''
         end
       end
-      
+
       attr_accessor :settings
-      
+
       def initialize(task_name)
         @settings = Settings.new
         yield @settings if block_given?
@@ -28,7 +29,7 @@ module Wool
             end
           end
         end
-        Wool::Runner.new(files).run
+        Wool::Runner.new(self.settings.options.split(/\n/) + files).run
       end
     end
   end

@@ -43,6 +43,7 @@ begin
   Wool::Rake::WoolTask.new(:wool) do |spec|
     spec.libs << 'lib' << 'spec'
     spec.extras << Wool::LineLengthMaximum(100) << Wool::LineLengthWarning(80)
+    spec.options = '--debug'
   end
 rescue LoadError => err
   task :wool do

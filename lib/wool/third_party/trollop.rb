@@ -12,7 +12,7 @@ VERSION = "1.16.2"
 ## Thrown by Parser in the event of a commandline error. Not needed if
 ## you're using the Trollop::options entry.
 class CommandlineError < StandardError; end
-  
+
 ## Thrown by Parser if the user passes in '-h' or '--help'. Handled
 ## automatically by Trollop#options.
 class HelpNeeded < StandardError; end

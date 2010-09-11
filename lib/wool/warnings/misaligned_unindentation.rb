@@ -1,6 +1,6 @@
 # This warning is used when 
 class Wool::MisalignedUnindentationWarning < Wool::LineWarning
-  def self.match?(line, context_stack)
+  def self.match?(line, context_stack, settings = {})
     false
   end
   

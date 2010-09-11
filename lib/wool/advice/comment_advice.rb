@@ -5,7 +5,7 @@ module Wool
     #
     # class MyWarning < Wool::Warning do
     #   extend Wool::Advice::CommentAdvice
-    #   
+    #
     #   def self.match?(body, context)
     #     body.include?('#')
     #   end
@@ -23,12 +23,12 @@ module Wool
           #
           # Like all twiddlers, is conservative. It might get tripped up by
           # a comment embedded code in a string.
-          def comment_removing_twiddler(body, context)
+          def comment_removing_twiddler(body, context, settings = {})
             in_string = was_slash = false
             1.upto(body.size) do |len|
-              char = body[len-1,1]
+              char = body[len - 1,1]
               if char == '#' && !in_string
-                return [body[0,len-1].rstrip, context]
+                return [body[0, len - 1].rstrip, context]
               end
               if (char == '"' || char == "'") && !in_string
                 in_string = true
@@ -37,7 +37,7 @@ module Wool
               end
               was_slash = char == '\\'
             end
-            [body, context]
+            [body, context, settings]
           end
           argument_advice :match?, :comment_removing_twiddler
         end

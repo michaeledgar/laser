@@ -1,6 +1,6 @@
 # Warning for having extra space at the end of a line.
 class Wool::ExtraWhitespaceWarning < Wool::LineWarning
-  def self.match?(line, context_stack)
+  def self.match?(line, context_stack, settings = {})
     /\s+$/ === line
   end
   

@@ -13,7 +13,15 @@ describe Wool::OperatorSpacing do
   end
 
   it "doesn't match in a comment" do
-    Wool::OperatorSpacing.match?('(stdin)', "hello # a+b").should be_false
+    Wool::OperatorSpacing.match?('(stdin)', 'hello # a+b').should be_false
+  end
+
+  it "doesn't match a <<- heredoc" do
+    Wool::OperatorSpacing.match?('(stdin)', '@original = <<-EOF').should be_false
+  end
+  
+  it "doesn't match a << heredoc" do
+    Wool::OperatorSpacing.match?('(stdin)', '@original = <<EOF').should be_false
   end
 
   it 'has a reasonable description' do

@@ -35,7 +35,7 @@ module Wool
       end
       warnings
     end
-    
+
     def process_line(line, line_number, filename)
       warnings = []
       update_context! line
@@ -112,7 +112,7 @@ module Wool
 
     def scan_for_warnings(warnings, content, filename)
       warnings.inject([]) do |acc, warning|
-        if warning.match?(content, self.context_stack)
+        if warning.match?(content, self.context_stack, @settings)
           acc << warning.new(filename, content)
         end
         acc

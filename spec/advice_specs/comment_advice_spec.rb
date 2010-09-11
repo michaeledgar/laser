@@ -5,7 +5,7 @@ describe Wool::Advice::CommentAdvice do
     @class = Class.new(Wool::Warning) do
       extend Wool::Advice::CommentAdvice
 
-      def self.match?(body, context)
+      def self.match?(body, context, settings={})
         body
       end
       remove_comments

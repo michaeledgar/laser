@@ -2,7 +2,7 @@
 class Wool::SemicolonWarning < Wool::LineWarning
   extend Wool::Advice::CommentAdvice
   
-  def self.match?(line, context_stack)
+  def self.match?(line, context_stack, settings = {})
     line = line.dup
     # Strip out strings dumbly to 
     line.gsub!(/'.*?'/, '')

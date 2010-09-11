@@ -14,6 +14,7 @@ module Wool
     def collect_options_and_arguments
       swizzling_argv do
         settings = get_settings
+        p settings if settings[:debug]
         files = ARGV.dup
         [settings, files]
       end
@@ -23,13 +24,30 @@ module Wool
     #
     # @return [Hash{Symbol => Object}] the settings entered by the user
     def get_settings
+      warning_opts = get_warning_options
       Trollop::options do
         banner 'Ask Peeves - the Ruby Linter'
         opt :fix, 'Should errors be fixed in-line?', :short => '-f'
         opt :"report-fixed", 'Should fixed errors be reported anyway?', :short => '-r'
+        warning_opts.each { |warning| opt(*warning) }
       end
     end
-
+    
+    # Gets all the options from the warning plugins and collects them
+    # with overriding rules. The later the declaration is run, the higher the
+    # priority the option has.
+    def get_warning_options
+      all_options = Wool::Warning.all_warnings.inject({}) do |result, warning|
+        options = warning.options
+        options = [options] if options.any? && !options[0].is_a?(Array)
+        options.each do |option|
+          result[option.first] = option
+        end
+        result
+      end
+      all_options.values
+    end
+    
     # Sets the ARGV variable to the runner's arguments during the execution
     # of the block.
     def swizzling_argv

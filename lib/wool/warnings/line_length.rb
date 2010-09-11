@@ -9,7 +9,7 @@ class Wool::GenericLineLengthWarning < Wool::LineWarning
     attr_accessor :severity
   end
 
-  def self.match?(line, context)
+  def self.match?(line, context, settings = {})
     !!(line.size > self.line_length_limit)
   end
   

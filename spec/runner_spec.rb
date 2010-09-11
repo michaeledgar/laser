@@ -8,7 +8,8 @@ describe Wool::Runner do
   context '#run' do
     it 'collects options and arguments, decides what to scan, scans, and displays' do
       runner = Wool::Runner.new(['--report-fixed', 'hello', 'world'])
-      expected_settings = {:"report-fixed_given"=>true, :"report-fixed"=>true, :fix => false, :help =>false}
+      expected_settings = {:"report-fixed_given"=>true, :"report-fixed"=>true,
+                           :fix => false, :help => false, :debug => false}
       scanner = mock(:scanner)
       Wool::Scanner.should_receive(:new, expected_settings).and_return(scanner)
 
