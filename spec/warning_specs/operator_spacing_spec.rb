@@ -38,6 +38,14 @@ describe Wool::OperatorSpacing do
     Wool::OperatorSpacing.match?('x.call(a, *args)', '(stdin)').should be_false
     Wool::OperatorSpacing.match?('x.call(*args, b)', '(stdin)').should be_false
     Wool::OperatorSpacing.match?('x.call(a, *args, b)', '(stdin)').should be_false
+    Wool::OperatorSpacing.match?('x.call *args', '(stdin)').should be_false
+  end
+  
+  it "doesn't match block arguments" do
+    Wool::OperatorSpacing.match?('x.call(&b)', '(stdin)').should be_false
+    Wool::OperatorSpacing.match?('x.call(a, &b)', '(stdin)').should be_false
+    Wool::OperatorSpacing.match?('x.call(&b, b)', '(stdin)').should be_false
+    Wool::OperatorSpacing.match?('x.call(a, &b, b)', '(stdin)').should be_false
   end
 
   it 'has a reasonable description' do
@@ -80,7 +88,8 @@ describe Wool::OperatorSpacing do
 
       it "matches when there is no space on the right side" do
         Wool::OperatorSpacing.match?("a #{operator}b", nil).should be_true
-      end
+      end unless operator == '&' or operator == '*'
+      # ^~~ a &b means a(&b) if a is a method!
 
       it "matches when there is no space on both sides" do
         Wool::OperatorSpacing.match?("a#{operator}b", nil).should be_true
