@@ -1,7 +1,10 @@
 module Wool
   class Runner
+    attr_accessor :using
+    
     def initialize(argv)
       @argv = argv
+      @using = [:all]
     end
 
     def run
@@ -37,7 +40,8 @@ module Wool
     # with overriding rules. The later the declaration is run, the higher the
     # priority the option has.
     def get_warning_options
-      all_options = Wool::Warning.all_warnings.inject({}) do |result, warning|
+      warnings_to_use = @using == [:all] ? Wool::Warning.all_warnings : @using
+      all_options = warnings_to_use.inject({}) do |result, warning|
         options = warning.options
         options = [options] if options.any? && !options[0].is_a?(Array)
         options.each do |option|

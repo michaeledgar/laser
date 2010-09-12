@@ -23,6 +23,21 @@ describe Wool::Rake::WoolTask do
       task.should_receive(:run)
       Rake::Task[task_name].invoke
     end
+    
+    it 'allows you to specify which warnings to use' do
+      task_name = "temptask3_#{rand(65000)}".to_sym
+      task = Wool::Rake::WoolTask.new(task_name) do |wool|
+        wool.using << :one << :two
+      end
+      task.settings.using.should == [:one, :two]
+    end
+    
+    it 'defaults to using all warnings' do
+      task_name = "temptask4_#{rand(65000)}".to_sym
+      task = Wool::Rake::WoolTask.new(task_name) do |wool|
+      end
+      task.settings.using.should == [:all]
+    end
   end
   
   context '#run' do

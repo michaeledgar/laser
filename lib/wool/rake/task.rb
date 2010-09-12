@@ -1,12 +1,13 @@
 module Wool
   module Rake
     class WoolTask
-      class Settings < Struct.new(:libs, :extras, :options)
+      class Settings < Struct.new(:libs, :extras, :options, :using)
         def initialize(*args)
           super
           self.libs ||= []
           self.extras ||= []
           self.options ||= ''
+          self.using ||= []
         end
       end
 
@@ -15,6 +16,7 @@ module Wool
       def initialize(task_name)
         @settings = Settings.new
         yield @settings if block_given?
+        @settings.using = [:all] if @settings.using.empty?
         task task_name do
           run
         end
@@ -29,7 +31,9 @@ module Wool
             end
           end
         end
-        Wool::Runner.new(self.settings.options.split(/\n/) + files).run
+        runner = Wool::Runner.new(self.settings.options.split(/\n/) + files)
+        runner.using = self.settings.using
+        runner.run
       end
     end
   end
