@@ -11,6 +11,7 @@ module Wool
     def run
       settings, files = collect_options_and_arguments
       settings[:__using__] = warnings_to_consider
+      settings[:__fix__] = warnings_to_fix
       scanner = Wool::Scanner.new(settings)
       warnings = collect_warnings(files, scanner)
       display_warnings(warnings, settings)
