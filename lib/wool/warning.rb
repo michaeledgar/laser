@@ -42,12 +42,13 @@ module Wool
       escape_string = nil
       input.size.times do |idx|
         char = input[idx,1]
+        # puts "#{char} : #{in_string} #{is_backslash} #{in_regex}"
         if char == '/'
           in_regex = !in_regex unless last_char =~ /\d/
         elsif !is_backslash && char == "'" || char == '"'
           if char == escape_string || escape_string.nil?
             in_string = !in_string
-            escape_string = char if in_string
+            escape_string = in_string ? char : nil
           end
         elsif char == find_char && !(in_string || in_regex)
           return [input[0,idx], input[idx..-1]]

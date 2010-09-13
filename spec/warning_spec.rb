@@ -33,9 +33,14 @@ describe Wool::Warning do
     end
 
     it 'ignores the character when in a single-quote literal' do
-      
       Wool::Warning.new.split_on_char_outside_literal("hello 'world # runs' hello", '#').should ==
           ["hello 'world # runs' hello", '']
+    end
+    
+    it 'can handle code with double nesting' do
+      input = %{Wool::Warning.new.split_on_char_outside_literal("hello 'world # runs' hello", '#').should}
+      output = [input, '']
+      Wool::Warning.new.split_on_char_outside_literal(input, '#').should == output
     end
 
     it 'ignores the character when in a double-quote literal' do
