@@ -30,37 +30,37 @@ describe Wool::GenericLineLengthWarning do
   it 'does not match lines equal to the specified number of characters' do
     @eighty_cap.match?('x' * 80, nil).should be_false
   end
-  
+
   context 'when fixing' do
     before do
       @twenty_cap = Class.new(Wool::GenericLineLengthWarning)
       @twenty_cap.line_length_limit = 20
     end
-    
+
     it "takes a line with just a comment on it and breaks it into many lines" do
       input = "# my comment is this and that and another thing"
       output = "# my comment is this\n# and that and\n# another thing"
       @twenty_cap.new('(stdin)', input).fix.should == output
     end
-    
+
     it "creates new lines with the same indentation as the input" do
       input = "   # my comment is this and that and another thing"
       output = "   # my comment is\n   # this and that\n   # and another\n   # thing"
       @twenty_cap.new('(stdin)', input).fix.should == output
     end
-    
+
     it 'uses the same number of hashes to denote the comment' do
       input = " ## my comment is this and that and another thing"
       output = " ## my comment is\n ## this and that\n ## and another\n ## thing"
       @twenty_cap.new('(stdin)', input).fix.should == output
     end
-    
+
     it 'splits up code with an overly long comment at the end' do
       input = "  a + b # this is a stupidly long comment lol"
       output = "  # this is a\n  # stupidly long\n  # comment lol\n  a + b"
       @twenty_cap.new('(stdin)', input).fix.should == output
     end
-    
+
     it 'uses the same indentation and hashes for the new comment' do
       input = " a + b ### this is a stupidly long comment lol"
       output = " ### this is a\n ### stupidly long\n ### comment lol\n a + b"
