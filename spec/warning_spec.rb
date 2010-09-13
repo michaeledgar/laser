@@ -25,4 +25,31 @@ describe Wool::Warning do
       Wool::Warning.new('temp', 'hello.rb', 'a+b', 3, 7).desc.should == 'Wool::Warning hello.rb:3 (7)'
     end
   end
+  
+  context '#split_on_char_outside_literal' do
+    it 'splits code and a comment with no literals present' do
+      Wool::Warning.new.split_on_char_outside_literal('hello world # runs hello', '#').should ==
+          ['hello world ', '# runs hello']
+    end
+
+    it 'ignores the character when in a single-quote literal' do
+      Wool::Warning.new.split_on_char_outside_literal("hello 'world # runs' hello", '#').should ==
+          ["hello 'world # runs' hello", '']
+    end
+
+    it 'ignores the character when in a double-quote literal' do
+      Wool::Warning.new.split_on_char_outside_literal('hello "world # runs" hello', '#').should ==
+          ['hello "world # runs" hello', '']
+    end
+
+    it 'ignores the character when in a regex literal' do
+      Wool::Warning.new.split_on_char_outside_literal('hello /world # runs/ hello', '#').should ==
+          ['hello /world # runs/ hello', '']
+    end
+    
+    it 'catches the character even with escaped quotes in literals' do
+      Wool::Warning.new.split_on_char_outside_literal('"hello \"world\"" # runs hello', '#').should ==
+          ['"hello \"world\"" ', '# runs hello']
+    end
+  end
 end

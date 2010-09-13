@@ -35,6 +35,23 @@ module Wool
     def desc
       "#{self.class.name} #{file}:#{line_number} (#{severity})"
     end
+    
+    def split_on_char_outside_literal(input, find_char)
+      last_char = ''
+      in_string = in_regex = is_backslash = false
+      input.size.times do |idx|
+        char = input[idx,1]
+        if char == '/'
+          in_regex = !in_regex unless last_char =~ /\d/
+        elsif !is_backslash && char == "'" || char == '"'
+          in_string = !in_string
+        elsif char == find_char && !(in_string || in_regex)
+          return [input[0,idx], input[idx..-1]]
+        end
+        is_backslash = char == '\\' && !is_backslash
+      end
+      return [input, '']
+    end
   end
 
   class LineWarning < Warning

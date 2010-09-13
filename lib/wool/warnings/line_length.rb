@@ -24,10 +24,10 @@ class Wool::GenericLineLengthWarning < Wool::LineWarning
   end
 
   def handle_long_comments(line)
-    working_line = line.gsub(/'((\\.)|[^'])*'/, "").gsub(/"((\\.)|[^"])*"/, '')
-    result = working_line.match(/^(\s*)([^#"']*)(#*)(.*)\Z/)
-    return nil unless result
-    indent, code, hashes, comment = result[1], result[2], result[3], result[4]
+    code, comment = split_on_char_outside_literal(line, '#')
+    return nil unless comment.any?
+    indent, code = code.match(/^(\s*)(.*)$/)[1..2]
+    hashes, comment = comment.match(/^(#+)(.*)$/)[1..2]
     comment_cleaned = fix_long_comment(indent + hashes + comment)
     code_cleaned = code.strip.any? ? "\n" + indent + code.rstrip : ''
     comment_cleaned + code_cleaned
