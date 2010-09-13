@@ -71,5 +71,5 @@ end
     it 'only removes the trailing whitespace' do
       @warning.fix(nil).should == @original
     end
-   end
+end
 end

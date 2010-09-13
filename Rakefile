@@ -38,16 +38,19 @@ Cucumber::Rake::Task.new(:features) do |t|
   t.cucumber_opts = "features --format pretty"
 end
 
-begin
-  require 'wool'
-  Wool::Rake::WoolTask.new(:wool) do |wool|
-    wool.libs << 'lib' << 'spec'
-    wool.using << Wool::LineLengthMaximum(100) << Wool::LineLengthWarning(80) << Wool::SemicolonWarning
-    wool.options = '--debug'
-  end
-rescue LoadError => err
-  task :wool do
-    abort 'Wool is not available. In order to run wool, you must: sudo gem install wool'
+if true
+  begin
+    require 'wool'
+    Wool::Rake::WoolTask.new(:wool) do |wool|
+      wool.libs << 'lib' << 'spec'
+      wool.using << :all << Wool::LineLengthMaximum(100) << Wool::LineLengthWarning(80)
+      wool.options = '--debug --fix'
+      wool.fix << Wool::ExtraBlankLinesWarning << Wool::ExtraWhitespaceWarning
+    end
+  rescue LoadError => err
+    task :wool do
+      abort 'Wool is not available. In order to run wool, you must: sudo gem install wool'
+    end
   end
 end
 

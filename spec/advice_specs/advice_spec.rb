@@ -17,12 +17,12 @@ describe Wool::Advice do
         before_advice :silly, :checkin
       end
     end
-    
+
     it 'causes the advised method to run the suggested advice before running' do
       @class.new.silly.should == 7
     end
   end
-  
+
   context '#after_advice' do
     before do
       @class = Class.new do
@@ -39,14 +39,14 @@ describe Wool::Advice do
         after_advice :silly, :checkout
       end
     end
-    
+
     it 'causes the advised method to run the suggested advice after running' do
       object = @class.new
       object.silly
       object.closed_over.should == 12
     end
   end
-  
+
   context '#argument_advice' do
     before do
       @class = Class.new do
@@ -61,7 +61,7 @@ describe Wool::Advice do
         argument_advice :silly, :twiddle
       end
     end
-    
+
     it 'causes the advised method to run, rewriting the arguments' do
       @class.new.silly(1).should == 7
     end

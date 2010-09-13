@@ -15,7 +15,7 @@ describe Wool::Rake::WoolTask do
       task.settings.libs.should == "LOL"
       task.settings.extras.should == "hai"
     end
-    
+
     it 'creates a Rake task with the given name that calls #run' do
       task_name = "temptask2_#{rand(65000)}".to_sym
       task = Wool::Rake::WoolTask.new(task_name)
@@ -23,7 +23,7 @@ describe Wool::Rake::WoolTask do
       task.should_receive(:run)
       Rake::Task[task_name].invoke
     end
-    
+
     it 'allows you to specify which warnings to use' do
       task_name = "temptask3_#{rand(65000)}".to_sym
       task = Wool::Rake::WoolTask.new(task_name) do |wool|
@@ -31,7 +31,7 @@ describe Wool::Rake::WoolTask do
       end
       task.settings.using.should == [:one, :two]
     end
-    
+
     it 'defaults to using all warnings' do
       task_name = "temptask4_#{rand(65000)}".to_sym
       task = Wool::Rake::WoolTask.new(task_name) do |wool|
@@ -39,7 +39,7 @@ describe Wool::Rake::WoolTask do
       task.settings.using.should == [:all]
     end
   end
-  
+
   context '#run' do
     it 'searches the listed libraries for files' do
       Dir.should_receive(:[]).with('lib/**/*.rb').and_return([])
@@ -49,7 +49,7 @@ describe Wool::Rake::WoolTask do
       end
       swizzling_io { task.run }
     end
-    
+
     it 'scans the matching files' do
       test_file = File.open(File.join(Dir.tmpdir, 'test_input'), 'w') do |fp|
         fp << 'a + b  '

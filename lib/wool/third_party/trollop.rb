@@ -250,7 +250,7 @@ class Parser
     syms.each { |sym| raise ArgumentError, "unknown option '#{sym}'" unless @specs[sym] }
     @constraints << [:depends, syms]
   end
-  
+
   ## Marks two (or more!) options as conflicting.
   def conflicts *syms
     syms.each { |sym| raise ArgumentError, "unknown option '#{sym}'" unless @specs[sym] }
@@ -426,7 +426,7 @@ class Parser
           # call this unless the cursor's at the beginning of a line.
 
     left = {}
-    @specs.each do |name, spec| 
+    @specs.each do |name, spec|
       left[name] = "--#{spec[:long]}" +
         (spec[:short] && spec[:short] != :none ? ", -#{spec[:short]}" : "") +
         case spec[:type]
@@ -442,7 +442,7 @@ class Parser
         when :date; " <date>"
         when :dates; " <date+>"
         end
-    end
+      end
 
     leftcol_width = left.values.map { |s| s.length }.max || 0
     rightcol_start = leftcol_width + 6 # spaces
@@ -647,7 +647,7 @@ private
     start = 0
     ret = []
     until start > str.length
-      nextt = 
+      nextt =
         if start + width >= str.length
           str.length
         else

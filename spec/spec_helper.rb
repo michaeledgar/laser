@@ -6,7 +6,7 @@ require 'spec/autorun'
 require 'stringio'
 
 Spec::Runner.configure do |config|
-  
+
 end
 
 def with_examples(*args)

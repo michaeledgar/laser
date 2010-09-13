@@ -32,7 +32,7 @@ module Wool
             end
           end
         end
-        runner = Wool::Runner.new(self.settings.options.split(/\n/) + files)
+        runner = Wool::Runner.new(self.settings.options.split(/\s/) + files)
         runner.using = self.settings.using
         runner.fix = self.settings.fix
         runner.run

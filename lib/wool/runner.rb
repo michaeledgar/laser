@@ -1,7 +1,7 @@
 module Wool
   class Runner
     attr_accessor :using, :fix
-    
+
     def initialize(argv)
       @argv = argv
       @using = [:all]
@@ -15,7 +15,7 @@ module Wool
       warnings = collect_warnings(files, scanner)
       display_warnings(warnings, settings)
     end
-    
+
     def collect_options_and_arguments
       swizzling_argv do
         settings = get_settings
@@ -37,7 +37,7 @@ module Wool
         warning_opts.each { |warning| opt(*warning) }
       end
     end
-    
+
     # Gets all the options from the warning plugins and collects them
     # with overriding rules. The later the declaration is run, the higher the
     # priority the option has.
@@ -52,7 +52,7 @@ module Wool
       end
       all_options.values
     end
-    
+
     # Converts a list of warnings and symbol shortcuts for warnings to just a
     # list of warnings.
     def convert_warning_list(list)
@@ -62,21 +62,21 @@ module Wool
         when :whitespace
           [Wool::ExtraBlankLinesWarning, Wool::ExtraWhitespaceWarning,
            Wool::OperatorSpacing, Wool::MisalignedUnindentationWarning]
-        else list
+          else list
         end
       end.flatten
     end
-    
+
     # Returns the list of warnings the user has activated for use.
     def warnings_to_consider
       convert_warning_list(@using)
     end
-    
+
     # Returns the list of warnings the user has selected for fixing
     def warnings_to_fix
       convert_warning_list(@fix)
     end
-    
+
     # Sets the ARGV variable to the runner's arguments during the execution
     # of the block.
     def swizzling_argv

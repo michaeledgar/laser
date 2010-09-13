@@ -29,17 +29,17 @@ module Wool
     def using
       @settings[:__using__]
     end
-    
+
     # Should we use this warning?
     def using?(warning)
       @settings[:__using__].include? warning
     end
-    
+
     # Returns the list of warnings to use for scanning.
     def fix
       @settings[:__fix__]
     end
-    
+
     # Should we use this warning?
     def fixing?(warning)
       @settings[:__fix__].include? warning.class
@@ -67,29 +67,29 @@ module Wool
         warnings
       end
     end
-    
+
     def fix_input(warnings, line, line_number, filename)
       fixable_warnings = filter_fixable warnings
       if fixable_warnings.size == 1
         self.settings[:output_file].puts fixable_warnings.first.fix(self.context_stack)
         [fixable_warnings.first]
       elsif fixable_warnings.size > 1
-        result = []
-        result << fixable_warnings.first
+        puts "Fixing: #{fixable_warnings.first.desc}"
+        result = [fixable_warnings.first]
         result.concat process_line(fixable_warnings.first.fix(self.context_stack), line_number, filename)
-        result.concat (warnings - fixable_warnings)
+        result.concat(warnings - fixable_warnings)
       else
         self.settings[:output_file].puts line
         warnings
       end
     end
-    
+
     def all_warnings_for_line(line, line_number, filename)
       new_warnings = check_for_indent_warnings!(line, filename)
       new_warnings.concat scan_for_line_warnings(line, filename)
       new_warnings.each {|warning| warning.line_number = line_number}
     end
-    
+
     def filter_fixable(warnings)
       warnings.select {|warning| warning.fixable? && fixing?(warning) }
     end
@@ -102,9 +102,9 @@ module Wool
         self.indent_stack.push indent_size
       elsif indent_size < current_indent
         previous = self.indent_stack.pop
-        if indent_size != current_indent && 
+        if indent_size != current_indent &&
            using.include?(MisalignedUnindentationWarning)
-          return [MisalignedUnindentationWarning.new(filename, line, current_indent)]
+        return [MisalignedUnindentationWarning.new(filename, line, current_indent)]
         end
       end
       []

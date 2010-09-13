@@ -11,20 +11,20 @@ describe Wool::Advice::CommentAdvice do
       remove_comments
     end
   end
-  
+
   context '#remove_comments' do
     it 'Returns the empty string unmodified' do
       @class.match?('', nil).should == ''
     end
-    
+
     it 'Turns a comment into the empty string' do
       @class.match?('# hello', nil).should == ''
     end
-    
+
     it 'strips the comments from the end of a string of code' do
       @class.match?('a + b # adding', nil).should == 'a + b'
     end
-    
+
     SAMPLES = [['', ''], ['#hello', ''], [' # hello', ''],
                [' a + b # hello', ' a + b'], ['(a + b) #', '(a + b)'],
                ['"#" + number', '"#" + number'],

@@ -19,40 +19,40 @@ describe Wool::OperatorSpacing do
   it "doesn't match a <<- heredoc" do
     Wool::OperatorSpacing.match?('@original = <<-EOF', '(stdin)').should be_false
   end
-  
+
   it "doesn't match a << heredoc" do
     Wool::OperatorSpacing.match?('@original = <<EOF', '(stdin)').should be_false
   end
-  
+
   it "doesn't match adjacent negative numbers" do
     Wool::OperatorSpacing.match?('  exit(-1)', '(stdin)').should be_false
   end
-  
+
   it "doesn't match *args in block parameters" do
     Wool::OperatorSpacing.match?('list.each do |*args|', '(stdin)').should be_false
     Wool::OperatorSpacing.match?('list.each { |*args| }', '(stdin)').should be_false
   end
-  
+
   it "doesn't match splat arguments" do
     Wool::OperatorSpacing.match?('x.call(*args)', '(stdin)').should be_false
     Wool::OperatorSpacing.match?('x.call(a, *args)', '(stdin)').should be_false
     Wool::OperatorSpacing.match?('x.call(*args, b)', '(stdin)').should be_false
     Wool::OperatorSpacing.match?('x.call(a, *args, b)', '(stdin)').should be_false
   end
-  
+
   it "does match multiplication in an argument list" do
     Wool::OperatorSpacing.match?('x.call(a *b)', '(stdin)').should be_true
     Wool::OperatorSpacing.match?('x.call(x, a *b)', '(stdin)').should be_true
     Wool::OperatorSpacing.match?('x.call(a *b, z)', '(stdin)').should be_true
   end
-  
+
   it "doesn't match block arguments" do
     Wool::OperatorSpacing.match?('x.call(&b)', '(stdin)').should be_false
     Wool::OperatorSpacing.match?('x.call(a, &b)', '(stdin)').should be_false
     Wool::OperatorSpacing.match?('x.call(&b, b)', '(stdin)').should be_false
     Wool::OperatorSpacing.match?('x.call(a, &b, b)', '(stdin)').should be_false
   end
-  
+
   it "doesn't match the [*item] idiom" do
     Wool::OperatorSpacing.match?('[*args]', '(stdin)').should be_false
   end
@@ -73,9 +73,9 @@ describe Wool::OperatorSpacing do
     with_examples ['{:a => /hello/}', '{:a => nil}'], [', /hello/', ', nil'],
                   ['say(/hello/)', 'say(nil)'], ['say(/hello/)', 'say(nil)'],
                   ['say /hello/', 'say nil'], ['say! /hello/', 'say! nil'] do |input, output|
-      it "removes the regex in #{input.inspect}" do
+    it "removes the regex in #{input.inspect}" do
           Wool::OperatorSpacing.remove_regexes(input).should == output
-      end
+    end
     end
 
     it 'removes a simple %r regex' do
