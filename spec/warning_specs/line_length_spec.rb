@@ -54,6 +54,18 @@ describe Wool::GenericLineLengthWarning do
       output = " ## my comment is\n ## this and that\n ## and another\n ## thing"
       @twenty_cap.new('(stdin)', input).fix.should == output
     end
+    
+    it 'splits up code with an overly long comment at the end' do
+      input = "  a + b # this is a stupidly long comment lol"
+      output = "  # this is a\n  # stupidly long\n  # comment lol\n  a + b"
+      @twenty_cap.new('(stdin)', input).fix.should == output
+    end
+    
+    it 'uses the same indentation and hashes for the new comment' do
+      input = " a + b ### this is a stupidly long comment lol"
+      output = " ### this is a\n ### stupidly long\n ### comment lol\n a + b"
+      @twenty_cap.new('(stdin)', input).fix.should == output
+    end
   end
 end
 

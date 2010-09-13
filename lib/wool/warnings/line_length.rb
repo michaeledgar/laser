@@ -18,11 +18,20 @@ class Wool::GenericLineLengthWarning < Wool::LineWarning
   end
 
   def fix(content_stack = nil)
-    result = fix_long_comment(self.line)
+    result = handle_long_comments(self.line)
     return result if result
     self.line
   end
-
+  
+  def handle_long_comments(line)
+    working_line = line.gsub(/'((\\.)|[^'])*'/, "").gsub(/"((\\.)|[^"])*"/, '')
+    result = working_line.match(/^(\s*)([^#"']*)(#*)(.*)\Z/)
+    indent, code, hashes, comment = result[1], result[2], result[3], result[4]
+    comment_cleaned = fix_long_comment(indent + hashes + comment)
+    code_cleaned = code.strip.any? ? "\n" + indent + code.rstrip : ''
+    comment_cleaned + code_cleaned
+  end
+  
   def fix_long_comment(text)
     # Must have no leading text
     return nil unless text =~ /^(\s*)(#+)\s*(.*)\Z/
