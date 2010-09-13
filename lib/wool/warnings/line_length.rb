@@ -29,7 +29,7 @@ class Wool::GenericLineLengthWarning < Wool::LineWarning
     indent, hashes, comment = $1, $2, $3
     indent_size = indent
     # The "+ 2" is (indent)#(single space)
-    space_for_text_per_line = self.class.line_length_limit - (hashes.size + 2)
+    space_for_text_per_line = self.class.line_length_limit - (indent.size + hashes.size + 1)
     lines = ['']
     words = comment.split(/\s/)
     quota = space_for_text_per_line
