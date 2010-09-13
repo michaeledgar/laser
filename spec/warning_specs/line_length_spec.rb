@@ -67,6 +67,18 @@ describe Wool::GenericLineLengthWarning do
       @twenty_cap.new('(stdin)', input).fix.should == output
     end
     
+    it "doesn't try to convert the 'end if foobar' technique" do
+      input = '  end if should_run_block?'
+      output = '  end if should_run_block?'
+      @twenty_cap.new('(stdin)', input, :indent_size => 2).fix.should == output
+    end
+    
+    it "doesn't try to convert the 'end unless foobar' technique" do
+      input = '  end unless should_run_block?'
+      output = '  end unless should_run_block?'
+      @twenty_cap.new('(stdin)', input, :indent_size => 2).fix.should == output
+    end
+    
     it 'converts lines with guarded ifs into 3 liners' do
       input = 'puts x if x > y && y.call'
       output = "if x > y && y.call\n  puts x\nend"
@@ -94,6 +106,12 @@ describe Wool::GenericLineLengthWarning do
     it 'only converts when it finds a guard on the real-world top level expression' do
       input = 'x.select { |x| x if 5 }'
       output = 'x.select { |x| x if 5 }'
+      @twenty_cap.new('(stdin)', input, :indent_size => 2).fix.should == output
+    end
+    
+    it 'converts nested if/unless as guards' do
+      input = 'puts x if foo.bar unless baz.boo'
+      output = "unless baz.boo\n  if foo.bar\n    puts x\n  end\nend"
       @twenty_cap.new('(stdin)', input, :indent_size => 2).fix.should == output
     end
   end

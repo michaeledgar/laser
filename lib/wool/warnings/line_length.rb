@@ -30,28 +30,24 @@ class Wool::GenericLineLengthWarning < Wool::LineWarning
   end
 
   def try_to_fix_guarded_lines(line)
-    return nil unless line =~ /\b(if|unless)\s/  # quick fast check
+    return nil if line !~ /\b(if|unless)\s/  # quick fast check
     code, guard = split_on_char_outside_literal(line, /(\b|\s)(if|unless)\b/)
-    return nil unless guard.any?
+    return nil if code.empty? || guard.empty? || code.strip == 'end'
     # check guard for closing braces
     return nil if count_occurrences(guard, '}') != count_occurrences(guard, '{')
     indent = get_indent(line)
-    condition = indent + guard.strip
-    body = indent + (' ' * @settings[:indent_size]) + code.strip
-    return condition + "\n" + body + "\n" + indent + 'end'
-    # tree = RubyParser.new.parse(line)
-    # if tree[0] == :if && (tree[2].nil? ^ tree[3].nil?)
-    #   method = tree[2] ? 'if' : 'unless'
-    #   # rewrite as if/then
-    #   indent = get_indent(line)
-    #   r2r = Ruby2Ruby.new
-    #   condition = indent + method + ' ' + r2r.process(tree[1])
-    #   body_tree = tree[2] || tree[3]
-    #   body = r2r.process(body_tree).split(/\n/).map do |line|
-    #     indent + (' ' * @settings[:indent_size]) + line.strip
-    #   end
-    #   return condition + body.join("\n") + indent + 'end'
-    # end
+    indent_unit = ' ' * @settings[:indent_size]
+    result = code
+    
+    while guard.any?
+      condition = indent + guard.strip
+      body = result.split(/\n/).map { |line| indent + indent_unit + line.strip}.join("\n")
+      new_condition, guard = split_on_char_outside_literal(condition[indent.size..-1], /[^\^](if|unless)\b/)
+      condition = new_condition if guard.any?
+      result = condition + "\n" + body + "\n" + indent + 'end'
+    end
+    
+    result
   end
 
   def handle_long_comments(line)
