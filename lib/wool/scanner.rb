@@ -78,11 +78,12 @@ module Wool
     def fix_input(warnings, line, line_number, filename)
       fixable_warnings = filter_fixable warnings
       if fixable_warnings.size == 1
-        self.settings[:output_lines].output_lines << fixable_warnings.first.fix(self.context_stack)
+        self.settings[:output_lines] << fixable_warnings.first.fix(self.context_stack) rescue line
         [fixable_warnings.first]
       elsif fixable_warnings.size > 1
         result = [fixable_warnings.first]
-        result.concat process_line(fixable_warnings.first.fix(self.context_stack), line_number, filename)
+        new_text = fixable_warnings.first.fix(self.context_stack) rescue line
+        result.concat process_line(new_text, line_number, filename)
         result.concat(warnings - fixable_warnings)
       else
         self.settings[:output_lines] << line
