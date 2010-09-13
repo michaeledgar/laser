@@ -20,34 +20,34 @@ describe Wool::Scanner do
       warnings = @fix_scanner.scan('a + b ', '(stdin)')
       warnings.size.should == 1
       warnings[0].should be_a(Wool::ExtraWhitespaceWarning)
-      @fix_scanner_stdout.string.should == "a + b\n"
+      @fix_scanner_stdout.string.should == "a + b"
     end
 
     it 'fixes multiple errors on one line' do
       warnings = @fix_scanner.scan('a +b ', '(stdin)')
       warnings.size.should == 2
-      @fix_scanner_stdout.string.should == "a + b\n"
+      @fix_scanner_stdout.string.should == "a + b"
     end
 
     it 'fixes multiline inputs' do
       warnings = @fix_scanner.scan("def plus(a, b)\n  a + b \nend", '(stdin)')
       warnings.size.should == 1
       warnings[0].should be_a(Wool::ExtraWhitespaceWarning)
-      @fix_scanner_stdout.string.should == "def plus(a, b)\n  a + b\nend\n"
+      @fix_scanner_stdout.string.should == "def plus(a, b)\n  a + b\nend"
     end
 
     it 'fixes multiline mis-indented inputs' do
       warnings = @fix_scanner.scan("def plus(a, b)\n  a + b\n end", '(stdin)')
       warnings.size.should == 1
       warnings[0].should be_a(Wool::MisalignedUnindentationWarning)
-      @fix_scanner_stdout.string.should == "def plus(a, b)\n  a + b\nend\n"
+      @fix_scanner_stdout.string.should == "def plus(a, b)\n  a + b\nend"
     end
 
     it 'fixes class definitions' do
       warnings = @fix_scanner.scan("class Hello\n  a+b\nend", '(stdin)')
       warnings.size.should == 1
       warnings[0].should be_a(Wool::OperatorSpacing)
-      @fix_scanner_stdout.string.should == "class Hello\n  a + b\nend\n"
+      @fix_scanner_stdout.string.should == "class Hello\n  a + b\nend"
     end
   end
 end

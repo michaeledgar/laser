@@ -57,12 +57,20 @@ module Wool
         p warning.fix(text)
         warning.fix(text)
       end
-      self.settings[:output_lines] = []
-      text.split(/\n/).each_with_index do |line, number|
-        warnings.concat process_line(line, number + 1, filename)
+      with_fixing_piped_to_output do
+        text.split(/\n/).each_with_index do |line, number|
+          warnings.concat process_line(line, number + 1, filename)
+        end
       end
-      self.settings[:output_file].write self.settings[:output_lines].join("\n")
       warnings
+    end
+    
+    def with_fixing_piped_to_output
+      self.settings[:output_lines] = []
+      yield
+      if @settings[:fix]
+        self.settings[:output_file].write self.settings[:output_lines].join("\n")
+      end
     end
 
     def process_line(line, line_number, filename)
