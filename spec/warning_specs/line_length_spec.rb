@@ -84,6 +84,12 @@ describe Wool::GenericLineLengthWarning do
       output = "  unless x > number\n    puts x\n  end"
       @twenty_cap.new('(stdin)', input, :indent_size => 2).fix.should == output
     end
+
+    it 'only converts when it finds a guard on the top level expression' do
+      input = 'x.select { |x| x if 5 }'
+      output = 'x.select { |x| x if 5 }'
+      @twenty_cap.new('(stdin)', input, :indent_size => 2).fix.should == output
+    end
   end
 end
 
