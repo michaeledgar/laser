@@ -52,6 +52,9 @@ module Wool
     #   If the code is clean, an empty array is returned.
     def scan(text, filename='(none)')
       warnings = scan_for_file_warnings(text, filename)
+      text = filter_fixable(warnings).inject(text) do |text, warning|
+        warning.fix(text)
+      end
       text.split(/\n/).each_with_index do |line, number|
         warnings.concat process_line(line, number + 1, filename)
       end
@@ -74,7 +77,6 @@ module Wool
         self.settings[:output_file].puts fixable_warnings.first.fix(self.context_stack)
         [fixable_warnings.first]
       elsif fixable_warnings.size > 1
-        puts "Fixing: #{fixable_warnings.first.desc}"
         result = [fixable_warnings.first]
         result.concat process_line(fixable_warnings.first.fix(self.context_stack), line_number, filename)
         result.concat(warnings - fixable_warnings)
