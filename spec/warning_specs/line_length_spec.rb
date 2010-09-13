@@ -48,6 +48,12 @@ describe Wool::GenericLineLengthWarning do
       output = "   # my comment is\n   # this and that\n   # and another\n   # thing"
       @twenty_cap.new('(stdin)', input).fix.should == output
     end
+    
+    it 'uses the same number of hashes to denote the comment' do
+      input = " ## my comment is this and that and another thing"
+      output = " ## my comment is\n ## this and that\n ## and another\n ## thing"
+      @twenty_cap.new('(stdin)', input).fix.should == output
+    end
   end
 end
 
