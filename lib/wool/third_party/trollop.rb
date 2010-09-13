@@ -102,7 +102,8 @@ class Parser
   ## +MULTI_ARG_TYPES+ constant. If unset, the default argument type is +:flag+,
   ## meaning that the argument does not take a parameter. The specification of
   ## +:type+ is not necessary if a +:default+ is given.
-  ## [+:default+] Set the default value for an argument. Without a default value,
+  ## [+:default+] Set the default value for an argument. Without a default
+  ## value,
   ## the hash returned by #parse (and thus Trollop::options) will have a +nil+
   ## value for this key unless the argument is given on the commandline. The
   ## argument type is derived automatically from the class of the default value
@@ -113,7 +114,8 @@ class Parser
   ## [+:required+] If set to +true+, the argument must be provided on the
   ## commandline.
   ## [+:multi+] If set to +true+, allows multiple occurrences of the option on
-  ## the commandline. Otherwise, only a single instance of the option is allowed.
+  ## the commandline. Otherwise, only a single instance of the option is
+  ## allowed.
   ## (Note that this is different from taking multiple parameters. See below.)
   ##
   ## Note that there are two types of argument multiplicity: an argument
@@ -312,7 +314,8 @@ class Parser
     @specs.each do |sym, opts|
       required[sym] = true if opts[:required]
       vals[sym] = opts[:default]
-      vals[sym] = [] if opts[:multi] && !opts[:default] # multi arguments default to [], not nil
+      # multi arguments default to [], not nil
+      vals[sym] = [] if opts[:multi] && !opts[:default]
     end
 
     resolve_default_short_options
@@ -384,7 +387,8 @@ class Parser
       opts = @specs[sym]
       raise CommandlineError, "option '#{arg}' needs a parameter" if params.empty? && opts[:type] != :flag
 
-      vals["#{sym}_given".intern] = true # mark argument as specified on the commandline
+      # mark argument as specified on the commandline
+      vals["#{sym}_given".intern] = true
 
       case opts[:type]
       when :flag
@@ -404,7 +408,8 @@ class Parser
       if SINGLE_ARG_TYPES.include?(opts[:type])
         unless opts[:multi]       # single parameter
           vals[sym] = vals[sym][0][0]
-        else                      # multiple options, each with a single parameter
+        # multiple options, each with a single parameter
+        else
           vals[sym] = vals[sym].map { |p| p[0] }
         end
       elsif MULTI_ARG_TYPES.include?(opts[:type]) && !opts[:multi]
@@ -712,17 +717,23 @@ end
 ##
 ##   require 'trollop'
 ##   opts = Trollop::options do
-##     opt :monkey, "Use monkey mode"                     # a flag --monkey, defaulting to false
-##     opt :goat, "Use goat mode", :default => true       # a flag --goat, defaulting to true
-##     opt :num_limbs, "Number of limbs", :default => 4   # an integer --num-limbs <i>, defaulting to 4
-##     opt :num_thumbs, "Number of thumbs", :type => :int # an integer --num-thumbs <i>, defaulting to nil
+##     opt :monkey, "Use monkey mode"                     # a flag --monkey,
+##     defaulting to false
+##     opt :goat, "Use goat mode", :default => true       # a flag --goat,
+##     defaulting to true
+##     opt :num_limbs, "Number of limbs", :default => 4   # an integer
+##     --num-limbs <i>, defaulting to 4
+##     opt :num_thumbs, "Number of thumbs", :type => :int # an integer
+##     --num-thumbs <i>, defaulting to nil
 ##   end
 ##
 ##   ## if called with no arguments
-##   p opts # => { :monkey => false, :goat => true, :num_limbs => 4, :num_thumbs => nil }
+##   p opts # => { :monkey => false, :goat => true, :num_limbs => 4, :num_thumbs
+##   => nil }
 ##
 ##   ## if called with --monkey
-##   p opts # => {:monkey_given=>true, :monkey=>true, :goat=>true, :num_limbs=>4, :help=>false, :num_thumbs=>nil}
+##   p opts # => {:monkey_given=>true, :monkey=>true, :goat=>true,
+##   :num_limbs=>4, :help=>false, :num_thumbs=>nil}
 ##
 ## See more examples at http://trollop.rubyforge.org.
 def options args=ARGV, *a, &b
@@ -743,8 +754,10 @@ end
 ##
 ##   require 'trollop'
 ##   p = Trollop::Parser.new do
-##     opt :monkey, "Use monkey mode"                     # a flag --monkey, defaulting to false
-##     opt :goat, "Use goat mode", :default => true       # a flag --goat, defaulting to true
+##     opt :monkey, "Use monkey mode"                     # a flag --monkey,
+##     defaulting to false
+##     opt :goat, "Use goat mode", :default => true       # a flag --goat,
+##     defaulting to true
 ##   end
 ##
 ##   opts = Trollop::with_standard_exception_handling p do

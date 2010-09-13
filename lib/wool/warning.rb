@@ -35,7 +35,7 @@ module Wool
     def desc
       "#{self.class.name} #{file}:#{line_number} (#{severity})"
     end
-    
+
     def split_on_char_outside_literal(input, find_char)
       last_char = ''
       in_string = in_regex = is_backslash = false

@@ -25,7 +25,7 @@ describe Wool::Warning do
       Wool::Warning.new('temp', 'hello.rb', 'a+b', 3, 7).desc.should == 'Wool::Warning hello.rb:3 (7)'
     end
   end
-  
+
   context '#split_on_char_outside_literal' do
     it 'splits code and a comment with no literals present' do
       Wool::Warning.new.split_on_char_outside_literal('hello world # runs hello', '#').should ==
@@ -33,6 +33,7 @@ describe Wool::Warning do
     end
 
     it 'ignores the character when in a single-quote literal' do
+      
       Wool::Warning.new.split_on_char_outside_literal("hello 'world # runs' hello", '#').should ==
           ["hello 'world # runs' hello", '']
     end
@@ -46,12 +47,12 @@ describe Wool::Warning do
       Wool::Warning.new.split_on_char_outside_literal('hello /world # runs/ hello', '#').should ==
           ['hello /world # runs/ hello', '']
     end
-    
+
     it 'catches the character even with escaped quotes in literals' do
       Wool::Warning.new.split_on_char_outside_literal('"hello \"world\"" # runs hello', '#').should ==
           ['"hello \"world\"" ', '# runs hello']
     end
-    
+
     it 'ignores embedded values in single quote strings in double quote strings' do
       input = %Q{"my message is: 'hello, \#{name}', i hope he likes it"}
       output = [input, '']
