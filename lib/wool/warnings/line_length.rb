@@ -32,7 +32,7 @@ class Wool::GenericLineLengthWarning < Wool::LineWarning
   def try_to_fix_guarded_lines(line)
     return nil if line !~ /\b(if|unless)\s/  # quick fast check
     code, guard = split_on_char_outside_literal(line, /(\b|\s)(if|unless)\b/)
-    return nil if code.empty? || guard.empty? || code.strip == 'end'
+    return nil if code.strip.empty? || guard.empty? || code.strip == 'end'
     # check guard for closing braces
     return nil if count_occurrences(guard, '}') != count_occurrences(guard, '{')
     indent = get_indent(line)
