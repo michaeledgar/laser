@@ -25,7 +25,7 @@ class Wool::GenericLineLengthWarning < Wool::LineWarning
 
   def fix_long_comment(text)
     # Must have no leading text
-    return text unless text =~ /^(\s+)(#+)\s*(.*)\Z/
+    return nil unless text =~ /^(\s*)(#+)\s*(.*)\Z/
     indent, hashes, comment = $1, $2, $3
     indent_size = indent
     # The "+ 2" is (indent)#(single space)
