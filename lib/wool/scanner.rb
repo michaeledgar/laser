@@ -53,8 +53,6 @@ module Wool
     def scan(text, filename='(none)')
       warnings = scan_for_file_warnings(text, filename)
       text = filter_fixable(warnings).inject(text) do |text, warning|
-        p warning
-        p warning.fix(text)
         warning.fix(text)
       end
       with_fixing_piped_to_output do
@@ -87,16 +85,13 @@ module Wool
       fixable_warnings = filter_fixable warnings
       if fixable_warnings.size == 1
         self.settings[:output_lines] << fixable_warnings.first.fix(self.context_stack) rescue line
-        [fixable_warnings.first]
       elsif fixable_warnings.size > 1
-        result = [fixable_warnings.first]
         new_text = fixable_warnings.first.fix(self.context_stack) rescue line
-        result.concat process_line(new_text, line_number, filename)
-        result.concat(warnings - fixable_warnings)
+        process_line(new_text, line_number, filename)
       else
         self.settings[:output_lines] << line
-        warnings
       end
+      warnings
     end
 
     def all_warnings_for_line(line, line_number, filename)
