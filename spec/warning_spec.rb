@@ -51,5 +51,11 @@ describe Wool::Warning do
       Wool::Warning.new.split_on_char_outside_literal('"hello \"world\"" # runs hello', '#').should ==
           ['"hello \"world\"" ', '# runs hello']
     end
+    
+    it 'ignores embedded values in single quote strings in double quote strings' do
+      input = %Q{"my message is: 'hello, \#{name}', i hope he likes it"}
+      output = [input, '']
+      Wool::Warning.new.split_on_char_outside_literal(input, '#').should == output
+    end
   end
 end
