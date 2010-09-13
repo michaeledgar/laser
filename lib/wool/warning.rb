@@ -29,7 +29,7 @@ module Wool
     end
 
     def fixable?
-      self.fix != self.body
+      self.fix != self.body rescue false
     end
 
     def desc
