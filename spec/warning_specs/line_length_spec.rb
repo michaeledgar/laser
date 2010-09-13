@@ -114,6 +114,12 @@ describe Wool::GenericLineLengthWarning do
       output = "unless baz.boo\n  if foo.bar\n    puts x\n  end\nend"
       @twenty_cap.new('(stdin)', input, :indent_size => 2).fix.should == output
     end
+    
+    it 'converts nested three if/unless as guards' do
+      input = 'puts x if foo.bar unless baz.boo if alpha.beta'
+      output = "if alpha.beta\n  unless baz.boo\n    if foo.bar\n      puts x\n    end\n  end\nend"
+      @twenty_cap.new('(stdin)', input, :indent_size => 2).fix.should == output
+    end
   end
 end
 

@@ -37,11 +37,16 @@ class Wool::GenericLineLengthWarning < Wool::LineWarning
     return nil if count_occurrences(guard, '}') != count_occurrences(guard, '{')
     indent = get_indent(line)
     indent_unit = ' ' * @settings[:indent_size]
-    result = code
+    
+    condition = indent + guard.strip
+    body = indent_unit + code
+    new_condition, guard = split_on_char_outside_literal(condition[indent.size..-1], /[^\^](if|unless)\b/)
+    condition = new_condition if guard.any?
+    result = condition + "\n" + body + "\n" + indent + 'end'
     
     while guard.any?
       condition = indent + guard.strip
-      body = result.split(/\n/).map { |line| indent + indent_unit + line.strip}.join("\n")
+      body = result.split(/\n/).map { |line| indent_unit + line}.join("\n")
       new_condition, guard = split_on_char_outside_literal(condition[indent.size..-1], /[^\^](if|unless)\b/)
       condition = new_condition if guard.any?
       result = condition + "\n" + body + "\n" + indent + 'end'
