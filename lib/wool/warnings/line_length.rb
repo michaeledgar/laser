@@ -25,7 +25,7 @@ class Wool::GenericLineLengthWarning < Wool::LineWarning
 
   def fix_long_comment(text)
     # Must have no leading text
-    return text unless text =~ /^(\s+)\#\s*(.*)\Z/
+    return text unless text =~ /^(\s+)#+\s*(.*)\Z/
     indent, comment = $1.size, $2
     # The "+ 2" is (indent)#(single space)
     space_for_text_per_line = self.class.line_length_limit - (indent.size + 2)
@@ -40,8 +40,12 @@ class Wool::GenericLineLengthWarning < Wool::LineWarning
         current_line += 1
         lines << ''
       end
-      lines[current_line] << ' ' if lines[current_line].any?
+      if lines[current_line].any?
+        lines[current_line] << ' '
+        quota -= 1
+      end
       lines[current_line] << word
+      quota -= word.size
     end
     lines.map { |line| " " * indent + '# ' + line }.join("\n")
   end

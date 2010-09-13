@@ -45,7 +45,7 @@ if true
       wool.libs << 'lib' << 'spec'
       wool.using << :all << Wool::LineLengthMaximum(100) << Wool::LineLengthWarning(80)
       wool.options = '--debug --fix'
-      wool.fix << Wool::ExtraBlankLinesWarning << Wool::ExtraWhitespaceWarning
+      wool.fix << Wool::ExtraBlankLinesWarning << Wool::ExtraWhitespaceWarning << Wool::LineLengthMaximum(80)
     end
   rescue LoadError => err
     task :wool do

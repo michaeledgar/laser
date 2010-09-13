@@ -64,7 +64,7 @@ module Wool
       end
       warnings
     end
-    
+
     def with_fixing_piped_to_output
       self.settings[:output_lines] = []
       yield
@@ -155,8 +155,8 @@ module Wool
       scan_for_warnings(using & FileWarning.all_warnings, file, filename)
     end
 
-    # Goes through all line warning subclasses and checks if we got some new warnings
-    # for a given line
+    # Goes through all line warning subclasses and checks if we got some new
+    # warnings for a given line
     def scan_for_line_warnings(line, filename)
       scan_for_warnings(using & LineWarning.all_warnings, line, filename)
     end
