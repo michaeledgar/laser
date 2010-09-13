@@ -35,7 +35,7 @@ module Wool
     def desc
       "#{self.class.name} #{file}:#{line_number} (#{severity})"
     end
-    
+
     def count_occurrences(string, substring)
       count = 0
       0.upto(string.size - substring.size) do |start|
@@ -45,7 +45,7 @@ module Wool
       end
       count
     end
-    
+
     def split_on_char_outside_literal(input, regex)
       last_char = ''
       in_string = in_regex = is_backslash = false
@@ -66,7 +66,7 @@ module Wool
       end
       return [input, '']
     end
-    
+
     def get_indent(line)
       line =~ /^(\s*).*$/ ? $1 : ''
     end

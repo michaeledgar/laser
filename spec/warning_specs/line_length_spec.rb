@@ -66,31 +66,31 @@ describe Wool::GenericLineLengthWarning do
       output = " ### this is a\n ### stupidly long\n ### comment lol\n a + b"
       @twenty_cap.new('(stdin)', input).fix.should == output
     end
-    
+
     it "doesn't try to convert the 'end if foobar' technique" do
       input = '  end if should_run_block?'
       output = '  end if should_run_block?'
       @twenty_cap.new('(stdin)', input, :indent_size => 2).fix.should == output
     end
-    
+
     it "doesn't try to convert the 'end unless foobar' technique" do
       input = '  end unless should_run_block?'
       output = '  end unless should_run_block?'
       @twenty_cap.new('(stdin)', input, :indent_size => 2).fix.should == output
     end
-    
+
     it 'converts lines with guarded ifs into 3 liners' do
       input = 'puts x if x > y && y.call'
       output = "if x > y && y.call\n  puts x\nend"
       @twenty_cap.new('(stdin)', input, :indent_size => 2).fix.should == output
     end
-    
+
     it 'converts lines with guarded unlesses into 3 liners' do
       input = 'puts x unless x > number'
       output = "unless x > number\n  puts x\nend"
       @twenty_cap.new('(stdin)', input, :indent_size => 2).fix.should == output
     end
-    
+
     it 'converts lines with guarded ifs while maintaining indentation' do
       input = '  puts x unless x > number'
       output = "  unless x > number\n    puts x\n  end"
@@ -102,25 +102,25 @@ describe Wool::GenericLineLengthWarning do
       output = %Q[syms.each { |sym| raise ArgumentError, "unknown option '\#{sym}'" unless @specs[sym] }]
       @twenty_cap.new('(stdin)', input, :indent_size => 2).fix.should == output
     end
-    
+
     it 'only converts when it finds a guard on the real-world top level expression' do
       input = 'x.select { |x| x if 5 }'
       output = 'x.select { |x| x if 5 }'
       @twenty_cap.new('(stdin)', input, :indent_size => 2).fix.should == output
     end
-    
+
     it 'converts nested if/unless as guards' do
       input = 'puts x if foo.bar unless baz.boo'
       output = "unless baz.boo\n  if foo.bar\n    puts x\n  end\nend"
       @twenty_cap.new('(stdin)', input, :indent_size => 2).fix.should == output
     end
-    
+
     it 'converts nested three if/unless as guards' do
       input = 'puts x if foo.bar unless baz.boo if alpha.beta'
       output = "if alpha.beta\n  unless baz.boo\n    if foo.bar\n      puts x\n    end\n  end\nend"
       @twenty_cap.new('(stdin)', input, :indent_size => 2).fix.should == output
     end
-    
+
     it 'converts nested three if/unless as guards maintaining indentation' do
       input = '    puts x if foo.bar unless baz.boo if alpha.beta'
       output = "    if alpha.beta\n      unless baz.boo\n        if foo.bar\n          puts x\n        end\n      end\n    end"

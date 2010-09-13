@@ -145,7 +145,9 @@ class Parser
   ## value, you must specify +:type+ as well.
 
   def opt name, desc="", opts={}
-    raise ArgumentError, "you already have an argument named '#{name}'" if @specs.member? name
+    if @specs.member? name
+      raise ArgumentError, "you already have an argument named '#{name}'"
+    end
 
     ## fill in :type
     opts[:type] = # normalize
@@ -168,7 +170,9 @@ class Parser
         end
       when nil; nil
       else
-        raise ArgumentError, "unsupported argument type '#{opts[:type]}'" unless TYPES.include?(opts[:type])
+        unless TYPES.include?(opts[:type])
+          raise ArgumentError, "unsupported argument type '#{opts[:type]}'"
+        end
         opts[:type]
       end
 
@@ -209,7 +213,9 @@ class Parser
         raise ArgumentError, "unsupported argument type '#{opts[:default].class.name}'"
       end
 
-    raise ArgumentError, ":type specification and default type don't match (default type is #{type_from_default})" if opts[:type] && type_from_default && opts[:type] != type_from_default
+    if opts[:type] && type_from_default && opts[:type] != type_from_default
+      raise ArgumentError, ":type specification and default type don't match (default type is #{type_from_default})"
+    end
 
     opts[:type] = opts[:type] || type_from_default || :flag
 
@@ -224,10 +230,16 @@ class Parser
       else
         raise ArgumentError, "invalid long option name #{opts[:long].inspect}"
       end
-    raise ArgumentError, "long option name #{opts[:long].inspect} is already taken; please specify a (different) :long" if @long[opts[:long]]
+    if @long[opts[:long]]
+      raise ArgumentError, "long option name #{opts[:long].inspect} is already taken; please specify a (different) :long"
+    end
 
     ## fill in :short
-    opts[:short] = opts[:short].to_s if opts[:short] unless opts[:short] == :none
+    unless opts[:short] == :none
+      if opts[:short]
+        opts[:short] = opts[:short].to_s
+      end
+    end
     opts[:short] = case opts[:short]
       when /^-(.)$/; $1
       when nil, :none, /^.$/; opts[:short]
@@ -235,15 +247,21 @@ class Parser
     end
 
     if opts[:short]
-      raise ArgumentError, "short option name #{opts[:short].inspect} is already taken; please specify a (different) :short" if @short[opts[:short]]
-      raise ArgumentError, "a short option name can't be a number or a dash" if opts[:short] =~ INVALID_SHORT_ARG_REGEX
+      if @short[opts[:short]]
+        raise ArgumentError, "short option name #{opts[:short].inspect} is already taken; please specify a (different) :short"
+      end
+      if opts[:short] =~ INVALID_SHORT_ARG_REGEX
+        raise ArgumentError, "a short option name can't be a number or a dash"
+      end
     end
 
     ## fill in :default for flags
     opts[:default] = false if opts[:type] == :flag && opts[:default].nil?
 
     ## autobox :default for :multi (multi-occurrence) arguments
-    opts[:default] = [opts[:default]] if opts[:default] && opts[:multi] && !opts[:default].is_a?(Array)
+    if opts[:default] && opts[:multi] && !opts[:default].is_a?(Array)
+      opts[:default] = [opts[:default]]
+    end
 
     ## fill in :multi
     opts[:multi] ||= false
@@ -308,7 +326,11 @@ class Parser
     vals = {}
     required = {}
 
-    opt :version, "Print version and exit" if @version unless @specs[:version] || @long["version"]
+    unless @specs[:version] || @long["version"]
+      if @version
+        opt :version, "Print version and exit"
+      end
+    end
     opt :help, "Show this message" unless @specs[:help] || @long["help"]
 
     @specs.each do |sym, opts|
@@ -376,7 +398,9 @@ class Parser
     end
 
     required.each do |sym, val|
-      raise CommandlineError, "option --#{@specs[sym][:long]} must be specified" unless given_args.include? sym
+      unless given_args.include? sym
+        raise CommandlineError, "option --#{@specs[sym][:long]} must be specified"
+      end
     end
 
     ## parse parameters
@@ -385,7 +409,9 @@ class Parser
       params = given_data[:params]
 
       opts = @specs[sym]
-      raise CommandlineError, "option '#{arg}' needs a parameter" if params.empty? && opts[:type] != :flag
+      if params.empty? && opts[:type] != :flag
+        raise CommandlineError, "option '#{arg}' needs a parameter"
+      end
 
       # mark argument as specified on the commandline
       vals["#{sym}_given".intern] = true
@@ -620,12 +646,16 @@ private
   end
 
   def parse_integer_parameter param, arg
-    raise CommandlineError, "option '#{arg}' needs an integer" unless param =~ /^\d+$/
+    unless param =~ /^\d+$/
+      raise CommandlineError, "option '#{arg}' needs an integer"
+    end
     param.to_i
   end
 
   def parse_float_parameter param, arg
-    raise CommandlineError, "option '#{arg}' needs a floating-point number" unless param =~ FLOAT_RE
+    unless param =~ FLOAT_RE
+      raise CommandlineError, "option '#{arg}' needs a floating-point number"
+    end
     param.to_f
   end
 

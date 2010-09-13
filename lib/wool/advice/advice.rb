@@ -28,7 +28,9 @@ module Wool
       define_method meth do |*args|
         identity = lambda {|*x| x}
         instance_eval(&(settings[:before] || identity))
-        new_args = instance_eval(& lambda { send(settings[:args], *args)}) if settings[:args]
+        if settings[:args]
+          new_args = instance_eval(& lambda { send(settings[:args], *args)})
+        end
         result = send("#{meth}_old#{counter}", *new_args)
         instance_eval(&(settings[:after] || identity))
         result

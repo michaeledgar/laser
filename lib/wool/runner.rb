@@ -99,7 +99,9 @@ module Wool
     def collect_warnings(files, scanner)
       full_list = files.map do |file|
         data = file == '(stdin)' ? STDIN.read : File.read(file)
-        scanner.settings[:output_file] = File.open(file, 'w') if scanner.settings[:fix]
+        if scanner.settings[:fix]
+          scanner.settings[:output_file] = File.open(file, 'w')
+        end
         results = scanner.scan(data, file)
         scanner.settings[:output_file].close if scanner.settings[:fix]
         results

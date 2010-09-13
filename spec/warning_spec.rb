@@ -63,7 +63,7 @@ describe Wool::Warning do
       output = [input, '']
       Wool::Warning.new.split_on_char_outside_literal(input, /#/).should == output
     end
-    
+
     it 'works for multichar regex matches' do
       input = ' puts x.call(y) if x > y'
       output = [' puts x.call(y)', ' if x > y']

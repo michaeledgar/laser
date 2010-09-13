@@ -8,9 +8,13 @@ class Wool::OperatorSpacing < Wool::LineWarning
     return false if op == '|' && is_block_line?(line)
     embed = op.gsub(/(\+|\-|\*|\||\^)/, '\\\\\\1')
     if op == '-'
-      op if line =~ /([A-Za-z0-9_]!|[A-Za-z0-9_?])#{embed}/ || line =~ /(#{embed})[$A-Za-z_?!]/
+      if line =~ /([A-Za-z0-9_]!|[A-Za-z0-9_?])#{embed}/ || line =~ /(#{embed})[$A-Za-z_?!]/
+        op
+      end
     else
-      op if line =~ /([A-Za-z0-9_]!|[A-Za-z0-9_?])#{embed}/ || line =~ /(#{embed})[$A-Za-z0-9_?!]/
+      if line =~ /([A-Za-z0-9_]!|[A-Za-z0-9_?])#{embed}/ || line =~ /(#{embed})[$A-Za-z0-9_?!]/
+        op
+      end
     end
   end
 
