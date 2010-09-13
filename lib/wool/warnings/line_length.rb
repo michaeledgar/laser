@@ -31,18 +31,25 @@ class Wool::GenericLineLengthWarning < Wool::LineWarning
 
   def try_to_fix_guarded_lines(line)
     return nil unless line =~ /\b(if|unless)\s/  # quick fast check
-    tree = RubyParser.new.parse(line)
-    if tree[0] == :if && (tree[2].nil? ^ tree[3].nil?)
-      # rewrite as if/then
-      indent = get_indent(line)
-      r2r = Ruby2Ruby.new
-      condition = indent + tree[0].to_s + r2r.process(tree[1])
-      body_tree = tree[2] || tree[3]
-      body = r2r.process(body_tree).split(/\n/).map do |line|
-        indent + (' ' * @settings[:indent_size]) + line.strip
-      end
-      return condition + body.join("\n") + indent + 'end'
-    end
+    code, guard = split_on_char_outside_literal(line, /(\b|\s)(if|unless)\b/)
+    return nil unless guard.any?
+    indent = get_indent(line)
+    condition = indent + guard.strip
+    body = indent + (' ' * @settings[:indent_size]) + code.strip
+    return condition + "\n" + body + "\n" + indent + 'end'
+    # tree = RubyParser.new.parse(line)
+    # if tree[0] == :if && (tree[2].nil? ^ tree[3].nil?)
+    #   method = tree[2] ? 'if' : 'unless'
+    #   # rewrite as if/then
+    #   indent = get_indent(line)
+    #   r2r = Ruby2Ruby.new
+    #   condition = indent + method + ' ' + r2r.process(tree[1])
+    #   body_tree = tree[2] || tree[3]
+    #   body = r2r.process(body_tree).split(/\n/).map do |line|
+    #     indent + (' ' * @settings[:indent_size]) + line.strip
+    #   end
+    #   return condition + body.join("\n") + indent + 'end'
+    # end
   end
 
   def handle_long_comments(line)
