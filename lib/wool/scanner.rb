@@ -11,7 +11,8 @@ module Wool
     attr_accessor :context_stack
     attr_accessor :indent_stack
 
-    DEFAULT_SETTINGS = {:fix => false, :output => STDOUT}
+    DEFAULT_SETTINGS = {:fix => false, :output => STDOUT,
+                        :__using__ => Wool::Warning.all_warnings}
 
     # Initializes the scanner with the given settings
     #
@@ -21,6 +22,11 @@ module Wool
       @settings = DEFAULT_SETTINGS.merge(settings)
       self.context_stack = []
       self.indent_stack = []
+    end
+
+    # Returns the list of warnings to use for scanning.
+    def using
+      @settings[:__using__]
     end
 
     # Scans the text for warnings.
@@ -65,7 +71,8 @@ module Wool
         self.indent_stack.push indent_size
       elsif indent_size < current_indent
         previous = self.indent_stack.pop
-        if indent_size != current_indent
+        if indent_size != current_indent && 
+           using.include?(MisalignedUnindentationWarning)
           return [MisalignedUnindentationWarning.new(filename, line, current_indent)]
         end
       end
@@ -99,13 +106,13 @@ module Wool
     # Goes through all file warning subclasses and see what warnings the file
     # generates as a whole.
     def scan_for_file_warnings(file, filename)
-      scan_for_warnings(FileWarning.all_warnings, file, filename)
+      scan_for_warnings(using & FileWarning.all_warnings, file, filename)
     end
 
     # Goes through all line warning subclasses and checks if we got some new warnings
     # for a given line
     def scan_for_line_warnings(line, filename)
-      scan_for_warnings(LineWarning.all_warnings, line, filename)
+      scan_for_warnings(using & LineWarning.all_warnings, line, filename)
     end
 
     private

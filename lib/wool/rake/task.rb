@@ -1,13 +1,14 @@
 module Wool
   module Rake
     class WoolTask
-      class Settings < Struct.new(:libs, :extras, :options, :using)
+      class Settings < Struct.new(:libs, :extras, :options, :using, :fix)
         def initialize(*args)
           super
           self.libs ||= []
           self.extras ||= []
           self.options ||= ''
           self.using ||= []
+          self.fix ||= []
         end
       end
 
@@ -33,6 +34,7 @@ module Wool
         end
         runner = Wool::Runner.new(self.settings.options.split(/\n/) + files)
         runner.using = self.settings.using
+        runner.fix = self.settings.fix
         runner.run
       end
     end

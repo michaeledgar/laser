@@ -17,7 +17,7 @@ class Wool::GenericLineLengthWarning < Wool::LineWarning
     super('Line too long', file, line, 0, self.class.severity)
   end
   
-  def fix(line, context)
+  def fix(content_stack = nil)
     
   end
   

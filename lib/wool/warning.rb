@@ -3,11 +3,16 @@ module Wool
     extend Advice
     
     def self.all_warnings
-      @@all_warnings ||= [Wool::Warning]
+      @all_warnings ||= [self]
     end
-    
+
     def self.inherited(klass)
       self.all_warnings << klass
+      next_klass = self.superclass
+      while next_klass != Wool::Warning.superclass
+        next_klass.send(:inherited, klass)
+        next_klass = next_klass.superclass
+      end
     end
     
     def self.match?(body, context_stack, settings = {})
@@ -33,21 +38,13 @@ module Wool
   end
   
   class LineWarning < Warning
-    def self.all_warnings
-      @@all_line_warnings ||= []
-    end
     alias_method :line, :body
-    
     def self.options
       []
     end
   end
   
   class FileWarning < Warning
-    def self.all_warnings
-      @@all_file_warnings ||= []
-    end
-    
     def self.options
       []
     end
