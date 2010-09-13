@@ -39,12 +39,16 @@ module Wool
     def split_on_char_outside_literal(input, find_char)
       last_char = ''
       in_string = in_regex = is_backslash = false
+      escape_string = nil
       input.size.times do |idx|
         char = input[idx,1]
         if char == '/'
           in_regex = !in_regex unless last_char =~ /\d/
         elsif !is_backslash && char == "'" || char == '"'
-          in_string = !in_string
+          if char == escape_string
+            in_string = !in_string
+            escape_string = char if in_string
+          end
         elsif char == find_char && !(in_string || in_regex)
           return [input[0,idx], input[idx..-1]]
         end
