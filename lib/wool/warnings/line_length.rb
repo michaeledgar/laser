@@ -33,6 +33,8 @@ class Wool::GenericLineLengthWarning < Wool::LineWarning
     return nil unless line =~ /\b(if|unless)\s/  # quick fast check
     code, guard = split_on_char_outside_literal(line, /(\b|\s)(if|unless)\b/)
     return nil unless guard.any?
+    # check guard for closing braces
+    return nil if count_occurrences(guard, '}') != count_occurrences(guard, '{')
     indent = get_indent(line)
     condition = indent + guard.strip
     body = indent + (' ' * @settings[:indent_size]) + code.strip

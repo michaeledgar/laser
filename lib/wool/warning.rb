@@ -35,7 +35,17 @@ module Wool
     def desc
       "#{self.class.name} #{file}:#{line_number} (#{severity})"
     end
-
+    
+    def count_occurrences(string, substring)
+      count = 0
+      0.upto(string.size - substring.size) do |start|
+        if string[start,substring.size] == substring
+          count += 1
+        end
+      end
+      count
+    end
+    
     def split_on_char_outside_literal(input, regex)
       last_char = ''
       in_string = in_regex = is_backslash = false
