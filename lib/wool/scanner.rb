@@ -74,11 +74,8 @@ module Wool
     def process_line(line, line_number, filename)
       update_context! line
       warnings = all_warnings_for_line(line, line_number, filename)
-      if @settings[:fix]
-        fix_input(warnings, line, line_number, filename)
-      else
-        warnings
-      end
+      fix_input(warnings, line, line_number, filename) if @settings[:fix]
+      warnings
     end
 
     def fix_input(warnings, line, line_number, filename)
@@ -91,7 +88,6 @@ module Wool
       else
         self.settings[:output_lines] << line
       end
-      warnings
     end
 
     def all_warnings_for_line(line, line_number, filename)
