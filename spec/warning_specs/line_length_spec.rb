@@ -86,6 +86,12 @@ describe Wool::GenericLineLengthWarning do
     end
 
     it 'only converts when it finds a guard on the top level expression' do
+      input = %Q[syms.each { |sym| raise ArgumentError, "unknown option '\#{sym}'" unless @specs[sym] }]
+      output = %Q[syms.each { |sym| raise ArgumentError, "unknown option '\#{sym}'" unless @specs[sym] }]
+      @twenty_cap.new('(stdin)', input, :indent_size => 2).fix.should == output
+    end
+    
+    it 'only converts when it finds a guard on the real-world top level expression' do
       input = 'x.select { |x| x if 5 }'
       output = 'x.select { |x| x if 5 }'
       @twenty_cap.new('(stdin)', input, :indent_size => 2).fix.should == output
