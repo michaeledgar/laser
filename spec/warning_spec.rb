@@ -28,40 +28,46 @@ describe Wool::Warning do
 
   context '#split_on_char_outside_literal' do
     it 'splits code and a comment with no literals present' do
-      Wool::Warning.new.split_on_char_outside_literal('hello world # runs hello', '#').should ==
+      Wool::Warning.new.split_on_char_outside_literal('hello world # runs hello', /#/).should ==
           ['hello world ', '# runs hello']
     end
 
     it 'ignores the character when in a single-quote literal' do
-      Wool::Warning.new.split_on_char_outside_literal("hello 'world # runs' hello", '#').should ==
+      Wool::Warning.new.split_on_char_outside_literal("hello 'world # runs' hello", /#/).should ==
           ["hello 'world # runs' hello", '']
     end
 
     it 'can handle code with double nesting' do
-      input = %{Wool::Warning.new.split_on_char_outside_literal("hello 'world # runs' hello", '#').should}
+      input = %{Wool::Warning.new.split_on_char_outside_literal("hello 'world # runs' hello", /#/).should}
       output = [input, '']
-      Wool::Warning.new.split_on_char_outside_literal(input, '#').should == output
+      Wool::Warning.new.split_on_char_outside_literal(input, /#/).should == output
     end
 
     it 'ignores the character when in a double-quote literal' do
-      Wool::Warning.new.split_on_char_outside_literal('hello "world # runs" hello', '#').should ==
+      Wool::Warning.new.split_on_char_outside_literal('hello "world # runs" hello', /#/).should ==
           ['hello "world # runs" hello', '']
     end
 
     it 'ignores the character when in a regex literal' do
-      Wool::Warning.new.split_on_char_outside_literal('hello /world # runs/ hello', '#').should ==
+      Wool::Warning.new.split_on_char_outside_literal('hello /world # runs/ hello', /#/).should ==
           ['hello /world # runs/ hello', '']
     end
 
     it 'catches the character even with escaped quotes in literals' do
-      Wool::Warning.new.split_on_char_outside_literal('"hello \"world\"" # runs hello', '#').should ==
+      Wool::Warning.new.split_on_char_outside_literal('"hello \"world\"" # runs hello', /#/).should ==
           ['"hello \"world\"" ', '# runs hello']
     end
 
     it 'ignores embedded values in single quote strings in double quote strings' do
       input = %Q{"my message is: 'hello, \#{name}', i hope he likes it"}
       output = [input, '']
-      Wool::Warning.new.split_on_char_outside_literal(input, '#').should == output
+      Wool::Warning.new.split_on_char_outside_literal(input, /#/).should == output
+    end
+    
+    it 'works for multichar regex matches' do
+      input = ' puts x.call(y) if x > y'
+      output = [' puts x.call(y)', ' if x > y']
+      Wool::Warning.new.split_on_char_outside_literal(input, /(\b|\s)if\b/).should == output
     end
   end
 end

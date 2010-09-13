@@ -5,6 +5,9 @@ class Wool::GenericLineLengthWarning < Wool::LineWarning
   def self.line_length_limit=(val)
     @line_length_limit = val
   end
+  def self.inspect
+    "Wool::GenericLineLengthWarning<#{line_length_limit}>"
+  end
   class << self
     attr_accessor :severity
   end
@@ -13,18 +16,37 @@ class Wool::GenericLineLengthWarning < Wool::LineWarning
     !!(line.size > self.line_length_limit)
   end
 
-  def initialize(file, line)
+  def initialize(file, line, settings={})
     super('Line too long', file, line, 0, self.class.severity)
+    @settings = settings
   end
 
   def fix(content_stack = nil)
     result = handle_long_comments(self.line)
     return result if result
+    result = try_to_fix_guarded_lines(self.line)
+    return result if result
     self.line
   end
 
+  def try_to_fix_guarded_lines(line)
+    return nil unless line =~ /\b(if|unless)\s/  # quick fast check
+    tree = RubyParser.new.parse(line)
+    if tree[0] == :if && (tree[2].nil? ^ tree[3].nil?)
+      # rewrite as if/then
+      indent = get_indent(line)
+      r2r = Ruby2Ruby.new
+      condition = indent + tree[0].to_s + r2r.process(tree[1])
+      body_tree = tree[2] || tree[3]
+      body = r2r.process(body_tree).split(/\n/).map do |line|
+        indent + (' ' * @settings[:indent_size]) + line.strip
+      end
+      return condition + body.join("\n") + indent + 'end'
+    end
+  end
+
   def handle_long_comments(line)
-    code, comment = split_on_char_outside_literal(line, '#')
+    code, comment = split_on_char_outside_literal(line, /#/)
     return nil unless comment.any?
     indent, code = code.match(/^(\s*)(.*)$/)[1..2]
     hashes, comment = comment.match(/^(#+\s*)(.*)$/)[1..2]
@@ -76,11 +98,11 @@ module Wool
   end
 
   def LineLengthMaximum(size)
-    LineLengthCustomSeverity(size, 8)
+    (@table ||= {})[size] ||= LineLengthCustomSeverity(size, 8)
   end
 
   def LineLengthWarning(size)
-    LineLengthCustomSeverity(size, 3)
+    (@table ||= {})[size] ||= LineLengthCustomSeverity(size, 3)
   end
   module_function :LineLengthMaximum, :LineLengthWarning, :LineLengthCustomSeverity
 end

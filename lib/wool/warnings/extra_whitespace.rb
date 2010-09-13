@@ -4,7 +4,7 @@ class Wool::ExtraWhitespaceWarning < Wool::LineWarning
     /\s+$/ === line
   end
 
-  def initialize(file, line)
+  def initialize(file, line, settings={})
     super('Extra Whitespace', file, line, 0, 2)
   end
 

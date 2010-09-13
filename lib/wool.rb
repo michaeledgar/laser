@@ -1,3 +1,5 @@
+require 'ruby_parser'
+require 'ruby2ruby'
 require 'wool/third_party/trollop'
 require 'wool/advice/advice.rb'
 require 'wool/advice/comment_advice.rb'

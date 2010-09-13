@@ -37,34 +37,52 @@ describe Wool::GenericLineLengthWarning do
       @twenty_cap.line_length_limit = 20
     end
 
-    it "takes a line with just a comment on it and breaks it into many lines" do
-      input = "# my comment is this and that and another thing"
+    it 'takes a line with just a comment on it and breaks it into many lines' do
+      input = '# my comment is this and that and another thing'
       output = "# my comment is this\n# and that and\n# another thing"
       @twenty_cap.new('(stdin)', input).fix.should == output
     end
 
-    it "creates new lines with the same indentation as the input" do
-      input = "   # my comment is this and that and another thing"
+    it 'creates new lines with the same indentation as the input' do
+      input = '   # my comment is this and that and another thing'
       output = "   # my comment is\n   # this and that\n   # and another\n   # thing"
       @twenty_cap.new('(stdin)', input).fix.should == output
     end
 
     it 'uses the same number of hashes to denote the comment' do
-      input = " ## my comment is this and that and another thing"
+      input = ' ## my comment is this and that and another thing'
       output = " ## my comment is\n ## this and that\n ## and another\n ## thing"
       @twenty_cap.new('(stdin)', input).fix.should == output
     end
 
     it 'splits up code with an overly long comment at the end' do
-      input = "  a + b # this is a stupidly long comment lol"
+      input = '  a + b # this is a stupidly long comment lol'
       output = "  # this is a\n  # stupidly long\n  # comment lol\n  a + b"
       @twenty_cap.new('(stdin)', input).fix.should == output
     end
 
     it 'uses the same indentation and hashes for the new comment' do
-      input = " a + b ### this is a stupidly long comment lol"
+      input = ' a + b ### this is a stupidly long comment lol'
       output = " ### this is a\n ### stupidly long\n ### comment lol\n a + b"
       @twenty_cap.new('(stdin)', input).fix.should == output
+    end
+    
+    it 'converts lines with guarded ifs into 3 liners' do
+      input = 'puts x if x > y && y.call'
+      output = "if x > y && y.call\n  puts x\nend"
+      @twenty_cap.new('(stdin)', input, :indent_size => 2).fix.should == output
+    end
+    
+    it 'converts lines with guarded unlesses into 3 liners' do
+      input = 'puts x unless x > number'
+      output = "unless x > number\n  puts x\nend"
+      @twenty_cap.new('(stdin)', input, :indent_size => 2).fix.should == output
+    end
+    
+    it 'converts lines with guarded ifs while maintaining indentation' do
+      input = '  puts x unless x > number'
+      output = "  unless x > number\n    puts x\n  end"
+      @twenty_cap.new('(stdin)', input, :indent_size => 2).fix.should == output
     end
   end
 end

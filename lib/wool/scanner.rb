@@ -11,7 +11,7 @@ module Wool
     attr_accessor :context_stack
     attr_accessor :indent_stack
 
-    DEFAULT_SETTINGS = {:fix => false, :output => STDOUT,
+    DEFAULT_SETTINGS = {:fix => false, :output => STDOUT, :indent_size => 2,
                         :__using__ => Wool::Warning.all_warnings,
                         :__fix__ => Wool::Warning.all_warnings}
 
@@ -21,6 +21,7 @@ module Wool
     #   scanning behavior
     def initialize(settings = DEFAULT_SETTINGS)
       @settings = DEFAULT_SETTINGS.merge(settings)
+      @settings[:__scanner__] = self
       self.context_stack = []
       self.indent_stack = []
     end
@@ -110,7 +111,7 @@ module Wool
         previous = self.indent_stack.pop
         if indent_size != current_indent &&
            using.include?(MisalignedUnindentationWarning)
-        return [MisalignedUnindentationWarning.new(filename, line, current_indent)]
+          return [MisalignedUnindentationWarning.new(filename, line, current_indent, @settings)]
         end
       end
       []
@@ -157,10 +158,10 @@ module Wool
     def scan_for_warnings(warnings, content, filename)
       warnings.inject([]) do |acc, warning|
         if warning.match?(content, self.context_stack, @settings)
-          acc << warning.new(filename, content)
+          acc << warning.new(filename, content, @settings)
         end
         acc
-      end
+      end.uniq
     end
   end
 end

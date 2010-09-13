@@ -67,7 +67,7 @@ class Wool::OperatorSpacing < Wool::LineWarning
   end
   remove_comments
 
-  def initialize(file, line)
+  def initialize(file, line, settings={})
     super("No operator spacing", file, line, 0, 5)
   end
 

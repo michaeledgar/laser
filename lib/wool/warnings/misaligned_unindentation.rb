@@ -4,7 +4,7 @@ class Wool::MisalignedUnindentationWarning < Wool::LineWarning
     false
   end
 
-  def initialize(file, line, expectation)
+  def initialize(file, line, expectation, settings={})
     super('Misaligned Unindentation', file, line, 0, 2)
     @expectation = expectation
   end

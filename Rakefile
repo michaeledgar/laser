@@ -10,6 +10,8 @@ begin
     gem.email = "michael.j.edgar@dartmouth.edu"
     gem.homepage = "http://github.com/michaeledgar/wool"
     gem.authors = ["Michael Edgar"]
+    gem.add_dependency "ruby_parser", ">= 2.0.5"
+    gem.add_dependency "ruby2ruby", ">= 1.2.4"
     gem.add_development_dependency "rspec", ">= 1.2.9"
     gem.add_development_dependency "yard", ">= 0"
     # gem is a Gem::Specification... see http://www.rubygems.org/read/chapter/20 for additional settings
@@ -45,7 +47,7 @@ if true
       wool.libs << 'lib' << 'spec'
       wool.using << :all << Wool::LineLengthMaximum(100) << Wool::LineLengthWarning(80)
       wool.options = '--debug --fix'
-      wool.fix << Wool::ExtraBlankLinesWarning << Wool::ExtraWhitespaceWarning << Wool::LineLengthMaximum(80)
+      wool.fix << Wool::ExtraBlankLinesWarning << Wool::ExtraWhitespaceWarning << Wool::LineLengthWarning(80)
     end
   rescue LoadError => err
     task :wool do

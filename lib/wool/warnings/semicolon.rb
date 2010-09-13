@@ -11,7 +11,7 @@ class Wool::SemicolonWarning < Wool::LineWarning
   end
   remove_comments
 
-  def initialize(file, line)
+  def initialize(file, line, settings={})
     severity = line =~ /['"]/ ? 2 : 4
     super('Semicolon for multiple statements', file, line, 0, severity)
   end
