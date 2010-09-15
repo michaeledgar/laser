@@ -1,4 +1,7 @@
 module Wool
+  # This is a set of methods that get provided to Warnings so they can perform
+  # lexical analysis of their bodies. This module handles tokenizing only - not
+  # parse-trees.
   module LexicalAnalysis
     def self.included(klass)
       klass.__send__(:extend, ClassMethods)

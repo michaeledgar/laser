@@ -37,4 +37,14 @@ describe Wool::SemicolonWarning do
   it "doesn't match when a semicolon is in a comment" do
     Wool::SemicolonWarning.match?("hello # indeed; i agree", nil)
   end
+  
+  context '#fix' do
+    it 'converts the simplest semicolon use to two lines' do
+      Wool::SemicolonWarning.new('(stdin)', 'a;b').fix.should == "a\nb"
+    end
+    
+    it 'converts the simplest triple semicolon use to two lines' do
+      Wool::SemicolonWarning.new('(stdin)', 'a;b;c').fix.should == "a\nb\nc"
+    end
+  end
 end
