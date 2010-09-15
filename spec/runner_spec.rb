@@ -24,15 +24,17 @@ describe Wool::Runner do
       scanner.should_receive(:scan).
               with(data1, 'hello').
               and_return([warning1])
+      warning1.should_receive(:to_ary)
 
       scanner.should_receive(:settings).and_return({})
       File.should_receive(:read).with('world').and_return(data2)
       scanner.should_receive(:scan).
               with(data2, 'world').
               and_return([warning2])
+      warning2.should_receive(:to_ary)
 
       runner.should_receive(:display_warnings).with([warning1, warning2], expected_settings)
-
+      
       runner.run
     end
   end
@@ -107,11 +109,13 @@ describe Wool::Runner do
       scanner = mock(:scanner)
       data1, data2 = mock(:data1), mock(:data2)
       warning_list1, warning_list2 = mock(:wl1), mock(:wl2)
-      File.should_receive(:read, 'abc').and_return(data1)
+      File.should_receive(:read).with('abc').and_return(data1)
       scanner.should_receive(:settings).exactly(4).times.and_return({})
       scanner.should_receive(:scan).with(data1, 'abc').and_return(warning_list1)
-      File.should_receive(:read, 'def').and_return(data2)
+      warning_list1.should_receive(:to_ary)
+      File.should_receive(:read).with('def').and_return(data2)
       scanner.should_receive(:scan).with(data2, 'def').and_return(warning_list2)
+      warning_list2.should_receive(:to_ary)
 
       @runner.collect_warnings(['abc', 'def'], scanner).should == [warning_list1, warning_list2]
     end
