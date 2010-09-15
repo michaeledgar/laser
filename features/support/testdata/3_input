@@ -1,0 +1,8 @@
+def plus(a, b)
+  a+ b  
+  raise StandardError.new('a horrible thing happened and now we stopped') if x > 10 unless y
+  if some_test  
+    do_something
+   end
+ end
+  

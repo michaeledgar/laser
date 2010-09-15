@@ -27,6 +27,7 @@ When(/I scan-and-fix warnings/) do
       full_path = File.join(TESTDATA_DIR, hash[:input])
       expected_output = File.read(File.join(TESTDATA_DIR, hash[:output]))
       captured_output = StringIO.new
+      Wool::LineLengthMaximum(80)
       runner = Wool::Scanner.new(:fix => true, :output_file => captured_output)
       runner.scan(File.read(full_path), hash[:input])
       reported_output = hash[:output]
