@@ -64,9 +64,9 @@ class Wool::GenericLineLengthWarning < Wool::LineWarning
     # Must have no leading text
     return nil unless text =~ /^(\s*)(#+\s*)(.*)\Z/
     indent, hashes, comment = $1, $2, $3
-    indent_size = indent
+    indent_size = indent.size
     # The "+ 2" is (indent)#(single space)
-    space_for_text_per_line = self.class.line_length_limit - (indent.size + hashes.size)
+    space_for_text_per_line = self.class.line_length_limit - (indent_size + hashes.size)
     lines = ['']
     words = comment.split(/\s/)
     quota = space_for_text_per_line

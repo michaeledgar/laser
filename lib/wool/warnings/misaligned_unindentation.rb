@@ -6,11 +6,12 @@ class Wool::MisalignedUnindentationWarning < Wool::LineWarning
 
   def initialize(file, line, expectation, settings={})
     super('Misaligned Unindentation', file, line, 0, 2)
+    @settings = settings
     @expectation = expectation
   end
 
   def fix(context_stack = nil)
-    ' ' * @expectation + self.line.lstrip
+    indent self.line, @expectation
   end
 
   def desc

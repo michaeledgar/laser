@@ -1,6 +1,7 @@
 module Wool
   class Warning < Struct.new(:name, :file, :body, :line_number, :severity)
     extend Advice
+    include LexicalAnalysis
 
     def self.all_warnings
       @all_warnings ||= [self]
@@ -34,6 +35,11 @@ module Wool
 
     def desc
       "#{self.class.name} #{file}:#{line_number} (#{severity})"
+    end
+
+    def indent(string, amt=nil)
+      amt ||= self.body.match(/^(\s*)/)[1].size
+      ' ' * amt + string.lstrip
     end
 
     def count_occurrences(string, substring)

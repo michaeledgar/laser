@@ -3,11 +3,8 @@ class Wool::SemicolonWarning < Wool::LineWarning
   extend Wool::Advice::CommentAdvice
 
   def self.match?(line, context_stack, settings = {})
-    line = line.dup
-    # Strip out strings dumbly to
-    line.gsub!(/'.*?'/, '')
-    line.gsub!(/".*?"/, '')
-    line =~ /;/ && line !~ /^\s*class\b/
+    tokens = lex(line)
+    has_token?(line, :on_semicolon) && !has_keyword?(line, "class")
   end
   remove_comments
 
