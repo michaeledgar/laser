@@ -28,16 +28,16 @@ module Wool
     end
     
     module InstanceMethods
-      def lex
-        @lexed ||= self.class.lex(self.body)
+      def lex(body = self.body)
+        @lexed ||= self.class.lex(body)
       end
       
       def has_token?(body = self.body, token)
-        self.class.has_token?(lex, token)
+        self.class.has_token?(body, token)
       end
       
       def has_keyword?(body = self.body, keyword)
-        self.class.has_keyword?(lex, keyword)
+        self.class.has_keyword?(body, keyword)
       end
     end
   end
