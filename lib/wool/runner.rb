@@ -115,7 +115,7 @@ module Wool
     #   files, ordered by file
     # @param [Hash{Symbol => Object}] settings the user-set display settings
     def display_warnings(warnings, settings)
-      num_fixable = warnings.select { |warning| warning.body != warning.fix(nil) }.size
+      num_fixable = warnings.select { |warn| warn.body != warn.fix(nil) }.size
       num_total = warnings.size
 
       results = "#{num_total} warnings found. #{num_fixable} are fixable."

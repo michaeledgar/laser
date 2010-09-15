@@ -1,3 +1,4 @@
+require 'rubygems'
 require 'ruby_parser'
 require 'ruby2ruby'
 require 'wool/third_party/trollop'

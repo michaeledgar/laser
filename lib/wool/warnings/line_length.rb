@@ -39,11 +39,11 @@ class Wool::GenericLineLengthWarning < Wool::LineWarning
     indent_unit = ' ' * @settings[:indent_size]
 
     result = code
-    while guard.any?
+    until guard.empty?
       condition = indent + guard.strip
       body = result.split(/\n/).map { |line| indent_unit + line}.join("\n")
       new_condition, guard = split_on_char_outside_literal(condition[indent.size..-1], /[^\^](if|unless)\b/)
-      condition = indent + new_condition if guard.any?
+      condition = indent + new_condition unless guard.empty?
       result = condition + "\n" + body + "\n" + indent + 'end'
     end
 
@@ -52,11 +52,11 @@ class Wool::GenericLineLengthWarning < Wool::LineWarning
 
   def handle_long_comments(line)
     code, comment = split_on_char_outside_literal(line, /#/)
-    return nil unless comment.any?
+    return nil if comment.empty?
     indent, code = code.match(/^(\s*)(.*)$/)[1..2]
     hashes, comment = comment.match(/^(#+\s*)(.*)$/)[1..2]
     comment_cleaned = fix_long_comment(indent + hashes + comment)
-    code_cleaned = code.strip.any? ? "\n" + indent + code.rstrip : ''
+    code_cleaned = !code.strip.empty? ? "\n" + indent + code.rstrip : ''
     comment_cleaned + code_cleaned
   end
 
@@ -79,7 +79,7 @@ class Wool::GenericLineLengthWarning < Wool::LineWarning
         lines << ''
         quota = space_for_text_per_line
       end
-      if lines[current_line].any?
+      unless lines[current_line].empty?
         lines[current_line] << ' '
         quota -= 1
       end

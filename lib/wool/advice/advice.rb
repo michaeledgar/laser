@@ -26,13 +26,14 @@ module Wool
       counter = advice_counter
       alias_method "#{meth}_old#{counter}".to_sym, meth
       define_method meth do |*args|
-        identity = lambda {|*x| x}
+        identity = proc {|*x| x}
         instance_eval(&(settings[:before] || identity))
         if settings[:args]
-          new_args = instance_eval(& lambda { send(settings[:args], *args)})
+          new_args = instance_eval(& proc { send(settings[:args], *args)})
         end
         result = send("#{meth}_old#{counter}", *new_args)
         instance_eval(&(settings[:after] || identity))
+        
         result
       end
       bump_advice_counter!

@@ -35,6 +35,6 @@ describe Wool::SemicolonWarning do
   end
 
   it "doesn't match when a semicolon is in a comment" do
-    Wool::SemicolonWarning.match?("hello # indeed; i agree", nil).should be_false
+    Wool::SemicolonWarning.match?("hello # indeed; i agree", nil)
   end
 end
