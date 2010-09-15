@@ -46,5 +46,13 @@ describe Wool::SemicolonWarning do
     it 'converts the simplest triple semicolon use to two lines' do
       Wool::SemicolonWarning.new('(stdin)', 'a;b;c').fix.should == "a\nb\nc"
     end
+    
+    it 'maintains indentation on new lines' do
+      Wool::SemicolonWarning.new('(stdin)', '  a;b').fix.should == "  a\n  b"
+    end
+    
+    it 'maintains indentation on all new lines' do
+      Wool::SemicolonWarning.new('(stdin)', '  a;b;c').fix.should == "  a\n  b\n  c"
+    end
   end
 end
