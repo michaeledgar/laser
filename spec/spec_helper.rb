@@ -12,7 +12,7 @@ module Wool
         def initialize(input, *args)
           @input, @args = input, args
         end
-    
+
         def matches?(actual)
           @class = actual
           @class.new('(stdin)', @input, *@args).match?

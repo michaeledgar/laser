@@ -33,7 +33,7 @@ module Wool
         end
         result = send("#{meth}_old#{counter}", *new_args)
         instance_eval(&(settings[:after] || identity))
-        
+
         result
       end
       bump_advice_counter!

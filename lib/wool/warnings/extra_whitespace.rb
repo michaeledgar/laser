@@ -7,7 +7,7 @@ class Wool::ExtraWhitespaceWarning < Wool::LineWarning
   def desc
     'The line has trailing whitespace.'
   end
-  
+
   def match?(body = self.body, context_stack = nil, settings = {})
     /\s+$/ === line
   end

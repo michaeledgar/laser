@@ -34,7 +34,7 @@ describe Wool::Runner do
       warning2.should_receive(:to_ary)
 
       runner.should_receive(:display_warnings).with([warning1, warning2], expected_settings)
-      
+
       runner.run
     end
   end

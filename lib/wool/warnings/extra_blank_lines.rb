@@ -5,11 +5,11 @@ class Wool::ExtraBlankLinesWarning < Wool::FileWarning
   def initialize(file, body, settings={})
     super('Extra blank lines', file, body, 0, severity)
   end
-  
+
   def desc
     "This file has #{count_extra_lines} blank lines at the end of it."
   end
-  
+
   def match?(body = self.body, context_stack = nil, settings = {})
     self.body =~ EXTRA_LINE
   end
