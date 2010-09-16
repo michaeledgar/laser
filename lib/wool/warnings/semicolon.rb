@@ -5,6 +5,11 @@ class Wool::SemicolonWarning < Wool::LineWarning
     has_token?(line, :on_semicolon) && !has_keyword?(line, "class")
   end
   
+  def initialize(file, line, settings={})
+    severity = line =~ /['"]/ ? 2 : 4
+    super('Semicolon for multiple statements', file, line, 0, severity)
+  end
+  
   def fix(context_stack = nil, line = self.body)
     token = has_token?(line, :on_semicolon)
     return line unless token
@@ -16,11 +21,6 @@ class Wool::SemicolonWarning < Wool::LineWarning
       right = fix(context_stack, right)
       "#{indent left}\n#{indent right}"
     end
-  end
-
-  def initialize(file, line, settings={})
-    severity = line =~ /['"]/ ? 2 : 4
-    super('Semicolon for multiple statements', file, line, 0, severity)
   end
 
   def desc
