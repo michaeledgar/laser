@@ -12,34 +12,29 @@ module Wool
     #   remove_comments
     # end
     module CommentAdvice
-      def remove_comments
-        class << self
-          extend Advice
-          # This twiddler aims to remove comments and trailing whitespace
-          # from the ruby source input, so that warnings that aren't concerned
-          # with the implications of comments in their source can safely
-          # discard them. This is a bit more complicated than simply
-          # gsub(/#.*$/,''), because there are strings with # in them too.
-          #
-          # Like all twiddlers, is conservative. It might get tripped up by
-          # a comment embedded code in a string.
-          def comment_removing_twiddler(body, context, settings = {})
-            in_string = was_slash = false
-            1.upto(body.size) do |len|
-              char = body[len - 1,1]
-              if char == '#' && !in_string
-                return [body[0, len - 1].rstrip, context]
-              end
-              if (char == '"' || char == "'") && !in_string
-                in_string = true
-              elsif (char == '"' || char == "'") && !was_slash
-                in_string = false
-              end
-              was_slash = char == '\\'
-            end
-            [body, context, settings]
-          end
+      def self.included(klass)
+        klass.__send__(:extend, ClassMethods)
+        klass.__send__(:include, InstanceMethods)
+      end
+
+      module ClassMethods
+        def remove_comments
           argument_advice :match?, :comment_removing_twiddler
+        end
+      end
+
+      module InstanceMethods
+        # This twiddler aims to remove comments and trailing whitespace
+        # from the ruby source input, so that warnings that aren't concerned
+        # with the implications of comments in their source can safely
+        # discard them. Uses Ripper to look for comment tokens.
+        def comment_removing_twiddler(body = self.body, context = nil, settings = {})
+          comment_token = has_token?(body, :on_comment)
+          if comment_token
+            max = comment_token[0][1]
+            body = max == 0 ? '' : body[0..max-1].rstrip
+          end
+          [body, context, settings]
         end
       end
     end

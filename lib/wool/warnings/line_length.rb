@@ -12,8 +12,8 @@ class Wool::GenericLineLengthWarning < Wool::LineWarning
     attr_accessor :severity
   end
 
-  def self.match?(line, context, settings = {})
-    !!(line.size > self.line_length_limit)
+  def match?(body = self.body, context_stack = nil, settings = {})
+    !!(line.size > self.class.line_length_limit)
   end
 
   def initialize(file, line, settings={})

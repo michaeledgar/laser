@@ -1,6 +1,6 @@
 # Warning for using semicolons outside of class declarations.
 class Wool::SemicolonWarning < Wool::LineWarning
-  def self.match?(line, context_stack, settings = {})
+  def match?(line = self.body, context_stack = nil, settings = {})
     tokens = lex(line)
     has_token?(line, :on_semicolon) && !has_keyword?(line, "class")
   end

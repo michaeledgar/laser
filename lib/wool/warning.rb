@@ -25,8 +25,8 @@ module Wool
       [:debug, "Shows debug output from wool's scanner", {:short => '-d'}]
     end
 
-    def match?(context_stack, settings = {})
-      self.class.match?(self.body, context_stack, settings)
+    def match?(body = self.body, context_stack = nil, settings = {})
+      self.class.match?(body, context_stack, settings)
     end
 
     def fix(context_stack = nil)

@@ -7,15 +7,15 @@ describe Wool::ExtraBlankLinesWarning do
   end
 
   it 'matches when there is a single empty blank line' do
-    Wool::ExtraBlankLinesWarning.match?("a + b\n", nil).should be_true
+    Wool::ExtraBlankLinesWarning.new('(stdin)', "a + b\n").match?.should be_true
   end
 
   it 'matches when there is a single blank line with spaces' do
-    Wool::ExtraBlankLinesWarning.match?("a + b\n  ", nil).should be_true
+    Wool::ExtraBlankLinesWarning.new('(stdin)', "a + b\n  ").match?.should be_true
   end
 
   it 'matches when there is are multiple blank lines' do
-    Wool::ExtraBlankLinesWarning.match?("a + b\n  \n\t\n", nil).should be_true
+    Wool::ExtraBlankLinesWarning.new('(stdin)', "a + b\n  \n\t\n").match?.should be_true
   end
 
   it 'counts the number of blank lines' do
@@ -66,10 +66,10 @@ EOF
       @original.strip!
       invalid = @original + "\n  \t\t\n  \n\n"
       @warning = Wool::ExtraBlankLinesWarning.new('(stdin)', invalid)
-end
+    end
 
     it 'only removes the trailing whitespace' do
       @warning.fix(nil).should == @original
     end
-end
+  end
 end

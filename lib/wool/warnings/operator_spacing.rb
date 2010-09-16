@@ -1,9 +1,9 @@
 # Warning for not putting space around operators
 class Wool::OperatorSpacing < Wool::LineWarning
-  extend Wool::Advice::CommentAdvice
+  include Wool::Advice::CommentAdvice
   OPERATORS = %w(+ - / * != !== = == === ~= !~ += -= *= /= ** **= ||= || && &&= &= |= | & ^)
 
-  def self.matches_operator?(line, op)
+  def matches_operator?(line, op)
     return false if line =~ /^\s*def /
     return false if op == '|' && is_block_line?(line)
     embed = op.gsub(/(\+|\-|\*|\||\^)/, '\\\\\\1')
@@ -18,7 +18,7 @@ class Wool::OperatorSpacing < Wool::LineWarning
     end
   end
 
-  def self.matching_operator(line, settings = {})
+  def matching_operator(line, settings = {})
     working_line = line.gsub(/'[^']*'/, "''").gsub(/"[^"]*"/, '""')
     working_line = working_line.gsub(/<<\-?[A-Za-b0-9_]+/, "''")
     working_line = remove_regexes working_line
@@ -37,7 +37,7 @@ class Wool::OperatorSpacing < Wool::LineWarning
     nil
   end
 
-  def self.remove_regexes(line)
+  def remove_regexes(line)
     working_line = line.gsub(%r!((^|[^0-9 \t\n])\s*)/.*[^\\]/!, '\\1nil')
     working_line.gsub!(/%r(.).*[^\\]\1/, 'nil')
     working_line.gsub!(/%r\[.*[^\\]\]/, 'nil')
@@ -46,27 +46,27 @@ class Wool::OperatorSpacing < Wool::LineWarning
     working_line
   end
 
-  def self.ignore_block_params(line)
+  def ignore_block_params(line)
     line.gsub(/(\{|(do))\s*\|.*\|/, '\\1')
   end
 
-  def self.ignore_splat_args(line)
+  def ignore_splat_args(line)
     line.gsub(/(\(|(, ))\&([a-z][A-Za-z0-9_]*)((, )|\)|\Z)/, '\\1')
   end
 
-  def self.ignore_array_splat_idiom(line)
+  def ignore_array_splat_idiom(line)
     line.gsub(/\[\*([a-z][A-Za-z0-9_]*)\]/, '\\1')
   end
 
-  def self.ignore_to_proc_args(line)
+  def ignore_to_proc_args(line)
     line.gsub(/(\(|(, ))\*([a-z][A-Za-z0-9_]*)((, )|\)|\Z)/, '\\1')
   end
 
-  def self.is_block_line?(line)
+  def is_block_line?(line)
     line =~ /do\s*\|/ || line =~ /\{\s*\|/
   end
 
-  def self.match?(line, context_stack, settings = {})
+  def match?(line = self.body, context_stack = nil, settings = {})
     !!self.matching_operator(line, settings)
   end
   remove_comments
@@ -80,7 +80,7 @@ class Wool::OperatorSpacing < Wool::LineWarning
     OPERATORS.each do |op|
       next if op == '==' && line =~ /!==/
       next if op == '=' && line =~ /!=/
-      next if op == '|' && self.class.is_block_line?(line)
+      next if op == '|' && self.is_block_line?(line)
       embed = op.gsub(/(\+|\-|\*|\||\^)/, '\\\\\\1')
       line.gsub!(/([A-Za-z0-9_]!|[A-Za-z0-9_?])(#{embed})/, '\1 \2')
       line.gsub!(/(#{embed})([$A-Za-z0-9_?!])/, '\1 \2')
@@ -89,7 +89,7 @@ class Wool::OperatorSpacing < Wool::LineWarning
   end
 
   def desc
-    first_operator = self.class.matching_operator(self.line)
+    first_operator = self.matching_operator(self.line)
     "Insufficient spacing around #{first_operator}"
   end
 end

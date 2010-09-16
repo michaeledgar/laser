@@ -3,9 +3,9 @@ require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 describe Wool::Advice::CommentAdvice do
   before do
     @class = Class.new(Wool::Warning) do
-      extend Wool::Advice::CommentAdvice
+      include Wool::Advice::CommentAdvice
 
-      def self.match?(body, context, settings={})
+      def match?(body = self.body, context = nil, settings={})
         body
       end
       remove_comments
@@ -14,15 +14,15 @@ describe Wool::Advice::CommentAdvice do
 
   context '#remove_comments' do
     it 'Returns the empty string unmodified' do
-      @class.match?('', nil).should == ''
+      @class.new('(stdin)', '').match?('').should == ''
     end
 
     it 'Turns a comment into the empty string' do
-      @class.match?('# hello', nil).should == ''
+      @class.new('(stdin)', '# hello').match?('# hello').should == ''
     end
 
     it 'strips the comments from the end of a string of code' do
-      @class.match?('a + b # adding', nil).should == 'a + b'
+      @class.new('(stdin)', 'a + b # adding').match?('a + b # adding').should == 'a + b'
     end
 
     SAMPLES = [['', ''], ['#hello', ''], [' # hello', ''],
@@ -31,7 +31,7 @@ describe Wool::Advice::CommentAdvice do
                ['" hello \\"mam\\"" # comment', '" hello \\"mam\\""']]
     SAMPLES.each do |input, output|
       it "should turn #{input} into #{output}" do
-        @class.match?(input, nil).should == output
+        @class.new('(stdin)', input).match?(input).should == output
       end
     end
   end

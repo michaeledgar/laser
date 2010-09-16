@@ -157,7 +157,7 @@ module Wool
 
     def scan_for_warnings(warnings, content, filename)
       warnings.map! { |warning| warning.new(filename, content, @settings)}
-      warnings.select { |warning| warning.match?(self.context_stack, @settings)}.uniq
+      warnings.select { |warning| warning.match?(warning.body, self.context_stack, @settings)}.uniq
     end
   end
 end

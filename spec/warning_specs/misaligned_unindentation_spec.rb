@@ -13,7 +13,7 @@ describe Wool::MisalignedUnindentationWarning do
     end
 
     it 'matches nothing' do
-      Wool::MisalignedUnindentationWarning.match?('(stdin)', ' a + b').should be_false
+      Wool::MisalignedUnindentationWarning.new('(stdin)', ' a + b', 2).match?.should be_false
     end
 
     it 'fixes by removing more spaces than expected' do
