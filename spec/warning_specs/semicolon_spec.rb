@@ -6,23 +6,23 @@ describe Wool::SemicolonWarning do
   end
 
   it 'matches when a semicolon splits two expressions' do
-    Wool::SemicolonWarning.new('(stdin)', 'puts x; puts y').match?.should be_true
+    Wool::SemicolonWarning.should warn('puts x; puts y')
   end
 
   it 'matches when a semicolon splits two expressions that have strings' do
-    Wool::SemicolonWarning.new('(stdin)', 'puts "x"; puts "y"').match?.should be_true
+    Wool::SemicolonWarning.should warn('puts "x"; puts "y"')
   end
 
   it "doesn't match when a semicolon is in a string" do
-    Wool::SemicolonWarning.new('(stdin)', 'puts "x;y"').match?.should be_false
+    Wool::SemicolonWarning.should_not warn('puts "x;y"')
   end
 
   it "doesn't match when a semicolon is in a single-quoted string" do
-    Wool::SemicolonWarning.new('(stdin)', "puts 'x;y'").match?.should be_false
+    Wool::SemicolonWarning.should_not warn("puts 'x;y'")
   end
 
   it "doesn't match when a semicolon is used in an Exception definition" do
-    Wool::SemicolonWarning.new('(stdin)', 'class AError < BError; end"').match?.should be_false
+    Wool::SemicolonWarning.should_not warn('class AError < BError; end"')
   end
 
   it 'has a lower severity when quotes are involved due to unsure-ness' do
@@ -35,7 +35,7 @@ describe Wool::SemicolonWarning do
   end
 
   it "doesn't match when a semicolon is in a comment" do
-    Wool::SemicolonWarning.new('(stdin)', "hello # indeed; i agree").match?
+    Wool::SemicolonWarning.should_not warn("hello # indeed; i agree")
   end
   
   context '#fix' do

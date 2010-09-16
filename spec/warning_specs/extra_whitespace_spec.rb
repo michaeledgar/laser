@@ -6,15 +6,15 @@ describe Wool::ExtraWhitespaceWarning do
   end
 
   it 'matches when there are spaces at the end of a line' do
-    Wool::ExtraWhitespaceWarning.new('(stdin)', 'a + b  ').match?.should be_true
-    Wool::ExtraWhitespaceWarning.new('(stdin)', 'a + b ').match?.should be_true
-    Wool::ExtraWhitespaceWarning.new('(stdin)', 'a + b').match?.should be_false
+    Wool::ExtraWhitespaceWarning.should warn('a + b  ')
+    Wool::ExtraWhitespaceWarning.should warn('a + b ')
+    Wool::ExtraWhitespaceWarning.should_not warn('a + b')
   end
 
   it 'matches when there are tabs at the end of a line' do
-    Wool::ExtraWhitespaceWarning.new('(stdin)', "a + b\t\t").match?.should be_true
-    Wool::ExtraWhitespaceWarning.new('(stdin)', "a + b\t").match?.should be_true
-    Wool::ExtraWhitespaceWarning.new('(stdin)', 'a + b').match?.should be_false
+    Wool::ExtraWhitespaceWarning.should warn("a + b\t\t")
+    Wool::ExtraWhitespaceWarning.should warn("a + b\t")
+    Wool::ExtraWhitespaceWarning.should_not warn('a + b')
   end
 
   it 'has a remotely useful description' do

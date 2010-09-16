@@ -7,15 +7,15 @@ describe Wool::ExtraBlankLinesWarning do
   end
 
   it 'matches when there is a single empty blank line' do
-    Wool::ExtraBlankLinesWarning.new('(stdin)', "a + b\n").match?.should be_true
+    Wool::ExtraBlankLinesWarning.should warn("a + b\n")
   end
 
   it 'matches when there is a single blank line with spaces' do
-    Wool::ExtraBlankLinesWarning.new('(stdin)', "a + b\n  ").match?.should be_true
+    Wool::ExtraBlankLinesWarning.should warn("a + b\n  ")
   end
 
   it 'matches when there is are multiple blank lines' do
-    Wool::ExtraBlankLinesWarning.new('(stdin)', "a + b\n  \n\t\n").match?.should be_true
+    Wool::ExtraBlankLinesWarning.should warn("a + b\n  \n\t\n")
   end
 
   it 'counts the number of blank lines' do

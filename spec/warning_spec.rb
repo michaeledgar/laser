@@ -9,8 +9,8 @@ describe Wool::Warning do
   end
 
   it 'does not match anything' do
-    Wool::Warning.match?('hello(world)', nil).should be_false
-    Wool::Warning.match?(' a +b  ', nil).should be_false
+    Wool::Warning.should_not warn('hello(world)')
+    Wool::Warning.should_not warn(' a +b  ')
   end
 
   it 'does not change lines when it fixes them' do

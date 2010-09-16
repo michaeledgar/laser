@@ -20,15 +20,15 @@ describe Wool::GenericLineLengthWarning do
   end
 
   it 'matches lines longer than the specified number of characters' do
-    @eighty_cap.new('(stdin)', 'x' * 82).match?.should be_true
+    @eighty_cap.should warn('x' * 82)
   end
 
   it 'does not match lines shorter than the specified number of characters' do
-    @eighty_cap.new('(stdin)', 'x' * 78).match?.should be_false
+    @eighty_cap.should_not warn('x' * 78)
   end
 
   it 'does not match lines equal to the specified number of characters' do
-    @eighty_cap.new('(stdin)', 'x' * 80).match?.should be_false
+    @eighty_cap.should_not warn('x' * 80)
   end
 
   context 'when fixing' do
@@ -135,7 +135,7 @@ describe 'Wool::LineLengthMaximum' do
   end
 
   it 'matches lines longer than the specified maximum' do
-    @hundred_cap.new('(stdin)', 'x' * 101).match?.should be_true
+    @hundred_cap.should warn('x' * 101)
   end
 
   it 'has a high severity' do
@@ -143,7 +143,7 @@ describe 'Wool::LineLengthMaximum' do
   end
 
   it 'does not match lines smaller than the specified maximum' do
-    @hundred_cap.new('(stdin)', 'x' * 100).match?.should be_false
+    @hundred_cap.should_not warn('x' * 100)
   end
 end
 
@@ -153,7 +153,7 @@ describe 'Wool::LineLengthWarning' do
   end
 
   it 'matches lines longer than the specified maximum' do
-    @hundred_cap.new('(stdin)', 'x' * 81).match?.should be_true
+    @hundred_cap.should warn('x' * 81)
   end
 
   it 'has a lower severity' do
@@ -161,6 +161,6 @@ describe 'Wool::LineLengthWarning' do
   end
 
   it 'does not match lines smaller than the specified maximum' do
-    @hundred_cap.new('(stdin)', 'x' * 80).match?.should be_false
+    @hundred_cap.should_not warn('x' * 80)
   end
 end

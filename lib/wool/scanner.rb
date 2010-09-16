@@ -72,6 +72,7 @@ module Wool
       end
     end
 
+    # Finds all matching warnings, and if the user wishes, fix a subset of them.
     def process_line(line, line_number, filename)
       update_context! line
       warnings = all_warnings_for_line(line, line_number, filename)
@@ -79,6 +80,8 @@ module Wool
       warnings
     end
 
+    # Tries to fix the given line with a set of matching warnings for that line.
+    # May recurse if there are multiple warnings on the same line.
     def fix_input(warnings, line, line_number, filename)
       fixable_warnings = filter_fixable warnings
       if fixable_warnings.size == 1
@@ -91,12 +94,14 @@ module Wool
       end
     end
 
+    # Returns all warnings that match the line
     def all_warnings_for_line(line, line_number, filename)
       new_warnings = check_for_indent_warnings!(line, filename)
       new_warnings.concat scan_for_line_warnings(line, filename)
       new_warnings.each {|warning| warning.line_number = line_number}
     end
 
+    # Returns only the warnings that we should fix
     def filter_fixable(warnings)
       warnings.select {|warning| warning.fixable? && fixing?(warning) }
     end

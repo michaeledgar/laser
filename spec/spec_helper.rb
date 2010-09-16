@@ -5,8 +5,37 @@ require 'spec'
 require 'spec/autorun'
 require 'stringio'
 
-Spec::Runner.configure do |config|
+module Wool
+  module RSpec
+    module Matchers
+      class Warns
+        def initialize(input, *args)
+          @input, @args = input, args
+        end
+    
+        def matches?(actual)
+          @class = actual
+          @class.new('(stdin)', @input, *@args).match?
+        end
 
+        def failure_message
+          "expected '#{@actual}' to match #{@input.inspect}"
+        end
+
+        def negative_failure_message
+          "expected '#{@actual}' to not match #{@input.inspect}"
+        end
+      end
+
+      def warn(input, *args)
+        Warns.new(input, *args)
+      end
+    end
+  end
+end
+
+Spec::Runner.configure do |config|
+  config.include(Wool::RSpec::Matchers)
 end
 
 def with_examples(*args)

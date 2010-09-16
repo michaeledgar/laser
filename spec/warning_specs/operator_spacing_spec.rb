@@ -6,55 +6,55 @@ describe Wool::OperatorSpacing do
   end
 
   it "doesn't match block declarations" do
-    Wool::OperatorSpacing.new('(stdin)', '[1, 2].each { |x| p x }').match?.should be_false
-    Wool::OperatorSpacing.new('(stdin)', '[1, 2].each {| y | p x }').match?.should be_false
-    Wool::OperatorSpacing.new('(stdin)', "[1, 2].each do |x|\n p x\nend").match?.should be_false
-    Wool::OperatorSpacing.new('(stdin)', "[1, 2].each do|x|\n p x\nend").match?.should be_false
+    Wool::OperatorSpacing.should_not warn('[1, 2].each { |x| p x }')
+    Wool::OperatorSpacing.should_not warn('[1, 2].each {| y | p x }')
+    Wool::OperatorSpacing.should_not warn("[1, 2].each do |x|\n p x\nend")
+    Wool::OperatorSpacing.should_not warn("[1, 2].each do|x|\n p x\nend")
   end
 
   it "doesn't match in a comment" do
-    Wool::OperatorSpacing.new('(stdin)', 'hello # a+b').match?.should be_false
+    Wool::OperatorSpacing.should_not warn('hello # a+b')
   end
 
   it "doesn't match a <<- heredoc" do
-    Wool::OperatorSpacing.new('(stdin)', '@original = <<-EOF').match?.should be_false
+    Wool::OperatorSpacing.should_not warn('@original = <<-EOF')
   end
 
   it "doesn't match a << heredoc" do
-    Wool::OperatorSpacing.new('(stdin)', '@original = <<EOF').match?.should be_false
+    Wool::OperatorSpacing.should_not warn('@original = <<EOF')
   end
 
   it "doesn't match adjacent negative numbers" do
-    Wool::OperatorSpacing.new('(stdin)', '  exit(-1)').match?.should be_false
+    Wool::OperatorSpacing.should_not warn('  exit(-1)')
   end
 
   it "doesn't match *args in block parameters" do
-    Wool::OperatorSpacing.new('(stdin)', 'list.each do |*args|').match?.should be_false
-    Wool::OperatorSpacing.new('(stdin)', 'list.each { |*args| }').match?.should be_false
+    Wool::OperatorSpacing.should_not warn('list.each do |*args|')
+    Wool::OperatorSpacing.should_not warn('list.each { |*args| }')
   end
 
   it "doesn't match splat arguments" do
-    Wool::OperatorSpacing.new('(stdin)', 'x.call(*args)').match?.should be_false
-    Wool::OperatorSpacing.new('(stdin)', 'x.call(a, *args)').match?.should be_false
-    Wool::OperatorSpacing.new('(stdin)', 'x.call(*args, b)').match?.should be_false
-    Wool::OperatorSpacing.new('(stdin)', 'x.call(a, *args, b)').match?.should be_false
+    Wool::OperatorSpacing.should_not warn('x.call(*args)')
+    Wool::OperatorSpacing.should_not warn('x.call(a, *args)')
+    Wool::OperatorSpacing.should_not warn('x.call(*args, b)')
+    Wool::OperatorSpacing.should_not warn('x.call(a, *args, b)')
   end
 
   it "does match multiplication in an argument list" do
-    Wool::OperatorSpacing.new('(stdin)', 'x.call(a *b)').match?.should be_true
-    Wool::OperatorSpacing.new('(stdin)', 'x.call(x, a *b)').match?.should be_true
-    Wool::OperatorSpacing.new('(stdin)', 'x.call(a *b, z)').match?.should be_true
+    Wool::OperatorSpacing.should warn('x.call(a *b)')
+    Wool::OperatorSpacing.should warn('x.call(x, a *b)')
+    Wool::OperatorSpacing.should warn('x.call(a *b, z)')
   end
 
   it "doesn't match block arguments" do
-    Wool::OperatorSpacing.new('(stdin)', 'x.call(&b)').match?.should be_false
-    Wool::OperatorSpacing.new('(stdin)', 'x.call(a, &b)').match?.should be_false
-    Wool::OperatorSpacing.new('(stdin)', 'x.call(&b, b)').match?.should be_false
-    Wool::OperatorSpacing.new('(stdin)', 'x.call(a, &b, b)').match?.should be_false
+    Wool::OperatorSpacing.should_not warn('x.call(&b)')
+    Wool::OperatorSpacing.should_not warn('x.call(a, &b)')
+    Wool::OperatorSpacing.should_not warn('x.call(&b, b)')
+    Wool::OperatorSpacing.should_not warn('x.call(a, &b, b)')
   end
 
   it "doesn't match the [*item] idiom" do
-    Wool::OperatorSpacing.new('(stdin)', '[*args]').match?.should be_false
+    Wool::OperatorSpacing.should_not warn('[*args]')
   end
 
   it 'has a reasonable description' do
@@ -92,19 +92,19 @@ describe Wool::OperatorSpacing do
   Wool::OperatorSpacing::OPERATORS.each do |operator|
     context "with #{operator}" do
       it "matches when there is no space on the left side" do
-        Wool::OperatorSpacing.new('(stdin)', "a#{operator} b").match?.should be_true
+        Wool::OperatorSpacing.should warn("a#{operator} b")
       end
 
       it "matches when there is no space on the right side" do
-        Wool::OperatorSpacing.new('(stdin)', "a #{operator}b").match?.should be_true
+        Wool::OperatorSpacing.should warn("a #{operator}b")
       end
 
       it "matches when there is no space on both sides" do
-        Wool::OperatorSpacing.new('(stdin)', "a#{operator}b").match?.should be_true
+        Wool::OperatorSpacing.should warn("a#{operator}b")
       end
 
       it "doesn't match when there is exactly one space on both sides" do
-        Wool::OperatorSpacing.new('(stdin)', "a #{operator} b").match?.should be_false
+        Wool::OperatorSpacing.should_not warn("a #{operator} b")
       end
 
       context 'when fixing' do
