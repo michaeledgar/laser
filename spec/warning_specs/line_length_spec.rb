@@ -1,13 +1,13 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 
-describe Wool::GenericLineLengthWarning do
+describe GenericLineLengthWarning do
   before do
-    @eighty_cap = Class.new(Wool::GenericLineLengthWarning)
+    @eighty_cap = Class.new(GenericLineLengthWarning)
     @eighty_cap.line_length_limit = 80
   end
 
   it 'is a line-based warning' do
-    Wool::GenericLineLengthWarning.new('(stdin)', 'hello').should be_a(Wool::LineWarning)
+    GenericLineLengthWarning.new('(stdin)', 'hello').should be_a(LineWarning)
   end
 
   it 'initializes to a file and line' do
@@ -33,7 +33,7 @@ describe Wool::GenericLineLengthWarning do
 
   context 'when fixing' do
     before do
-      @twenty_cap = Class.new(Wool::GenericLineLengthWarning)
+      @twenty_cap = Class.new(GenericLineLengthWarning)
       @twenty_cap.line_length_limit = 20
     end
 
@@ -129,9 +129,9 @@ describe Wool::GenericLineLengthWarning do
   end
 end
 
-describe 'Wool::LineLengthMaximum' do
+describe 'LineLengthMaximum' do
   before do
-    @hundred_cap = Wool::LineLengthMaximum(100)
+    @hundred_cap = LineLengthMaximum(100)
   end
 
   it 'matches lines longer than the specified maximum' do
@@ -147,9 +147,9 @@ describe 'Wool::LineLengthMaximum' do
   end
 end
 
-describe 'Wool::LineLengthWarning' do
+describe 'LineLengthWarning' do
   before do
-    @hundred_cap = Wool::LineLengthWarning(80)
+    @hundred_cap = LineLengthWarning(80)
   end
 
   it 'matches lines longer than the specified maximum' do

@@ -1,42 +1,42 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 
-describe Wool::ExtraBlankLinesWarning do
+describe ExtraBlankLinesWarning do
   it 'is a file-based warning' do
-    Wool::ExtraBlankLinesWarning.new('(stdin)', 'hello').should be_a(Wool::FileWarning)
-    Wool::FileWarning.all_warnings.should include(Wool::ExtraBlankLinesWarning)
+    ExtraBlankLinesWarning.new('(stdin)', 'hello').should be_a(FileWarning)
+    FileWarning.all_warnings.should include(ExtraBlankLinesWarning)
   end
 
   it 'matches when there is a single empty blank line' do
-    Wool::ExtraBlankLinesWarning.should warn("a + b\n")
+    ExtraBlankLinesWarning.should warn("a + b\n")
   end
 
   it 'matches when there is a single blank line with spaces' do
-    Wool::ExtraBlankLinesWarning.should warn("a + b\n  ")
+    ExtraBlankLinesWarning.should warn("a + b\n  ")
   end
 
   it 'matches when there is are multiple blank lines' do
-    Wool::ExtraBlankLinesWarning.should warn("a + b\n  \n\t\n")
+    ExtraBlankLinesWarning.should warn("a + b\n  \n\t\n")
   end
 
   it 'counts the number of blank lines' do
-    Wool::ExtraBlankLinesWarning.new('(stdin)', "a + b\n").count_extra_lines.should == 1
-    Wool::ExtraBlankLinesWarning.new('(stdin)', "a + b\n\t\n").count_extra_lines.should == 2
-    Wool::ExtraBlankLinesWarning.new('(stdin)', "a + b\n\n").count_extra_lines.should == 2
-    Wool::ExtraBlankLinesWarning.new('(stdin)', "a + b\n  \n\n").count_extra_lines.should == 3
-    Wool::ExtraBlankLinesWarning.new('(stdin)', "a + b\n  \n\t\n").count_extra_lines.should == 3
-    Wool::ExtraBlankLinesWarning.new('(stdin)', "a + b\n\n\n\n\n").count_extra_lines.should == 5
+    ExtraBlankLinesWarning.new('(stdin)', "a + b\n").count_extra_lines.should == 1
+    ExtraBlankLinesWarning.new('(stdin)', "a + b\n\t\n").count_extra_lines.should == 2
+    ExtraBlankLinesWarning.new('(stdin)', "a + b\n\n").count_extra_lines.should == 2
+    ExtraBlankLinesWarning.new('(stdin)', "a + b\n  \n\n").count_extra_lines.should == 3
+    ExtraBlankLinesWarning.new('(stdin)', "a + b\n  \n\t\n").count_extra_lines.should == 3
+    ExtraBlankLinesWarning.new('(stdin)', "a + b\n\n\n\n\n").count_extra_lines.should == 5
   end
 
   it 'has a remotely useful description' do
-    Wool::ExtraBlankLinesWarning.new('(stdin)', 'hello  ').desc.should =~ /blank line/
+    ExtraBlankLinesWarning.new('(stdin)', 'hello  ').desc.should =~ /blank line/
   end
 
-  WARNINGS = @warnings = [ Wool::ExtraBlankLinesWarning.new('(stdin)', "a + b\n\n\t  \t\n\t  "),
-                Wool::ExtraBlankLinesWarning.new('(stdin)', "a + b\n  \n\t\n"),
-                Wool::ExtraBlankLinesWarning.new('(stdin)', "a + b\n  \n\n"),
-                Wool::ExtraBlankLinesWarning.new('(stdin)', "a + b\n\n\n\n\n"),
-                Wool::ExtraBlankLinesWarning.new('(stdin)', "a + b\n"),
-                Wool::ExtraBlankLinesWarning.new('(stdin)', "a + b\n  ") ]
+  WARNINGS = @warnings = [ ExtraBlankLinesWarning.new('(stdin)', "a + b\n\n\t  \t\n\t  "),
+                ExtraBlankLinesWarning.new('(stdin)', "a + b\n  \n\t\n"),
+                ExtraBlankLinesWarning.new('(stdin)', "a + b\n  \n\n"),
+                ExtraBlankLinesWarning.new('(stdin)', "a + b\n\n\n\n\n"),
+                ExtraBlankLinesWarning.new('(stdin)', "a + b\n"),
+                ExtraBlankLinesWarning.new('(stdin)', "a + b\n  ") ]
 
   WARNINGS.each do |warning|
     context "When fixing #{warning.body.inspect}" do
@@ -50,7 +50,7 @@ describe Wool::ExtraBlankLinesWarning do
     before do
       @original = <<-EOF
     # Warning for using semicolons outside of class declarations.
-  class Wool::SemicolonWarning < Wool::LineWarning
+  class SemicolonWarning < LineWarning
 
   def initialize(file, line)
     severity = line =~ /['"]/ ? 2 : 4
@@ -65,7 +65,7 @@ end
 EOF
       @original.strip!
       invalid = @original + "\n  \t\t\n  \n\n"
-      @warning = Wool::ExtraBlankLinesWarning.new('(stdin)', invalid)
+      @warning = ExtraBlankLinesWarning.new('(stdin)', invalid)
     end
 
     it 'only removes the trailing whitespace' do
