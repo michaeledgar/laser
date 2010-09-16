@@ -31,8 +31,8 @@ module Wool
         def comment_removing_twiddler(body = self.body, context = nil, settings = {})
           comment_token = has_token?(body, :on_comment)
           if comment_token
-            max = comment_token[0][1]
-            body = max == 0 ? '' : body[0..max-1].rstrip
+            max = [0, comment_token[0][1] - 1].max
+            body = body[0,max]
           end
           [body, context, settings]
         end
