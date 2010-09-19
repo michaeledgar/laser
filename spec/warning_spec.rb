@@ -27,47 +27,51 @@ describe Warning do
   end
 
   context '#split_on_char_outside_literal' do
+    def splitted(input, match)
+      Warning.new.split_on_char_outside_literal(input, match)
+    end
+    
     it 'splits code and a comment with no literals present' do
-      Warning.new.split_on_char_outside_literal('hello world # runs hello', /#/).should ==
+      splitted('hello world # runs hello', /#/).should ==
           ['hello world ', '# runs hello']
     end
 
     it 'ignores the character when in a single-quote literal' do
-      Warning.new.split_on_char_outside_literal("hello 'world # runs' hello", /#/).should ==
+      splitted("hello 'world # runs' hello", /#/).should ==
           ["hello 'world # runs' hello", '']
     end
 
     it 'can handle code with double nesting' do
       input = %{Warning.new.split_on_char_outside_literal("hello 'world # runs' hello", /#/).should}
       output = [input, '']
-      Warning.new.split_on_char_outside_literal(input, /#/).should == output
+      splitted(input, /#/).should == output
     end
 
     it 'ignores the character when in a double-quote literal' do
-      Warning.new.split_on_char_outside_literal('hello "world # runs" hello', /#/).should ==
+      splitted('hello "world # runs" hello', /#/).should ==
           ['hello "world # runs" hello', '']
     end
 
     it 'ignores the character when in a regex literal' do
-      Warning.new.split_on_char_outside_literal('hello /world # runs/ hello', /#/).should ==
+      splitted('hello /world # runs/ hello', /#/).should ==
           ['hello /world # runs/ hello', '']
     end
 
     it 'catches the character even with escaped quotes in literals' do
-      Warning.new.split_on_char_outside_literal('"hello \"world\"" # runs hello', /#/).should ==
+      splitted('"hello \"world\"" # runs hello', /#/).should ==
           ['"hello \"world\"" ', '# runs hello']
     end
 
     it 'ignores embedded values in single quote strings in double quote strings' do
       input = %Q{"my message is: 'hello, \#{name}', i hope he likes it"}
       output = [input, '']
-      Warning.new.split_on_char_outside_literal(input, /#/).should == output
+      splitted(input, /#/).should == output
     end
 
     it 'works for multichar regex matches' do
       input = ' puts x.call(y) if x > y'
       output = [' puts x.call(y)', ' if x > y']
-      Warning.new.split_on_char_outside_literal(input, /(\b|\s)if\b/).should == output
+      splitted(input, /(\b|\s)if\b/).should == output
     end
   end
 end
