@@ -21,6 +21,12 @@ describe Wool::Scanner do
       warnings.size.should == 0
     end
     
+    it "ignores multiple warnings that are marked in the line's comments" do
+      warnings = @scanner.scan(
+          'a +b; c + d # wool: ignore OperatorSpacing SemicolonWarning')
+      warnings.size.should == 0
+    end
+    
     it 'fixes the input and writes it to :output_file' do
       warnings = @fix_scanner.scan('a + b ', '(stdin)')
       warnings.size.should == 1
