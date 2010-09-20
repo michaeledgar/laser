@@ -17,7 +17,7 @@ class Wool::SemicolonWarning < Wool::LineWarning
     if location == 0
       line[1..-1]
     else
-      left, right = line[0..location-1], line[location+1..-1] || ''
+      left, right = line[0..location-1], line[location + 1..-1] || ''
       right = fix(context_stack, right)
       "#{indent left}\n#{indent right}"
     end

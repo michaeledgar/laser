@@ -22,7 +22,8 @@ describe Warning do
 
   context '#desc' do
     it "defaults to the class's name with all info" do
-      Warning.new('temp', 'hello.rb', 'a+b', 3, 7).desc.should == 'Wool::Warning hello.rb:3 (7)'
+      Warning.new('temp', 'hello.rb', 'a+b', 3, 7).desc.should ==
+          'Wool::Warning hello.rb:3 (7)'
     end
   end
 
@@ -30,7 +31,7 @@ describe Warning do
     def splitted(input, match)
       Warning.new.split_on_char_outside_literal(input, match)
     end
-    
+
     it 'splits code and a comment with no literals present' do
       splitted('hello world # runs hello', /#/).should ==
           ['hello world ', '# runs hello']
