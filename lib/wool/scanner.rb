@@ -147,7 +147,8 @@ module Wool
       return warnings unless match && ignore_label = match[1]
       class_names = ignore_label.split
       result = warnings.reject do |warning|
-        class_names.include?(warning.class.name.gsub(/.*::(.*)/, '\1'))
+        class_names.include?(warning.class.name.gsub(/.*::(.*)/, '\1')) ||
+          class_names.include?(warning.class.short_name)
       end
       result
     end

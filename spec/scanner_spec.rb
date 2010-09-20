@@ -16,14 +16,25 @@ describe Wool::Scanner do
       warnings[0].should be_a(Wool::ExtraWhitespaceWarning)
     end
     
-    it "ignores warnings that are marked in the line's comments" do
+    it "ignores warnings specified in the line's comments by class name" do
       warnings = @scanner.scan('a +b # wool: ignore OperatorSpacing')
+      warnings.size.should == 0
+    end
+    
+    it "ignores warnings specified in the line's comments by short name" do
+      warnings = @scanner.scan('a +b # wool: ignore W005')
       warnings.size.should == 0
     end
     
     it "ignores multiple warnings that are marked in the line's comments" do
       warnings = @scanner.scan(
           'a +b; c + d # wool: ignore OperatorSpacing SemicolonWarning')
+      warnings.size.should == 0
+    end
+
+    it "ignores multiple warnings in the line's comments as short name" do
+      warnings = @scanner.scan(
+          'a +b; c + d # wool: ignore W005 W006')
       warnings.size.should == 0
     end
     
