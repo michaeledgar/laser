@@ -101,6 +101,7 @@ module Wool
     # Checks for new warnings based on indentation.
     def check_for_indent_warnings!(line, filename)
       return [] if line == ""
+      current_indent = self.indent_stack.last || 0
       indent_size = get_indent_size line
       if indent_size > current_indent
         self.indent_stack.push indent_size
@@ -112,11 +113,6 @@ module Wool
         end
       end
       []
-    end
-
-    # Gets the current indent size
-    def current_indent
-      self.indent_stack.last || 0
     end
 
     # Gets the indent size of a given line
