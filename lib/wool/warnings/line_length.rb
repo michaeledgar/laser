@@ -1,10 +1,6 @@
 class Wool::GenericLineLengthWarning < Wool::LineWarning
-  def self.line_length_limit
-    @line_length_limit ||= 80000
-  end
-  def self.line_length_limit=(val)
-    @line_length_limit = val
-  end
+  cattr_accessor_with_default :line_length_limit, 80000
+  
   def self.inspect
     "Wool::GenericLineLengthWarning<#{line_length_limit}>"
   end

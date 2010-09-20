@@ -1,6 +1,7 @@
 module Wool
   class Warning < Struct.new(:name, :file, :body, :line_number, :severity)
     extend Advice
+    extend ModuleExtensions
     include LexicalAnalysis
 
     def self.all_warnings
