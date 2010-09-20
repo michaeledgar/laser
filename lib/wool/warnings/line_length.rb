@@ -1,4 +1,5 @@
 class Wool::GenericLineLengthWarning < Wool::LineWarning
+  self.short_name = 'S003'
   cattr_accessor_with_default :line_length_limit, 80000
   
   def self.inspect

@@ -3,6 +3,8 @@ class Wool::OperatorSpacing < Wool::LineWarning
   include Wool::Advice::CommentAdvice
   OPERATORS = %w(+ - / * != !== = == === ~= !~ += -= *= /= ** **= ||= || && &&= &= |= | & ^)
 
+  self.short_name = 'W005'
+
   def matches_operator?(line, op)
     return false if line =~ /^\s*def /
     return false if op == '|' && is_block_line?(line)

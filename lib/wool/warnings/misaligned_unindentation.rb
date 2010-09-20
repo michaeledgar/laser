@@ -1,5 +1,6 @@
 # This warning is used when
 class Wool::MisalignedUnindentationWarning < Wool::LineWarning
+  self.short_name = 'S004'
   def match?(body = self.body, context_stack = nil, settings = {})
     false
   end
