@@ -4,6 +4,8 @@ module Wool
     extend ModuleExtensions
     include LexicalAnalysis
 
+    cattr_accessor :short_name
+
     def self.all_warnings
       @all_warnings ||= [self]
     end
@@ -17,17 +19,13 @@ module Wool
       end
     end
 
-    def self.match?(body, context_stack, settings = {})
-      false
-    end
-
     # Override in subclasses to provide a list of options to send to Trollop
     def self.options
       [:debug, "Shows debug output from wool's scanner", {:short => '-d'}]
     end
 
     def match?(body = self.body, context_stack = nil, settings = {})
-      self.class.match?(body, context_stack, settings)
+      false
     end
 
     def fix(context_stack = nil)

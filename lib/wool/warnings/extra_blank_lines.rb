@@ -1,4 +1,4 @@
-# Warning for using semicolons outside of class declarations.
+  # Warning for using semicolons outside of class declarations.
 class Wool::ExtraBlankLinesWarning < Wool::FileWarning
   EXTRA_LINE = /\n[\t ]*\Z/
 
@@ -11,7 +11,7 @@ class Wool::ExtraBlankLinesWarning < Wool::FileWarning
   end
 
   def match?(body = self.body, context_stack = nil, settings = {})
-    self.body =~ EXTRA_LINE
+    body =~ EXTRA_LINE
   end
 
   def fix(context_stack = nil)
