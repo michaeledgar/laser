@@ -1,12 +1,5 @@
 module Wool
   class Scanner
-    class Context < Struct.new(:type, :data)
-      def initialize(*args)
-        super
-        self.data ||= {}
-      end
-    end
-
     attr_accessor :settings
     attr_accessor :context_stack
     attr_accessor :indent_stack
@@ -74,7 +67,6 @@ module Wool
 
     # Finds all matching warnings, and if the user wishes, fix a subset of them.
     def process_line(line, line_number, filename)
-      update_context! line
       warnings = all_warnings_for_line(line, line_number, filename)
       fix_input(warnings, line, line_number, filename) if @settings[:fix]
       warnings
@@ -132,20 +124,6 @@ module Wool
       line.match(/^\s*/)[0].size
     end
 
-    # Updates the context of the scanner right now based on poor heuristics.
-    def update_context!(line)
-      case line
-      when /^\s*class\s+([A-Z][A-Za-z0-9_]*)/
-        self.context_stack.push(Context.new(:class, {:class_name => $1}))
-      when /^\s*module\s+([A-Z][A-Za-z0-9_]*)/
-        self.context_stack.push(Context.new(:module, {:module_name => $1}))
-      when /^\s*if([^$]*?)(then)?\s*$/
-        self.context_stack.push(Context.new(:if, {:condition => $1.strip}))
-      when /^\s*end\b/
-        self.context_stack.pop
-      end
-    end
-
     # Goes through all file warning subclasses and see what warnings the file
     # generates as a whole.
     def scan_for_file_warnings(file, filename)
@@ -155,11 +133,25 @@ module Wool
     # Goes through all line warning subclasses and checks if we got some new
     # warnings for a given line
     def scan_for_line_warnings(line, filename)
-      scan_for_warnings(using & LineWarning.all_warnings, line, filename)
+      warnings = scan_for_warnings(using & LineWarning.all_warnings, line, filename)      
+      filtered_warnings_from_line(line, warnings)
     end
 
     private
-
+    
+    # Filters the list of warnings by checking the line for warnings to
+    # ignore. The line should contain "wool: ignore ClassToIgnore" in a comment,
+    # though you can omit the space between "wool:" and "ignore".
+    def filtered_warnings_from_line(line, warnings)
+      match = line.match(/#.*wool:\s*ignore\s+(.*)$/)
+      return warnings unless match && ignore_label = match[1]
+      class_names = ignore_label.split
+      result = warnings.reject do |warning|
+        class_names.include?(warning.class.name.gsub(/.*::(.*)/, '\1'))
+      end
+      result
+    end
+    
     def scan_for_warnings(warnings, content, filename)
       warnings.map! { |warning| warning.new(filename, content, @settings)}
       warnings.select { |warning| warning.match?(warning.body, self.context_stack, @settings)}.uniq
