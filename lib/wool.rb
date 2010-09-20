@@ -1,10 +1,14 @@
+# Dependencies
 require 'ripper'
 require 'wool/third_party/trollop'
-require 'wool/advice/advice.rb'
+require 'wool/support/module_extensions'
+require 'wool/advice/advice'
 require 'wool/lexical_analysis'
-require 'wool/advice/comment_advice.rb'
+require 'wool/advice/comment_advice'
+# Runners
 require 'wool/runner'
 require 'wool/rake/task'
+# Program logic
 require 'wool/warning'
 require 'wool/scanner'
 
