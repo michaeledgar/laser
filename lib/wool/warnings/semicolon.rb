@@ -11,8 +11,7 @@ class Wool::SemicolonWarning < Wool::LineWarning
   end
 
   def fix(context_stack = nil, line = self.body)
-    token = find_token(line, :on_semicolon)
-    return line unless token
+    return line unless token = find_token(line, :on_semicolon)
     location = token[0][1]
     if location == 0
       line[1..-1]
