@@ -12,48 +12,24 @@ describe Wool::LexicalAnalysis do
   end
 
   context '#lex' do
-    it 'as a class method lexes its argument' do
-      @class.lex('a').should == [[[1,0], :on_ident, 'a']]
-    end
-
     it 'as an instance method lexes its body' do
       @class.new('a').lex.should == [[[1,0], :on_ident, 'a']]
     end
   end
 
   context '#find_token' do
-    it 'as a class method checks if the given text has the given token' do
-      @class.find_token('a + b', :on_op).should be_true
-    end
-
     it 'as an instance method lexes its body' do
       @class.new('a + b').find_token(:on_op).should be_true
-    end
-
-    it 'as a class method returns falsy if token not found' do
-      @class.find_token('a + b', :on_kw).should be_false
     end
 
     it 'as an instance method returns falsy if token not found' do
       @class.new('a + b').find_token(:on_kw).should be_false
     end
-
-    it 'returns the actual token if it is found' do
-      @class.find_token('a + b', :on_op).should == [[1,2], :on_op, '+']
-    end
   end
 
   context '#find_keyword' do
-    it 'as a class method checks if the given text has the given keyword' do
-      @class.find_keyword('class A < B', 'class').should be_true
-    end
-
     it 'as an instance method lexes its body' do
       @class.new('class A < B').find_keyword('class').should be_true
-    end
-
-    it 'as a class method returns falsy if token not found' do
-      @class.find_keyword('class A < B', 'end').should be_false
     end
 
     it 'as an instance method returns falsy if token not found' do
@@ -61,7 +37,7 @@ describe Wool::LexicalAnalysis do
     end
 
     it 'returns the actual token if it is found' do
-      @class.find_keyword('class A < B', 'class').should == [[1,0], :on_kw, 'class']
+      @class.new('class A < B').find_keyword('class').should == [[1,0], :on_kw, 'class']
     end
   end
 end
