@@ -19,15 +19,15 @@ module Wool
         body === Array ? [body, *args] : [lex(body), *args]
       end
 
-      def has_keyword?(body, keyword)
+      def find_keyword(body, keyword)
         body.find {|tok| tok[1] == :on_kw && tok[2] == keyword}
       end
-      argument_advice :has_keyword?, :prelex
+      argument_advice :find_keyword, :prelex
 
-      def has_token?(body, token, text=nil)
+      def find_token(body, token, text=nil)
         body.find {|tok| tok[1] == token}
       end
-      argument_advice :has_token?, :prelex
+      argument_advice :find_token, :prelex
     end
 
     module InstanceMethods
@@ -35,12 +35,12 @@ module Wool
         @lexed ||= self.class.lex(body)
       end
 
-      def has_token?(body = self.body, token)
-        self.class.has_token?(body, token)
+      def find_token(body = self.body, token)
+        self.class.find_token(body, token)
       end
 
-      def has_keyword?(body = self.body, keyword)
-        self.class.has_keyword?(body, keyword)
+      def find_keyword(body = self.body, keyword)
+        self.class.find_keyword(body, keyword)
       end
     end
   end
