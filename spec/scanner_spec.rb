@@ -22,7 +22,7 @@ describe Wool::Scanner do
     end
     
     it "ignores warnings specified in the line's comments by short name" do
-      warnings = @scanner.scan('a +b # wool: ignore W005')
+      warnings = @scanner.scan("a +b # wool: ignore #{OperatorSpacing.short_name}")
       warnings.size.should == 0
     end
     
@@ -34,7 +34,7 @@ describe Wool::Scanner do
 
     it "ignores multiple warnings in the line's comments as short name" do
       warnings = @scanner.scan(
-          'a +b; c + d # wool: ignore W005 W006')
+          "a +b; c + d # wool: ignore #{OperatorSpacing.short_name} #{SemicolonWarning.short_name}")
       warnings.size.should == 0
     end
     

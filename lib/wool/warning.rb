@@ -9,6 +9,10 @@ module Wool
     def self.all_warnings
       @all_warnings ||= [self]
     end
+    
+    def self.all_types
+      @@all_types ||= Hash.new {|h,k| h[k] = []}
+    end
 
     def self.inherited(klass)
       self.all_warnings << klass
@@ -21,7 +25,21 @@ module Wool
 
     # Override in subclasses to provide a list of options to send to Trollop
     def self.options
-      [:debug, "Shows debug output from wool's scanner", {:short => '-d'}]
+      @options ||= [:debug, "Shows debug output from wool's scanner", {:short => '-d'}]
+    end
+    
+    def self.opt(*args)
+      self.options << args
+    end
+    
+    def self.type(*args)
+      if args.any?
+        @type = args.first.to_s
+        all_types[@type] << self
+        self.short_name = @type[0,2].upcase + all_types[@type].size.to_s
+      else
+        @type
+      end
     end
 
     def match?(body = self.body, context_stack = nil, settings = {})

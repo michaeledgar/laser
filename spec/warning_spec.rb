@@ -44,6 +44,32 @@ describe Warning do
     end
   end
 
+  context '#type' do
+    it 'returns the current type when no args are provided' do
+      klass = Class.new(Warning) do
+        def self.set_type
+          @type = 'hai'
+        end
+      end
+      klass.set_type
+      klass.type.should == 'hai'
+    end
+    
+    it 'sets the type when an argument is provided' do
+      klass = Class.new(Warning) do
+        type :silly
+      end
+      klass.type.should == 'silly'
+    end
+    
+    it 'sets a short name based on the type provided' do
+      klass = Class.new(Warning) do
+        type :silly
+      end
+      klass.short_name.should =~ /SI\d/
+    end
+  end
+
   context '#split_on_char_outside_literal' do
     def splitted(input, match)
       Warning.new.split_on_char_outside_literal(input, match)

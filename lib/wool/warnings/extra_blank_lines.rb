@@ -1,7 +1,7 @@
   # Warning for using semicolons outside of class declarations.
 class Wool::ExtraBlankLinesWarning < Wool::FileWarning
   EXTRA_LINE = /\n[\t ]*\Z/
-  self.short_name = 'S001'
+  type :style
 
   def initialize(file, body, settings={})
     super('Extra blank lines', file, body, 0, severity)

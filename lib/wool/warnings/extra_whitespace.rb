@@ -1,6 +1,6 @@
 # Warning for having extra space at the end of a line.
 class Wool::ExtraWhitespaceWarning < Wool::LineWarning
-  self.short_name = 'S002'
+  type :style
   
   def initialize(file, line, settings={})
     super('Extra Whitespace', file, line, 0, 2)

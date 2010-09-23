@@ -3,7 +3,7 @@ class Wool::OperatorSpacing < Wool::LineWarning
   include Wool::Advice::CommentAdvice
   OPERATORS = %w(+ - / * != !== = == === ~= !~ += -= *= /= ** **= ||= || && &&= &= |= | & ^)
 
-  self.short_name = 'W005'
+  type :style
 
   def matches_operator?(line, op)
     return false if line =~ /^\s*def /
