@@ -44,9 +44,7 @@ describe Warning do
     end
     
     it 'when specified in a subclass as a string, just uses the string' do
-      subclass = Class.new(Warning) do
-        desc 'hello'
-      end
+      subclass = Class.new(Warning) { desc 'hello' }
       subclass.new('a', 'b').desc.should == 'hello'
     end
 
@@ -71,16 +69,12 @@ describe Warning do
     end
     
     it 'sets the type when an argument is provided' do
-      klass = Class.new(Warning) do
-        type :silly
-      end
+      klass = Class.new(Warning) { type :silly }
       klass.type.should == 'silly'
     end
     
     it 'sets a short name based on the type provided' do
-      klass = Class.new(Warning) do
-        type :silly
-      end
+      klass = Class.new(Warning) { type :silly }
       klass.short_name.should =~ /SI\d/
     end
   end
