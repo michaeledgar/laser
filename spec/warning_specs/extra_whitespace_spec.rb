@@ -22,17 +22,12 @@ describe ExtraWhitespaceWarning do
   end
 
   context 'when fixing' do
-    before do
-      @warning = ExtraWhitespaceWarning.new('(stdin)', 'a + b  ')
-      @tab_warning = ExtraWhitespaceWarning.new('(stdin)', "a + b\t\t")
-    end
-
     it 'fixes by removing extra spaces' do
-      @warning.fix(nil).should == 'a + b'
+      ExtraWhitespaceWarning.should correct_to('a + b  ', 'a + b')
     end
 
     it 'fixes by removing extra tabs' do
-      @tab_warning.fix(nil).should == 'a + b'
+      ExtraWhitespaceWarning.should correct_to("a + b\t\t", 'a + b')
     end
   end
 end

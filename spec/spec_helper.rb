@@ -10,6 +10,7 @@ include Wool
 module Wool
   module RSpec
     module Matchers
+      # Matcher for checking if #match? returns trues
       class Warns
         def initialize(input, *args)
           @input, @args = input, args
@@ -31,6 +32,30 @@ module Wool
 
       def warn(input, *args)
         Warns.new(input, *args)
+      end
+      
+      # Matcher for comparing input/output of #fix
+      class CorrectsTo
+        def initialize(input, output, *args)
+          @input, @output, @args = input, output, args
+        end
+
+        def matches?(actual)
+          @class = actual
+          @class.new('(stdin)', @input, *@args).fix == @output
+        end
+
+        def failure_message
+          "expected '#{@input}' to correct to #{@output.inspect}"
+        end
+
+        def negative_failure_message
+          "expected '#{@input}' to not correct to #{@output.inspect}"
+        end
+      end
+      
+      def correct_to(input, output, *args)
+        CorrectsTo.new(input, output, *args)
       end
     end
   end
