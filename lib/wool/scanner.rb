@@ -108,7 +108,8 @@ module Wool
         previous = self.indent_stack.pop
         if indent_size != current_indent &&
            using.include?(MisalignedUnindentationWarning)
-          return [MisalignedUnindentationWarning.new(filename, line, current_indent, @settings)]
+          warnings_to_check = [MisalignedUnindentationWarning.new(filename, line, current_indent, @settings)]
+          return filtered_warnings_from_line(line, warnings_to_check)
         end
       end
       []
