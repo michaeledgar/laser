@@ -2,10 +2,8 @@
 class Wool::ExtraBlankLinesWarning < Wool::FileWarning
   EXTRA_LINE = /\n[\t ]*\Z/
   type :style
-
-  def initialize(file, body, settings={})
-    super('Extra blank lines', file, body, 0, 1)
-  end
+  severity 1
+  short_desc 'Extra blank lines'
 
   def desc
     "This file has #{count_extra_lines} blank lines at the end of it."

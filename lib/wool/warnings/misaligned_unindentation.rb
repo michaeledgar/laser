@@ -1,14 +1,16 @@
 # This warning is used when
 class Wool::MisalignedUnindentationWarning < Wool::LineWarning
   type :style
-  def match?(body = self.body, context_stack = nil, settings = {})
-    false
-  end
+  severity 2
+  short_desc 'Misaligned Unindentation'
 
   def initialize(file, line, expectation, settings={})
-    super('Misaligned Unindentation', file, line, 0, 2)
-    @settings = settings
+    super(file, line, settings)
     @expectation = expectation
+  end
+
+  def match?(body = self.body, context_stack = nil, settings = {})
+    false
   end
 
   def fix(context_stack = nil)

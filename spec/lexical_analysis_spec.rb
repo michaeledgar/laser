@@ -1,9 +1,9 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 
-describe Wool::LexicalAnalysis do
+describe LexicalAnalysis do
   before do
     @class = Class.new do
-      include Wool::LexicalAnalysis
+      include LexicalAnalysis
       attr_accessor :body
       def initialize(body)
         self.body = body

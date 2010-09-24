@@ -1,9 +1,9 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 
-describe Wool::LexicalAnalysis do
+describe LexicalAnalysis do
   before do
     @class = Class.new do
-      extend Wool::ModuleExtensions
+      extend ModuleExtensions
       cattr_reader :read1, :read2
       cattr_writer :write1, :write2
       cattr_accessor :both1, :both2
@@ -58,7 +58,7 @@ describe Wool::LexicalAnalysis do
   describe '#cattr_get_and_setter' do
     before do
       @base = Class.new do
-        extend Wool::ModuleExtensions
+        extend ModuleExtensions
         cattr_get_and_setter :type
         type :silly
       end

@@ -1,19 +1,19 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 require 'stringio'
 
-describe Wool::Scanner do
+describe Scanner do
   before do
-    @scanner = Wool::Scanner.new
+    @scanner = Scanner.new
 
     @fix_scanner_stdout = StringIO.new
-    @fix_scanner = Wool::Scanner.new(:fix => true, :output_file => @fix_scanner_stdout)
+    @fix_scanner = Scanner.new(:fix => true, :output_file => @fix_scanner_stdout)
   end
 
   context '#scan' do
     it 'takes an input and gathers warnings about it' do
       warnings = @scanner.scan('a + b ', '(stdin)')
       warnings.size.should == 1
-      warnings[0].should be_a(Wool::ExtraWhitespaceWarning)
+      warnings[0].should be_a(ExtraWhitespaceWarning)
     end
     
     it "ignores warnings specified in the line's comments by class name" do
@@ -41,7 +41,7 @@ describe Wool::Scanner do
     it 'fixes the input and writes it to :output_file' do
       warnings = @fix_scanner.scan('a + b ', '(stdin)')
       warnings.size.should == 1
-      warnings[0].should be_a(Wool::ExtraWhitespaceWarning)
+      warnings[0].should be_a(ExtraWhitespaceWarning)
       @fix_scanner_stdout.string.should == "a + b"
     end
 
@@ -54,21 +54,21 @@ describe Wool::Scanner do
     it 'fixes multiline inputs' do
       warnings = @fix_scanner.scan("def plus(a, b)\n  a + b \nend", '(stdin)')
       warnings.size.should == 1
-      warnings[0].should be_a(Wool::ExtraWhitespaceWarning)
+      warnings[0].should be_a(ExtraWhitespaceWarning)
       @fix_scanner_stdout.string.should == "def plus(a, b)\n  a + b\nend"
     end
 
     it 'fixes multiline mis-indented inputs' do
       warnings = @fix_scanner.scan("def plus(a, b)\n  a + b\n end", '(stdin)')
       warnings.size.should == 1
-      warnings[0].should be_a(Wool::MisalignedUnindentationWarning)
+      warnings[0].should be_a(MisalignedUnindentationWarning)
       @fix_scanner_stdout.string.should == "def plus(a, b)\n  a + b\nend"
     end
 
     it 'fixes class definitions' do
       warnings = @fix_scanner.scan("class Hello\n  a+b\nend", '(stdin)')
       warnings.size.should == 1
-      warnings[0].should be_a(Wool::OperatorSpacing)
+      warnings[0].should be_a(OperatorSpacing)
       @fix_scanner_stdout.string.should == "class Hello\n  a + b\nend"
     end
   end

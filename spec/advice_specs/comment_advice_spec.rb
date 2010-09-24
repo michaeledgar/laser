@@ -1,9 +1,9 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 
-describe Wool::Advice::CommentAdvice do
+describe Advice::CommentAdvice do
   before do
-    @class = Class.new(Wool::Warning) do
-      include Wool::Advice::CommentAdvice
+    @class = Class.new(Warning) do
+      include Advice::CommentAdvice
 
       def match?(body = self.body, context = nil, settings={})
         body

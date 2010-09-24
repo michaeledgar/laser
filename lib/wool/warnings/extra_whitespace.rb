@@ -1,10 +1,8 @@
 # Warning for having extra space at the end of a line.
 class Wool::ExtraWhitespaceWarning < Wool::LineWarning
   type :style
-  
-  def initialize(file, line, settings={})
-    super('Extra Whitespace', file, line, 0, 2)
-  end
+  severity 2
+  short_desc 'Extra Whitespace'
 
   def desc
     'The line has trailing whitespace.'

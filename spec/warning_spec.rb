@@ -31,7 +31,7 @@ describe Warning do
   end
 
   it 'does not change lines when it fixes them' do
-    warning = Warning.new('None', '(stdin)', 'a+b', 1, 0)
+    warning = Warning.new('(stdin)', 'a+b')
     warning.fix(nil).should == 'a+b'
     warning.body = ' b **   c+1 eval(string) '
     warning.fix(nil).should == ' b **   c+1 eval(string) '
@@ -39,8 +39,10 @@ describe Warning do
 
   context '#desc' do
     it "defaults to the class's name with all info" do
-      Warning.new('temp', 'hello.rb', 'a+b', 3, 7).desc.should ==
-          'Wool::Warning hello.rb:3 (7)'
+      warning = Warning.new('hello.rb', 'a+b')
+      warning.severity = 7
+      warning.line_number = 3
+      warning.desc.should == 'Wool::Warning hello.rb:3 (7)'
     end
   end
 

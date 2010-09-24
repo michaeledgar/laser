@@ -1,13 +1,15 @@
 # Warning for using semicolons outside of class declarations.
 class Wool::SemicolonWarning < Wool::LineWarning
   type :style
-  def match?(line = self.body, context_stack = nil, settings = {})
-    find_token(line, :on_semicolon) && !find_keyword(line, :class)
+  short_desc 'Semicolon for multiple statements'
+  
+  def initialize(file, line, settings={})
+    super
+    self.severity = line =~ /['"]/ ? 2 : 4
   end
 
-  def initialize(file, line, settings={})
-    severity = line =~ /['"]/ ? 2 : 4
-    super('Semicolon for multiple statements', file, line, 0, severity)
+  def match?(line = self.body, context_stack = nil, settings = {})
+    find_token(line, :on_semicolon) && !find_keyword(line, :class)
   end
 
   def fix(context_stack = nil, line = self.body)

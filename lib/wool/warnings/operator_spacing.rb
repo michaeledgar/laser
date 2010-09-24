@@ -4,6 +4,8 @@ class Wool::OperatorSpacing < Wool::LineWarning
   OPERATORS = %w(+ - / * != !== = == === ~= !~ += -= *= /= ** **= ||= || && &&= &= |= | & ^)
 
   type :style
+  severity 5
+  short_desc 'No operator spacing'
 
   def matches_operator?(line, op)
     return false if line =~ /^\s*def /
@@ -72,10 +74,6 @@ class Wool::OperatorSpacing < Wool::LineWarning
     !!self.matching_operator(line, settings)
   end
   remove_comments
-
-  def initialize(file, line, settings={})
-    super("No operator spacing", file, line, 0, 5)
-  end
 
   def fix(context_stack = nil)
     line = self.line.dup

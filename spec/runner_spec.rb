@@ -1,19 +1,19 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 
-describe Wool::Runner do
+describe Runner do
   before do
-    @runner = Wool::Runner.new(['a', :b])
+    @runner = Runner.new(['a', :b])
   end
 
   context '#run' do
     it 'collects options and arguments, decides what to scan, scans, and displays' do
-      runner = Wool::Runner.new(['--report-fixed', 'hello', 'world'])
+      runner = Runner.new(['--report-fixed', 'hello', 'world'])
       expected_settings = {:"report-fixed_given"=>true, :"report-fixed"=>true,
                            :fix => false, :help => false, :debug => false,
-                           :__using__ => Wool::Warning.all_warnings,
-                           :__fix__ => Wool::Warning.all_warnings}
+                           :__using__ => Warning.all_warnings,
+                           :__fix__ => Warning.all_warnings}
       scanner = mock(:scanner)
-      Wool::Scanner.should_receive(:new, expected_settings).and_return(scanner)
+      Scanner.should_receive(:new, expected_settings).and_return(scanner)
 
       data1, data2 = mock(:data1), mock(:data2)
       warning1, warning2 = mock(:warning1), mock(:warning2)
@@ -41,7 +41,7 @@ describe Wool::Runner do
 
   context '#collect_options_and_arguments' do
     before do
-      @runner = Wool::Runner.new(['--fix', '--report-fixed', 'hello', 'there'])
+      @runner = Runner.new(['--fix', '--report-fixed', 'hello', 'there'])
       @settings, @arguments = @runner.collect_options_and_arguments
     end
 
@@ -75,14 +75,14 @@ describe Wool::Runner do
 
   context '#get_settings' do
     it 'has a --fix option' do
-      runner = Wool::Runner.new(['--fix'])
+      runner = Runner.new(['--fix'])
       settings = runner.swizzling_argv { runner.get_settings }
       settings[:fix].should be_true
       settings[:fix_given].should be_true
     end
 
     it 'has a --report-fixed option' do
-      runner = Wool::Runner.new(['--report-fixed'])
+      runner = Runner.new(['--report-fixed'])
       settings = runner.swizzling_argv { runner.get_settings }
       settings[:"report-fixed"].should be_true
       settings[:"report-fixed_given"].should be_true
@@ -91,14 +91,17 @@ describe Wool::Runner do
 
   context '#display_warnings' do
     it 'prints the lines and files where there are warnings' do
-      warnings = [Wool::Warning.new('temp', 'hello', 'a+b', 4, 3)]
-      runner = Wool::Runner.new(['temp', 'hello'])
+      warning = Warning.new('hello', 'a+b')
+      warning.line_number = 4
+      warning.severity = 3
+      warnings = [warning]
+      runner = Runner.new(['temp', 'hello'])
       output = swizzling_io do
         runner.display_warnings(warnings, {})
       end
       output.should =~ /hello:4/
       output.should =~ /(3)/
-      output.should =~ /Wool::Warning/
+      output.should =~ /Warning/
       output.should =~ /1 warning/
       output.should =~ /0 are fixable/
     end

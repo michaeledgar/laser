@@ -1,21 +1,14 @@
 class Wool::GenericLineLengthWarning < Wool::LineWarning
-  type :style
   cattr_accessor_with_default :line_length_limit, 80000
+  type :style
+  short_desc 'Line too long'
   
   def self.inspect
     "Wool::GenericLineLengthWarning<#{line_length_limit}>"
   end
-  class << self
-    attr_accessor :severity
-  end
 
   def match?(body = self.body, context_stack = nil, settings = {})
     !!(line.size > self.class.line_length_limit)
-  end
-
-  def initialize(file, line, settings={})
-    super('Line too long', file, line, 0, self.class.severity)
-    @settings = settings
   end
 
   def fix(content_stack = nil)

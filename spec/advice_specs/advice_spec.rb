@@ -1,10 +1,10 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 
-describe Wool::Advice do
+describe Advice do
   context '#before_advice' do
     before do
       @class = Class.new do
-        extend Wool::Advice
+        extend Advice
         attr_accessor :closed_over
         define_method :silly do
           self.closed_over ||= 1
@@ -26,7 +26,7 @@ describe Wool::Advice do
   context '#after_advice' do
     before do
       @class = Class.new do
-        extend Wool::Advice
+        extend Advice
         attr_accessor :closed_over
         define_method :silly do
           self.closed_over ||= 1
@@ -50,7 +50,7 @@ describe Wool::Advice do
   context '#argument_advice' do
     before do
       @class = Class.new do
-        extend Wool::Advice
+        extend Advice
         attr_accessor :closed_over
         define_method :silly do |arg|
           arg + 5

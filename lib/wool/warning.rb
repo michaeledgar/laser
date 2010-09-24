@@ -5,6 +5,7 @@ module Wool
     include LexicalAnalysis
 
     cattr_accessor :short_name
+    cattr_get_and_setter :severity, :short_desc
 
     def self.all_warnings
       @all_warnings ||= [self]
@@ -40,6 +41,11 @@ module Wool
       else
         @type
       end
+    end
+
+    def initialize(file, body, settings={})
+      super(self.class.short_desc, file, body, 0, self.class.severity)
+      @settings = settings
     end
 
     def match?(body = self.body, context_stack = nil, settings = {})
