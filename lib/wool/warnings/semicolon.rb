@@ -2,7 +2,7 @@
 class Wool::SemicolonWarning < Wool::LineWarning
   type :style
   def match?(line = self.body, context_stack = nil, settings = {})
-    find_token(line, :on_semicolon) && !find_keyword(line, "class")
+    find_token(line, :on_semicolon) && !find_keyword(line, :class)
   end
 
   def initialize(file, line, settings={})

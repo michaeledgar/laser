@@ -26,11 +26,8 @@ module Wool
     #   for. Any number of keywords may be specified.
     # @return [Array] the token in the form returned by Ripper. See #lex.
     def find_keyword(*args)
-      if args.first.is_a?(String) && args.size > 1
-        body, list = args[0], args[1..-1]
-      else
-        body, list = self.body, args
-      end
+      body, list = _extract_token_search_args(args)
+      list.map! {|x| x.to_s}
       lex(body).find {|tok| tok[1] == :on_kw && list.include?(tok[2])}
     end
 
@@ -43,11 +40,7 @@ module Wool
     #   for. Any number of tokens may be specified.
     # @return [Array] the token in the form returned by Ripper. See #lex.
     def find_token(*args)
-      if args.first.is_a?(String)
-        body, list = args[0], args[1..-1]
-      else
-        body, list = self.body, args
-      end
+      body, list = _extract_token_search_args(args)
       lex(body).find {|tok| list.include?(tok[1])}
     end
     
@@ -62,6 +55,14 @@ module Wool
     end
     
     private
+    
+    def _extract_token_search_args(args)
+      if args.first.is_a?(String)
+        return args[0], args[1..-1]
+      else
+        return self.body, args
+      end
+    end
     
     def _split_body_with_raw_token(body, token)
       max = token ? [0, token[0][1]].max : body.size
