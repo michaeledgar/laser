@@ -44,6 +44,21 @@ describe Warning do
       warning.line_number = 3
       warning.desc.should == 'Wool::Warning hello.rb:3 (7)'
     end
+    
+    it 'when specified in a subclass as a string, just uses the string' do
+      subclass = Class.new(Warning) do
+        desc 'hello'
+      end
+      subclass.new('a', 'b').desc.should == 'hello'
+    end
+
+    it 'when specified in a subclass as a block, runs that proc as the instance' do
+      subclass = Class.new(Warning) do
+        severity 1024
+        desc { self.class.severity.to_s }
+      end
+      subclass.new('a', 'b').desc.should == '1024'
+    end
   end
 
   context '#type' do

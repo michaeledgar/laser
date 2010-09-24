@@ -80,5 +80,12 @@ describe LexicalAnalysis do
       @derived.type.should == :laughable
       @base.type.should == :silly
     end
+    
+    it 'turns a block into a proc and sets it' do
+      @derived = Class.new(@base) do
+        type { 5 + 3 }
+      end
+      @derived.type.call.should == 8
+    end
   end
 end

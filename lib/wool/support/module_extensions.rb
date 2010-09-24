@@ -62,9 +62,11 @@ module Wool
         cattr_accessor attr
         metaclass.instance_eval do
           alias_method "#{attr}_old_get".to_sym, attr
-          define_method attr do |*args|
-            if args.size > 0 then
+          define_method attr do |*args, &blk|
+            if args.size > 0
               send("#{attr}=", *args)
+            elsif blk != nil
+              send("#{attr}=", blk)
             else
               send("#{attr}_old_get")
             end

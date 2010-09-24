@@ -5,7 +5,9 @@ module Wool
     include LexicalAnalysis
 
     cattr_accessor :short_name
-    cattr_get_and_setter :severity, :short_desc
+    cattr_get_and_setter :severity, :short_desc, :desc
+    
+    desc { "#{self.class.name} #{file}:#{line_number} (#{severity})" }
 
     def self.all_warnings
       @all_warnings ||= [self]
@@ -61,7 +63,10 @@ module Wool
     end
 
     def desc
-      "#{self.class.name} #{file}:#{line_number} (#{severity})"
+      case desc = self.class.desc
+      when String then desc
+      when Proc then instance_eval(&self.class.desc)
+      end
     end
 
     def indent(string, amt=nil)
