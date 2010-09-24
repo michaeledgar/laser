@@ -20,9 +20,16 @@ module Wool
     def collect_options_and_arguments
       swizzling_argv do
         settings = get_settings
+        handle_global_options(settings)
         p settings if settings[:debug]
         files = ARGV.dup
         [settings, files]
+      end
+    end
+
+    def handle_global_options(settings)
+      if settings[:"line-length"]
+        @using << Wool.LineLengthWarning(settings[:"line-length"])
       end
     end
 
@@ -35,6 +42,7 @@ module Wool
         banner 'Ask Peeves - the Ruby Linter'
         opt :fix, 'Should errors be fixed in-line?', :short => '-f'
         opt :"report-fixed", 'Should fixed errors be reported anyway?', :short => '-r'
+        opt :"line-length", 'Warn at the given line length', :short => '-l', :type => :int
         warning_opts.each { |warning| opt(*warning) }
       end
     end
