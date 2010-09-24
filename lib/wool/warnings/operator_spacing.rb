@@ -6,6 +6,7 @@ class Wool::OperatorSpacing < Wool::LineWarning
   type :style
   severity 5
   short_desc 'No operator spacing'
+  desc { "Insufficient spacing around #{self.matching_operator(self.line)}" }
 
   def matches_operator?(line, op)
     return false if line =~ /^\s*def /
@@ -86,10 +87,5 @@ class Wool::OperatorSpacing < Wool::LineWarning
       line.gsub!(/(#{embed})([$A-Za-z0-9_?!])/, '\1 \2')
     end
     line
-  end
-
-  def desc
-    first_operator = self.matching_operator(self.line)
-    "Insufficient spacing around #{first_operator}"
   end
 end

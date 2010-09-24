@@ -2,6 +2,7 @@ class Wool::GenericLineLengthWarning < Wool::LineWarning
   cattr_accessor_with_default :line_length_limit, 80000
   type :style
   short_desc 'Line too long'
+  desc { "Line length: #{line.size} > #{self.class.line_length_limit} (max)" }
   
   def self.inspect
     "Wool::GenericLineLengthWarning<#{line_length_limit}>"
@@ -84,10 +85,6 @@ class Wool::GenericLineLengthWarning < Wool::LineWarning
     end
     lines.map { |line| indent + hashes + line }.join("\n")
   end
-
-  def desc
-    "Line length: #{line.size} > #{self.class.line_length_limit} (max)"
-  end
 end
 
 module Wool
@@ -95,6 +92,7 @@ module Wool
     new_warning = Class.new(Wool::GenericLineLengthWarning)
     new_warning.line_length_limit = size
     new_warning.severity = severity
+    new_warning.desc = Wool::GenericLineLengthWarning.desc
     new_warning
   end
 

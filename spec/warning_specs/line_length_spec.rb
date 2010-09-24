@@ -2,7 +2,7 @@ require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 
 describe GenericLineLengthWarning do
   before do
-    @eighty_cap = Class.new(GenericLineLengthWarning)
+    @eighty_cap = LineLengthCustomSeverity(80, 2)
     @eighty_cap.line_length_limit = 80
   end
 

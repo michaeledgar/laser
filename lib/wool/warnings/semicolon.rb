@@ -2,7 +2,7 @@
 class Wool::SemicolonWarning < Wool::LineWarning
   type :style
   short_desc 'Semicolon for multiple statements'
-  
+  desc 'The line uses a semicolon to separate multiple statements outside of a class declaration.'
   def initialize(file, line, settings={})
     super
     self.severity = line =~ /['"]/ ? 2 : 4
@@ -19,9 +19,5 @@ class Wool::SemicolonWarning < Wool::LineWarning
 
     right = fix(context_stack, right[1..-1])
     "#{indent left}\n#{indent right}"
-  end
-
-  def desc
-    'The line uses a semicolon to separate multiple statements outside of a class declaration.'
   end
 end

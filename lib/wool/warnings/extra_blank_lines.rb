@@ -4,10 +4,7 @@ class Wool::ExtraBlankLinesWarning < Wool::FileWarning
   type :style
   severity 1
   short_desc 'Extra blank lines'
-
-  def desc
-    "This file has #{count_extra_lines} blank lines at the end of it."
-  end
+  desc { "This file has #{count_extra_lines} blank lines at the end of it." }
 
   def match?(body = self.body, context_stack = nil, settings = {})
     body =~ EXTRA_LINE

@@ -3,10 +3,7 @@ class Wool::ExtraWhitespaceWarning < Wool::LineWarning
   type :style
   severity 2
   short_desc 'Extra Whitespace'
-
-  def desc
-    'The line has trailing whitespace.'
-  end
+  desc 'The line has trailing whitespace.'
 
   def match?(body = self.body, context_stack = nil, settings = {})
     /\s+$/ === line

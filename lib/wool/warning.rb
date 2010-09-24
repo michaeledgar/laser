@@ -84,7 +84,7 @@ module Wool
       count
     end
 
-    def get_indent(line)
+    def get_indent(line = self.body)
       line =~ /^(\s*).*$/ ? $1 : ''
     end
   end
