@@ -108,27 +108,20 @@ describe OperatorSpacing do
       end
 
       context 'when fixing' do
-        before do
-          @warning_1 = OperatorSpacing.new('(stdin)', "a #{operator} b")
-          @warning_2 = OperatorSpacing.new('(stdin)', "a#{operator} b")
-          @warning_3 = OperatorSpacing.new('(stdin)', "a #{operator}b")
-          @warning_4 = OperatorSpacing.new('(stdin)', "a#{operator}b")
-        end
-
         it 'changes nothing when there is one space on both sides' do
-          @warning_1.fix(nil).should == "a #{operator} b"
+          OperatorSpacing.should correct_to("a #{operator} b", "a #{operator} b")
         end
 
         it 'fixes by inserting an extra space on the left' do
-          @warning_2.fix(nil).should == "a #{operator} b"
+          OperatorSpacing.should correct_to("a#{operator} b", "a #{operator} b")
         end
 
         it 'fixes by inserting an extra space on the right' do
-          @warning_3.fix(nil).should == "a #{operator} b"
+          OperatorSpacing.should correct_to("a #{operator}b", "a #{operator} b")
         end
 
         it 'fixes by inserting an extra space on both sides' do
-          @warning_4.fix(nil).should == "a #{operator} b"
+          OperatorSpacing.should correct_to("a#{operator}b", "a #{operator} b")
         end
       end
     end

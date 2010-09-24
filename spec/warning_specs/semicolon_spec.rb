@@ -40,19 +40,19 @@ describe SemicolonWarning do
 
   context '#fix' do
     it 'converts the simplest semicolon use to two lines' do
-      SemicolonWarning.new('(stdin)', 'a;b').fix.should == "a\nb"
+      SemicolonWarning.should correct_to('a;b', "a\nb")
     end
 
     it 'converts the simplest triple semicolon use to two lines' do
-      SemicolonWarning.new('(stdin)', 'a;b;c').fix.should == "a\nb\nc"
+      SemicolonWarning.should correct_to('a;b;c', "a\nb\nc")
     end
 
     it 'maintains indentation on new lines' do
-      SemicolonWarning.new('(stdin)', '  a;b').fix.should == "  a\n  b"
+      SemicolonWarning.should correct_to('  a;b', "  a\n  b")
     end
 
     it 'maintains indentation on all new lines' do
-      SemicolonWarning.new('(stdin)', '  a;b;c').fix.should == "  a\n  b\n  c"
+      SemicolonWarning.should correct_to('  a;b;c', "  a\n  b\n  c")
     end
   end
 end

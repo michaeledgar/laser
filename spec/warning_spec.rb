@@ -31,10 +31,8 @@ describe Warning do
   end
 
   it 'does not change lines when it fixes them' do
-    warning = Warning.new('(stdin)', 'a+b')
-    warning.fix(nil).should == 'a+b'
-    warning.body = ' b **   c+1 eval(string) '
-    warning.fix(nil).should == ' b **   c+1 eval(string) '
+    Warning.should correct_to('a+b', 'a+b')
+    Warning.should correct_to(' b **   c+1 eval(string) ', ' b **   c+1 eval(string) ')
   end
 
   context '#desc' do

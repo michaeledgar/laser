@@ -33,24 +33,25 @@ describe InlineCommentSpaceWarning do
     before do
       @settings = {InlineCommentSpaceWarning::OPTION_KEY => 2}
     end
+    
+    after do
+      InlineCommentSpaceWarning.should correct_to(@input, @output, @settings)
+    end
 
     it 'adds spaces when necessary' do
-      input = 'a + b#comment'
-      output = 'a + b  #comment'
-      InlineCommentSpaceWarning.new('(stdin)', input, @settings).fix.should == output
+      @input = 'a + b#comment'
+      @output = 'a + b  #comment'
     end
 
     it 'removes spaces when necessary' do
-      input = 'a + b        #comment'
-      output = 'a + b  #comment'
-      InlineCommentSpaceWarning.new('(stdin)', input, @settings).fix.should == output
+      @input = 'a + b        #comment'
+      @output = 'a + b  #comment'
     end
     
     it 'respects the option for spacing' do
-      settings = {InlineCommentSpaceWarning::OPTION_KEY => 0}
-      input = 'a + b        #comment'
-      output = 'a + b#comment'
-      InlineCommentSpaceWarning.new('(stdin)', input, settings).fix.should == output
+      @settings = {InlineCommentSpaceWarning::OPTION_KEY => 0}
+      @input = 'a + b        #comment'
+      @output = 'a + b#comment'
     end
   end
 end

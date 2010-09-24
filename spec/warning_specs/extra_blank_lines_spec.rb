@@ -31,17 +31,13 @@ describe ExtraBlankLinesWarning do
     ExtraBlankLinesWarning.new('(stdin)', 'hello  ').desc.should =~ /blank line/
   end
 
-  WARNINGS = @warnings = [ ExtraBlankLinesWarning.new('(stdin)', "a + b\n\n\t  \t\n\t  "),
-                ExtraBlankLinesWarning.new('(stdin)', "a + b\n  \n\t\n"),
-                ExtraBlankLinesWarning.new('(stdin)', "a + b\n  \n\n"),
-                ExtraBlankLinesWarning.new('(stdin)', "a + b\n\n\n\n\n"),
-                ExtraBlankLinesWarning.new('(stdin)', "a + b\n"),
-                ExtraBlankLinesWarning.new('(stdin)', "a + b\n  ") ]
-
-  WARNINGS.each do |warning|
-    context "When fixing #{warning.body.inspect}" do
+  INPUTS = ["a + b\n\n\t  \t\n\t  ", "a + b\n  \n\t\n", "a + b\n  \n\n",
+            "a + b\n\n\n\n\n", "a + b\n", "a + b\n  " ]
+                
+  INPUTS.each do |input|
+    context "When fixing #{input.inspect}" do
       it 'fixes by removing all extra whitespace' do
-        warning.fix(nil).should == 'a + b'
+        ExtraBlankLinesWarning.should correct_to(input, 'a + b')
       end
     end
   end
@@ -64,12 +60,11 @@ describe ExtraBlankLinesWarning do
 end
 EOF
       @original.strip!
-      invalid = @original + "\n  \t\t\n  \n\n"
-      @warning = ExtraBlankLinesWarning.new('(stdin)', invalid)
+      @invalid = @original + "\n  \t\t\n  \n\n"
     end
 
     it 'only removes the trailing whitespace' do
-      @warning.fix(nil).should == @original
+      ExtraBlankLinesWarning.should correct_to(@invalid, @original)
     end
   end
 end
