@@ -50,4 +50,45 @@ describe Wool::LexicalAnalysis do
       result[2].should == 'class'
     end
   end
+  
+  context '#split_on_token' do
+    it 'splits the input into two parts based on the token searched' do
+      left, right = @class.new('a + b; c + d').split_on_token(:on_semicolon)
+      left.should == 'a + b'
+      right.should == '; c + d'
+    end
+    
+    it 'works with multiple searched tokens' do
+      left, right = @class.new('a + b; c + d').split_on_token(:on_semicolon, :on_op)
+      left.should == 'a '
+      right.should == '+ b; c + d'
+    end
+
+    it 'matches its own documentation' do
+      left, right = @class.new('').split_on_token('x = 5 unless y == 2', :on_kw)
+      left.should == 'x = 5 '
+      right.should == 'unless y == 2'
+    end
+  end
+  
+  
+  context '#split_on_keyword' do
+    it 'splits the input into two parts based on the token searched' do
+      left, right = @class.new('rescue x if y').split_on_keyword(:if)
+      left.should == 'rescue x '
+      right.should == 'if y'
+    end
+    
+    it 'works with multiple searched tokens' do
+      left, right = @class.new('rescue x if y').split_on_keyword(:if, :rescue)
+      left.should == ''
+      right.should == 'rescue x if y'
+    end
+
+    it 'matches its own documentation' do
+      left, right = @class.new('').split_on_keyword('x = 5 unless y == 2', :unless)
+      left.should == 'x = 5 '
+      right.should == 'unless y == 2'
+    end
+  end
 end

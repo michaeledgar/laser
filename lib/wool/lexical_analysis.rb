@@ -22,7 +22,7 @@ module Wool
     #
     # @param [String] body (self.body) The first parameter is optional: the text
     #   to search. This defaults to the full text.
-    # @param [String] keyword The rest of the arguments are keywords to search
+    # @param [Symbol] keyword The rest of the arguments are keywords to search
     #   for. Any number of keywords may be specified.
     # @return [Array] the token in the form returned by Ripper. See #lex.
     def find_keyword(*args)
@@ -36,7 +36,7 @@ module Wool
     #
     # @param [String] body (self.body) The first parameter is optional: the text
     #   to search. This defaults to the full text.
-    # @param [String] token The rest of the arguments are tokens to search
+    # @param [Symbol] token The rest of the arguments are tokens to search
     #   for. Any number of tokens may be specified.
     # @return [Array] the token in the form returned by Ripper. See #lex.
     def find_token(*args)
@@ -44,12 +44,34 @@ module Wool
       lex(body).find {|tok| list.include?(tok[1])}
     end
     
-    def split_on_keyword(body, *keywords)
+    # Splits the body into two halfs based on the first appearance of a keyword.
+    #
+    # @example
+    #   split_on_keyword('x = 5 unless y == 2', :unless)
+    #   # => ['x = 5 ', 'unless y == 2']
+    # @param [String] body (self.body) The first parameter is optional: the text
+    #   to search. This defaults to the full text.
+    # @param [Symbol] token The rest of the arguments are keywords to search
+    #   for. Any number of keywords may be specified.
+    # @return [Array<String, String>] The body split by the keyword.
+    def split_on_keyword(*args)
+      body, keywords = _extract_token_search_args(args)
       token = find_keyword(body, *keywords)
       return _split_body_with_raw_token(body, token)
     end
-    
-    def split_on_token(body, *tokens)
+
+    # Splits the body into two halfs based on the first appearance of a token.
+    #
+    # @example
+    #   split_on_token('x = 5 unless y == 2', :on_kw)
+    #   # => ['x = 5 ', 'unless y == 2']
+    # @param [String] body (self.body) The first parameter is optional: the text
+    #   to search. This defaults to the full text.
+    # @param [Symbol] token The rest of the arguments are tokens to search
+    #   for. Any number of tokens may be specified.
+    # @return [Array<String, String>] The body split by the token.
+    def split_on_token(*args)
+      body, tokens = _extract_token_search_args(args)
       token = find_token(body, *tokens)
       return _split_body_with_raw_token(body, token)
     end
