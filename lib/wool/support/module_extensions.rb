@@ -43,7 +43,7 @@ module Wool
       end
       cattr_writer(attr)
     end
-    
+
     # Creates a DSL-friendly set-and-getter method. The method, when called with
     # no arguments, acts as a getter. When called with arguments, it acts as a
     # setter. Uses class instance variables - this is not for generating

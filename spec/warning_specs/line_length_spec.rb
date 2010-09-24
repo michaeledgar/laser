@@ -37,7 +37,7 @@ describe GenericLineLengthWarning do
       @twenty_cap.line_length_limit = 20
       @settings = {}
     end
-    
+
     after do
       @twenty_cap.should correct_to(@input, @output, @settings)
     end
@@ -66,7 +66,7 @@ describe GenericLineLengthWarning do
       @input = ' a + b ### this is a stupidly long comment lol'
       @output = " ### this is a\n ### stupidly long\n ### comment lol\n a + b"
     end
-    
+
     context 'with an indent size of 2' do
       before { @settings = {:indent_size => 2} }
       it "doesn't try to convert the 'end if foobar' technique" do

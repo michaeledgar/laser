@@ -19,11 +19,11 @@ describe Warning do
         x.name && x != Warning && x != FileWarning && x != LineWarning
       end
     end
-    
+
     it 'exist for every warning class' do
       @real_warnings.select {|x| x.name && x.short_name == nil}.should be_empty
     end
-    
+
     it 'do not conflict with each other' do
       short_names = @real_warnings.map {|x| x.short_name}.uniq
       short_names.size.should == @real_warnings.size
@@ -42,7 +42,7 @@ describe Warning do
       warning.line_number = 3
       warning.desc.should == 'Wool::Warning hello.rb:3 (7)'
     end
-    
+
     it 'when specified in a subclass as a string, just uses the string' do
       subclass = Class.new(Warning) { desc 'hello' }
       subclass.new('a', 'b').desc.should == 'hello'
@@ -67,12 +67,12 @@ describe Warning do
       klass.set_type
       klass.type.should == 'hai'
     end
-    
+
     it 'sets the type when an argument is provided' do
       klass = Class.new(Warning) { type :silly }
       klass.type.should == 'silly'
     end
-    
+
     it 'sets a short name based on the type provided' do
       klass = Class.new(Warning) { type :silly }
       klass.short_name.should =~ /SI\d/

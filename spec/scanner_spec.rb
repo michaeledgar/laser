@@ -15,17 +15,17 @@ describe Scanner do
       warnings.size.should == 1
       warnings[0].should be_a(ExtraWhitespaceWarning)
     end
-    
+
     it "ignores warnings specified in the line's comments by class name" do
       warnings = @scanner.scan('a +b  # wool: ignore OperatorSpacing')
       warnings.size.should == 0
     end
-    
+
     it "ignores warnings specified in the line's comments by short name" do
       warnings = @scanner.scan("a +b  # wool: ignore #{OperatorSpacing.short_name}")
       warnings.size.should == 0
     end
-    
+
     it "ignores multiple warnings that are marked in the line's comments" do
       warnings = @scanner.scan(
           'a +b; c + d  # wool: ignore OperatorSpacing SemicolonWarning')
@@ -37,7 +37,7 @@ describe Scanner do
           "a +b; c + d  # wool: ignore #{OperatorSpacing.short_name} #{SemicolonWarning.short_name}")
       warnings.size.should == 0
     end
-    
+
     it 'fixes the input and writes it to :output_file' do
       warnings = @fix_scanner.scan('a + b ', '(stdin)')
       warnings.size.should == 1

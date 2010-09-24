@@ -16,14 +16,14 @@ class Wool::InlineCommentSpaceWarning < Wool::LineWarning
     padding_size = left_of_comment.size - stripped.size
     return spacing != padding_size
   end
-  
+
   def fix(context_stack = nil)
     comment_token = find_token(:on_comment)
     comment_pos = comment_token[0][1] - 1
     left_of_comment = line[0..comment_pos].rstrip
     left_of_comment + (' ' * spacing) + comment_token.last
   end
-  
+
   def spacing
     @settings[OPTION_KEY] || DEFAULT_SPACE
   end

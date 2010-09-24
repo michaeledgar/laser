@@ -133,12 +133,12 @@ module Wool
     # Goes through all line warning subclasses and checks if we got some new
     # warnings for a given line
     def scan_for_line_warnings(line, filename)
-      warnings = scan_for_warnings(using & LineWarning.all_warnings, line, filename)      
+      warnings = scan_for_warnings(using & LineWarning.all_warnings, line, filename)
       filtered_warnings_from_line(line, warnings)
     end
 
     private
-    
+
     # Filters the list of warnings by checking the line for warnings to
     # ignore. The line should contain "wool: ignore ClassToIgnore" in a comment,
     # though you can omit the space between "wool:" and "ignore".
@@ -152,7 +152,7 @@ module Wool
       end
       result
     end
-    
+
     def scan_for_warnings(warnings, content, filename)
       warnings.map! { |warning| warning.new(filename, content, @settings)}
       warnings.select { |warning| warning.match?(warning.body, self.context_stack, @settings)}.uniq

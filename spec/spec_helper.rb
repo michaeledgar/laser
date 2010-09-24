@@ -33,7 +33,7 @@ module Wool
       def warn(input, *args)
         Warns.new(input, *args)
       end
-      
+
       # Matcher for comparing input/output of #fix
       class CorrectsTo
         def initialize(input, output, *args)
@@ -53,7 +53,7 @@ module Wool
           "expected '#{@input}' to not correct to #{@output.inspect}"
         end
       end
-      
+
       def correct_to(input, output, *args)
         CorrectsTo.new(input, output, *args)
       end

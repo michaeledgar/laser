@@ -25,7 +25,7 @@ describe LexicalAnalysis do
     it 'returns falsy if token not found' do
       @class.new('a + b').find_token(:on_kw).should be_false
     end
-    
+
     it 'works with multiple token options' do
       result = @class.new('a + b # hello').find_token(:on_op, :on_comment)
       result[1].should == :on_op
@@ -50,14 +50,14 @@ describe LexicalAnalysis do
       result[2].should == 'class'
     end
   end
-  
+
   context '#split_on_token' do
     it 'splits the input into two parts based on the token searched' do
       left, right = @class.new('a + b; c + d').split_on_token(:on_semicolon)
       left.should == 'a + b'
       right.should == '; c + d'
     end
-    
+
     it 'works with multiple searched tokens' do
       left, right = @class.new('a + b; c + d').split_on_token(:on_semicolon, :on_op)
       left.should == 'a '
@@ -70,15 +70,15 @@ describe LexicalAnalysis do
       right.should == 'unless y == 2'
     end
   end
-  
-  
+
+
   context '#split_on_keyword' do
     it 'splits the input into two parts based on the token searched' do
       left, right = @class.new('rescue x if y').split_on_keyword(:if)
       left.should == 'rescue x '
       right.should == 'if y'
     end
-    
+
     it 'works with multiple searched tokens' do
       left, right = @class.new('rescue x if y').split_on_keyword(:if, :rescue)
       left.should == ''

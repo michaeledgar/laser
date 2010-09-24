@@ -43,7 +43,7 @@ module Wool
       body, list = _extract_token_search_args(args)
       lex(body).find {|tok| list.include?(tok[1])}
     end
-    
+
     # Splits the body into two halfs based on the first appearance of a keyword.
     #
     # @example
@@ -75,9 +75,9 @@ module Wool
       token = find_token(body, *tokens)
       return _split_body_with_raw_token(body, token)
     end
-    
+
     private
-    
+
     def _extract_token_search_args(args)
       if args.first.is_a?(String)
         return args[0], args[1..-1]
@@ -85,7 +85,7 @@ module Wool
         return self.body, args
       end
     end
-    
+
     def _split_body_with_raw_token(body, token)
       max = token ? [0, token[0][1]].max : body.size
       return body[0,max], body[max..-1]

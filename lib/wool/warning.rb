@@ -7,7 +7,7 @@ module Wool
     cattr_accessor :short_name
     cattr_accessor_with_default :match_filters, []
     cattr_get_and_setter :severity, :short_desc, :desc
-    
+
     desc { "#{self.class.name} #{file}:#{line_number} (#{severity})" }
 
     # This tracks all subclasses (and subclasses of subclasses, etc). Plus, this
@@ -16,7 +16,7 @@ module Wool
     def self.all_warnings
       @all_warnings ||= [self]
     end
-    
+
     # All types should be shared and modified by *all* subclasses. This makes
     # Wool::Warning.all_types a global registry.
     def self.all_types
@@ -38,12 +38,12 @@ module Wool
     def self.options
       @options ||= [:debug, "Shows debug output from wool's scanner", {:short => '-d'}]
     end
-    
+
     # Adds an option in Trollop format.
     def self.opt(*args)
       self.options << args
     end
-    
+
     # Modified cattr_get_and_setter that updates the class's short_name and
     # registers the class as a member of the given type.
     def self.type(*args)
@@ -55,7 +55,7 @@ module Wool
         @type
       end
     end
-    
+
     # Default initializer.
     def initialize(file, body, settings={})
       super(self.class.short_desc, file, body, 0, self.class.severity)

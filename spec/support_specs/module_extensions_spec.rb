@@ -10,7 +10,7 @@ describe LexicalAnalysis do
       cattr_accessor_with_default :arr1, []
     end
   end
-  
+
   describe '#cattr_reader' do
     it 'creates reading methods for the given variables' do
       @class.__send__(:instance_variable_set, :@read1, 'hello')
@@ -19,7 +19,7 @@ describe LexicalAnalysis do
       @class.read2.should == 5
     end
   end
-  
+
   describe '#cattr_writer' do
     it 'creates writing methods for the given variables' do
       @class.write1 = 'hello'
@@ -28,7 +28,7 @@ describe LexicalAnalysis do
       @class.__send__(:instance_variable_get, :@write2).should == 5
     end
   end
-  
+
   describe '#cattr_accessor' do
     it 'creates reading and writing methods for the given variables' do
       @class.both1 = 'hello'
@@ -43,7 +43,7 @@ describe LexicalAnalysis do
       @class.both2.should == 10
     end
   end
-  
+
   describe '#cattr_accessor_with_default' do
     it 'creates reading and writing methods, but defaults the ivar value' do
       @class.arr1.should == []
@@ -54,7 +54,7 @@ describe LexicalAnalysis do
       @class.__send__(:instance_variable_get, :@arr1).should == [1, 2]
     end
   end
-  
+
   describe '#cattr_get_and_setter' do
     before do
       @base = Class.new do
@@ -63,16 +63,16 @@ describe LexicalAnalysis do
         type :silly
       end
     end
-    
+
     it 'acts a setter and getter on the base class' do
       @base.type.should == :silly
     end
-    
+
     it 'is not inherited' do
       @derived = Class.new(@base)
       @derived.type.should_not == :silly
     end
-    
+
     it 'can be used by inherited classes' do
       @derived = Class.new(@base) do
         type :laughable
@@ -80,7 +80,7 @@ describe LexicalAnalysis do
       @derived.type.should == :laughable
       @base.type.should == :silly
     end
-    
+
     it 'turns a block into a proc and sets it' do
       @derived = Class.new(@base) do
         type { 5 + 3 }

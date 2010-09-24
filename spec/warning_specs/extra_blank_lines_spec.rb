@@ -33,7 +33,7 @@ describe ExtraBlankLinesWarning do
 
   INPUTS = ["a + b\n\n\t  \t\n\t  ", "a + b\n  \n\t\n", "a + b\n  \n\n",
             "a + b\n\n\n\n\n", "a + b\n", "a + b\n  " ]
-                
+
   INPUTS.each do |input|
     context "When fixing #{input.inspect}" do
       it 'fixes by removing all extra whitespace' do

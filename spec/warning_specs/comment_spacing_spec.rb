@@ -12,13 +12,13 @@ describe InlineCommentSpaceWarning do
     InlineCommentSpaceWarning.should_not warn('a + b  # comment', SETTINGS)
     InlineCommentSpaceWarning.should_not warn('a +b  # wool: ignore OperatorSpacing', SETTINGS)
   end
-  
+
   it 'has an option to specify the necessary spacing' do
     InlineCommentSpaceWarning.options.size.should be > 0
     InlineCommentSpaceWarning.options[0].first.should ==
         InlineCommentSpaceWarning::OPTION_KEY
   end
-  
+
   it 'respects the option for specifying the necessary spacing' do
     settings = {InlineCommentSpaceWarning::OPTION_KEY => 0}
     InlineCommentSpaceWarning.should warn('a + b # comment', settings)
@@ -33,7 +33,7 @@ describe InlineCommentSpaceWarning do
     before do
       @settings = {InlineCommentSpaceWarning::OPTION_KEY => 2}
     end
-    
+
     after do
       InlineCommentSpaceWarning.should correct_to(@input, @output, @settings)
     end
@@ -47,7 +47,7 @@ describe InlineCommentSpaceWarning do
       @input = 'a + b        #comment'
       @output = 'a + b  #comment'
     end
-    
+
     it 'respects the option for spacing' do
       @settings = {InlineCommentSpaceWarning::OPTION_KEY => 0}
       @input = 'a + b        #comment'
