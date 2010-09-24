@@ -54,4 +54,31 @@ describe Wool::LexicalAnalysis do
       @class.__send__(:instance_variable_get, :@arr1).should == [1, 2]
     end
   end
+  
+  describe '#cattr_get_and_setter' do
+    before do
+      @base = Class.new do
+        extend Wool::ModuleExtensions
+        cattr_get_and_setter :type
+        type :silly
+      end
+    end
+    
+    it 'acts a setter and getter on the base class' do
+      @base.type.should == :silly
+    end
+    
+    it 'is not inherited' do
+      @derived = Class.new(@base)
+      @derived.type.should_not == :silly
+    end
+    
+    it 'can be used by inherited classes' do
+      @derived = Class.new(@base) do
+        type :laughable
+      end
+      @derived.type.should == :laughable
+      @base.type.should == :silly
+    end
+  end
 end

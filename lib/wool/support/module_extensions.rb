@@ -43,5 +43,34 @@ module Wool
       end
       cattr_writer(attr)
     end
+    
+    # Creates a DSL-friendly set-and-getter method. The method, when called with
+    # no arguments, acts as a getter. When called with arguments, it acts as a
+    # setter. Uses class instance variables - this is not for generating
+    # instance methods.
+    #
+    # @example
+    #   class A
+    #     cattr_get_and_setter :type
+    #   end
+    #   class B < A
+    #     type :silly
+    #   end
+    #   p B.type  # => :silly
+    def cattr_get_and_setter(*attrs)
+      attrs.each do |attr|
+        cattr_accessor attr
+        metaclass.instance_eval do
+          alias_method "#{attr}_old_get".to_sym, attr
+          define_method attr do |*args|
+            if args.size > 0 then
+              send("#{attr}=", *args)
+            else
+              send("#{attr}_old_get")
+            end
+          end
+        end
+      end
+    end
   end
 end

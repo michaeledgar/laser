@@ -4,7 +4,7 @@ class Wool::ExtraBlankLinesWarning < Wool::FileWarning
   type :style
 
   def initialize(file, body, settings={})
-    super('Extra blank lines', file, body, 0, severity)
+    super('Extra blank lines', file, body, 0, 1)
   end
 
   def desc
