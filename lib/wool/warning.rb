@@ -5,18 +5,26 @@ module Wool
     include LexicalAnalysis
 
     cattr_accessor :short_name
+    cattr_accessor_with_default :match_filters, []
     cattr_get_and_setter :severity, :short_desc, :desc
     
     desc { "#{self.class.name} #{file}:#{line_number} (#{severity})" }
 
+    # This tracks all subclasses (and subclasses of subclasses, etc). Plus, this
+    # method is inherited, so Wool::LineWarning.all_subclasses will have all
+    # subclasses of Wool::LineWarning!
     def self.all_warnings
       @all_warnings ||= [self]
     end
     
+    # All types should be shared and modified by *all* subclasses. This makes
+    # Wool::Warning.all_types a global registry.
     def self.all_types
       @@all_types ||= Hash.new {|h,k| h[k] = []}
     end
 
+    # When a Warning subclass is subclassed, store the subclass and inform the
+    # next superclass up the inheritance hierarchy.
     def self.inherited(klass)
       self.all_warnings << klass
       next_klass = self.superclass
@@ -31,10 +39,13 @@ module Wool
       @options ||= [:debug, "Shows debug output from wool's scanner", {:short => '-d'}]
     end
     
+    # Adds an option in Trollop format.
     def self.opt(*args)
       self.options << args
     end
     
+    # Modified cattr_get_and_setter that updates the class's short_name and
+    # registers the class as a member of the given type.
     def self.type(*args)
       if args.any?
         @type = args.first.to_s
@@ -44,7 +55,8 @@ module Wool
         @type
       end
     end
-
+    
+    # Default initializer.
     def initialize(file, body, settings={})
       super(self.class.short_desc, file, body, 0, self.class.severity)
       @settings = settings

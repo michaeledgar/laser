@@ -14,7 +14,7 @@ module Wool
     #   why the 1 is always there. At any rate - the result is an array of those
     #   tokens.
     def lex(body = self.body)
-      Ripper::Lexer.new(body).lex
+      Ripper.lex(body)
     end
 
     # Finds the first instance of a set of keywords in the body. If no text is
