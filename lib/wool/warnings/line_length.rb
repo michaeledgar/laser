@@ -28,8 +28,9 @@ class Wool::GenericLineLengthWarning < Wool::LineWarning
 
   def try_to_fix_guarded_lines(line)
     return nil if line !~ /\b(if|unless)\s/  # quick fast check
-    code, guard = split_on_char_outside_literal(line, /(\b|\s)(if|unless)\b/)
-    return nil if code.strip.empty? || guard.empty? || code.strip == 'end'
+    code, guard = split_on_keyword(:if, :unless)
+    code.rstrip!
+    return nil if code.empty? || guard.empty? || code.strip == 'end'
     # check guard for closing braces
     return nil if count_occurrences(guard, '}') != count_occurrences(guard, '{')
     indent = get_indent(line)
@@ -39,7 +40,12 @@ class Wool::GenericLineLengthWarning < Wool::LineWarning
     until guard.empty?
       condition = indent + guard.strip
       body = result.split(/\n/).map { |line| indent_unit + line}.join("\n")
-      new_condition, guard = split_on_char_outside_literal(condition[indent.size..-1], /[^\^](if|unless)\b/)
+      new_condition, guard = split_on_keyword(condition[indent.size+1..-1], :if, :unless)
+      if new_condition.empty?
+        new_condition, guard = guard.rstrip, ''
+      else
+        new_condition = "#{condition[indent.size,1]}#{new_condition.rstrip}"
+      end
       condition = indent + new_condition unless guard.empty?
       result = condition + "\n" + body + "\n" + indent + 'end'
     end

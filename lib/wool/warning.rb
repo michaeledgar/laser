@@ -73,27 +73,6 @@ module Wool
       count
     end
 
-    def split_on_char_outside_literal(input, regex)
-      last_char = ''
-      in_string = in_regex = is_backslash = false
-      escape_string = nil
-      input.size.times do |idx|
-        char = input[idx,1]
-        if char == '/'
-          in_regex = !in_regex unless last_char =~ /\d/
-        elsif !is_backslash && char == "'" || char == '"'
-          if char == escape_string || escape_string.nil?
-            in_string = !in_string
-            escape_string = in_string ? char : nil
-          end
-        elsif (input[idx..-1] =~ regex) == 0 && !(in_string || in_regex)
-          return [input[0,idx], input[idx..-1]]
-        end
-        is_backslash = char == '\\' && !is_backslash
-      end
-      return [input, '']
-    end
-
     def get_indent(line)
       line =~ /^(\s*).*$/ ? $1 : ''
     end
