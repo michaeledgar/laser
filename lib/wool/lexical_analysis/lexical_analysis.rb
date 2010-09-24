@@ -46,7 +46,12 @@ module Wool
     # @return [Array] the token in the form returned by Ripper. See #lex.
     def find_token(*args)
       body, list = _extract_token_search_args(args)
-      lex(body).find {|tok| list.include?(tok[1])}
+      lexed = lex(body)
+      lexed.find.with_index do |tok, idx|
+        is_token = list.include?(tok[1])
+        is_not_symbol = idx == 0 || lexed[idx-1][1] != :on_symbeg
+        is_token && is_not_symbol
+      end
     end
 
     # Splits the body into two halfs based on the first appearance of a keyword.

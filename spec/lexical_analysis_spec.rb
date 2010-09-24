@@ -30,6 +30,10 @@ describe LexicalAnalysis do
       result = @class.new('a + b # hello').find_token(:on_op, :on_comment)
       result[1].should == :on_op
     end
+    
+    it 'is not triggered by symbols' do
+      @class.new(':+').find_token(:on_op).should be_false
+    end
   end
 
   context '#find_keyword' do
@@ -48,6 +52,10 @@ describe LexicalAnalysis do
     it 'works with multiple keyword options' do
       result = @class.new('class A < B; end').find_keyword(:class, :end)
       result[2].should == 'class'
+    end
+
+    it 'is not triggered by symbols' do
+      @class.new(':unless').find_keyword(:unless).should be_false
     end
   end
 
