@@ -10,6 +10,7 @@ describe Runner do
       runner = Runner.new(['--report-fixed', 'hello', 'world'])
       expected_settings = {:"report-fixed_given"=>true, :"report-fixed"=>true,
                            :fix => false, :help => false, :debug => false,
+                           InlineCommentSpaceWarning::OPTION_KEY => 2,
                            :__using__ => Warning.all_warnings,
                            :__fix__ => Warning.all_warnings}
       scanner = mock(:scanner)

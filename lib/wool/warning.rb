@@ -104,13 +104,13 @@ module Wool
   class LineWarning < Warning
     alias_method :line, :body
     def self.options
-      []
+      @options ||= []
     end
   end
 
   class FileWarning < Warning
     def self.options
-      []
+      @options ||= []
     end
   end
 end
