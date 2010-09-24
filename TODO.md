@@ -1,3 +1,7 @@
+# Cleanup
+
+* Completely remove context stack remnants
+
 # Useful Features
 
 * Easy, DSL-like way to specify regex-matching, token-matching for match?

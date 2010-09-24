@@ -31,8 +31,26 @@ describe InlineCommentSpaceWarning do
 
   context 'when fixing' do
     before do
-      @warning = InlineCommentSpaceWarning.new('(stdin)', 'a + b  ')
-      @tab_warning = InlineCommentSpaceWarning.new('(stdin)', "a + b\t\t")
+      @settings = {InlineCommentSpaceWarning::OPTION_KEY => 2}
+    end
+
+    it 'adds spaces when necessary' do
+      input = 'a + b#comment'
+      output = 'a + b  #comment'
+      InlineCommentSpaceWarning.new('(stdin)', input, @settings).fix.should == output
+    end
+
+    it 'removes spaces when necessary' do
+      input = 'a + b        #comment'
+      output = 'a + b  #comment'
+      InlineCommentSpaceWarning.new('(stdin)', input, @settings).fix.should == output
+    end
+    
+    it 'respects the option for spacing' do
+      settings = {InlineCommentSpaceWarning::OPTION_KEY => 0}
+      input = 'a + b        #comment'
+      output = 'a + b#comment'
+      InlineCommentSpaceWarning.new('(stdin)', input, settings).fix.should == output
     end
   end
 end
