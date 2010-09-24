@@ -48,7 +48,7 @@ class Wool::GenericLineLengthWarning < Wool::LineWarning
   end
 
   def handle_long_comments(line)
-    code, comment = split_on_char_outside_literal(line, /#/)
+    code, comment = split_on_token(line, :on_comment)
     return nil if comment.empty?
     indent, code = code.match(/^(\s*)(.*)$/)[1..2]
     hashes, comment = comment.match(/^(#+\s*)(.*)$/)[1..2]
