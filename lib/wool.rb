@@ -3,7 +3,7 @@ require 'ripper'
 require 'wool/third_party/trollop'
 require 'wool/support/module_extensions'
 require 'wool/advice/advice'
-require 'wool/lexical_analysis'
+require 'wool/lexical_analysis/lexical_analysis'
 require 'wool/advice/comment_advice'
 # Runners
 require 'wool/runner'
