@@ -29,11 +29,7 @@ module Wool
         # with the implications of comments in their source can safely
         # discard them. Uses Ripper to look for comment tokens.
         def comment_removing_twiddler(body = self.body, context = nil, settings = {})
-          comment_token = find_token(body, :on_comment)
-          if comment_token
-            max = [0, comment_token[0][1] - 1].max
-            body = body[0,max]
-          end
+          body = split_on_token(body, :on_comment).first
           [body, context, settings]
         end
       end

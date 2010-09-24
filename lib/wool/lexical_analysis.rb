@@ -50,5 +50,11 @@ module Wool
       end
       lex(body).find {|tok| list.include?(tok[1])}
     end
+    
+    def split_on_token(body, *tokens)
+      comment_token = find_token(body, *tokens)
+      max = comment_token ? [0, comment_token[0][1] - 1].max : body.size
+      return body[0,max], body[max..-1]
+    end
   end
 end
