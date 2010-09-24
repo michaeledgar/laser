@@ -11,15 +11,12 @@ class Wool::SemicolonWarning < Wool::LineWarning
   end
 
   def fix(context_stack = nil, line = self.body)
-    return line unless token = find_token(line, :on_semicolon)
-    location = token[0][1]
-    if location == 0
-      line[1..-1]
-    else
-      left, right = line[0..location-1], line[location + 1..-1] || ''
-      right = fix(context_stack, right)
-      "#{indent left}\n#{indent right}"
-    end
+    left, right = split_on_token(line, :on_semicolon)
+    return line if right.empty?
+    return right[1..-1] if left.empty?
+
+    right = fix(context_stack, right[1..-1])
+    "#{indent left}\n#{indent right}"
   end
 
   def desc
