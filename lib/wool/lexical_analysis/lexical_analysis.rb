@@ -28,7 +28,12 @@ module Wool
     def find_keyword(*args)
       body, list = _extract_token_search_args(args)
       list.map! {|x| x.to_s}
-      lex(body).find {|tok| tok[1] == :on_kw && list.include?(tok[2])}
+      lexed = lex(body)
+      lexed.find.with_index do |tok, idx|
+        is_keyword = tok[1] == :on_kw && list.include?(tok[2])
+        is_not_symbol = idx == 0 || lexed[idx-1][1] != :on_symbeg
+        is_keyword && is_not_symbol
+      end
     end
 
     # Finds the first instance of a set of tokens in the body. If no text is

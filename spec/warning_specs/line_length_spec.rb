@@ -66,6 +66,12 @@ describe GenericLineLengthWarning do
       @input = ' a + b ### this is a stupidly long comment lol'
       @output = " ### this is a\n ### stupidly long\n ### comment lol\n a + b"
     end
+    
+    it 'fails to fix when if/unless are in a symbol' do
+      # This came from an actual bug from running wool on wool's source.
+      @input = "    left, right = @class.new('').split_on_keyword('x = 5 unless y == 2', :unless)"
+      @output = @input
+    end
 
     context 'with an indent size of 2' do
       before { @settings = {:indent_size => 2} }

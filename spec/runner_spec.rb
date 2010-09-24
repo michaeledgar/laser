@@ -11,6 +11,7 @@ describe Runner do
       expected_settings = {:"report-fixed_given"=>true, :"report-fixed"=>true,
                            :fix => false, :help => false, :debug => false,
                            InlineCommentSpaceWarning::OPTION_KEY => 2,
+                           :"line-length" => nil,
                            :__using__ => Warning.all_warnings,
                            :__fix__ => Warning.all_warnings}
       scanner = mock(:scanner)
