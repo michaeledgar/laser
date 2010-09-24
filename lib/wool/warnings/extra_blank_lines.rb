@@ -11,14 +11,13 @@ class Wool::ExtraBlankLinesWarning < Wool::FileWarning
   end
 
   def fix(context_stack = nil)
-    body = self.body.dup
-    while body =~ EXTRA_LINE
-      body.gsub!(EXTRA_LINE, '')
-    end
-    body
+    body.gsub(/\s*\Z/, '')
   end
 
+  # Counts how many extra lines there are at the end of the file.
   def count_extra_lines
+    # We use this logic because #lines ignores blank lines at the end, and
+    # split(/\n/) does as well.
     count = 0
     working_body = self.body.dup
     while working_body =~ EXTRA_LINE

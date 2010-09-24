@@ -3,7 +3,8 @@ class Wool::SemicolonWarning < Wool::LineWarning
   type :style
   short_desc 'Semicolon for multiple statements'
   desc 'The line uses a semicolon to separate multiple statements outside of a class declaration.'
-  def initialize(file, line, settings={})
+
+  def initialize(*args)
     super
     self.severity = line =~ /['"]/ ? 2 : 4
   end
