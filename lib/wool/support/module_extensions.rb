@@ -4,11 +4,6 @@ module Wool
   # This prevents conflicts with other libraries defining extensions
   # of the same name.
   module ModuleExtensions
-    # Gets this object's metaclass.
-    def metaclass
-      class << self; self; end
-    end
-
     # Creates a reader for the given instance variables on the class object.
     def cattr_reader(*attrs)
       attrs.each do |attr|
@@ -31,7 +26,7 @@ module Wool
 
     def cattr_accessor_with_default(attr, default)
       varname = "@#{attr}".to_sym
-      metaclass.instance_eval do
+      singleton_class.instance_eval do
         define_method attr do
           if instance_variable_defined?(varname)
             instance_variable_get(varname)
@@ -60,7 +55,7 @@ module Wool
     def cattr_get_and_setter(*attrs)
       attrs.each do |attr|
         cattr_accessor attr
-        metaclass.instance_eval do
+        singleton_class.instance_eval do
           alias_method "#{attr}_old_get".to_sym, attr
           define_method attr do |*args, &blk|
             if args.size > 0
