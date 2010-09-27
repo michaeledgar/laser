@@ -63,8 +63,16 @@ module Wool
       @settings = settings
     end
 
-    def match?(body = self.body, settings = {})
+    def match?(body = self.body)
       false
+    end
+
+    def generated_warnings(*args)
+      case match_result = match?(*args)
+      when Array then match_result
+      when false, nil then []
+      else [self]
+      end
     end
 
     def fix

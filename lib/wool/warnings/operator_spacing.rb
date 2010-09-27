@@ -8,7 +8,7 @@ class Wool::OperatorSpacing < Wool::LineWarning
   short_desc 'No operator spacing'
   desc { "Insufficient spacing around #{self.match?(self.line)[2]}" }
 
-  def match?(line = self.body, options = {})
+  def match?(line = self.body)
     working_line = ignore_block_params line
     working_line = ignore_splat_args working_line
     working_line = ignore_to_proc_args working_line
@@ -22,6 +22,10 @@ class Wool::OperatorSpacing < Wool::LineWarning
       return token if idx > 0 && ![:on_sp, :on_op].include?(lexed[idx-1][1])
     end
     nil
+  end
+  
+  def generated_warnings(*args)
+    match?(*args) ? [self] : []
   end
 
   def ignore_block_params(line)

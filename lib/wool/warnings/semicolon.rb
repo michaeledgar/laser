@@ -9,8 +9,8 @@ class Wool::SemicolonWarning < Wool::LineWarning
     self.severity = line =~ /['"]/ ? 2 : 4
   end
 
-  def match?(line = self.body, settings = {})
-    find_token(line, :on_semicolon) && !find_keyword(line, :class)
+  def match?(line = self.body)
+    !!(find_token(line, :on_semicolon) && !find_keyword(line, :class))
   end
 
   def fix(line = self.body)
