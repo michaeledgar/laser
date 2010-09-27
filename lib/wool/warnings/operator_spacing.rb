@@ -25,19 +25,19 @@ class Wool::OperatorSpacing < Wool::LineWarning
   end
 
   def ignore_block_params(line)
-    line.gsub(/(\{|(do))\s*\|.*\|/, '\\1')
+    line.gsub(/(\{|(do))\s*\|.*\|/, '\1')
   end
 
   def ignore_splat_args(line)
-    line.gsub(/(\(|(, ))\&([a-z][A-Za-z0-9_]*)((, )|\)|\Z)/, '\\1')
+    line.gsub(/(\(|(, ))\&([a-z][A-Za-z0-9_]*)((, )|\)|\Z)/, '\1')
   end
 
   def ignore_array_splat_idiom(line)
-    line.gsub(/\[\*([a-z][A-Za-z0-9_]*)\]/, '\\1')
+    line.gsub(/\[\*([a-z][A-Za-z0-9_]*)\]/, '\1')
   end
 
   def ignore_to_proc_args(line)
-    line.gsub(/(\(|(, ))\*([a-z][A-Za-z0-9_]*)((, )|\)|\Z)/, '\\1')
+    line.gsub(/(\(|(, ))\*([a-z][A-Za-z0-9_]*)((, )|\)|\Z)/, '\1')
   end
 
   def is_block_line?(line)
