@@ -4,6 +4,7 @@ require 'wool/third_party/trollop'
 require 'wool/support/module_extensions'
 require 'wool/advice/advice'
 require 'wool/analysis/lexical_analysis'
+require 'wool/analysis/sexp_analysis'
 require 'wool/advice/comment_advice'
 # Runners
 require 'wool/runner'

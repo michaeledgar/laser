@@ -3,6 +3,7 @@ module Wool
     extend Advice
     extend ModuleExtensions
     include LexicalAnalysis
+    include SexpAnalysis
 
     cattr_accessor :short_name
     cattr_accessor_with_default :match_filters, []

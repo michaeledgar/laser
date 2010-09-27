@@ -3,8 +3,6 @@ module Wool
   # lexical analysis of their bodies. This module handles tokenizing only - not
   # parse-trees.
   module LexicalAnalysis
-    extend Advice
-
     # Lexes the given text.
     #
     # @param [String] body (self.body) The text to lex
