@@ -13,5 +13,4 @@ class Wool::MisalignedUnindentationWarning < Wool::LineWarning
   def fix(context_stack = nil)
     indent self.line, @expectation
   end
-
 end

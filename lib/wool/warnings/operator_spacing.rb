@@ -6,49 +6,22 @@ class Wool::OperatorSpacing < Wool::LineWarning
   type :style
   severity 5
   short_desc 'No operator spacing'
-  desc { "Insufficient spacing around #{self.matching_operator(self.line)}" }
+  desc { "Insufficient spacing around #{self.match?(self.line)[2]}" }
 
-  def matches_operator?(line, op)
-    return false if line =~ /^\s*def /
-    return false if op == '|' && is_block_line?(line)
-    embed = op.gsub(/(\+|\-|\*|\||\^)/, '\\\\\\1')
-    if op == '-'
-      if line =~ /([A-Za-z0-9_]!|[A-Za-z0-9_?])#{embed}/ || line =~ /(#{embed})[$A-Za-z_?!]/
-        op
-      end
-    else
-      if line =~ /([A-Za-z0-9_]!|[A-Za-z0-9_?])#{embed}/ || line =~ /(#{embed})[$A-Za-z0-9_?!]/
-        op
-      end
-    end
-  end
-
-  def matching_operator(line, settings = {})
-    working_line = line.gsub(/'[^']*'/, "''").gsub(/"[^"]*"/, '""')
-    working_line = working_line.gsub(/<<\-?[A-Za-b0-9_]+/, "''")
-    working_line = remove_regexes working_line
-    working_line = ignore_block_params working_line
+  def match?(line = self.body, context_stack = nil, options = {})
+    working_line = ignore_block_params line
     working_line = ignore_splat_args working_line
     working_line = ignore_to_proc_args working_line
     working_line = ignore_array_splat_idiom working_line
-
-    OPERATORS.each do |op|
-      if matches_operator?(working_line, op)
-        puts "Original line: #{line}" if settings[:debug]
-        puts "Working line: #{working_line}" if settings[:debug]
-        return op
-      end
+    lexed = lex(working_line)
+    lexed.each_with_index do |token, idx|
+      next unless token[1] == :on_op
+      next if idx == lexed.size - 1  # Last token on line (continuation) is ok
+      next if token[2] == '-' && [:on_float, :on_int].include?(lexed[idx+1][1])
+      return token if lexed[idx+1][1] != :on_sp && lexed[idx+1][1] != :on_op
+      return token if idx > 0 && ![:on_sp, :on_op].include?(lexed[idx-1][1])
     end
     nil
-  end
-
-  def remove_regexes(line)
-    working_line = line.gsub(%r!((^|[^0-9 \t\n])\s*)/.*[^\\]/!, '\\1nil')
-    working_line.gsub!(/%r(.).*[^\\]\1/, 'nil')
-    working_line.gsub!(/%r\[.*[^\\]\]/, 'nil')
-    working_line.gsub!(/%r\{.*[^\\]\}/, 'nil')
-    working_line.gsub!(/%r\(.*[^\\]\)/, 'nil')
-    working_line
   end
 
   def ignore_block_params(line)
@@ -70,11 +43,6 @@ class Wool::OperatorSpacing < Wool::LineWarning
   def is_block_line?(line)
     line =~ /do\s*\|/ || line =~ /\{\s*\|/
   end
-
-  def match?(line = self.body, context_stack = nil, settings = {})
-    !!self.matching_operator(line, settings)
-  end
-  remove_comments
 
   def fix(context_stack = nil)
     line = self.line.dup
