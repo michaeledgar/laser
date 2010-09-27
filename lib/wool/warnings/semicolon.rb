@@ -9,16 +9,16 @@ class Wool::SemicolonWarning < Wool::LineWarning
     self.severity = line =~ /['"]/ ? 2 : 4
   end
 
-  def match?(line = self.body, context_stack = nil, settings = {})
+  def match?(line = self.body, settings = {})
     find_token(line, :on_semicolon) && !find_keyword(line, :class)
   end
 
-  def fix(context_stack = nil, line = self.body)
+  def fix(line = self.body)
     left, right = split_on_token(line, :on_semicolon)
     return line if right.empty?
     return right[1..-1] if left.empty?
 
-    right = fix(context_stack, right[1..-1])
+    right = fix(right[1..-1])
     "#{indent left}\n#{indent right}"
   end
 end

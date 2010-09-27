@@ -1,7 +1,6 @@
 module Wool
   class Scanner
     attr_accessor :settings
-    attr_accessor :context_stack
     attr_accessor :indent_stack
 
     DEFAULT_SETTINGS = {:fix => false, :output => STDOUT, :indent_size => 2,
@@ -15,7 +14,6 @@ module Wool
     def initialize(settings = DEFAULT_SETTINGS)
       @settings = DEFAULT_SETTINGS.merge(settings)
       @settings[:__scanner__] = self
-      self.context_stack = []
       self.indent_stack = []
     end
 
@@ -77,9 +75,9 @@ module Wool
     def fix_input(warnings, line, line_number, filename)
       fixable_warnings = filter_fixable warnings
       if fixable_warnings.size == 1
-        self.settings[:output_lines] << fixable_warnings.first.fix(self.context_stack) rescue line
+        self.settings[:output_lines] << fixable_warnings.first.fix rescue line
       elsif fixable_warnings.size > 1
-        new_text = fixable_warnings.first.fix(self.context_stack) rescue line
+        new_text = fixable_warnings.first.fix rescue line
         process_line(new_text, line_number, filename)
       else
         self.settings[:output_lines] << line
@@ -156,7 +154,7 @@ module Wool
 
     def scan_for_warnings(warnings, content, filename)
       warnings.map! { |warning| warning.new(filename, content, @settings)}
-      warnings.select { |warning| warning.match?(warning.body, self.context_stack, @settings)}.uniq
+      warnings.select { |warning| warning.match?(warning.body, @settings)}.uniq
     end
   end
 end

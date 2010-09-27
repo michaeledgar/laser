@@ -6,11 +6,11 @@ class Wool::ExtraBlankLinesWarning < Wool::FileWarning
   short_desc 'Extra blank lines'
   desc { "This file has #{count_extra_lines} blank lines at the end of it." }
 
-  def match?(body = self.body, context_stack = nil, settings = {})
+  def match?(body = self.body, settings = {})
     body =~ EXTRA_LINE
   end
 
-  def fix(context_stack = nil)
+  def fix
     body.gsub(/\s*\Z/, '')
   end
 

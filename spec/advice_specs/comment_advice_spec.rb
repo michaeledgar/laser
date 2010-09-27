@@ -5,7 +5,7 @@ describe Advice::CommentAdvice do
     @class = Class.new(Warning) do
       include Advice::CommentAdvice
 
-      def match?(body = self.body, context = nil, settings={})
+      def match?(body = self.body, settings={})
         body
       end
       remove_comments

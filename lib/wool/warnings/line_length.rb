@@ -8,7 +8,7 @@ class Wool::GenericLineLengthWarning < Wool::LineWarning
     "Wool::GenericLineLengthWarning<#{line_length_limit}>"
   end
 
-  def match?(body = self.body, context_stack = nil, settings = {})
+  def match?(body = self.body, settings = {})
     !!(line.size > self.class.line_length_limit)
   end
 

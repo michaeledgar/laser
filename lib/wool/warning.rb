@@ -63,11 +63,11 @@ module Wool
       @settings = settings
     end
 
-    def match?(body = self.body, context_stack = nil, settings = {})
+    def match?(body = self.body, settings = {})
       false
     end
 
-    def fix(context_stack = nil)
+    def fix
       self.body
     end
 

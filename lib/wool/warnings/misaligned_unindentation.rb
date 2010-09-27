@@ -10,7 +10,7 @@ class Wool::MisalignedUnindentationWarning < Wool::LineWarning
     @expectation = expectation
   end
 
-  def fix(context_stack = nil)
+  def fix
     indent self.line, @expectation
   end
 end

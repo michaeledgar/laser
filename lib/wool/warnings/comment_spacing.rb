@@ -7,7 +7,7 @@ class Wool::InlineCommentSpaceWarning < Wool::LineWarning
   desc { "Inline comments must be at least #{@settings[OPTION_KEY]} spaces from code." }
   opt OPTION_KEY, 'Number of spaces between code and inline comments', :default => DEFAULT_SPACE
 
-  def match?(line = self.body, context_stack = nil, settings = {})
+  def match?(line = self.body, settings = {})
     return false unless comment_token = find_token(:on_comment)
     comment_pos = comment_token[0][1] - 1
     left_of_comment = line[0..comment_pos]
@@ -17,7 +17,7 @@ class Wool::InlineCommentSpaceWarning < Wool::LineWarning
     return spacing != padding_size
   end
 
-  def fix(context_stack = nil)
+  def fix
     comment_token = find_token(:on_comment)
     comment_pos = comment_token[0][1] - 1
     left_of_comment = line[0..comment_pos].rstrip

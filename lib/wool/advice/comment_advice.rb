@@ -28,8 +28,8 @@ module Wool
         # from the ruby source input, so that warnings that aren't concerned
         # with the implications of comments in their source can safely
         # discard them. Uses Ripper to look for comment tokens.
-        def comment_removing_twiddler(body = self.body, context = nil, settings = {})
-          [split_on_token(body, :on_comment).first.rstrip, context, settings]
+        def comment_removing_twiddler(body = self.body, settings = {})
+          [split_on_token(body, :on_comment).first.rstrip, settings]
         end
       end
     end
