@@ -37,34 +37,19 @@ describe UselessDoubleQuotesWarning do
     UselessDoubleQuotesWarning.should_not warn("simple %q{string is okay}")
   end
 
-  # it 'matches when a semicolon splits two expressions that have strings' do
-  #   SemicolonWarning.should warn('puts "x"; puts "y"')
-  # end
-  #
-  # it "doesn't match when a semicolon is in a string" do
-  #   SemicolonWarning.should_not warn('puts "x;y"')
-  # end
-  #
-  # it "doesn't match when a semicolon is in a single-quoted string" do
-  #   SemicolonWarning.should_not warn("puts 'x;y'")
-  # end
-  #
-  # it "doesn't match when a semicolon is used in an Exception definition" do
-  #   SemicolonWarning.should_not warn('class AError < BError; end"')
-  # end
-  #
-  # it 'has a lower severity when quotes are involved due to unsure-ness' do
-  #   SemicolonWarning.new('(stdin)', "hello' world' ; there").severity.should <
-  #   SemicolonWarning.new('(stdin)', 'hello world ; there').severity
-  # end
-  #
-  # it 'has a remotely descriptive description' do
-  #   SemicolonWarning.new('(stdin)', 'hello ; world').desc.should =~ /semicolon/
-  # end
-  #
-  # it "doesn't match when a semicolon is in a comment" do
-  #   SemicolonWarning.should_not warn("hello # indeed; i agree")
-  # end
-
-  
+  context '#fix' do
+    it 'fixes a simple string using double quotes unnecessarily' do
+      checker = UselessDoubleQuotesWarning.new('(stdin)', 'simple "example, okay?"')
+      warnings = checker.match?
+      warnings.size.should == 1
+      warnings.first.fix('simple "example, okay?"').should == "simple 'example, okay?'"
+    end
+    
+    it 'fixes a simple string using %Q{} unnecessarily' do
+      checker = UselessDoubleQuotesWarning.new('(stdin)', 'simple %Q{example, okay?}')
+      warnings = checker.match?
+      warnings.size.should == 1
+      warnings.first.fix('simple %Q{example, okay?}').should == "simple %q{example, okay?}"
+    end
+  end
 end

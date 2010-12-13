@@ -8,6 +8,7 @@ module Wool
     cattr_accessor :short_name
     cattr_accessor_with_default :match_filters, []
     cattr_get_and_setter :severity, :short_desc, :desc
+    attr_accessor :settings
 
     desc { "#{self.class.name} #{file}:#{line_number} (#{severity})" }
 
