@@ -25,6 +25,6 @@ class Wool::UselessDoubleQuotesWarning < Wool::FileWarning
 
   def fix(body = self.body)
     body.gsub("\"#{quoted_string}\"", "'#{quoted_string}'").
-         gsub("%Q{#{quoted_string}}", "%q{#{quoted_string}}").tap {|x| p x}
+         gsub("%Q{#{quoted_string}}", "%q{#{quoted_string}}")
   end
 end
