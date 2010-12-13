@@ -18,7 +18,8 @@ module Wool
 
         def matches?(actual)
           @class = actual
-          @class.new('(stdin)', @input, *@args).match?
+          result = @class.new('(stdin)', @input, *@args).match?
+          result && result != [] # empty list is also failure to find any warnings
         end
 
         def failure_message

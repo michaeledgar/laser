@@ -1,6 +1,9 @@
 ## MAC OS
 .DS_Store
 
+## REDCAR
+.redcar
+
 ## TEXTMATE
 *.tmproj
 tmtags

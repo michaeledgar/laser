@@ -15,6 +15,55 @@ module Wool
       Ripper.lex(body)
     end
 
+    # Returns the text between two token positions. The token positions are
+    # in [line, column] format. The body, left, and right tokens must be provided,
+    # and optionally, you can override the inclusiveness of the text-between operation.
+    # It defaults to :none, for including neither the left nor right tokens in the
+    # result. You can pass :none, :left, :right, or :both.
+    #
+    # @param [String] body (self.body) The first parameter is optional: the text
+    #   to search. This defaults to the full text.
+    # @param [Token] left the left token to get the text between
+    # @param [Token] right the right token to get the text between
+    # @param [Symbol] inclusive should the :left, :right, :both, or :none tokens
+    #    be included in the resulting text?
+    # @return the text between the two tokens within the text. This is necessary
+    #    because the lexer provides [line, column] coordinates which is quite
+    #    unfortunate.
+    def text_between_token_positions(text, left, right, inclusive = :none)
+      result = ""
+      lines = text.lines.to_a
+      left[0][0].upto(right[0][0]) do |cur_line|
+        line = lines[cur_line - 1]
+        result << left[2] if cur_line == left[0][0] && (inclusive == :both || inclusive == :left)
+        left_bound = cur_line == left[0][0] ? left[0][1] + left[2].size : 0
+        right_bound = cur_line == right[0][0] ? right[0][1] - 1 : -1
+        result << line[left_bound..right_bound]
+        result << right[2] if cur_line == right[0][0] && (inclusive == :both || inclusive == :right)
+      end
+      result
+    end
+      
+    # Searches for the given token using standard [body], target symbols syntax.
+    # Yields for each token found that matches the query, and returns all those
+    # who match.
+    #
+    # @param [String] body (self.body) The first parameter is optional: the text
+    #   to search. This defaults to the full text.
+    # @param [Symbol] token The rest of the arguments are tokens to search
+    #   for. Any number of tokens may be specified.
+    # @return [Array<Array>] All the matching tokens for the query
+    def select_token(*args)
+      body, list = _extract_token_search_args(args)
+      result = []
+      while (token = find_token(body, *list)) && token != nil
+        result << token if yield(*token)
+        _, body = split_on_token(body, *list)
+        body = body[token[2].size..-1]
+      end
+      return result
+    end
+    
     # Finds the first instance of a set of keywords in the body. If no text is
     # given to scan, then the full content is scanned.
     #
