@@ -35,6 +35,20 @@ describe Warning do
     Warning.should correct_to(' b **   c+1 eval(string) ', ' b **   c+1 eval(string) ')
   end
 
+  context '#concrete_warnings' do
+    before { @concrete = Warning.concrete_warnings }
+    it 'returns a list of classes that are subclasses of Warning' do
+      @concrete.should_not be_empty
+      @concrete.each {|w| w.ancestors.should include(Warning) }
+    end
+    
+    it 'returns a list that does not contain Warning, FileWarning, or LineWarning' do
+      @concrete.should_not include(Warning)
+      @concrete.should_not include(FileWarning)
+      @concrete.should_not include(LineWarning)
+    end
+  end
+
   context '#desc' do
     it "defaults to the class's name with all info" do
       warning = Warning.new('hello.rb', 'a+b')

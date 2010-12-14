@@ -11,7 +11,7 @@ describe Runner do
       expected_settings = {:"report-fixed_given"=>true, :"report-fixed"=>true,
                            :fix => false, :help => false, :debug => false,
                            InlineCommentSpaceWarning::OPTION_KEY => 2,
-                           :"line-length" => nil,
+                           :"line-length" => nil, :only => nil, :stdin => false,
                            :__using__ => Warning.all_warnings,
                            :__fix__ => Warning.all_warnings}
       scanner = mock(:scanner)
@@ -37,6 +37,31 @@ describe Runner do
 
       runner.should_receive(:display_warnings).with([warning1, warning2], expected_settings)
 
+      runner.run
+    end
+    
+    it 'works with :stdin => true' do
+      runner = Runner.new(['--stdin', '--only', 'UselessDoubleQuotesWarning'])
+      expected_settings = {:"report-fixed"=>false, :fix => false, :help => false,
+                           :debug => false, InlineCommentSpaceWarning::OPTION_KEY => 2,
+                           :"line-length" => nil, :only => 'UselessDoubleQuotesWarning',
+                           :stdin => true, :stdin_given => true, :only_given => true,
+                           :__using__ => [UselessDoubleQuotesWarning],
+                           :__fix__ => [UselessDoubleQuotesWarning]}
+      scanner = mock(:scanner)
+      Scanner.should_receive(:new, expected_settings).and_return(scanner)
+
+      data1 = mock(:data1)
+      warning1 = mock(:warning1)
+
+      scanner.should_receive(:settings).twice.and_return({:"report-fixed" => true})
+      STDIN.should_receive(:read).and_return(data1)
+      scanner.should_receive(:scan).
+              with(data1, '(stdin)').
+              and_return([warning1])
+      warning1.should_receive(:to_ary)
+
+      runner.should_receive(:display_warnings).with([warning1], expected_settings)
       runner.run
     end
   end
@@ -88,6 +113,22 @@ describe Runner do
       settings = runner.swizzling_argv { runner.get_settings }
       settings[:"report-fixed"].should be_true
       settings[:"report-fixed_given"].should be_true
+    end
+  end
+
+  context '#handle_global_options' do
+    it 'specifies :using and :fix when :only is provided' do
+      runner = Runner.new([])
+      runner.handle_global_options(:only => 'UselessDoubleQuotesWarning')
+      runner.using.should == [UselessDoubleQuotesWarning]
+      runner.fix.should == [UselessDoubleQuotesWarning]
+    end
+    
+    it 'works with multiple short names' do
+      runner = Runner.new([])
+      runner.handle_global_options(:only => 'ST1,ST3')
+      runner.using.size.should == 2
+      runner.using.each {|w| w.ancestors.should include(Warning) }
     end
   end
 

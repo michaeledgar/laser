@@ -18,6 +18,14 @@ module Wool
     def self.all_warnings
       @all_warnings ||= [self]
     end
+    
+    # Returns all "concrete" warnings, that is, those that have an actual
+    # implementation. No meta-warnings like FileWarning/LineWarning.
+    #
+    # @return [Array<Class>] the concrete warnings you might want to use
+    def self.concrete_warnings
+      all_warnings - [self, FileWarning, LineWarning]
+    end
 
     # All types should be shared and modified by *all* subclasses. This makes
     # Wool::Warning.all_types a global registry.
@@ -56,6 +64,13 @@ module Wool
       else
         @type
       end
+    end
+
+    # Adds an instance method that extracts a key from the settings of
+    # the warning. This is a simple way of storing metadata about the
+    # discovered error/issue for presentational purposes.
+    def self.setting_accessor(*syms)
+      syms.each { |sym| class_eval("def #{sym}\n  @settings[#{sym.inspect}]\nend") }
     end
 
     # Default initializer.

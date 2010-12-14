@@ -51,5 +51,12 @@ describe UselessDoubleQuotesWarning do
       warnings.size.should == 1
       warnings.first.fix('simple %Q{example, okay?}').should == "simple %q{example, okay?}"
     end
+        
+    it 'fixes a simple string inside a complex one' do
+      checker = UselessDoubleQuotesWarning.new('(stdin)', 'simple "example, #{h "guy"} okay?"')
+      warnings = checker.match?
+      warnings.size.should == 1
+      warnings.first.fix('simple "example, #{h "guy"} okay?"').should == 'simple "example, #{h \'guy\'} okay?"'
+    end
   end
 end

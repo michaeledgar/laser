@@ -79,3 +79,11 @@ def swizzling_io
 ensure
   $stdout = old_stdout
 end
+
+def swizzling_stdin
+  old_stdin, $stdin = $stdin, StringIO.new
+  yield $stdin
+  return $stdin.string
+ensure
+  $stdin = old_stdin
+end
