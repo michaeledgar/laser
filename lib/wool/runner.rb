@@ -14,7 +14,7 @@ module Wool
       settings[:__fix__] = warnings_to_fix
       scanner = Scanner.new(settings)
       warnings = collect_warnings(files, scanner)
-      display_warnings(warnings, settings)
+      display_warnings(warnings, settings) if settings[:display]
     end
 
     def collect_options_and_arguments
@@ -56,6 +56,7 @@ module Wool
       Trollop::options do
         banner 'Ask Peeves - the Ruby Linter'
         opt :fix, 'Should errors be fixed in-line?', :short => '-f'
+        opt :display, 'Should errors be displayed?', :short => '-b', :default => true
         opt :"report-fixed", 'Should fixed errors be reported anyway?', :short => '-r'
         opt :"line-length", 'Warn at the given line length', :short => '-l', :type => :int
         opt :only, 'Only consider the given warning (by short or full name)', :short => '-O', :type => :string
@@ -125,10 +126,10 @@ module Wool
       full_list = files.map do |file|
         data = file == '(stdin)' ? STDIN.read : File.read(file)
         if scanner.settings[:fix]
-          scanner.settings[:output_file] = File.open(file, 'w')
+          scanner.settings[:output_file] = scanner.settings[:stdin] ? STDOUT : File.open(file, 'w')
         end
         results = scanner.scan(data, file)
-        scanner.settings[:output_file].close if scanner.settings[:fix]
+        scanner.settings[:output_file].close if scanner.settings[:fix] && !scanner.settings[:stdin]
         results
       end
       full_list.flatten
@@ -145,7 +146,7 @@ module Wool
 
       results = "#{num_total} warnings found. #{num_fixable} are fixable."
       puts results
-      puts "=" * results.size
+      puts '=' * results.size
 
       warnings.each do |warning|
         puts "#{warning.file}:#{warning.line_number} #{warning.name} (#{warning.severity}) - #{warning.desc}"

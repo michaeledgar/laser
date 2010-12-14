@@ -12,6 +12,7 @@ describe Runner do
                            :fix => false, :help => false, :debug => false,
                            InlineCommentSpaceWarning::OPTION_KEY => 2,
                            :"line-length" => nil, :only => nil, :stdin => false,
+                           :display => true,
                            :__using__ => Warning.all_warnings,
                            :__fix__ => Warning.all_warnings}
       scanner = mock(:scanner)
@@ -46,6 +47,7 @@ describe Runner do
                            :debug => false, InlineCommentSpaceWarning::OPTION_KEY => 2,
                            :"line-length" => nil, :only => 'UselessDoubleQuotesWarning',
                            :stdin => true, :stdin_given => true, :only_given => true,
+                           :display => true,
                            :__using__ => [UselessDoubleQuotesWarning],
                            :__fix__ => [UselessDoubleQuotesWarning]}
       scanner = mock(:scanner)
