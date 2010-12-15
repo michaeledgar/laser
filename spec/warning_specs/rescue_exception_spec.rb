@@ -38,6 +38,68 @@ describe RescueExceptionWarning do
   end
 
   context '#fix' do
+    it 'fixes a rescue of Exception as the only type' do
+      input = <<-EOF
+begin
+  puts x
+rescue Exception  # bad
+end
+EOF
+      output = <<-EOF
+begin
+  puts x
+rescue StandardError  # bad
+end
+EOF
+      RescueExceptionWarning.new('(stdin)', input).match?(input).first.fix.should == output
+    end
     
+    it 'fixes a rescue of Exception with an additional identifier' do
+      input = <<-EOF
+begin
+  puts x
+rescue Exception => e  # bad
+end
+EOF
+      output = <<-EOF
+begin
+  puts x
+rescue StandardError => e  # bad
+end
+EOF
+      RescueExceptionWarning.new('(stdin)', input).match?(input).first.fix.should == output
+    end
+    
+    it 'fixes a rescue of Exception that is specified second' do
+      input = <<-EOF
+begin
+  puts x
+rescue StandardError, Exception  # bad
+end
+EOF
+      output = <<-EOF
+begin
+  puts x
+rescue StandardError, StandardError  # bad
+end
+EOF
+      RescueExceptionWarning.new('(stdin)', input).match?(input).first.fix.should == output
+    end
+    
+    it 'fixes a rescue of Exception that is specified second w/ addl identifier' do
+      input = <<-EOF
+begin
+  puts x
+rescue StandardError, Exception => e  # bad
+end
+EOF
+      output = <<-EOF
+begin
+  puts x
+rescue StandardError, StandardError => e  # bad
+end
+EOF
+      RescueExceptionWarning.new('(stdin)', input).match?(input).first.fix.should == output
+    end
   end
 end

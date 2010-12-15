@@ -4,6 +4,7 @@ class Wool::RescueExceptionWarning < Wool::FileWarning
   type :dangerous
   short_desc 'rescue Exception is dangerous'
   desc 'The line rescues "Exception" or "Object", which is too broad. Rescue StandardError instead.'
+  setting_accessor :position
 
   def match?(file = self.body)
     find_sexps(:rescue).map do |_, types, name|
@@ -16,7 +17,8 @@ class Wool::RescueExceptionWarning < Wool::FileWarning
       list.map do |type|
         if type[0] == :var_ref &&
            type[1][0] == :@const && type[1][1] == "Exception"
-          warning = RescueExceptionWarning.new(file, body)
+          warning = RescueExceptionWarning.new(file, body, :position => type[1][2])
+          warning.position[0] -= 1
           warning.line_number = type[1][2][1]
           warning
         end
@@ -25,6 +27,15 @@ class Wool::RescueExceptionWarning < Wool::FileWarning
   end
 
   def fix
-    body
+    result = ""
+    all_lines = self.body.lines.to_a
+    result << all_lines[0..position[0]-1].join if position[0]-1 >= 0
+    result << all_lines[position[0]][0,position[1]]
+    result << 'StandardError'
+    if trailing = all_lines[position[0]][position[1] + 'Exception'.size .. -1]
+      result << trailing
+    end
+    result << all_lines[position[0]+1..-1].join if position[0]+1 < all_lines.size
+    result
   end
 end
