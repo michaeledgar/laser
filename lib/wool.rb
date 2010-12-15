@@ -14,6 +14,19 @@ require 'wool/analysis/protocol_registry'
 require 'wool/analysis/scope'
 require 'wool/analysis/annotations'
 require 'wool/advice/comment_advice'
+
+module Wool
+  # MOVE THIS
+  # TODO(adgar): move this to someplace effing sensible
+  def self.initialize_global_scope
+    object_class = SexpAnalysis::WoolClass.new('Object', nil)
+    SexpAnalysis::ProtocolRegistry.register_class_protocol(object_class.protocol)
+    global = SexpAnalysis::Scope.new(nil, SexpAnalysis::Symbol.new(object_class), {'Object' => object_class})
+    SexpAnalysis::Scope.const_set("GlobalScope", global) unless SexpAnalysis.const_defined?("GlobalScope")
+    object_class.instance_variable_set("@scope", SexpAnalysis::Scope::GlobalScope)
+  end
+  initialize_global_scope
+end
 # Runners
 require 'wool/runner'
 require 'wool/rake/task'

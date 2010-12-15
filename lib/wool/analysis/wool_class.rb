@@ -26,8 +26,10 @@ module Wool
     # Wool representation of a method. This name is tweaked so it doesn't
     # collide with ::Method.
     class WoolMethod
+      extend ModuleExtensions
       attr_reader :name, :signatures
-
+      attr_accessor_with_default :pure, false
+      
       def initialize(name)
         @name = name
         @signatures = []

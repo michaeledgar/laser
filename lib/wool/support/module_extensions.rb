@@ -4,6 +4,17 @@ module Wool
   # This prevents conflicts with other libraries defining extensions
   # of the same name.
   module ModuleExtensions
+    # Creates an attr_accessor that defaults to a certain value.
+    def attr_accessor_with_default(name, val)
+      ivar_sym = ":@#{name}".intern
+      define_method name do
+        unless instance_variable_defined?(ivar_sym)
+          instance_variable_set(ivar_sym, val)
+        end
+        instance_variable_get ivar_sym
+      end
+      attr_writer name
+    end
     # Creates a reader for the given instance variables on the class object.
     def cattr_reader(*attrs)
       attrs.each do |attr|

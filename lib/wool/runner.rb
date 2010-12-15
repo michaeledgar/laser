@@ -12,7 +12,6 @@ module Wool
       settings, files = collect_options_and_arguments
       settings[:__using__] = warnings_to_consider
       settings[:__fix__] = warnings_to_fix
-      initialize_global_scope
       scanner = Scanner.new(settings)
       warnings = collect_warnings(files, scanner)
       display_warnings(warnings, settings) if settings[:display]
@@ -113,15 +112,6 @@ module Wool
       yield
     ensure
       ARGV.replace old_argv
-    end
-
-    # MOVE THIS
-    # TODO(adgar): move this to someplace effing sensible
-    def initialize_global_scope
-      object_class = SexpAnalysis::WoolClass.new('Object')
-      SexpAnalysis::ProtocolRegistry.register_class_protocol(object_class.protocol)
-      global = SexpAnalysis::Scope.new(nil, SexpAnalysis::Symbol.new(object_class), {'Object' => object_class})
-      SexpAnalysis.const_set("GlobalScope", global) unless SexpAnalysis.const_defined?("GlobalScope")
     end
 
     # Collects warnings from all the provided files by running them through
