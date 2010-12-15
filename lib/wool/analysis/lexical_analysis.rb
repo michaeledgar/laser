@@ -3,8 +3,18 @@ module Wool
   # lexical analysis of their bodies. This module handles tokenizing only - not
   # parse-trees.
   module LexicalAnalysis
+    # This is a wrapper class around the tokens returned by Ripper. Since the
+    # tokens are just arrays, this class lets us use nice mnemonics with almost zero
+    # runtime overhead.
     class Token < Struct.new(:type, :body, :line, :col)
-      
+      # Unpacks the token from Ripper and breaks it into its separate components.
+      #
+      # @param [Array<Array<Integer, Integer>, Symbol, String>] token the token
+      #     from Ripper that we're wrapping
+      def initialize(token)
+        pos, self.type, self.body = token
+        self.line, self.col = pos
+      end
     end
     
     # Lexes the given text.
@@ -16,7 +26,7 @@ module Wool
     #   why the 1 is always there. At any rate - the result is an array of those
     #   tokens.
     def lex(body = self.body)
-      Ripper.lex(body)
+      Ripper.lex(body).map {|token| Token.new(token) }
     end
 
     # Returns the text between two token positions. The token positions are
@@ -37,13 +47,13 @@ module Wool
     def text_between_token_positions(text, left, right, inclusive = :none)
       result = ""
       lines = text.lines.to_a
-      left[0][0].upto(right[0][0]) do |cur_line|
+      left.line.upto(right.line) do |cur_line|
         line = lines[cur_line - 1]
-        result << left[2] if cur_line == left[0][0] && (inclusive == :both || inclusive == :left)
-        left_bound = cur_line == left[0][0] ? left[0][1] + left[2].size : 0
-        right_bound = cur_line == right[0][0] ? right[0][1] - 1 : -1
+        result << left.body if cur_line == left.line && (inclusive == :both || inclusive == :left)
+        left_bound = cur_line == left.line ? left.col + left.body.size : 0
+        right_bound = cur_line == right.line ? right.col - 1 : -1
         result << line[left_bound..right_bound]
-        result << right[2] if cur_line == right[0][0] && (inclusive == :both || inclusive == :right)
+        result << right.body if cur_line == right.line && (inclusive == :both || inclusive == :right)
       end
       result
     end
@@ -63,7 +73,7 @@ module Wool
       while (token = find_token(body, *list)) && token != nil
         result << token if yield(*token)
         _, body = split_on_token(body, *list)
-        body = body[token[2].size..-1]
+        body = body[token.body.size..-1]
       end
       return result
     end
@@ -81,8 +91,8 @@ module Wool
       list.map! {|x| x.to_s}
       lexed = lex(body)
       lexed.find.with_index do |tok, idx|
-        is_keyword = tok[1] == :on_kw && list.include?(tok[2])
-        is_not_symbol = idx == 0 || lexed[idx-1][1] != :on_symbeg
+        is_keyword = tok.type == :on_kw && list.include?(tok.body)
+        is_not_symbol = idx == 0 || lexed[idx-1].type != :on_symbeg
         is_keyword && is_not_symbol
       end
     end
@@ -99,8 +109,8 @@ module Wool
       body, list = _extract_token_search_args(args)
       lexed = lex(body)
       lexed.find.with_index do |tok, idx|
-        is_token = list.include?(tok[1])
-        is_not_symbol = idx == 0 || lexed[idx-1][1] != :on_symbeg
+        is_token = list.include?(tok.type)
+        is_not_symbol = idx == 0 || lexed[idx-1].type != :on_symbeg
         is_token && is_not_symbol
       end
     end
@@ -148,7 +158,7 @@ module Wool
     end
 
     def _split_body_with_raw_token(body, token)
-      max = token ? [0, token[0][1]].max : body.size
+      max = token ? [0, token.col].max : body.size
       return body[0,max], body[max..-1]
     end
   end

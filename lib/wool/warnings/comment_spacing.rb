@@ -9,7 +9,7 @@ class Wool::InlineCommentSpaceWarning < Wool::LineWarning
 
   def match?(line = self.body)
     return false unless comment_token = find_token(:on_comment)
-    comment_pos = comment_token[0][1] - 1
+    comment_pos = comment_token.col - 1
     left_of_comment = line[0..comment_pos]
     stripped = left_of_comment.rstrip
     return false if stripped.empty?
@@ -19,9 +19,9 @@ class Wool::InlineCommentSpaceWarning < Wool::LineWarning
 
   def fix
     comment_token = find_token(:on_comment)
-    comment_pos = comment_token[0][1] - 1
+    comment_pos = comment_token.col - 1
     left_of_comment = line[0..comment_pos].rstrip
-    left_of_comment + (' ' * spacing) + comment_token.last
+    left_of_comment + (' ' * spacing) + comment_token.body
   end
 
   def spacing

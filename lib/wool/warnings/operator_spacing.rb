@@ -6,7 +6,7 @@ class Wool::OperatorSpacing < Wool::LineWarning
   type :style
   severity 5
   short_desc 'No operator spacing'
-  desc { "Insufficient spacing around #{self.match?(self.line)[2]}" }
+  desc { "Insufficient spacing around #{self.match?(self.line).body}" }
 
   def match?(line = self.body)
     working_line = ignore_block_params line
@@ -15,11 +15,11 @@ class Wool::OperatorSpacing < Wool::LineWarning
     working_line = ignore_array_splat_idiom working_line
     lexed = lex(working_line)
     lexed.each_with_index do |token, idx|
-      next unless token[1] == :on_op
+      next unless token.type == :on_op
       next if idx == lexed.size - 1  # Last token on line (continuation) is ok
-      next if token[2] == '-' && [:on_float, :on_int].include?(lexed[idx+1][1])
-      return token if lexed[idx+1][1] != :on_sp && lexed[idx+1][1] != :on_op
-      return token if idx > 0 && ![:on_sp, :on_op].include?(lexed[idx-1][1])
+      next if token.body == '-' && [:on_float, :on_int].include?(lexed[idx+1].type)
+      return token if lexed[idx+1].type != :on_sp && lexed[idx+1].type != :on_op
+      return token if idx > 0 && ![:on_sp, :on_op].include?(lexed[idx-1].type)
     end
     nil
   end
