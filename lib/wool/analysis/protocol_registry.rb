@@ -9,6 +9,15 @@ module Wool
       cattr_accessor_with_default :protocols, []
       cattr_accessor_with_default :class_protocols, {}
 
+      def self.add_protocol(proto)
+        self.protocols << proto
+      end
+      
+      def self.register_class_protocol(class_protocol)
+        add_protocol class_protocol
+        self.class_protocols[class_protocol.class.path] = class_protocol
+      end
+
       def self.[](class_name)
         return query(:class_path => class_name.gsub(/^::/, ''))
       end
