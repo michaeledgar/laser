@@ -29,3 +29,22 @@ describe SexpAnalysis::Protocols::ClassProtocol do
     end
   end
 end
+
+describe SexpAnalysis::Protocols::UnionProtocol do
+  before do
+    @first, @second, @third = mock(:proto1), mock(:proto2), mock(:proto3)
+    @union = SexpAnalysis::Protocols::UnionProtocol.new([@first, @second, @third])
+  end
+  
+  context '#signatures' do
+    it "returns the union of all the protocols' signatures" do
+      sigs = mock(:sig1), mock(:sig2), mock(:sig3), mock(:sig4), mock(:sig5), mock(:sig6)
+      [@first, @second, @third].each_with_index do |proto, idx|
+        proto.should_receive(:signatures).and_return(sigs[idx * 2, 3])
+      end
+      final_sigs = @union.signatures
+      sigs.each {|sig| final_sigs.should include(sig)}
+    end
+  end
+end
+    

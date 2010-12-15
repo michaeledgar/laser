@@ -42,7 +42,7 @@ module Wool
         #
         # @return [Array<Signature>] the supported signatures for this protocol.
         def signatures
-          @protocols.inject(:|)
+          @protocols.map(&:signatures).inject(:|)
         end
       end
       
