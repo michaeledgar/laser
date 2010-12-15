@@ -1,6 +1,6 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 require 'set'
-describe Annotations::ParentAnnotation do
+describe SexpAnalysis::ParentAnnotation do
   it 'adds the #parent method to Sexp' do
     SexpAnalysis::Sexp.instance_methods.should include(:parent)
   end
@@ -9,7 +9,7 @@ describe Annotations::ParentAnnotation do
     tree = SexpAnalysis::Sexp.new([:abc, SexpAnalysis::Sexp.new([:def, 1, 2]),
                                    SexpAnalysis::Sexp.new([:zzz, SexpAnalysis::Sexp.new([:return]), 
                                                            "hi", SexpAnalysis::Sexp.new([:silly, 4])])])
-    Annotations::ParentAnnotation::Annotator.new.annotate!(tree)
+    SexpAnalysis::ParentAnnotation::Annotator.new.annotate!(tree)
     tree.parent.should == nil
     tree[1].parent.should == tree
     tree[2].parent.should == tree

@@ -1,5 +1,5 @@
 module Wool
-  module Annotations
+  module SexpAnalysis
     # This is a simple inherited attribute applied to each node,
     # giving a pointer to that node's parent. That way AST traversal
     # is easier.

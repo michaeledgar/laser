@@ -1,6 +1,6 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 require 'set'
-describe Annotations::NextPrevAnnotation do
+describe SexpAnalysis::NextPrevAnnotation do
   it 'adds the #next and #prev methods to Sexp' do
     SexpAnalysis::Sexp.instance_methods.should include(:next)
     SexpAnalysis::Sexp.instance_methods.should include(:prev)
@@ -10,7 +10,7 @@ describe Annotations::NextPrevAnnotation do
     tree = SexpAnalysis::Sexp.new([:abc, SexpAnalysis::Sexp.new([:def, 1, 2]),
                                    SexpAnalysis::Sexp.new([:zzz, SexpAnalysis::Sexp.new([:return]), 
                                                            "hi", SexpAnalysis::Sexp.new([:silly, 4])])])
-    Annotations::NextPrevAnnotation::Annotator.new.annotate!(tree)
+    SexpAnalysis::NextPrevAnnotation::Annotator.new.annotate!(tree)
     tree[1].prev.should == nil
     tree[1].next.should == tree[2]
     tree[2].prev.should == tree[1]
