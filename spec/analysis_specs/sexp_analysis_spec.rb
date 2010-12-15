@@ -60,6 +60,43 @@ describe SexpAnalysis do
           x.weird_thing_2!.should == "world"
         end
       end
+      
+      context '#eval_as_constant' do
+        it 'converts :var_ref constants' do
+          result = mock
+          scope = SexpAnalysis::Scope.new(nil, nil, {'B' => result})
+          sexp = SexpAnalysis::Sexp.new([:var_ref, [:@const, 'B', [1, 17]]])
+          sexp.eval_as_constant(scope).should == result
+        end
+
+        it 'converts :const_ref constants' do
+          result = mock
+          scope = SexpAnalysis::Scope.new(nil, nil, {'C' => result})
+          sexp = SexpAnalysis::Sexp.new([:const_ref, [:@const, 'C', [4, 17]]])
+          sexp.eval_as_constant(scope).should == result
+        end
+        
+        it 'converts :top_const_ref constants' do
+          result = mock
+          SexpAnalysis::Scope::GlobalScope.constants['__testing_ref__'] = result
+          sexp = SexpAnalysis::Sexp.new([:top_const_ref, [:@const, '__testing_ref__', [4, 17]]])
+          sexp.eval_as_constant(nil).should == result
+        end
+        
+        it 'converts :const_path_ref constants' do
+          input = [:const_path_ref, [:const_path_ref, [:const_path_ref, [:const_path_ref,
+                   [:var_ref, [:@const, "B", [1, 7]]], [:@const, "M", [1, 10]]],
+                   [:@const, "C", [1, 13]]], [:@const, "D", [1, 16]]], [:@const, "E", [1, 19]]]
+          global, b_sym, m_sym, c_sym, d_sym, e_sym = mock, mock, mock, mock, mock, mock
+          global.should_receive(:constants).and_return({'B' => b_sym})
+          b_sym.should_receive(:constants).and_return({'M' => m_sym})
+          m_sym.should_receive(:constants).and_return({'C' => c_sym})
+          c_sym.should_receive(:constants).and_return({'D' => d_sym})
+          d_sym.should_receive(:constants).and_return({'E' => e_sym})
+          sexp = SexpAnalysis::Sexp.new(input)
+          sexp.eval_as_constant(global).should == e_sym
+        end
+      end
     end
   end
   

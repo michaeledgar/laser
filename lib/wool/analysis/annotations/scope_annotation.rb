@@ -12,8 +12,12 @@ module Wool
       class Annotator
         include Visitor
         def annotate!(root)
-          
+          @current_scope = Scope::GlobalScope
           visit(root)
+        end
+        
+        def visit_module
+          
         end
       end
       add_global_annotator Annotator
