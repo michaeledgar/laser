@@ -6,11 +6,11 @@ describe SexpAnalysis::WoolClass do
     @a = SexpAnalysis::WoolClass.new('A')
     @b = SexpAnalysis::WoolClass.new('B') do |b|
       b.add_method(SexpAnalysis::WoolMethod.new('foo') do |method|
-        method.add_signature(@a, [])
-        method.add_signature(b, [@a])
+        method.add_signature(@a.protocol, [])
+        method.add_signature(b.protocol, [@a.protocol])
       end)
       b.add_method(SexpAnalysis::WoolMethod.new('bar') do |method|
-        method.add_signature(b, [@a, b])
+        method.add_signature(b.protocol, [@a.protocol, b.protocol])
       end)
     end
   end
@@ -21,9 +21,12 @@ describe SexpAnalysis::WoolClass do
     end
     
     it "flattens all its method's signatures" do
-      @b.signatures.should include(SexpAnalysis::Signature.new('foo', @a, []))
-      @b.signatures.should include(SexpAnalysis::Signature.new('foo', @b, [@a]))
-      @b.signatures.should include(SexpAnalysis::Signature.new('bar', @b, [@a, @b]))
+      @b.signatures.should include(
+          SexpAnalysis::Signature.new('foo', @a.protocol, []))
+      @b.signatures.should include(
+          SexpAnalysis::Signature.new('foo', @b.protocol, [@a.protocol]))
+      @b.signatures.should include(
+          SexpAnalysis::Signature.new('bar', @b.protocol, [@a.protocol, @b.protocol]))
     end
   end
 end
@@ -37,10 +40,12 @@ describe SexpAnalysis::WoolMethod do
   
   context '#add_signature' do
     it 'creates signature objects and returns them in #signatures' do
-      @method.add_signature(@a, [])
-      @method.add_signature(@b, [@a, @a])
-      @method.signatures.should include(SexpAnalysis::Signature.new('foobar', @a, []))
-      @method.signatures.should include(SexpAnalysis::Signature.new('foobar', @b, [@a, @a]))
+      @method.add_signature(@a.protocol, [])
+      @method.add_signature(@b.protocol, [@a.protocol, @a.protocol])
+      @method.signatures.should include(
+          SexpAnalysis::Signature.new('foobar', @a.protocol, []))
+      @method.signatures.should include(
+          SexpAnalysis::Signature.new('foobar', @b.protocol, [@a.protocol, @a.protocol]))
     end
   end
   

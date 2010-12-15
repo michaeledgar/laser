@@ -57,6 +57,18 @@ module Wool
           @class = klass
         end
         
+        # Compares two ClassProtocols. Has a short-circuit check if two protocols
+        # refer to the same class or not. Otherwise, it has to check the signatures.
+        #
+        # @param [Protocols::Base] other the other protocol to compare against
+        # @return [-1, 0, 1] a standard comparison result.
+        def <=>(other)
+          if ClassProtocol === other && self.class == other.class
+          then return 0
+          else self.signatures <=> other.signatures
+          end
+        end
+        
         # Returns all the signatures that the class responds to, since this protocol
         # has the same signatures.
         #
