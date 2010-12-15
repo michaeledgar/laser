@@ -2,12 +2,57 @@ module Wool
   # This is a set of methods that get provided to Warnings so they can perform
   # parse-tree analysis of their bodies.
   module SexpAnalysis
+    # Replaces the ParseTree Sexps by adding a few handy-dandy methods.
+    class Sexp < Array
+      # Returns a mutable reference to the list of annotations that will run
+      # upon initializing a new Sexp.
+      #
+      # @return [Array[Class < Annotation]] the activated annotations, in the
+      #    order they will run in.
+      def self.annotations
+        @annotations ||= []
+      end
+      
+      # Initializes the Sexp with the contents of the array returned by Ripper.
+      #
+      # @param [Array<Object>] other the other 
+      def initialize(other)
+        replace other
+        replace_children!
+        self.class.annotations.each do |klass|
+          klass.new.annotate!(self)
+        end
+      end
+      
+      # @return [Array<Object>] the children of the node.
+      def children
+        self[1..-1]
+      end
+      
+      # @return [Symbol] the type of the node.
+      def type
+        self[0]
+      end
+      
+      # Replaces the children with Sexp versions of them
+      def replace_children!
+        replace([self[0]] + self[1..-1].map do |x|
+          case x
+          when Array
+            self.class.new(x)
+          else x
+          end
+        end)
+      end
+      private :replace_children!
+    end
+    
     # Parses the given text.
     #
     # @param [String] body (self.body) The text to parse
     # @return [Sexp, NilClass] the sexp representing the input text.
     def parse(body = self.body)
-      Ripper.sexp(body)
+      Sexp.new Ripper.sexp(body)
     end
     
     # Finds all sexps of the given type in the given Sexp tree.
