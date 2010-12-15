@@ -9,7 +9,7 @@ class Wool::GenericLineLengthWarning < Wool::LineWarning
   end
 
   def match?(body = self.body)
-    !!(line.size > self.class.line_length_limit)
+    !!(line.rstrip.size > self.class.line_length_limit)
   end
 
   def fix(content_stack = nil)
