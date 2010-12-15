@@ -5,6 +5,7 @@ require 'wool/support/module_extensions'
 require 'wool/advice/advice'
 require 'wool/analysis/lexical_analysis'
 require 'wool/analysis/sexp_analysis'
+require 'wool/analysis/annotations'
 require 'wool/advice/comment_advice'
 # Runners
 require 'wool/runner'

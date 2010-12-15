@@ -26,7 +26,7 @@ module Wool
       
       # @return [Array<Object>] the children of the node.
       def children
-        self[1..-1]
+        (Array === self[0] ? self : self[1..-1]) || []
       end
       
       # @return [Symbol] the type of the node.
@@ -36,7 +36,7 @@ module Wool
       
       # Replaces the children with Sexp versions of them
       def replace_children!
-        replace([self[0]] + self[1..-1].map do |x|
+        replace(map do |x|
           case x
           when Array
             self.class.new(x)
