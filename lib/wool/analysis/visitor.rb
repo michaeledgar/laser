@@ -12,7 +12,7 @@ module Wool
         case node
         when Sexp
           case node[0]
-          when Symbol
+          when ::Symbol
             send("visit_#{node[0]}", node)
           when Array
             node.each {|x| visit(x)}
