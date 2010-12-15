@@ -1,5 +1,4 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
-require 'pp'
 
 describe SexpAnalysis::Protocols::ClassProtocol do
   before do

@@ -20,7 +20,7 @@ module Wool
   # TODO(adgar): move this to someplace effing sensible
   def self.initialize_global_scope
     object_class = SexpAnalysis::WoolClass.new('Object', nil)
-    SexpAnalysis::ProtocolRegistry.register_class_protocol(object_class.protocol)
+    SexpAnalysis::ProtocolRegistry.add_class_protocol(object_class.protocol)
     global = SexpAnalysis::Scope.new(nil, SexpAnalysis::Symbol.new(object_class), {'Object' => object_class})
     SexpAnalysis::Scope.const_set("GlobalScope", global) unless SexpAnalysis.const_defined?("GlobalScope")
     object_class.instance_variable_set("@scope", SexpAnalysis::Scope::GlobalScope)

@@ -48,13 +48,13 @@ module Wool
       
       # A protocol that has the same signatures as a given class.
       class ClassProtocol < Base
-        attr_reader :class
+        attr_reader :class_used
 
         # Initializes the class protocol with the given class.
         #
         # @param [WoolClass] klass the wool class whose protocol we are representing
         def initialize(klass)
-          @class = klass
+          @class_used = klass
         end
         
         # Compares two ClassProtocols. Has a short-circuit check if two protocols
@@ -63,7 +63,7 @@ module Wool
         # @param [Protocols::Base] other the other protocol to compare against
         # @return [-1, 0, 1] a standard comparison result.
         def <=>(other)
-          if ClassProtocol === other && self.class == other.class
+          if ClassProtocol === other && self.class_used == other.class_used
           then return 0
           else self.signatures <=> other.signatures
           end
@@ -74,7 +74,7 @@ module Wool
         #
         # @return [Array<Signature>] the supported signatures for this protocol.
         def signatures
-          @class.signatures
+          @class_used.signatures
         end
       end
     end

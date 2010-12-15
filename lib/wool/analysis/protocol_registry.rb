@@ -13,9 +13,9 @@ module Wool
         self.protocols << proto
       end
       
-      def self.register_class_protocol(class_protocol)
+      def self.add_class_protocol(class_protocol)
         add_protocol class_protocol
-        self.class_protocols[class_protocol.class.path] = class_protocol
+        self.class_protocols[class_protocol.class_used.path] = class_protocol
       end
 
       def self.[](class_name)
