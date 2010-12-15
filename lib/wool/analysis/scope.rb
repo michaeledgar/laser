@@ -8,13 +8,6 @@ module Wool
       def initialize(parent, self_ptr, constants={})
         @parent, @self_ptr, @constants = parent, self_ptr, constants
       end
-
-      def self.initialize_global_scope
-        object_class = WoolClass.new('Object')
-        ProtocolRegistry.register_class_protocol(object_class.protocol)
-        global = Scope.new(nil, Symbol.new(object_class), {'Object' => object_class})
-      end
-      GlobalScope = initialize_global_scope
     end
   end
 end
