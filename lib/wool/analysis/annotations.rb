@@ -13,9 +13,13 @@ module Wool
     # this bad form!
     module BasicAnnotation
       def add_annotator(*args)
-        SexpAnalysis::Sexp.__send__(:annotations).concat args
+        SexpAnalysis::Sexp.annotations.concat args.map(&:new)
       end
       alias_method :add_annotators, :add_annotator
+      def add_global_annotator(*args)
+        SexpAnalysis.global_annotations.concat args.map(&:new)
+      end
+      alias_method :add_global_annotators, :add_global_annotator
       def add_property(*args)
         SexpAnalysis::Sexp.__send__(:attr_accessor, *args)
       end
