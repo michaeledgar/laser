@@ -88,18 +88,22 @@ describe SexpAnalysis do
                    [:var_ref, [:@const, "B", [1, 7]]], [:@const, "M", [1, 10]]],
                    [:@const, "C", [1, 13]]], [:@const, "D", [1, 16]]], [:@const, "E", [1, 19]]]
           global, b_sym, m_sym, c_sym, d_sym, e_sym = mock, mock, mock, mock, mock, mock
+          b_scope, m_scope, c_scope, d_scope = mock, mock, mock, mock
           global.should_receive(:constants).and_return({'B' => b_sym})
-          b_sym.should_receive(:constants).and_return({'M' => m_sym})
-          m_sym.should_receive(:constants).and_return({'C' => c_sym})
-          c_sym.should_receive(:constants).and_return({'D' => d_sym})
-          d_sym.should_receive(:constants).and_return({'E' => e_sym})
+          b_sym.should_receive(:scope).and_return(b_scope)
+          b_scope.should_receive(:constants).and_return({'M' => m_sym})
+          m_sym.should_receive(:scope).and_return(m_scope)
+          m_scope.should_receive(:constants).and_return({'C' => c_sym})
+          c_sym.should_receive(:scope).and_return(c_scope)
+          c_scope.should_receive(:constants).and_return({'D' => d_sym})
+          d_sym.should_receive(:scope).and_return(d_scope)
+          d_scope.should_receive(:constants).and_return({'E' => e_sym})
           sexp = Sexp.new(input)
           sexp.eval_as_constant(global).should == e_sym
         end
       end
     end
   end
-  
   
   before do
     @class = Class.new do

@@ -60,7 +60,9 @@ module Wool
         when :@const then scope.constants[self[1]]
         # [:const_path_ref, [:var_ref, [:@const, "B", [1, 17]]], [:@const, "M", [1, 20]]]
         when :const_path_ref
-          children.inject(scope) {|scope, const| const.eval_as_constant(scope) }
+          left, right = children
+          scope = left.eval_as_constant(scope).scope
+          right.eval_as_constant(scope)
         end
       end
     end

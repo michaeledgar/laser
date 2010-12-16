@@ -21,10 +21,12 @@ module Wool
         end
         
         def visit_module(node)
-          path_node = node.children.first
-          body = node.children[1]
-          
-          node.scope = @current_scope
+          path_node, body = node.children
+        end
+        
+        def visit_class(node)
+          path_to_new_class, superclass, body = node.children
+          superclass = superclass ? superclass.eval_as_constant(@current_scope) : ClassRegistry['Object']
         end
       end
       add_global_annotator Annotator
