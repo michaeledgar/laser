@@ -4,21 +4,19 @@ require 'rake'
 begin
   require 'jeweler'
   Jeweler::Tasks.new do |gem|
-    gem.name = "wool"
-    gem.summary = %Q{Analysis and Linting tool for Ruby.}
+    gem.name = 'wool'
+    gem.summary = %Q{Analysis and linting tool for Ruby.}
     gem.description = %Q{Wool is an advanced static analysis tool for Ruby.}
-    gem.email = "michael.j.edgar@dartmouth.edu"
-    gem.homepage = "http://github.com/michaeledgar/wool"
-    gem.authors = ["Michael Edgar"]
-    gem.add_dependency "ruby_parser", ">= 2.0.5"
-    gem.add_dependency "ruby2ruby", ">= 1.2.4"
-    gem.add_development_dependency "rspec", ">= 1.2.9"
-    gem.add_development_dependency "yard", ">= 0"
+    gem.email = 'michael.j.edgar@dartmouth.edu'
+    gem.homepage = 'http://github.com/michaeledgar/wool'
+    gem.authors = ['Michael Edgar']
+    gem.add_development_dependency 'rspec', '>= 1.2.9'
+    gem.add_development_dependency 'yard', '>= 0'
     # gem is a Gem::Specification... see http://www.rubygems.org/read/chapter/20 for additional settings
   end
   Jeweler::GemcutterTasks.new
 rescue LoadError
-  puts "Jeweler (or a dependency) not available. Install it with: gem install jeweler"
+  puts 'Jeweler (or a dependency) not available. Install it with: gem install jeweler'
 end
 
 require 'spec/rake/spectask'
@@ -31,7 +29,7 @@ task :rcov => :default
 
 require 'rake/testtask'
 Rake::TestTask.new do |t|
-  t.libs << "test"
+  t.libs << 'test'
   t.test_files = FileList['test/**/test*.rb']
   t.verbose = true
 end
