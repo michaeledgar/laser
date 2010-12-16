@@ -20,10 +20,13 @@ module Wool
         end
       end
       
+      def default_visit(node)
+        node.children.select {|x| Sexp === x}.each {|x| visit(x) }
+      end
+      
       def method_missing(meth, *args, &blk)
         if meth.to_s[0,6] == 'visit_'
-          node = args.first
-          node.children.select {|x| Sexp === x}.each {|x| visit(x) }
+          default_visit args.first
         else
           raise
         end

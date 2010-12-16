@@ -1,15 +1,15 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 require 'pp'
 
-describe SexpAnalysis::WoolClass do
+describe WoolClass do
   before do
-    @a = SexpAnalysis::WoolClass.new('A')
-    @b = SexpAnalysis::WoolClass.new('B') do |b|
-      b.add_method(SexpAnalysis::WoolMethod.new('foo') do |method|
+    @a = WoolClass.new('A')
+    @b = WoolClass.new('B') do |b|
+      b.add_method(WoolMethod.new('foo') do |method|
         method.add_signature(@a.protocol, [])
         method.add_signature(b.protocol, [@a.protocol])
       end)
-      b.add_method(SexpAnalysis::WoolMethod.new('bar') do |method|
+      b.add_method(WoolMethod.new('bar') do |method|
         method.add_signature(b.protocol, [@a.protocol, b.protocol])
       end)
     end
@@ -22,20 +22,20 @@ describe SexpAnalysis::WoolClass do
     
     it "flattens all its method's signatures" do
       @b.signatures.should include(
-          SexpAnalysis::Signature.new('foo', @a.protocol, []))
+          Signature.new('foo', @a.protocol, []))
       @b.signatures.should include(
-          SexpAnalysis::Signature.new('foo', @b.protocol, [@a.protocol]))
+          Signature.new('foo', @b.protocol, [@a.protocol]))
       @b.signatures.should include(
-          SexpAnalysis::Signature.new('bar', @b.protocol, [@a.protocol, @b.protocol]))
+          Signature.new('bar', @b.protocol, [@a.protocol, @b.protocol]))
     end
   end
 end
 
-describe SexpAnalysis::WoolMethod do
+describe WoolMethod do
   before do
-    @a = SexpAnalysis::WoolClass.new('A')
-    @b = SexpAnalysis::WoolClass.new('B')
-    @method = SexpAnalysis::WoolMethod.new('foobar')
+    @a = WoolClass.new('A')
+    @b = WoolClass.new('B')
+    @method = WoolMethod.new('foobar')
   end
   
   context '#add_signature' do
@@ -43,9 +43,9 @@ describe SexpAnalysis::WoolMethod do
       @method.add_signature(@a.protocol, [])
       @method.add_signature(@b.protocol, [@a.protocol, @a.protocol])
       @method.signatures.should include(
-          SexpAnalysis::Signature.new('foobar', @a.protocol, []))
+          Signature.new('foobar', @a.protocol, []))
       @method.signatures.should include(
-          SexpAnalysis::Signature.new('foobar', @b.protocol, [@a.protocol, @a.protocol]))
+          Signature.new('foobar', @b.protocol, [@a.protocol, @a.protocol]))
     end
   end
   

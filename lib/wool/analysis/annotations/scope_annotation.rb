@@ -16,8 +16,9 @@ module Wool
           visit(root)
         end
         
-        def visit_module
-          
+        def visit_module(node)
+          path_node = node.children.first
+          body = node.children[1]
         end
       end
       add_global_annotator Annotator

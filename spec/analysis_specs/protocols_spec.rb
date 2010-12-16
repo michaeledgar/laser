@@ -1,15 +1,15 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 
-describe SexpAnalysis::Protocols::ClassProtocol do
+describe Protocols::ClassProtocol do
   before do
-    a = SexpAnalysis::WoolClass.new('A')
+    a = WoolClass.new('A')
     @a_proto = a.protocol
-    b = SexpAnalysis::WoolClass.new('B') do |b|
-      b.add_method(SexpAnalysis::WoolMethod.new('foo') do |method|
+    b = WoolClass.new('B') do |b|
+      b.add_method(WoolMethod.new('foo') do |method|
         method.add_signature(@a_proto, [])
         method.add_signature(b.protocol, [@a_proto])
       end)
-      b.add_method(SexpAnalysis::WoolMethod.new('bar') do |method|
+      b.add_method(WoolMethod.new('bar') do |method|
         method.add_signature(b.protocol, [@a_proto, b.protocol])
       end)
     end
@@ -22,17 +22,17 @@ describe SexpAnalysis::Protocols::ClassProtocol do
     end
     
     it "gets its class's signatures when they are specified, which are its methods' signatures" do
-      @b_proto.signatures.should include(SexpAnalysis::Signature.new('foo', @a_proto, []))
-      @b_proto.signatures.should include(SexpAnalysis::Signature.new('foo', @b_proto, [@a_proto]))
-      @b_proto.signatures.should include(SexpAnalysis::Signature.new('bar', @b_proto, [@a_proto, @b_proto]))
+      @b_proto.signatures.should include(Signature.new('foo', @a_proto, []))
+      @b_proto.signatures.should include(Signature.new('foo', @b_proto, [@a_proto]))
+      @b_proto.signatures.should include(Signature.new('bar', @b_proto, [@a_proto, @b_proto]))
     end
   end
 end
 
-describe SexpAnalysis::Protocols::UnionProtocol do
+describe Protocols::UnionProtocol do
   before do
     @first, @second, @third = mock(:proto1), mock(:proto2), mock(:proto3)
-    @union = SexpAnalysis::Protocols::UnionProtocol.new([@first, @second, @third])
+    @union = Protocols::UnionProtocol.new([@first, @second, @third])
   end
   
   context '#signatures' do

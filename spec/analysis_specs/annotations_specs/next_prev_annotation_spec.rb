@@ -1,16 +1,16 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 require 'set'
-describe SexpAnalysis::NextPrevAnnotation do
+describe NextPrevAnnotation do
   it 'adds the #next and #prev methods to Sexp' do
-    SexpAnalysis::Sexp.instance_methods.should include(:next)
-    SexpAnalysis::Sexp.instance_methods.should include(:prev)
+    Sexp.instance_methods.should include(:next)
+    Sexp.instance_methods.should include(:prev)
   end
   
   it 'adds next and prevs to each node with a toy example' do
-    tree = SexpAnalysis::Sexp.new([:abc, SexpAnalysis::Sexp.new([:def, 1, 2]),
-                                   SexpAnalysis::Sexp.new([:zzz, SexpAnalysis::Sexp.new([:return]), 
-                                                           "hi", SexpAnalysis::Sexp.new([:silly, 4])])])
-    SexpAnalysis::NextPrevAnnotation::Annotator.new.annotate!(tree)
+    tree = Sexp.new([:abc, Sexp.new([:def, 1, 2]),
+                                   Sexp.new([:zzz, Sexp.new([:return]), 
+                                                           "hi", Sexp.new([:silly, 4])])])
+    NextPrevAnnotation::Annotator.new.annotate!(tree)
     tree[1].prev.should == nil
     tree[1].next.should == tree[2]
     tree[2].prev.should == tree[1]
@@ -24,7 +24,7 @@ describe SexpAnalysis::NextPrevAnnotation do
   # This will actually verify that every node in the tree has a
   # proper parent set. It's a complex, but thorough test.
   it 'adds next and prevs to each node with a real-world parse result' do
-    tree = SexpAnalysis::Sexp.new(Ripper.sexp('x = proc {|x, *rst, &blk| p x ** rst[0]; blk.call(rst[1..-1])}'))
+    tree = Sexp.new(Ripper.sexp('x = proc {|x, *rst, &blk| p x ** rst[0]; blk.call(rst[1..-1])}'))
     tree.next.should == nil
     tree.prev.should == nil
     visited = Set.new

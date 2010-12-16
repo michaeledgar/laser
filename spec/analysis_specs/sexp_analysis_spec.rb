@@ -1,9 +1,9 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 
 describe SexpAnalysis do
-  describe SexpAnalysis::Sexp do
+  describe Sexp do
     before do
-      @sexp = SexpAnalysis::Sexp.new([:if, [:abc, 2, 3], [:def, 4, 5], nil])
+      @sexp = Sexp.new([:if, [:abc, 2, 3], [:def, 4, 5], nil])
     end
     
     describe '#type' do
@@ -22,7 +22,7 @@ describe SexpAnalysis do
       end
       
       it 'returns everything in an array if a whole-array sexp' do
-        SexpAnalysis::Sexp.new([[:abc], 2, 3, [:def, 3, 4]]).children.should == [[:abc], 2, 3, [:def, 3, 4]]
+        Sexp.new([[:abc], 2, 3, [:def, 3, 4]]).children.should == [[:abc], 2, 3, [:def, 3, 4]]
       end
     end
     
@@ -45,17 +45,17 @@ describe SexpAnalysis do
               "world"
             end
           end
-          @old_annotations, SexpAnalysis::Sexp.annotations = SexpAnalysis::Sexp.annotations, [annotator_1, annotator_2]
+          @old_annotations, Sexp.annotations = Sexp.annotations, [annotator_1, annotator_2]
         end
         
         after do
-          SexpAnalysis::Sexp.annotations = @old_annotations
+          Sexp.annotations = @old_annotations
         end
         
         it 'runs the annotators in order' do
           x = Object.new
           def x.name; "x"; end
-          result = SexpAnalysis::Sexp.new([x])
+          result = Sexp.new([x])
           x.weird_thing!.should == "silly!"
           x.weird_thing_2!.should == "world"
         end
@@ -64,22 +64,22 @@ describe SexpAnalysis do
       context '#eval_as_constant' do
         it 'converts :var_ref constants' do
           result = mock
-          scope = SexpAnalysis::Scope.new(nil, nil, {'B' => result})
-          sexp = SexpAnalysis::Sexp.new([:var_ref, [:@const, 'B', [1, 17]]])
+          scope = Scope.new(nil, nil, {'B' => result})
+          sexp = Sexp.new([:var_ref, [:@const, 'B', [1, 17]]])
           sexp.eval_as_constant(scope).should == result
         end
 
         it 'converts :const_ref constants' do
           result = mock
-          scope = SexpAnalysis::Scope.new(nil, nil, {'C' => result})
-          sexp = SexpAnalysis::Sexp.new([:const_ref, [:@const, 'C', [4, 17]]])
+          scope = Scope.new(nil, nil, {'C' => result})
+          sexp = Sexp.new([:const_ref, [:@const, 'C', [4, 17]]])
           sexp.eval_as_constant(scope).should == result
         end
         
         it 'converts :top_const_ref constants' do
           result = mock
-          SexpAnalysis::Scope::GlobalScope.constants['__testing_ref__'] = result
-          sexp = SexpAnalysis::Sexp.new([:top_const_ref, [:@const, '__testing_ref__', [4, 17]]])
+          Scope::GlobalScope.constants['__testing_ref__'] = result
+          sexp = Sexp.new([:top_const_ref, [:@const, '__testing_ref__', [4, 17]]])
           sexp.eval_as_constant(nil).should == result
         end
         
@@ -93,7 +93,7 @@ describe SexpAnalysis do
           m_sym.should_receive(:constants).and_return({'C' => c_sym})
           c_sym.should_receive(:constants).and_return({'D' => d_sym})
           d_sym.should_receive(:constants).and_return({'E' => e_sym})
-          sexp = SexpAnalysis::Sexp.new(input)
+          sexp = Sexp.new(input)
           sexp.eval_as_constant(global).should == e_sym
         end
       end
