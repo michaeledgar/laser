@@ -5,7 +5,7 @@
 
 Gem::Specification.new do |s|
   s.name = %q{wool}
-  s.version = "0.5.0"
+  s.version = "0.5.1"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Michael Edgar"]
@@ -104,13 +104,14 @@ Gem::Specification.new do |s|
      "spec/warning_specs/useless_double_quotes_spec.rb",
      "spec/wool_spec.rb",
      "status_reports/2010/12/2010-12-14.md",
-     "test/third_party_tests/test_trollop.rb"
+     "test/third_party_tests/test_trollop.rb",
+     "wool.gemspec"
   ]
   s.homepage = %q{http://github.com/michaeledgar/wool}
   s.rdoc_options = ["--charset=UTF-8"]
   s.require_paths = ["lib"]
   s.rubygems_version = %q{1.3.6}
-  s.summary = %q{Style-focused linter for Ruby code.}
+  s.summary = %q{Analysis and Linting tool for Ruby.}
   s.test_files = [
     "spec/advice_specs/advice_spec.rb",
      "spec/advice_specs/comment_advice_spec.rb",
