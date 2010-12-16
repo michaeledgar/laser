@@ -11,7 +11,7 @@ Gem::Specification.new do |s|
   s.authors = ["Michael Edgar"]
   s.date = %q{2010-12-16}
   s.default_executable = %q{wool}
-  s.description = %q{Unlike existing lint tools, wool intends solely to examine Ruby code for style issues.}
+  s.description = %q{Wool is an advanced static analysis tool for Ruby.}
   s.email = %q{michael.j.edgar@dartmouth.edu}
   s.executables = ["wool"]
   s.extra_rdoc_files = [

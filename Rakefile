@@ -5,8 +5,8 @@ begin
   require 'jeweler'
   Jeweler::Tasks.new do |gem|
     gem.name = "wool"
-    gem.summary = %Q{Style-focused linter for Ruby code.}
-    gem.description = %Q{Unlike existing lint tools, wool intends solely to examine Ruby code for style issues.}
+    gem.summary = %Q{Analysis and Linting tool for Ruby.}
+    gem.description = %Q{Wool is an advanced static analysis tool for Ruby.}
     gem.email = "michael.j.edgar@dartmouth.edu"
     gem.homepage = "http://github.com/michaeledgar/wool"
     gem.authors = ["Michael Edgar"]
