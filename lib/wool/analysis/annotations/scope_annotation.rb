@@ -24,6 +24,7 @@ module Wool
         
         def visit_module(node)
           path_node, body = node.children
+          
         end
         
         def visit_class(node)
