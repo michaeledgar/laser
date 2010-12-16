@@ -13,6 +13,7 @@ module Wool
         @protocol = Protocols::ClassProtocol.new(self)
         @scope = scope
         @class_object = Symbol.new(@protocol, self)
+        ProtocolRegistry.add_class_protocol(@protocol)
         yield self if block_given?
       end
       
