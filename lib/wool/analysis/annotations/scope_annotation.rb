@@ -16,6 +16,8 @@ module Wool
           visit(root)
         end
         
+        # Replaces the general node visit method with one that assigns
+        # the current scope to the visited node.
         def default_visit(node)
           node.scope = @current_scope
         end

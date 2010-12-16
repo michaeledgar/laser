@@ -21,7 +21,7 @@ module Wool
   def self.initialize_global_scope
     object_class = SexpAnalysis::WoolClass.new('Object', nil)
     SexpAnalysis::ProtocolRegistry.add_class_protocol(object_class.protocol)
-    global = SexpAnalysis::Scope.new(nil, SexpAnalysis::Symbol.new(object_class.protocol, object_class), {'Object' => object_class})
+    global = SexpAnalysis::Scope.new(nil, object_class.class_object, {'Object' => object_class})
     SexpAnalysis::Scope.const_set("GlobalScope", global) unless SexpAnalysis.const_defined?("GlobalScope")
     object_class.instance_variable_set("@scope", SexpAnalysis::Scope::GlobalScope)
     module_class = SexpAnalysis::WoolClass.new('Module')
