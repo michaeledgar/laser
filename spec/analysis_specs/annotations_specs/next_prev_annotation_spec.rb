@@ -8,8 +8,7 @@ describe NextPrevAnnotation do
   
   it 'adds next and prevs to each node with a toy example' do
     tree = Sexp.new([:abc, Sexp.new([:def, 1, 2]),
-                                   Sexp.new([:zzz, Sexp.new([:return]), 
-                                                           "hi", Sexp.new([:silly, 4])])])
+                    Sexp.new([:zzz, Sexp.new([:return]), "hi", Sexp.new([:silly, 4])])])
     NextPrevAnnotation::Annotator.new.annotate!(tree)
     tree[1].prev.should == nil
     tree[1].next.should == tree[2]

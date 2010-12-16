@@ -21,10 +21,8 @@ describe WoolClass do
     end
     
     it "flattens all its method's signatures" do
-      @b.signatures.should include(
-          Signature.new('foo', @a.protocol, []))
-      @b.signatures.should include(
-          Signature.new('foo', @b.protocol, [@a.protocol]))
+      @b.signatures.should include(Signature.new('foo', @a.protocol, []))
+      @b.signatures.should include(Signature.new('foo', @b.protocol, [@a.protocol]))
       @b.signatures.should include(
           Signature.new('bar', @b.protocol, [@a.protocol, @b.protocol]))
     end
@@ -42,8 +40,7 @@ describe WoolMethod do
     it 'creates signature objects and returns them in #signatures' do
       @method.add_signature(@a.protocol, [])
       @method.add_signature(@b.protocol, [@a.protocol, @a.protocol])
-      @method.signatures.should include(
-          Signature.new('foobar', @a.protocol, []))
+      @method.signatures.should include(Signature.new('foobar', @a.protocol, []))
       @method.signatures.should include(
           Signature.new('foobar', @b.protocol, [@a.protocol, @a.protocol]))
     end

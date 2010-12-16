@@ -4,7 +4,8 @@ module Wool
     # clash with regular Class. This links the class to its protocol. It
     # has lists of methods, instance variables, and so on.
     class WoolClass
-      attr_reader :path, :methods, :protocol, :superclass, :scope
+      attr_reader :path, :methods, :protocol, :scope
+      attr_accessor :superclass
 
       def initialize(full_path, scope = Scope::GlobalScope)
         @path = full_path

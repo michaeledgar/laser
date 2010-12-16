@@ -7,8 +7,7 @@ describe ParentAnnotation do
   
   it 'adds parents to each node with a toy example' do
     tree = Sexp.new([:abc, Sexp.new([:def, 1, 2]),
-                                   Sexp.new([:zzz, Sexp.new([:return]), 
-                                                           "hi", Sexp.new([:silly, 4])])])
+                    Sexp.new([:zzz, Sexp.new([:return]),  "hi", Sexp.new([:silly, 4])])])
     ParentAnnotation::Annotator.new.annotate!(tree)
     tree.parent.should == nil
     tree[1].parent.should == tree

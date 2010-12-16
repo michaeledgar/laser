@@ -16,9 +16,15 @@ module Wool
           visit(root)
         end
         
+        def default_visit(node)
+          node.scope = @current_scope
+        end
+        
         def visit_module(node)
           path_node = node.children.first
           body = node.children[1]
+          
+          node.scope = @current_scope
         end
       end
       add_global_annotator Annotator
