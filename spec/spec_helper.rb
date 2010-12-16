@@ -4,8 +4,8 @@ require 'simplecov'
 require 'simplecov-gem-adapter'
 SimpleCov.start 'gem'
 require 'wool'
-require 'spec'
-require 'spec/autorun'
+require 'rspec'
+require 'rspec/autorun'
 require 'stringio'
 
 
@@ -66,8 +66,10 @@ module Wool
   end
 end
 
-Spec::Runner.configure do |config|
+RSpec.configure do |config|
   config.include(Wool::RSpec::Matchers)
+  config.filter_run :focus => true
+  config.run_all_when_everything_filtered = true
 end
 
 def with_examples(*args)

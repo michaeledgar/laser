@@ -10,7 +10,7 @@ begin
     gem.email = 'michael.j.edgar@dartmouth.edu'
     gem.homepage = 'http://github.com/michaeledgar/wool'
     gem.authors = ['Michael Edgar']
-    gem.add_development_dependency 'rspec', '>= 1.2.9'
+    gem.add_development_dependency 'rspec', '~> 2.3'
     gem.add_development_dependency 'yard', '>= 0'
     # gem is a Gem::Specification... see http://www.rubygems.org/read/chapter/20 for additional settings
   end
@@ -19,10 +19,9 @@ rescue LoadError
   puts 'Jeweler (or a dependency) not available. Install it with: gem install jeweler'
 end
 
-require 'spec/rake/spectask'
-Spec::Rake::SpecTask.new(:spec) do |spec|
-  spec.libs << 'lib' << 'spec'
-  spec.spec_files = FileList['spec/**/*_spec.rb']
+require 'rspec/core/rake_task'
+RSpec::Core::RakeTask.new(:spec) do |spec|
+  spec.pattern = FileList['spec/**/*_spec.rb']
 end
 
 task :rcov => :default
