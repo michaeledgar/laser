@@ -46,14 +46,14 @@ describe BasicAnnotation do
   end
   
   context '#add_property' do
+    selectors = [:aaa, :aaa=, :bbb, :bbb=]
     it 'adds accessors to SexpAnalysis::Sexp in a very intrusive manner' do
       @class.add_property :aaa, :bbb
       sexp = Sexp.new([:program, []])
-      sexp.should respond_to(:aaa)
-      sexp.should respond_to(:aaa=)
-      sexp.should respond_to(:bbb)
-      sexp.should respond_to(:bbb=)
-      
+      selectors.each {|sel| sexp.should respond_to(sel)}
+    end
+    after do
+      selectors.each {|sel| Sexp.__send__(:undef_method, sel)}
     end
   end
 end
