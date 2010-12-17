@@ -72,6 +72,10 @@ RSpec.configure do |config|
   config.run_all_when_everything_filtered = true
 end
 
+def many_mocks(n)
+  ([nil] * n).fill { mock }
+end
+
 def with_examples(*args)
   args.each do |arg|
     yield arg

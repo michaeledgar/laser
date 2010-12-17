@@ -15,6 +15,10 @@ module Wool
         yield self if block_given?
       end
       
+      def name
+        self.path.split('::').last
+      end
+      
       def add_method(method)
         @methods[method.name] = method
       end
