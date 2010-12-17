@@ -45,4 +45,15 @@ describe BasicAnnotation do
     end
   end
   
+  context '#add_property' do
+    it 'adds accessors to SexpAnalysis::Sexp in a very intrusive manner' do
+      @class.add_property :aaa, :bbb
+      sexp = Sexp.new([:program, []])
+      sexp.should respond_to(:aaa)
+      sexp.should respond_to(:aaa=)
+      sexp.should respond_to(:bbb)
+      sexp.should respond_to(:bbb=)
+      
+    end
+  end
 end
