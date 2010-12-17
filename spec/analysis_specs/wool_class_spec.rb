@@ -14,6 +14,13 @@ describe WoolModule do
     end
   end
   
+  context '#name' do
+    it 'extracts the name from the full path' do
+      x = WoolClass.new('::A::B::C::D::EverybodysFavoriteClass')
+      x.name.should == 'EverybodysFavoriteClass'
+    end
+  end
+  
   context '#signatures' do
     it 'returns an empty list when no methods are declared' do
       @a.signatures.should be_empty

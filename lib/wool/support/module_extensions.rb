@@ -6,7 +6,7 @@ module Wool
   module ModuleExtensions
     # Creates an attr_accessor that defaults to a certain value.
     def attr_accessor_with_default(name, val)
-      ivar_sym = ":@#{name}".intern
+      ivar_sym = "@#{name}"
       define_method name do
         unless instance_variable_defined?(ivar_sym)
           instance_variable_set(ivar_sym, val)

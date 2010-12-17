@@ -4,10 +4,23 @@ describe ModuleExtensions do
   before do
     @class = Class.new do
       extend ModuleExtensions
+      attr_accessor_with_default :acc, {:a => 2}
       cattr_reader :read1, :read2
       cattr_writer :write1, :write2
       cattr_accessor :both1, :both2
       cattr_accessor_with_default :arr1, []
+    end
+  end
+
+  describe 'attr_accessor_with_default' do
+    it 'creates an reader that defaults to the provided value' do
+      @class.new.acc.should == {:a => 2}
+    end
+    
+    it 'creates a writer that causes the default to be lost forever' do
+      x = @class.new
+      x.acc = {:b => 3}
+      x.acc.should == {:b => 3}
     end
   end
 
