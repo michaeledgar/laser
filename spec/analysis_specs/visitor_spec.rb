@@ -1,4 +1,5 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
+require 'ostruct'
 
 describe Visitor do
   before do
@@ -10,6 +11,17 @@ describe Visitor do
       def visit_bar(node)
         node.product = node[1] * node[2]
       end
+    end
+  end
+  
+  context '#method_missing' do
+    it "calls the default handler if the method looks like 'visit_'" do
+      node = OpenStruct.new
+      node.children = []
+      lambda { @class.new.visit_sillybar(node) }.should_not raise_error
+    end
+    it 'raises if no handler method is defined' do
+      lambda { @class.new.sillybar }.should raise_error(NoMethodError)
     end
   end
   

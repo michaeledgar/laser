@@ -28,7 +28,7 @@ module Wool
         if meth.to_s[0,6] == 'visit_'
           default_visit args.first
         else
-          raise
+          super
         end
       end
     end
