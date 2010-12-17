@@ -1,5 +1,19 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 
+describe Protocols::Base do
+  context '#signatures' do
+    it 'raises a NotImplementedError' do
+      lambda { Protocols::Base.new.signatures }.should raise_error(NotImplementedError)
+    end
+  end
+  
+  context '#signatures' do
+    it 'raises a NotImplementedError' do
+      lambda { Protocols::Base.new <=> Protocols::Base.new }.should raise_error(NotImplementedError)
+    end
+  end
+end
+
 describe Protocols::ClassProtocol do
   before do
     a = WoolClass.new('A')
