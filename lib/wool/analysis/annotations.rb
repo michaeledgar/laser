@@ -7,7 +7,7 @@ module Wool
     # all of which have been annotated. Synthesized attributes are fair game,
     # and adding inherited attributes to subnodes is also fair game.
     #
-    # All annotations add O(V) to the parser runtime.
+    # All annotations add O(V) to the parser running time.
     #
     # This module also provides some helper methods to inject functionality into
     # the Sexp class. Since that's what an annotation is, I don't consider
