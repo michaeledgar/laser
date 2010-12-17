@@ -3,14 +3,14 @@ module Wool
     # Wool representation of a module. Named WoolModule to avoid naming
     # conflicts. It has lists of methods, instance variables, and so on.
     class WoolModule
-      attr_reader :path, :methods, :protocol, :scope, :class_object
+      attr_reader :path, :methods, :protocol, :scope, :object
       
       def initialize(full_path, scope = Scope::GlobalScope)
         @path = full_path
         @methods = {}
         @protocol = Protocols::ClassProtocol.new(self)
         @scope = scope
-        @class_object = Symbol.new(@protocol, self)
+        @object = Symbol.new(@protocol, self)
         ProtocolRegistry.add_class_protocol(@protocol)
         yield self if block_given?
       end
