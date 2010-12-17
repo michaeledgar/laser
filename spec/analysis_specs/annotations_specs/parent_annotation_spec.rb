@@ -22,20 +22,8 @@ describe ParentAnnotation do
     tree = Sexp.new(Ripper.sexp('x = proc {|x, *rst, &blk| p x ** rst[0]; blk.call(rst[1..-1])}'))
     tree.parent.should == nil
     tree.children[0].parent.should == tree
-    visited = Set.new
-    to_visit = tree.children
-    while to_visit.any?
-      todo = to_visit.pop
-      next unless Sexp === todo
-      todo.parent.children.should include(todo) 
-      visited << todo
-      
-      case todo[0]
-      when Array
-        to_visit.concat todo
-      when Symbol
-        to_visit.concat todo.children
-      end
+    all_sexps_in_subtree(tree).each do |node|
+      node.parent.children.should include(node)
     end
   end
 end

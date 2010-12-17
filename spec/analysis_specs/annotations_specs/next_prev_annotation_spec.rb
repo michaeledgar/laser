@@ -27,21 +27,9 @@ describe NextPrevAnnotation do
     tree.next.should == nil
     tree.prev.should == nil
     visited = Set.new
-    to_visit = tree.children
-    while to_visit.any?
-      todo = to_visit.pop
-      next unless is_sexp?(todo)
-      
-      todo.prev.next.should == todo if is_sexp?(todo.prev)
-      todo.next.prev.should == todo if is_sexp?(todo.next)
-
-      visited << todo
-      case todo[0]
-      when Array
-        to_visit.concat todo
-      when Symbol
-        to_visit.concat todo.children
-      end
+    all_sexps_in_subtree(tree).each do |node|
+      node.prev.next.should == node if is_sexp?(node.prev)
+      node.next.prev.should == node if is_sexp?(node.next)
     end
   end
 end
