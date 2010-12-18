@@ -45,7 +45,7 @@ module Wool
           # [:top_const_ref, [:@const, "M", [1, 2]]]
           when :top_const_ref
             temp_cur_scope = Scope::GlobalScope
-            new_mod_name = path_node
+            new_mod_name = constant_name path_node
           # [:const_path_ref, [:var_ref, [:@const, "B", [1, 17]]], [:@const, "M", [1, 20]]]
           when :const_path_ref
             left, right = children
