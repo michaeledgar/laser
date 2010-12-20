@@ -13,6 +13,10 @@ module Wool
           old_initialize(*args)
         end
       end
+      
+      def <=>(other)
+        self.name <=> other.name
+      end
     end
   end
 end

@@ -48,8 +48,8 @@ module Wool
             new_mod_name = constant_name path_node
           # [:const_path_ref, [:var_ref, [:@const, "B", [1, 17]]], [:@const, "M", [1, 20]]]
           when :const_path_ref
-            left, right = children
-            temp_cur_scope = left.eval_as_constant(scope).scope
+            left, right = path_node.children
+            temp_cur_scope = left.eval_as_constant(temp_cur_scope).scope
             new_mod_name = constant_name right
           else
             new_mod_name = constant_name path_node
@@ -57,13 +57,14 @@ module Wool
           new_mod_full_path = scope_path(temp_cur_scope)
           new_mod_full_path << "::" unless new_mod_full_path.empty?
           new_mod_full_path << new_mod_name
-          new_mod = WoolModule.new(new_mod_full_path, temp_cur_scope)
-          instance = Symbol.new(new_mod.protocol, new_mod)
-          instance.name = new_mod_name
-          instance.scope = temp_cur_scope
+          # gotta swizzle in the new scope because the module we create is creating
+          # the new scope!
+          new_scope = Scope.new(temp_cur_scope, nil)
+          new_mod = WoolModule.new(new_mod_full_path, new_scope)
+          new_scope.self_ptr = new_mod.object
           
-          temp_cur_scope.constants[new_mod_name] = instance
-          new_scope = Scope.new(temp_cur_scope, instance)
+          temp_cur_scope.constants[new_mod_name] = new_mod.object
+          
           with_scope new_scope do
             visit(body)
           end
@@ -75,7 +76,7 @@ module Wool
         # end
         
         def scope_path(current)
-          (scope_stack + [current]).map {|x| x.self_ptr.name}.join('::')
+          current.self_ptr.class_used.path.dup
         end
         
         def enter_scope(scope)

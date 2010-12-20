@@ -4,7 +4,7 @@ module Wool
     # a self pointer, and a parent pointer to the enclosing scope.
     # It also has a local variable table.
     class Scope
-      attr_reader :constants, :self_ptr, :parent
+      attr_accessor :constants, :self_ptr, :parent
       def initialize(parent, self_ptr, constants={})
         @parent, @self_ptr, @constants = parent, self_ptr, constants
       end
