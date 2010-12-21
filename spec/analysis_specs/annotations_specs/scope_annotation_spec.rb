@@ -318,17 +318,27 @@ EOF
 ))
     ScopeAnnotation::Annotator.new.annotate!(tree)
     list = tree[1]
-    #wwd_header = list[0][1]
-    #wwd_body = list[0][2]
-    #supermod_header = list[1][1]
-    #supermod_body = list[1][3]
-    #wwd, supermod = wwd_body.scope.self_ptr, supermod_body.scope.self_ptr
-    #
-    #wwd_header.scope.should == Scope::GlobalScope
-    #wwd.class_used.path.should == 'Module'
-    #wwd.value.path.should == 'WWD'
-    #supermod.class_used.path.should == 'Class'
-    #supermod.value.path.should == 'WWD::SuperModule'
-    #supermod.value.superclass.should == ClassRegistry['Module']
+    and_header, and_body = list[0][1..2]
+    or_body = and_body[1][1][2]
+    is_body = or_body[1][1][2]
+    and_mod, or_mod, is_mod = [and_body, or_body, is_body].map {|node| node.scope.self_ptr }
+    and_header.scope.self_ptr.value.path.should == 'Object'
+    and_mod.value.path.should == 'And'
+    or_mod.value.path.should == 'And::Or'
+    is_mod.value.path.should == 'And::Or::Is'
+    reopen_and_body = list[1][2]
+    type_body = reopen_and_body[1][1][3]
+    kind_body = reopen_and_body[1][2][3]
+    silly_body = reopen_and_body[1][3][2]
+    reopen_and_mod, type_class, kind_class, silly_mod =
+        [reopen_and_body, type_body, kind_body, silly_body].map do |node|
+      node.scope.self_ptr
+    end
+    reopen_and_mod.value.path.should == 'And'
+    reopen_and_mod.value.object_id.should == and_mod.value.object_id
+    type_class.value.path.should == 'And::Or::Type'
+    kind_class.value.path.should == 'And::Or::Is::Ten::Kind'
+    kind_class.value.superclass.value.path.should == 'And::Or::Type'
+    silly_mod.value.path.should == 'And::Or::Is::Ten::Kind::Silly'
   end
 end
