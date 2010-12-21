@@ -41,13 +41,7 @@ module Wool
             new_mod_name = const_sexp_name(path_node)
           end
 
-          new_mod_full_path = temp_cur_scope.path
-          new_mod_full_path += "::" unless new_mod_full_path.empty?
-          new_mod_full_path += new_mod_name
-          # gotta swizzle in the new scope because the module we create is creating
-          # the new scope!
-          new_scope = Scope.new(temp_cur_scope, nil)
-          new_mod = WoolModule.new(new_mod_full_path, new_scope)
+          new_scope = temp_cur_scope.lookup_or_create_module(new_mod_name)
           
           with_scope new_scope do
             visit(body)

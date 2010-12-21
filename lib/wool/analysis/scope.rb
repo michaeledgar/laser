@@ -25,6 +25,21 @@ module Wool
         self_ptr.class_used.path
       end
       
+      def lookup_or_create_module(new_mod_name)
+        begin
+          lookup(new_mod_name)
+        rescue Scope::ScopeLookupFailure => err
+          new_mod_full_path = path
+          new_mod_full_path += "::" unless new_mod_full_path.empty?
+          new_mod_full_path += new_mod_name
+          # gotta swizzle in the new scope because the module we create is creating
+          # the new scope!
+          new_scope = Scope.new(self, nil)
+          new_mod = WoolModule.new(new_mod_full_path, new_scope)
+          new_scope
+        end
+      end
+      
       def lookup(str)
         if str =~ /^[A-Z]/ && constants[str]
         then constants[str]
