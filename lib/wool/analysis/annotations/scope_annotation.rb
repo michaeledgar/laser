@@ -54,7 +54,7 @@ module Wool
         def visit_class(node)
           path_node, superclass, body = node.children
           if superclass
-          then superclass = @current_scope.lookup_path(const_sexp_name(superclass))
+          then superclass = @current_scope.lookup_path(const_sexp_name(superclass)).self_ptr
           else superclass = ClassRegistry['Object']
           end
           

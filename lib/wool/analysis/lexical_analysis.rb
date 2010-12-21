@@ -67,16 +67,18 @@ module Wool
     # @param [Symbol] token The rest of the arguments are tokens to search
     #   for. Any number of tokens may be specified.
     # @return [Array<Array>] All the matching tokens for the query
-    def select_token(*args)
-      body, list = _extract_token_search_args(args)
-      result = []
-      while (token = find_token(body, *list)) && token != nil
-        result << token if yield(*token)
-        _, body = split_on_token(body, *list)
-        body = body[token.body.size..-1]
-      end
-      return result
-    end
+    # @deprecated
+    #
+    # def select_token(*args)
+    #   body, list = _extract_token_search_args(args)
+    #   result = []
+    #   while (token = find_token(body, *list)) && token != nil
+    #     result << token if yield(*token)
+    #     _, body = split_on_token(body, *list)
+    #     body = body[token.body.size..-1]
+    #   end
+    #   return result
+    # end
     
     # Finds the first instance of a set of keywords in the body. If no text is
     # given to scan, then the full content is scanned.

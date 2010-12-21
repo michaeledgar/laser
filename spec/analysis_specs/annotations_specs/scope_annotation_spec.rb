@@ -1,6 +1,16 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 require 'set'
 describe ScopeAnnotation do
+  before(:each) do
+    @backup_all = ProtocolRegistry.protocols.dup
+    @backup_map = ProtocolRegistry.class_protocols.dup
+  end
+  
+  after(:each) do
+    ProtocolRegistry.protocols.replace @backup_all
+    ProtocolRegistry.class_protocols.replace @backup_map
+  end
+  
   it 'adds the #scope method to Sexp' do
     Sexp.instance_methods.should include(:scope)
   end
@@ -135,5 +145,51 @@ describe ScopeAnnotation do
     a.value.name.should == 'A'
     b.value.name.should == 'B'
     c.value.name.should == 'C'
+  end
+  
+  # This is the AST that Ripper generates for the parsed code. It is
+  # provided here because otherwise the test is inscrutable.
+  #
+  # sexp = [:program, [
+  #         [:class, [:const_ref, [:@const, "A", [1, 6]]], nil,
+  #           [:bodystmt, [[:void_stmt]], nil, nil, nil]]]]
+  it 'creates a new scope when a class declaration is encountered' do
+    tree = Sexp.new(Ripper.sexp('class C99; end'))
+    ScopeAnnotation::Annotator.new.annotate!(tree)
+    list = tree[1]
+    a_header = list[0][1]
+    a_body = list[0][3]
+    a = a_body.scope.self_ptr
+    
+    a_header.scope.should == Scope::GlobalScope
+    a.class_used.path.should == 'Class'
+    a.value.path.should == 'C99'
+    a.value.superclass.should == ClassRegistry['Object']
+  end
+  
+  # This is the AST that Ripper generates for the parsed code. It is
+  # provided here because otherwise the test is inscrutable.
+  #
+  # sexp = [:program, [
+  #         [:class, [:const_ref, [:@const, "C89", [1, 6]]], nil,
+  #           [:bodystmt, [[:void_stmt]], nil, nil, nil]],
+  #         [:class, [:const_ref, [:@const, "CPP", [1, 22]]], [:var_ref, [:@const, "C89", [1, 28]]],
+  #           [:bodystmt, [[:void_stmt]], nil, nil, nil]]]]
+  it 'creates a new class with the appropriate superclass when specified' do
+    tree = Sexp.new(Ripper.sexp('class C89; end; class CPP < C89; end'))
+    ScopeAnnotation::Annotator.new.annotate!(tree)
+    list = tree[1]
+    a_header = list[0][1]
+    a_body = list[0][3]
+    b_header = list[1][1]
+    b_body = list[1][3]
+    a, b = a_body.scope.self_ptr, b_body.scope.self_ptr
+    
+    a_header.scope.should == Scope::GlobalScope
+    a.class_used.path.should == 'Class'
+    a.value.path.should == 'C89'
+    b.class_used.path.should == 'Class'
+    b.value.path.should == 'CPP'
+    b.value.superclass.should == a.value
   end
 end
