@@ -10,10 +10,15 @@ module Wool
         @methods = {}
         @protocol = Protocols::ClassProtocol.new(self)
         @scope = scope
-        @object = Symbol.new(:protocol => @protocol, :class_used => self, :scope => scope, :name => name)
         ProtocolRegistry.add_class_protocol(@protocol)
+        @object = Symbol.new(:protocol => @protocol, :class_used => wool_class, :scope => scope,
+                             :name => name, :value => self)
         initialize_scope
         yield self if block_given?
+      end
+
+      def wool_class
+        ClassRegistry['Module']
       end
 
       # If this is a new, custom module, we can update the constant
@@ -47,6 +52,10 @@ module Wool
     # It inherits from WoolModule to pull in everything but superclasses.
     class WoolClass < WoolModule
       attr_accessor :superclass
+      
+      def wool_class
+        ClassRegistry['Class']
+      end
       
       def inspect
         "#<WoolClass: #{path} superclass=#{superclass.inspect}>"

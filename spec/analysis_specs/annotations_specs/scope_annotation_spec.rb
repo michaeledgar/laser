@@ -29,8 +29,8 @@ describe ScopeAnnotation do
     expectalot(:scope => { Scope::GlobalScope => [tree, list[0], list[0][1], list[0][2]],
                            Scope::GlobalScope.lookup('A').scope => with_new_scope })
 
-    list[1][2].scope.self_ptr.class_used.path.should == 'A'
-    list[1][2].scope.self_ptr.name.should == 'A'
+    list[1][2].scope.self_ptr.class_used.path.should == 'Module'
+    list[1][2].scope.self_ptr.value.path.should == 'A'
   end
   
   # This is the AST that Ripper generates for the parsed code. It is
@@ -67,7 +67,9 @@ describe ScopeAnnotation do
     ScopeAnnotation::Annotator.new.annotate!(tree)
     list = tree[1]
     mod = list[1][2].scope.self_ptr
-    mod.class_used.path.should == 'ABC::DEF'
+    #mod.class_used.path.should == 'ABC::DEF'
+    mod.class_used.path.should == 'Module'
+    mod.value.path.should == 'ABC::DEF'
     mod.name.should == 'DEF'
     mod.scope.parent.self_ptr.name.should == 'ABC'
     
@@ -119,16 +121,19 @@ describe ScopeAnnotation do
     tree = Sexp.new(Ripper.sexp('module A; module B; module C; end; end; end'))
     ScopeAnnotation::Annotator.new.annotate!(tree)
     list = tree[1]
-
     a_body = list[0][2]
     b_body = a_body[1][1][2]
     c_body = b_body[1][1][2]
     a, b, c = [a_body, b_body, c_body].map {|x| x.scope.self_ptr }
-    a.class_used.path.should == 'A'
-    b.class_used.path.should == 'A::B'
-    c.class_used.path.should == 'A::B::C'
-    a.class_used.name.should == 'A'
-    b.class_used.name.should == 'B'
-    c.class_used.name.should == 'C'
+    
+    a.class_used.path.should == 'Module'
+    b.class_used.path.should == 'Module'
+    c.class_used.path.should == 'Module'
+    a.value.path.should == 'A'
+    b.value.path.should == 'A::B'
+    c.value.path.should == 'A::B::C'
+    a.value.name.should == 'A'
+    b.value.name.should == 'B'
+    c.value.name.should == 'C'
   end
 end

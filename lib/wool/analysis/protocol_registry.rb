@@ -31,7 +31,7 @@ module Wool
     
     module ClassRegistry
       def self.[](class_name)
-        if ProtocolRegistry[class_name]
+        if ProtocolRegistry[class_name].any?
         then ProtocolRegistry[class_name].first.class_used
         else raise ArgumentError.new("No class found with the path #{class_name}.")
         end

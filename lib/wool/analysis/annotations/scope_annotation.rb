@@ -44,7 +44,7 @@ module Wool
           else
             new_mod_name = const_sexp_name(path_node)
           end
-
+          
           new_scope = temp_cur_scope.lookup_or_create_module(new_mod_name)
           with_scope new_scope do
             visit(body)
