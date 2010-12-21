@@ -24,18 +24,12 @@ describe ScopeAnnotation do
   it 'creates a new scope when a simple module declaration is encountered' do
     tree = Sexp.new(Ripper.sexp('a = nil; module A; a = 10; end'))
     ScopeAnnotation::Annotator.new.annotate!(tree)
-    tree.scope.should == Scope::GlobalScope
     list = tree[1]
-    list[0].scope.should == Scope::GlobalScope
-    list[0][1].scope.should == Scope::GlobalScope
-    list[0][2].scope.should == Scope::GlobalScope
-    list[1][2].scope.should_not == Scope::GlobalScope
-    list[1][2].scope.self_ptr.should == Scope::GlobalScope.constants['A']
-    mod = list[1][2].scope.self_ptr
-    mod.name.should == 'A'
-    all_sexps_in_subtree(list[1][2]).each do |node|
-      node.scope.should == list[1][2].scope
-    end
+    with_new_scope = list[1][2], *all_sexps_in_subtree(list[1][2])
+    expectalot(:scope => { Scope::GlobalScope => [tree, list[0], list[0][1], list[0][2]],
+                           Scope::GlobalScope.constants['A'].scope => with_new_scope })
+
+    list[1][2].scope.self_ptr.name.should == 'A'
   end
   
   # This is the AST that Ripper generates for the parsed code. It is
@@ -49,18 +43,12 @@ describe ScopeAnnotation do
   it 'creates a new scope when a simple top-pathed module declaration is encountered' do
     tree = Sexp.new(Ripper.sexp('a = nil; module ::B; a = 10; end'))
     ScopeAnnotation::Annotator.new.annotate!(tree)
-    tree.scope.should == Scope::GlobalScope
     list = tree[1]
-    list[0].scope.should == Scope::GlobalScope
-    list[0][1].scope.should == Scope::GlobalScope
-    list[0][2].scope.should == Scope::GlobalScope
-    list[1][2].scope.should_not == Scope::GlobalScope
-    list[1][2].scope.self_ptr.should == Scope::GlobalScope.constants['B']
-    mod = list[1][2].scope.self_ptr
-    mod.name.should == 'B'
-    all_sexps_in_subtree(list[1][2]).each do |node|
-      node.scope.should == list[1][2].scope
-    end
+    list[1][2].scope.self_ptr.name.should == 'B'
+
+    with_new_scope = list[1][2], *all_sexps_in_subtree(list[1][2])
+    expectalot(:scope => { Scope::GlobalScope => [tree, list[0], list[0][1], list[0][2]],
+                           Scope::GlobalScope.constants['B'].scope => with_new_scope })
   end
   
   # This is the AST that Ripper generates for the parsed code. It is
@@ -78,19 +66,14 @@ describe ScopeAnnotation do
     Scope::GlobalScope.constants['ABC'] = temp_mod.object
     tree = Sexp.new(Ripper.sexp('a = nil; module ABC::DEF; a = 10; end'))
     ScopeAnnotation::Annotator.new.annotate!(tree)
-    tree.scope.should == Scope::GlobalScope
     list = tree[1]
-    list[0].scope.should == Scope::GlobalScope
-    list[0][1].scope.should == Scope::GlobalScope
-    list[0][2].scope.should == Scope::GlobalScope
-    list[1][2].scope.should_not == Scope::GlobalScope
-    list[1][2].scope.self_ptr.should == temp_scope.constants['DEF']
     mod = list[1][2].scope.self_ptr
     mod.class_used.path.should == 'ABC::DEF'
     mod.name.should == 'DEF'
     mod.scope.parent.self_ptr.name.should == 'ABC'
-    all_sexps_in_subtree(list[1][2]).each do |node|
-      node.scope.should == list[1][2].scope
-    end
+    
+    with_new_scope = list[1][2], *all_sexps_in_subtree(list[1][2])
+    expectalot(:scope => { Scope::GlobalScope => [tree, list[0], list[0][1], list[0][2]],
+                           temp_scope.constants['DEF'].scope => with_new_scope })
   end
 end

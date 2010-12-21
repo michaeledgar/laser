@@ -17,6 +17,10 @@ module Wool
       def <=>(other)
         self.name <=> other.name
       end
+      
+      def inspect
+        "#<Symbol: #{self_ptr.name}>"
+      end
     end
   end
 end

@@ -26,6 +26,10 @@ module Wool
       def signatures
         @methods.values.map(&:signatures).flatten
       end
+      
+      def inspect
+        "#<WoolModule: #{path}>"
+      end
     end
 
     # Wool representation of a class. I named it WoolClass so it wouldn't
@@ -33,6 +37,10 @@ module Wool
     # It inherits from WoolModule to pull in everything but superclasses.
     class WoolClass < WoolModule
       attr_accessor :superclass
+      
+      def inspect
+        "#<WoolClass: #{path} superclass=#{superclass.inspect}>"
+      end
     end
 
     # Wool representation of a method. This name is tweaked so it doesn't

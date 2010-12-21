@@ -9,19 +9,15 @@ describe ParentAnnotation do
     tree = Sexp.new([:abc, Sexp.new([:def, 1, 2]),
                     Sexp.new([:zzz, Sexp.new([:return]),  "hi", Sexp.new([:silly, 4])])])
     ParentAnnotation::Annotator.new.annotate!(tree)
-    tree.parent.should == nil
-    tree[1].parent.should == tree
-    tree[2].parent.should == tree
-    tree[2][1].parent.should == tree[2]
-    tree[2][3].parent.should == tree[2]
+    expectalot(:parent => { nil => [tree], tree => [tree[1], tree[2]],
+                            tree[2] => [tree[2][1], tree[2][3]] } )
   end
   
   # This will actually verify that every node in the tree has a
   # proper parent set. It's a complex, but thorough test.
   it 'adds parents to each node with a real-world parse result' do
     tree = Sexp.new(Ripper.sexp('x = proc {|x, *rst, &blk| p x ** rst[0]; blk.call(rst[1..-1])}'))
-    tree.parent.should == nil
-    tree.children[0].parent.should == tree
+    expectalot(:parent => { nil => [tree], tree => [tree.children.first] })
     all_sexps_in_subtree(tree).each do |node|
       node.parent.children.should include(node)
     end

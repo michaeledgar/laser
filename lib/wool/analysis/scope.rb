@@ -8,6 +8,10 @@ module Wool
       def initialize(parent, self_ptr, constants={})
         @parent, @self_ptr, @constants = parent, self_ptr, constants
       end
+      
+      def inspect
+        "#<Scope: #{self_ptr.name}>"
+      end
     end
   end
 end
