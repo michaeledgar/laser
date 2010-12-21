@@ -27,35 +27,39 @@ module Wool
 
         def visit_module(node)
           path_node, body = node.children
-          [node, path_node, *path_node.all_subtrees].each do |subnode|
-            subnode.scope = @current_scope
-          end
+          default_visit(path_node)
+          node.scope = @current_scope
 
           temp_cur_scope, new_mod_name = unpack_path(@current_scope, path_node)
           new_scope = temp_cur_scope.lookup_or_create_module(new_mod_name)
-          with_scope new_scope do
-            visit(body)
-          end
+          visit_with_scope(body, new_scope)
         end
 
         def visit_class(node)
-          path_node, superclass, body = node.children
-          if superclass
-          then superclass = @current_scope.lookup_path(const_sexp_name(superclass)).self_ptr
+          path_node, superclass_node, body = node.children
+          if superclass_node
+          then superclass = @current_scope.lookup_path(const_sexp_name(superclass_node)).self_ptr
           else superclass = ClassRegistry['Object']
           end
           
-          [node, path_node, *path_node.all_subtrees].each do |subnode|
-            subnode.scope = @current_scope
-          end
+          default_visit(path_node)
+          node.scope = @current_scope
+          superclass_node.scope = @current_scope if superclass_node
 
           temp_cur_scope, new_class_name = unpack_path(@current_scope, path_node)
           new_scope = temp_cur_scope.lookup_or_create_class(new_class_name, superclass)
-          with_scope new_scope do
-            visit(body)
-          end
+          visit_with_scope(body, new_scope)
         end
 
+        # Given a current scope and any possible way to describe a constant,
+        # break it into two parts: the name of the final constant, and the
+        # scope it will be in. The actual constant need not yet have an existing
+        # object representing it yet – it will be lookup_or_created later.
+        #
+        # @param [Scope] current_scope the scope to look up the path in
+        # @param [Sexp] path_node the node that describes the constant
+        # @return [Array[Scope,String]] A tuple of the final scope and the
+        #     name of the constant to use (as extracted from the AST)
         def unpack_path(current_scope, path_node)
           case path_node.type
           when :const_path_ref
@@ -69,24 +73,6 @@ module Wool
             new_class_name = const_sexp_name(path_node)
           end
           [current_scope, new_class_name]
-        end
-
-        def enter_scope(scope)
-          @current_scope = scope
-          scope_stack.push scope
-        end
-
-        def exit_scope
-          scope_stack.pop
-          @current_scope = scope_stack.last
-        end
-
-        # Yields with the current scope preserved.
-        def with_scope(scope)
-          enter_scope scope
-          yield
-        ensure
-          exit_scope
         end
 
         # Evaluates the constant reference/path with the given scope
