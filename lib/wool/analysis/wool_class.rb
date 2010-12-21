@@ -12,7 +12,17 @@ module Wool
         @scope = scope
         @object = Symbol.new(:protocol => @protocol, :class_used => self, :scope => scope, :name => name)
         ProtocolRegistry.add_class_protocol(@protocol)
+        initialize_scope
         yield self if block_given?
+      end
+
+      # If this is a new, custom module, we can update the constant
+      # table and perform module initialization.
+      def initialize_scope
+        if @scope && @scope != Scope::GlobalScope
+          @scope.self_ptr = self.object
+          @scope.parent.constants[name] = self.object if @scope.parent
+        end
       end
       
       def name

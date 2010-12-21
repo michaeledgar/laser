@@ -61,9 +61,6 @@ module Wool
           # the new scope!
           new_scope = Scope.new(temp_cur_scope, nil)
           new_mod = WoolModule.new(new_mod_full_path, new_scope)
-          new_scope.self_ptr = new_mod.object
-          
-          temp_cur_scope.constants[new_mod_name] = new_mod.object
           
           with_scope new_scope do
             visit(body)
