@@ -25,7 +25,7 @@ module Wool
         begin
           lookup(new_mod_name).scope
         rescue Scope::ScopeLookupFailure => err
-          new_mod_full_path = path
+          new_mod_full_path = self == GlobalScope ? '' : path
           new_mod_full_path += "::" unless new_mod_full_path.empty?
           new_mod_full_path += new_mod_name
           # gotta swizzle in the new scope because the module we create is creating

@@ -29,6 +29,7 @@ describe ScopeAnnotation do
     expectalot(:scope => { Scope::GlobalScope => [tree, list[0], list[0][1], list[0][2]],
                            Scope::GlobalScope.lookup('A').scope => with_new_scope })
 
+    list[1][2].scope.self_ptr.class_used.path.should == 'A'
     list[1][2].scope.self_ptr.name.should == 'A'
   end
   
@@ -101,5 +102,33 @@ describe ScopeAnnotation do
     # *MUST* Be same objects because this is how we implement re-opening - the
     # second has to modify the same scope as before!
     list[0][2].scope.object_id.should == list[1][2].scope.object_id
+  end
+
+  # This is the AST that Ripper generates for the parsed code. It is
+  # provided here because otherwise the test is inscrutable.
+  #
+  # sexp = [:program, [
+  #         [:module, [:const_ref, [:@const, "A", [1, 7]]],
+  #           [:bodystmt, [[:void_stmt],
+  #            [:module, [:const_ref, [:@const, "B", [1, 17]]],
+  #              [:bodystmt, [[:void_stmt],
+  #               [:module, [:const_ref, [:@const, "C", [1, 27]]],
+  #                 [:bodystmt, [[:void_stmt]],
+  #                  nil, nil, nil]]], nil, nil, nil]]], nil, nil, nil]]]]
+  it 'creates a new scope when a pathed module declaration is encountered' do
+    tree = Sexp.new(Ripper.sexp('module A; module B; module C; end; end; end'))
+    ScopeAnnotation::Annotator.new.annotate!(tree)
+    list = tree[1]
+
+    a_body = list[0][2]
+    b_body = a_body[1][1][2]
+    c_body = b_body[1][1][2]
+    a, b, c = [a_body, b_body, c_body].map {|x| x.scope.self_ptr }
+    a.class_used.path.should == 'A'
+    b.class_used.path.should == 'A::B'
+    c.class_used.path.should == 'A::B::C'
+    a.class_used.name.should == 'A'
+    b.class_used.name.should == 'B'
+    c.class_used.name.should == 'C'
   end
 end
