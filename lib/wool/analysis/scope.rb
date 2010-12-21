@@ -5,7 +5,7 @@ module Wool
     # It also has a local variable table.
     class Scope
       class ScopeLookupFailure < StandardError
-        attr_reader :scope, :query
+        attr_accessor :scope, :query
         def initialize(scope, query)
           @scope, @query = scope, query
           super("Scope #{@scope.inspect} does not contain #{query.inspect}")
@@ -33,6 +33,7 @@ module Wool
         rescue Scope::ScopeLookupFailure => err
           # gotta swizzle in the new scope because the module we create is creating
           # the new scope!
+          
           new_scope = Scope.new(self, nil)
           new_mod = WoolModule.new(submodule_path(new_mod_name), new_scope)
           new_scope
@@ -62,6 +63,13 @@ module Wool
       def lookup(str)
         if str =~ /^[A-Z]/ && constants[str]
         then constants[str]
+        elsif str =~ /^[A-z]/ && parent
+          begin
+            parent.lookup(str)
+          rescue ScopeLookupFailure => err
+            err.scope = self
+            raise err
+          end
         elsif locals[str] then locals[str]
         else raise ScopeLookupFailure.new(self, str)
         end

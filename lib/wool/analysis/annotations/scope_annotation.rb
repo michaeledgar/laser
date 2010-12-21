@@ -82,7 +82,7 @@ module Wool
           when :var_ref, :const_ref, :top_const_ref then sexp[1][1]
           when :@const then sexp[1]
           when :const_path_ref 
-            left, right = children
+            left, right = sexp.children
             const_sexp_name(left) + '::' + const_sexp_name(right)
           end
         end

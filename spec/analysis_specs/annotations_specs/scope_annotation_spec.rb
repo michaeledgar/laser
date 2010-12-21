@@ -127,8 +127,8 @@ describe ScopeAnnotation do
   #               [:module, [:const_ref, [:@const, "C", [1, 27]]],
   #                 [:bodystmt, [[:void_stmt]],
   #                  nil, nil, nil]]], nil, nil, nil]]], nil, nil, nil]]]]
-  it 'creates a new scope when a pathed module declaration is encountered' do
-    tree = Sexp.new(Ripper.sexp('module A; module B; module C; end; end; end'))
+  it 'creates several new scopes when a bunch of nested modules are encountered' do
+    tree = Sexp.new(Ripper.sexp('module A; module B32; module C444; end; end; end'))
     ScopeAnnotation::Annotator.new.annotate!(tree)
     list = tree[1]
     a_body = list[0][2]
@@ -140,11 +140,11 @@ describe ScopeAnnotation do
     b.class_used.path.should == 'Module'
     c.class_used.path.should == 'Module'
     a.value.path.should == 'A'
-    b.value.path.should == 'A::B'
-    c.value.path.should == 'A::B::C'
+    b.value.path.should == 'A::B32'
+    c.value.path.should == 'A::B32::C444'
     a.value.name.should == 'A'
-    b.value.name.should == 'B'
-    c.value.name.should == 'C'
+    b.value.name.should == 'B32'
+    c.value.name.should == 'C444'
   end
   
   # This is the AST that Ripper generates for the parsed code. It is
@@ -221,5 +221,114 @@ describe ScopeAnnotation do
     supermod.class_used.path.should == 'Class'
     supermod.value.path.should == 'WWD::SuperModule'
     supermod.value.superclass.should == ClassRegistry['Module']
+  end
+  
+  # This is the AST that Ripper generates for the parsed code. It is
+  # provided here because otherwise the test is inscrutable.
+  #
+  # sexp = 
+  # [:program,
+  #  [[:module,
+  #    [:const_ref, [:@const, "And", [1, 7]]],
+  #    [:bodystmt,
+  #     [[:void_stmt],
+  #      [:module,
+  #       [:const_ref, [:@const, "Or", [2, 9]]],
+  #       [:bodystmt,
+  #        [[:void_stmt],
+  #         [:module,
+  #          [:const_ref, [:@const, "Is", [3, 11]]],
+  #          [:bodystmt,
+  #           [[:void_stmt],
+  #            [:module,
+  #             [:const_ref, [:@const, "Ten", [4, 13]]],
+  #             [:bodystmt,
+  #              [[:void_stmt],
+  #               [:module,
+  #                [:const_ref, [:@const, "Seven", [5, 15]]],
+  #                [:bodystmt, [[:void_stmt]], nil, nil, nil]]],
+  #              nil, nil, nil]]],
+  #           nil, nil, nil]]],
+  #        nil, nil, nil]]],
+  #     nil, nil, nil]],
+  #   [:module,
+  #    [:const_ref, [:@const, "And", [11, 7]]],
+  #    [:bodystmt,
+  #     [[:void_stmt],
+  #      [:class,
+  #       [:const_path_ref,
+  #        [:var_ref, [:@const, "Or", [12, 8]]],
+  #        [:@const, "Type", [12, 12]]],
+  #       nil,
+  #       [:bodystmt, [[:void_stmt]], nil, nil, nil]],
+  #      [:class,
+  #       [:const_path_ref,
+  #        [:const_path_ref,
+  #         [:const_path_ref,
+  #          [:var_ref, [:@const, "Or", [14, 8]]],
+  #          [:@const, "Is", [14, 12]]],
+  #         [:@const, "Ten", [14, 16]]],
+  #        [:@const, "Kind", [14, 21]]],
+  #       [:const_path_ref,
+  #        [:const_path_ref,
+  #         [:top_const_ref, [:@const, "And", [14, 30]]],
+  #         [:@const, "Or", [14, 35]]],
+  #        [:@const, "Type", [14, 39]]],
+  #       [:bodystmt,
+  #        [[:module,
+  #          [:const_ref, [:@const, "Silly", [15, 11]]],
+  #          [:bodystmt, [[:void_stmt]], nil, nil, nil]]],
+  #        nil, nil, nil]],
+  #      [:module,
+  #       [:const_path_ref,
+  #        [:const_path_ref,
+  #         [:const_path_ref,
+  #          [:const_path_ref,
+  #           [:var_ref, [:@const, "Or", [18, 9]]],
+  #           [:@const, "Is", [18, 13]]],
+  #          [:@const, "Ten", [18, 17]]],
+  #         [:@const, "Kind", [18, 22]]],
+  #        [:@const, "Silly", [18, 28]]],
+  #       [:bodystmt, [[:void_stmt]], nil, nil, nil]]],
+  #     nil, nil, nil]]]]
+  
+  it 'handles a monstrous comprehensive module and class nesting example' do
+    tree = Sexp.new(Ripper.sexp(<<-EOF
+module And
+  module Or
+    module Is
+      module Ten
+        module Seven
+        end
+      end
+    end
+  end
+end
+module And
+  class Or::Type
+  end
+  class Or::Is::Ten::Kind < ::And::Or::Type
+    module Silly
+    end
+  end
+  module Or::Is::Ten::Kind::Silly
+  end
+end
+EOF
+))
+    ScopeAnnotation::Annotator.new.annotate!(tree)
+    list = tree[1]
+    #wwd_header = list[0][1]
+    #wwd_body = list[0][2]
+    #supermod_header = list[1][1]
+    #supermod_body = list[1][3]
+    #wwd, supermod = wwd_body.scope.self_ptr, supermod_body.scope.self_ptr
+    #
+    #wwd_header.scope.should == Scope::GlobalScope
+    #wwd.class_used.path.should == 'Module'
+    #wwd.value.path.should == 'WWD'
+    #supermod.class_used.path.should == 'Class'
+    #supermod.value.path.should == 'WWD::SuperModule'
+    #supermod.value.superclass.should == ClassRegistry['Module']
   end
 end

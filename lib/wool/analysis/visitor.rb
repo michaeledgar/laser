@@ -21,7 +21,7 @@ module Wool
         end
       end
       
-      attr_accessor_with_default :scope_stack, [SexpAnalysis::Scope::GlobalScope]
+      attr_accessor_with_default :scope_stack, [Scope::GlobalScope]
       def enter_scope(scope)
         @current_scope = scope
         scope_stack.push scope

@@ -55,6 +55,7 @@ module Wool
         # @param [WoolClass] klass the wool class whose protocol we are representing
         def initialize(klass)
           @class_used = klass
+          self
         end
         
         # Compares two ClassProtocols. Has a short-circuit check if two protocols

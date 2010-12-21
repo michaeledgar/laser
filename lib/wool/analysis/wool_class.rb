@@ -1,15 +1,36 @@
 module Wool
   module SexpAnalysis
+    class WoolObject
+      extend ModuleExtensions
+      attr_reader :protocol, :scope, :methods
+      
+      def initialize(klass = ClassRegistry['Object'], scope = Scope::GlobalScope)
+        @protocol = klass.protocol
+        @scope = scope
+        @methods = {}
+      end
+      
+      def signatures
+        @methods.values.map(&:signatures).flatten
+      end
+      
+      def add_method(method)
+        @methods[method.name] = method
+      end
+    end
+    
     # Wool representation of a module. Named WoolModule to avoid naming
     # conflicts. It has lists of methods, instance variables, and so on.
-    class WoolModule
-      attr_reader :path, :methods, :protocol, :scope, :object
+    class WoolModule < WoolObject
+      attr_reader :path, :instance_methods, :object
       
       def initialize(full_path, scope = Scope::GlobalScope)
+        super(self, scope)
         @path = full_path
-        @methods = {}
+        @instance_methods = {}
         @protocol = Protocols::ClassProtocol.new(self)
         @scope = scope
+        @methods = {}
         ProtocolRegistry.add_class_protocol(@protocol)
         @object = Symbol.new(:protocol => @protocol, :class_used => wool_class, :scope => scope,
                              :name => name, :value => self)
@@ -34,12 +55,8 @@ module Wool
         self.path.split('::').last
       end
       
-      def add_method(method)
-        @methods[method.name] = method
-      end
-      
-      def signatures
-        @methods.values.map(&:signatures).flatten
+      def add_instance_method(method)
+        @instance_methods[method.name] = method
       end
       
       def inspect
