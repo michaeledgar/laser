@@ -62,7 +62,7 @@ module Wool
       def lookup(str)
         if str =~ /^[A-Z]/ && constants[str]
         then constants[str]
-        elsif locals[str[0,1]]
+        elsif locals[str] then locals[str]
         else raise ScopeLookupFailure.new(self, str)
         end
       end

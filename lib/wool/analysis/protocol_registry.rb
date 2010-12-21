@@ -38,16 +38,25 @@ module Wool
       end
       
       def self.initialize_global_scope
-        class_class = SexpAnalysis::WoolClass.new('Class', nil)
-        module_class = SexpAnalysis::WoolClass.new('Module', nil)
-        object_class = SexpAnalysis::WoolClass.new('Object', nil)
+        class_class = WoolClass.new('Class', nil)
+        module_class = WoolClass.new('Module', nil)
+        object_class = WoolClass.new('Object', nil)
+        class_scope = Scope.new(nil, class_class)
+        module_scope = Scope.new(nil, module_class)
+        object_scope = Scope.new(nil, object_class)
         module_class.superclass = object_class
         class_class.superclass = module_class
-        global = SexpAnalysis::Scope.new(nil, object_class.object, {'Object' => object_class})
-        SexpAnalysis::Scope.const_set("GlobalScope", global) unless SexpAnalysis.const_defined?("GlobalScope")
-        object_class.instance_variable_set("@scope", SexpAnalysis::Scope::GlobalScope)
-        module_class.instance_variable_set("@scope", SexpAnalysis::Scope::GlobalScope)
-        class_class.instance_variable_set("@scope", SexpAnalysis::Scope::GlobalScope)
+        global = Scope.new(nil, object_class.object,
+            {'Object' => object_class, 'Module' => module_class, 'Class' => class_class})
+        unless SexpAnalysis.const_defined?("GlobalScope")
+          Scope.const_set("GlobalScope", global) 
+        end
+        class_scope.parent = Scope::GlobalScope
+        module_scope.parent = Scope::GlobalScope
+        object_scope.parent = Scope::GlobalScope
+        object_class.instance_variable_set("@scope", object_scope)
+        module_class.instance_variable_set("@scope", module_scope)
+        class_class.instance_variable_set("@scope", class_scope)
       end
     end
   end

@@ -188,8 +188,38 @@ describe ScopeAnnotation do
     a_header.scope.should == Scope::GlobalScope
     a.class_used.path.should == 'Class'
     a.value.path.should == 'C89'
+    a.value.superclass.should == ClassRegistry['Object']
     b.class_used.path.should == 'Class'
     b.value.path.should == 'CPP'
     b.value.superclass.should == a.value
+  end
+
+  # This is the AST that Ripper generates for the parsed code. It is
+  # provided here because otherwise the test is inscrutable.
+  #
+  # sexp = [:program,
+  #         [[:module, [:const_ref, [:@const, "WWD", [1, 7]]],
+  #           [:bodystmt, [[:void_stmt]], nil, nil, nil]],
+  #          [:class,
+  #           [:const_path_ref, [:var_ref, [:@const, "WWD", [1, 23]]],
+  #             [:@const, "SuperModule", [1, 28]]],
+  #           [:var_ref, [:@const, "Module", [1, 42]]],
+  #           [:bodystmt, [[:void_stmt]], nil, nil, nil]]]]
+  it 'declares classes inside modules with path-based definitions' do
+    tree = Sexp.new(Ripper.sexp('module WWD; end; class WWD::SuperModule < Module; end'))
+    ScopeAnnotation::Annotator.new.annotate!(tree)
+    list = tree[1]
+    wwd_header = list[0][1]
+    wwd_body = list[0][2]
+    supermod_header = list[1][1]
+    supermod_body = list[1][3]
+    wwd, supermod = wwd_body.scope.self_ptr, supermod_body.scope.self_ptr
+    
+    wwd_header.scope.should == Scope::GlobalScope
+    wwd.class_used.path.should == 'Module'
+    wwd.value.path.should == 'WWD'
+    supermod.class_used.path.should == 'Class'
+    supermod.value.path.should == 'WWD::SuperModule'
+    supermod.value.superclass.should == ClassRegistry['Module']
   end
 end
