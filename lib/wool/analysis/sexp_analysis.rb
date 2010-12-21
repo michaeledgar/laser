@@ -45,26 +45,6 @@ module Wool
         end)
       end
       private :replace_children!
-      
-      # Evaluates the constant reference/path with the given scope
-      # as context.
-      def eval_as_constant(scope)
-        case type
-        # [:var_ref, [:@const, "B", [1, 17]]]
-        when :var_ref then scope.constants[self[1][1]]
-        # [:const_ref, [:@const, "M", [1, 17]]]
-        when :const_ref then scope.constants[self[1][1]]
-        # [:top_const_ref, [:@const, "M", [1, 2]]]
-        when :top_const_ref then Scope::GlobalScope.constants[self[1][1]]
-        # [:@const, "B", [1, 7]]
-        when :@const then scope.constants[self[1]]
-        # [:const_path_ref, [:var_ref, [:@const, "B", [1, 17]]], [:@const, "M", [1, 20]]]
-        when :const_path_ref
-          left, right = children
-          scope = left.eval_as_constant(scope).scope
-          right.eval_as_constant(scope)
-        end
-      end
     end
     
     # Global annotations are only run once, at the root. 

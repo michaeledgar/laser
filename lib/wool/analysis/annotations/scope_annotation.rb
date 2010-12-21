@@ -25,38 +25,25 @@ module Wool
           visit_children(node)
         end
 
-        def constant_name(const)
-          case const.type
-          # [:var_ref, [:@const, "B", [1, 17]]]
-          when :var_ref then return const[1][1]
-          # [:const_ref, [:@const, "M", [1, 17]]]
-          when :const_ref then return const[1][1]
-          # [:top_const_ref, [:@const, "M", [1, 2]]]
-          when :top_const_ref then return const[1][1]
-          # [:@const, "B", [1, 7]]
-          when :@const then return const[1]
-          end
-        end
-
         def visit_module(node)
           temp_cur_scope = @current_scope
           path_node, body = node.children
+          
           case path_node.type
-          # [:top_const_ref, [:@const, "M", [1, 2]]]
-          when :top_const_ref
-            temp_cur_scope = Scope::GlobalScope
-            new_mod_name = constant_name path_node
-          # [:const_path_ref, [:var_ref, [:@const, "B", [1, 17]]], [:@const, "M", [1, 20]]]
           when :const_path_ref
             left, right = path_node.children
-            temp_cur_scope = left.eval_as_constant(temp_cur_scope).scope
-            new_mod_name = constant_name right
+            new_mod_name = const_sexp_name(right)
+            temp_cur_scope = temp_cur_scope.lookup_path(const_sexp_name(left))
+          when :top_const_ref
+            temp_cur_scope = Scope::GlobalScope
+            new_mod_name = const_sexp_name(path_node)
           else
-            new_mod_name = constant_name path_node
+            new_mod_name = const_sexp_name(path_node)
           end
-          new_mod_full_path = scope_path(temp_cur_scope)
-          new_mod_full_path << "::" unless new_mod_full_path.empty?
-          new_mod_full_path << new_mod_name
+
+          new_mod_full_path = temp_cur_scope.path
+          new_mod_full_path += "::" unless new_mod_full_path.empty?
+          new_mod_full_path += new_mod_name
           # gotta swizzle in the new scope because the module we create is creating
           # the new scope!
           new_scope = Scope.new(temp_cur_scope, nil)
@@ -66,15 +53,24 @@ module Wool
             visit(body)
           end
         end
+        
+        # Evaluates the constant reference/path with the given scope
+        # as context.
+        def const_sexp_name(sexp)
+          case sexp.type
+          when :var_ref, :const_ref, :top_const_ref then sexp[1][1]
+          when :@const then sexp[1]
+          when :const_path_ref 
+            left, right = children
+            const_sexp_name(left) + '::' + const_sexp_name(right)
+          end
+        end
+        
         # 
         # def visit_class(node)
         #   path_to_new_class, superclass, body = node.children
         #   superclass = superclass ? superclass.eval_as_constant(@current_scope) : ClassRegistry['Object']
         # end
-        
-        def scope_path(current)
-          current.self_ptr.class_used.path.dup
-        end
         
         def enter_scope(scope)
           @current_scope = scope

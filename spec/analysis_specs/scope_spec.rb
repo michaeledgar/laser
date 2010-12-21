@@ -22,9 +22,9 @@ end
 describe Scope do
   before do
     @new_scope = Scope.new(Scope::GlobalScope, nil)
-    @abd = WoolModule.new('ABD', @new_scope)
+    WoolModule.new('ABD', @new_scope)  # ignore: unused return
     @third_scope = Scope.new(@new_scope, nil)
-    @oop = WoolModule.new('OOP', @third_scope)
+    WoolModule.new('OOP', @third_scope)  # ignore: unused return
   end
 
   describe '#lookup' do
@@ -44,17 +44,17 @@ describe Scope do
     end
   end
   
-  describe '#lookup_constant_with_path' do
+  describe '#lookup_path' do
     it 'looks up 2 scopes in a path' do
-      Scope::GlobalScope.lookup_constant_with_path('ABD::OOP').should == @oop
+      Scope::GlobalScope.lookup_path('ABD::OOP').should == @third_scope
     end
     
     it 'raises a ScopeLookupFailure on failure' do
       lambda {
-        Scope::GlobalScope.lookup_constant_with_path('ABD::ABC987') 
+        Scope::GlobalScope.lookup_path('ABD::ABC987') 
       }.should raise_error(Scope::ScopeLookupFailure)
       begin
-        Scope::GlobalScope.lookup_constant_with_path('ABD::ABC987')
+        Scope::GlobalScope.lookup_path('ABD::ABC987')
       rescue Scope::ScopeLookupFailure => err
         err.scope.should == @new_scope
         err.query.should == 'ABC987'

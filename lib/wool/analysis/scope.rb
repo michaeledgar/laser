@@ -20,7 +20,11 @@ module Wool
       def inspect
         "#<Scope: #{self_ptr.name}>"
       end
-
+      
+      def path
+        self_ptr.class_used.path
+      end
+      
       def lookup(str)
         if str =~ /^[A-Z]/ && constants[str]
         then constants[str]
@@ -29,9 +33,9 @@ module Wool
         end
       end
 
-      def lookup_constant_with_path(path)
+      def lookup_path(path)
         parts = path.split('::')
-        parts.inject(self) { |scope, part| scope.lookup(part).scope }.self_ptr
+        parts.inject(self) { |scope, part| scope.lookup(part).scope }
       end
     end
   end
