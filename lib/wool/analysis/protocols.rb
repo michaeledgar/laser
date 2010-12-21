@@ -37,6 +37,10 @@ module Wool
           @protocols = constituents
         end
         
+        def to_s
+          @protocols.inject {|a, b| "#{a.to_s} U #{b.to_s}"}
+        end
+        
         # Returns the list of all known signatures that this protocol responds
         # to, which is the union of all the constituent protocols.
         #
@@ -58,16 +62,8 @@ module Wool
           self
         end
         
-        # Compares two ClassProtocols. Has a short-circuit check if two protocols
-        # refer to the same class or not. Otherwise, it has to check the signatures.
-        #
-        # @param [Protocols::Base] other the other protocol to compare against
-        # @return [-1, 0, 1] a standard comparison result.
-        def <=>(other)
-          if ClassProtocol === other && self.class_used == other.class_used
-          then return 0
-          else self.signatures <=> other.signatures
-          end
+        def to_s
+          "#<ClassProtocol: #{class_used.path}>"
         end
         
         # Returns all the signatures that the class responds to, since this protocol

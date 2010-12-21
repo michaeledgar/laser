@@ -8,8 +8,8 @@ module Wool
       include Comparable
 
       def <=>(other)
-        [self.name, self.return_protocol, self.argument_protocols] <=>
-            [other.name, other.return_protocol, other.argument_protocols]
+        [self.name, self.return_protocol.to_s, self.argument_protocols.map(&:to_s).sort] <=>
+            [other.name, other.return_protocol.to_s, other.argument_protocols.map(&:to_s).sort]
       end
     end
   end
