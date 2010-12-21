@@ -31,20 +31,7 @@ module Wool
             subnode.scope = @current_scope
           end
 
-          temp_cur_scope = @current_scope
-          
-          case path_node.type
-          when :const_path_ref
-            left, right = path_node.children
-            new_mod_name = const_sexp_name(right)
-            temp_cur_scope = temp_cur_scope.lookup_path(const_sexp_name(left))
-          when :top_const_ref
-            temp_cur_scope = Scope::GlobalScope
-            new_mod_name = const_sexp_name(path_node)
-          else
-            new_mod_name = const_sexp_name(path_node)
-          end
-          
+          temp_cur_scope, new_mod_name = unpack_path(@current_scope, path_node)
           new_scope = temp_cur_scope.lookup_or_create_module(new_mod_name)
           with_scope new_scope do
             visit(body)
@@ -62,24 +49,26 @@ module Wool
             subnode.scope = @current_scope
           end
 
-          temp_cur_scope = @current_scope
-
-          case path_node.type
-          when :const_path_ref
-            left, right = path_node.children
-            new_class_name = const_sexp_name(right)
-            temp_cur_scope = temp_cur_scope.lookup_path(const_sexp_name(left))
-          when :top_const_ref
-            temp_cur_scope = Scope::GlobalScope
-            new_class_name = const_sexp_name(path_node)
-          else
-            new_class_name = const_sexp_name(path_node)
-          end
-
+          temp_cur_scope, new_class_name = unpack_path(@current_scope, path_node)
           new_scope = temp_cur_scope.lookup_or_create_class(new_class_name, superclass)
           with_scope new_scope do
             visit(body)
           end
+        end
+
+        def unpack_path(current_scope, path_node)
+          case path_node.type
+          when :const_path_ref
+            left, right = path_node.children
+            new_class_name = const_sexp_name(right)
+            current_scope = current_scope.lookup_path(const_sexp_name(left))
+          when :top_const_ref
+            current_scope = Scope::GlobalScope
+            new_class_name = const_sexp_name(path_node)
+          else
+            new_class_name = const_sexp_name(path_node)
+          end
+          [current_scope, new_class_name]
         end
 
         def enter_scope(scope)
