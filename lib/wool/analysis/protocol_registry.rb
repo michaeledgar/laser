@@ -19,12 +19,21 @@ module Wool
       end
 
       def self.[](class_name)
-        return query(:class_path => class_name.gsub(/^::/, ''))
+        query(:class_path => class_name.gsub(/^::/, ''))
       end
 
       def self.query(query={})
         if query[:class_path]
-          return [self.class_protocols[query[:class_path]]]
+          [self.class_protocols[query[:class_path]]]
+        end
+      end
+    end
+    
+    module ClassRegistry
+      def self.[](class_name)
+        if ProtocolRegistry[class_name]
+        then ProtocolRegistry[class_name].first.class_used
+        else raise ArgumentError.new("No class found with the path #{class_name}.")
         end
       end
     end

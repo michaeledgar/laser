@@ -51,12 +51,11 @@ module Wool
           end
         end
 
-        # 
         def visit_class(node)
           path_node, superclass, body = node.children
           if superclass
           then superclass = @current_scope.lookup_path(const_sexp_name(superclass))
-          else superclass = ProtocolRegistry['Object'].first.class_used
+          else superclass = ClassRegistry['Object']
           end
           
           [node, path_node, *path_node.all_subtrees].each do |subnode|
