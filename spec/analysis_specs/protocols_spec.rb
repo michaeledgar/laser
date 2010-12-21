@@ -17,17 +17,17 @@ end
 describe Protocols::InstanceProtocol do
   before do
     a = WoolClass.new('A')
-    @a_proto = a.protocol
+    @a_proto = ProtocolRegistry['A'].first
     b = WoolClass.new('B') do |b|
       b.add_method(WoolMethod.new('foo') do |method|
         method.add_signature(@a_proto, [])
-        method.add_signature(b.protocol, [@a_proto])
+        method.add_signature(ProtocolRegistry['B'].first, [@a_proto])
       end)
       b.add_method(WoolMethod.new('bar') do |method|
-        method.add_signature(b.protocol, [@a_proto, b.protocol])
+        method.add_signature(ProtocolRegistry['B'].first, [@a_proto, ProtocolRegistry['B'].first])
       end)
     end
-    @b_proto = b.protocol
+    @b_proto = ProtocolRegistry['B'].first
   end
   
   context '#signatures' do

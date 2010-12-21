@@ -28,18 +28,17 @@ module Wool
         super(self, scope)
         @path = full_path
         @instance_methods = {}
-        @protocol = Protocols::InstanceProtocol.new(self)
         @scope = scope
         @methods = {}
-        ProtocolRegistry.add_class_protocol(@protocol)
-        @object = Symbol.new(:protocol => @protocol, :class_used => wool_class, :scope => scope,
+        initialize_protocol
+        @object = Symbol.new(:protocol => @protocol, :class_used => ClassRegistry[superclass_name], :scope => scope,
                              :name => name, :value => self)
         initialize_scope
         yield self if block_given?
       end
 
-      def wool_class
-        ClassRegistry['Module']
+      def superclass_name
+        'Module'
       end
 
       # If this is a new, custom module, we can update the constant
@@ -49,6 +48,17 @@ module Wool
           @scope.self_ptr = self.object
           @scope.parent.constants[name] = self.object if @scope.parent
         end
+      end
+      
+      def initialize_protocol
+        if ProtocolRegistry[superclass_name].empty?
+          @protocol = Protocols::InstanceProtocol.new(superclass_name)
+          ProtocolRegistry.add_class_protocol(@protocol)
+        else
+          @protocol = ProtocolRegistry[superclass_name].first
+        end
+        # for instances of me
+        ProtocolRegistry.add_class_protocol(Protocols::InstanceProtocol.new(self))
       end
       
       def name
@@ -70,8 +80,8 @@ module Wool
     class WoolClass < WoolModule
       attr_accessor :superclass
       
-      def wool_class
-        ClassRegistry['Class']
+      def superclass_name
+        'Class'
       end
       
       def inspect
