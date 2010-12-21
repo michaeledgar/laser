@@ -31,15 +31,32 @@ module Wool
         begin
           lookup(new_mod_name).scope
         rescue Scope::ScopeLookupFailure => err
-          new_mod_full_path = self == GlobalScope ? '' : path
-          new_mod_full_path += "::" unless new_mod_full_path.empty?
-          new_mod_full_path += new_mod_name
           # gotta swizzle in the new scope because the module we create is creating
           # the new scope!
           new_scope = Scope.new(self, nil)
-          new_mod = WoolModule.new(new_mod_full_path, new_scope)
+          new_mod = WoolModule.new(submodule_path(new_mod_name), new_scope)
           new_scope
         end
+      end
+
+      def lookup_or_create_class(new_class_name, superclass)
+        begin
+          lookup(new_class_name).scope
+        rescue Scope::ScopeLookupFailure => err
+          # gotta swizzle in the new scope because the class we create is creating
+          # the new scope!
+          new_scope = Scope.new(self, nil)
+          new_class = WoolClass.new(submodule_path(new_class_name), new_scope) do |klass|
+            klass.superclass = superclass
+          end
+          new_scope
+        end
+      end
+      
+      def submodule_path(new_mod_name)
+        new_mod_full_path = self == GlobalScope ? '' : path
+        new_mod_full_path += "::" unless new_mod_full_path.empty?
+        new_mod_full_path += new_mod_name
       end
 
       def lookup(str)

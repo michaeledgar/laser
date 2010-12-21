@@ -52,10 +52,36 @@ module Wool
         end
 
         # 
-        # def visit_class(node)
-        #   path_to_new_class, superclass, body = node.children
-        #   superclass = superclass ? superclass.eval_as_constant(@current_scope) : ClassRegistry['Object']
-        # end
+        def visit_class(node)
+          path_node, superclass, body = node.children
+          if superclass
+          then superclass = @current_scope.lookup_path(const_sexp_name(superclass))
+          else superclass = ProtocolRegistry['Object'].first.class_used
+          end
+          
+          [node, path_node, *path_node.all_subtrees].each do |subnode|
+            subnode.scope = @current_scope
+          end
+
+          temp_cur_scope = @current_scope
+
+          case path_node.type
+          when :const_path_ref
+            left, right = path_node.children
+            new_class_name = const_sexp_name(right)
+            temp_cur_scope = temp_cur_scope.lookup_path(const_sexp_name(left))
+          when :top_const_ref
+            temp_cur_scope = Scope::GlobalScope
+            new_class_name = const_sexp_name(path_node)
+          else
+            new_class_name = const_sexp_name(path_node)
+          end
+
+          new_scope = temp_cur_scope.lookup_or_create_class(new_class_name, superclass)
+          with_scope new_scope do
+            visit(body)
+          end
+        end
 
         def enter_scope(scope)
           @current_scope = scope
