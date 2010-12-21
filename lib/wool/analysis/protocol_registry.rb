@@ -36,6 +36,19 @@ module Wool
         else raise ArgumentError.new("No class found with the path #{class_name}.")
         end
       end
+      
+      def self.initialize_global_scope
+        class_class = SexpAnalysis::WoolClass.new('Class', nil)
+        module_class = SexpAnalysis::WoolClass.new('Module', nil)
+        object_class = SexpAnalysis::WoolClass.new('Object', nil)
+        module_class.superclass = object_class
+        class_class.superclass = module_class
+        global = SexpAnalysis::Scope.new(nil, object_class.object, {'Object' => object_class})
+        SexpAnalysis::Scope.const_set("GlobalScope", global) unless SexpAnalysis.const_defined?("GlobalScope")
+        object_class.instance_variable_set("@scope", SexpAnalysis::Scope::GlobalScope)
+        module_class.instance_variable_set("@scope", SexpAnalysis::Scope::GlobalScope)
+        class_class.instance_variable_set("@scope", SexpAnalysis::Scope::GlobalScope)
+      end
     end
   end
 end
