@@ -58,7 +58,27 @@ describe ProtocolRegistry do
 end
 
 describe 'ClassRegistry' do
+  before(:each) do
+    @backup_all = ProtocolRegistry.protocols.dup
+    @backup_map = ProtocolRegistry.class_protocols.dup
+  end
   
+  after(:each) do
+    ProtocolRegistry.protocols.replace @backup_all
+    ProtocolRegistry.class_protocols.replace @backup_map
+  end
+
+  describe '#[]' do
+    it 'finds ClassProtocols and extracts the WoolClass appropriately' do
+      ClassRegistry['Object'].should == ProtocolRegistry['Object'].first.class_used
+      x = OpenStruct.new
+      x.class_used = temp_class = OpenStruct.new
+      x.class_used.path = 'SillyWilly'
+      ProtocolRegistry.add_class_protocol x
+      ClassRegistry['SillyWilly'].should == temp_class
+    end
+  end
+
   describe 'built-in classes' do
     it 'sets up Module, Class, and Object as instances of Class correctly' do
       ClassRegistry['Object'].object.class_used.should == ClassRegistry['Class']
