@@ -34,6 +34,24 @@ module Wool
         self[0]
       end
       
+      def all_subtrees
+        to_visit = self.children.dup
+        visited = Set.new
+        while to_visit.any?
+          todo = to_visit.shift
+          next unless is_sexp?(todo)
+
+          case todo[0]
+          when Array
+            to_visit.concat todo
+          when Symbol
+            to_visit.concat todo.children
+            visited << todo
+          end
+        end
+        visited
+      end
+      
       # Replaces the children with Sexp versions of them
       def replace_children!
         replace(map do |x|

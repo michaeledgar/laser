@@ -13,7 +13,7 @@ module Wool
         attr_reader :scope_stack
         include Visitor
         def annotate!(root)
-          @scope_stack = []
+          @scope_stack = [Scope::GlobalScope]
           @current_scope = Scope::GlobalScope
           visit(root)
         end
@@ -26,8 +26,12 @@ module Wool
         end
 
         def visit_module(node)
-          temp_cur_scope = @current_scope
           path_node, body = node.children
+          [node, path_node, *path_node.all_subtrees].each do |subnode|
+            subnode.scope = @current_scope
+          end
+
+          temp_cur_scope = @current_scope
           
           case path_node.type
           when :const_path_ref
@@ -42,12 +46,35 @@ module Wool
           end
 
           new_scope = temp_cur_scope.lookup_or_create_module(new_mod_name)
-          
           with_scope new_scope do
             visit(body)
           end
         end
-        
+
+        # 
+        # def visit_class(node)
+        #   path_to_new_class, superclass, body = node.children
+        #   superclass = superclass ? superclass.eval_as_constant(@current_scope) : ClassRegistry['Object']
+        # end
+
+        def enter_scope(scope)
+          @current_scope = scope
+          scope_stack.push scope
+        end
+
+        def exit_scope
+          scope_stack.pop
+          @current_scope = scope_stack.last
+        end
+
+        # Yields with the current scope preserved.
+        def with_scope(scope)
+          enter_scope scope
+          yield
+        ensure
+          exit_scope
+        end
+
         # Evaluates the constant reference/path with the given scope
         # as context.
         def const_sexp_name(sexp)
@@ -58,29 +85,6 @@ module Wool
             left, right = children
             const_sexp_name(left) + '::' + const_sexp_name(right)
           end
-        end
-        
-        # 
-        # def visit_class(node)
-        #   path_to_new_class, superclass, body = node.children
-        #   superclass = superclass ? superclass.eval_as_constant(@current_scope) : ClassRegistry['Object']
-        # end
-        
-        def enter_scope(scope)
-          @current_scope = scope
-          scope_stack.push scope
-        end
-        
-        def exit_scope
-          @current_scope = scope_stack.pop
-        end
-        
-        # Yields with the current scope preserved.
-        def with_scope(scope)
-          enter_scope scope
-          yield
-        ensure
-          exit_scope
         end
       end
       add_global_annotator Annotator

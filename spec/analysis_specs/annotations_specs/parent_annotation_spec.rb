@@ -18,7 +18,7 @@ describe ParentAnnotation do
   it 'adds parents to each node with a real-world parse result' do
     tree = Sexp.new(Ripper.sexp('x = proc {|x, *rst, &blk| p x ** rst[0]; blk.call(rst[1..-1])}'))
     expectalot(:parent => { nil => [tree], tree => [tree.children.first] })
-    all_sexps_in_subtree(tree).each do |node|
+    tree.all_subtrees.each do |node|
       node.parent.children.should include(node)
     end
   end

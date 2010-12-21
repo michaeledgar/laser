@@ -16,18 +16,14 @@ module Wool
       def initialize(parent, self_ptr, constants={}, locals={})
         @parent, @self_ptr, @constants, @locals = parent, self_ptr, constants, locals
       end
-
-      def inspect
-        "#<Scope: #{self_ptr.name}>"
-      end
       
       def path
         self_ptr.class_used.path
       end
-      
+
       def lookup_or_create_module(new_mod_name)
         begin
-          lookup(new_mod_name)
+          lookup(new_mod_name).scope
         rescue Scope::ScopeLookupFailure => err
           new_mod_full_path = path
           new_mod_full_path += "::" unless new_mod_full_path.empty?
@@ -39,7 +35,7 @@ module Wool
           new_scope
         end
       end
-      
+
       def lookup(str)
         if str =~ /^[A-Z]/ && constants[str]
         then constants[str]

@@ -20,7 +20,7 @@ describe NextPrevAnnotation do
     tree = Sexp.new(Ripper.sexp('x = proc {|x, *rst, &blk| p x ** rst[0]; blk.call(rst[1..-1])}'))
     expectalot(:next => { nil => [tree] }, :prev => { nil => [tree] })
     visited = Set.new
-    all_sexps_in_subtree(tree).each do |node|
+    tree.all_subtrees.each do |node|
       node.prev.next.should == node if is_sexp?(node.prev)
       node.next.prev.should == node if is_sexp?(node.next)
     end

@@ -19,7 +19,7 @@ module Wool
       end
       
       def inspect
-        "#<Symbol: #{self_ptr.name}>"
+        "#<Symbol: #{name}>"
       end
     end
   end
