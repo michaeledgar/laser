@@ -15,7 +15,7 @@ module Wool
       
       def self.add_class_protocol(class_protocol)
         add_protocol class_protocol
-        self.class_protocols[class_protocol.class_used.path] = class_protocol
+        self.class_protocols[class_protocol.value.path] = class_protocol
       end
 
       def self.[](class_name)
@@ -32,7 +32,7 @@ module Wool
     module ClassRegistry
       def self.[](class_name)
         if ProtocolRegistry[class_name].any?
-        then ProtocolRegistry[class_name].first.class_used
+        then ProtocolRegistry[class_name].first.value
         else raise ArgumentError.new("No class found with the path #{class_name}.")
         end
       end

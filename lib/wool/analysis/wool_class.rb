@@ -28,7 +28,7 @@ module Wool
         super(self, scope)
         @path = full_path
         @instance_methods = {}
-        @protocol = Protocols::ClassProtocol.new(self)
+        @protocol = Protocols::InstanceProtocol.new(self)
         @scope = scope
         @methods = {}
         ProtocolRegistry.add_class_protocol(@protocol)

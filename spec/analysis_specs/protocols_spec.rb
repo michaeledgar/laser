@@ -14,7 +14,7 @@ describe Protocols::Base do
   end
 end
 
-describe Protocols::ClassProtocol do
+describe Protocols::InstanceProtocol do
   before do
     a = WoolClass.new('A')
     @a_proto = a.protocol

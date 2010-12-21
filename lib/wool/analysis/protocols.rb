@@ -2,7 +2,7 @@ module Wool
   module SexpAnalysis
     # This module contains a class hierarchy that represents the type
     # hierarchy in the analyzed Ruby code. This is where method responsiveness
-    # can be checked. Some protocols are simple, such as a ClassProtocol,
+    # can be checked. Some protocols are simple, such as a InstanceProtocol,
     # which responds to all the methods that the corresponding Class does.
     # Some might be structural or dependent or generic! The key part is that
     # method signatures can be listed and queried.
@@ -51,19 +51,18 @@ module Wool
       end
       
       # A protocol that has the same signatures as a given class.
-      class ClassProtocol < Base
-        attr_reader :class_used
+      class InstanceProtocol < Base
+        attr_reader :value
 
         # Initializes the class protocol with the given class.
         #
         # @param [WoolClass] klass the wool class whose protocol we are representing
-        def initialize(klass)
-          @class_used = klass
-          self
+        def initialize(instance)
+          @value = instance
         end
         
         def to_s
-          "#<ClassProtocol: #{class_used.path}>"
+          "#<InstanceProtocol: #{value.path}>"
         end
         
         # Returns all the signatures that the class responds to, since this protocol
@@ -71,7 +70,7 @@ module Wool
         #
         # @return [Array<Signature>] the supported signatures for this protocol.
         def signatures
-          @class_used.signatures
+          @value.signatures
         end
       end
     end
