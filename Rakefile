@@ -40,6 +40,8 @@ Cucumber::Rake::Task.new(:features) do |t|
   t.cucumber_opts = "features --format pretty"
 end
 
+require 'metric_fu'
+
 if true
   begin
     require 'wool'
