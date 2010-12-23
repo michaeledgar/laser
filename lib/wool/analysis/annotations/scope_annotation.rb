@@ -25,7 +25,9 @@ module Wool
           visit_children(node)
         end
 
-        def visit_module(node)
+        # Visits a module node and either creates or re-enters the corresponding scope, annotating the
+        # body with that scope.
+        add :module do |node, path_node, body|
           path_node, body = node.children
           default_visit(path_node)
           node.scope = @current_scope
@@ -35,8 +37,9 @@ module Wool
           visit_with_scope(body, new_scope)
         end
 
-        def visit_class(node)
-          path_node, superclass_node, body = node.children
+        # Visits a class node and either creates or re-enters a corresponding scope, annotating the
+        # body with that scope.
+        add :class do |node, path_node, superclass_node, body|
           if superclass_node
           then superclass = @current_scope.lookup_path(const_sexp_name(superclass_node)).self_ptr
           else superclass = ClassRegistry['Object']
@@ -49,6 +52,12 @@ module Wool
           temp_cur_scope, new_class_name = unpack_path(@current_scope, path_node)
           new_scope = temp_cur_scope.lookup_or_create_class(new_class_name, superclass)
           visit_with_scope(body, new_scope)
+        end
+
+        add :def do |node, name, arglist, body|
+        end
+
+        add :defs do |node, singleton, op, name, arglist, body|
         end
 
         # Given a current scope and any possible way to describe a constant,

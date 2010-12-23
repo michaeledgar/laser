@@ -9,6 +9,29 @@ module Wool
     # tree until it hits a method you define.
     module Visitor
       extend ModuleExtensions
+      def self.included(klass)
+        klass.__send__(:extend, ClassMethods)
+        klass.__send__(:extend, ModuleExtensions)
+        klass.cattr_accessor_with_default :filters, []
+      end
+      module ClassMethods
+        extend ModuleExtensions
+        class Filter < Struct.new(:filter, :args, :blk)
+          def matches?(node)
+            case filter
+            when ::Symbol then node.type == filter
+            when Proc then filter.call(node, *args)
+            end
+          end
+          def run(node, visitor)
+            visitor.instance_exec(node, *node.children, &blk)
+          end
+        end
+        def add(filter, *args, &blk)
+          (self.filters ||= []) << Filter.new(filter, args, blk)
+        end
+      end
+
       def visit(node)
         case node
         when Sexp
@@ -49,9 +72,17 @@ module Wool
       end
       alias_method :default_visit, :visit_children
       
+      def try_filters(node)
+        filters = self.class.filters.select { |filter| filter.matches?(node) }
+        if filters.any?
+          filters.each { |filter| filter.run(node, self) }
+          true
+        end
+      end
+      
       def method_missing(meth, *args, &blk)
         if meth.to_s[0,6] == 'visit_'
-          default_visit args.first
+          try_filters args.first or default_visit args.first
         else
           super
         end
