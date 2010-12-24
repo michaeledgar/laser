@@ -2,7 +2,7 @@ module Wool
   module Parsers
     grammar Annotation
       rule type
-        (top / self_type)
+        (top / self_type / constant)
       end
     
       rule top
@@ -17,6 +17,14 @@ module Wool
         "self" {
           def constraints
             [Constraints::SelfTypeConstraint.new]
+          end
+        }
+      end
+      
+      rule constant
+        ( "::"? [A-Z] [A-Za-z_]* )+ {
+          def constraints
+            [Constraints::ClassConstraint.new(text_value, :covariant)]
           end
         }
       end
