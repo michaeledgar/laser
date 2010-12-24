@@ -19,6 +19,10 @@ I'll be using a pseudo-flex/bison syntax.
 
     Productions:
     top : "Top" { return [] } ; # empty set
+    self : "self" { return [SelfTypeConstraint.new] } ;
+    unknown : "_" { return [UnknownTypeConstraint.new] }
+            | "_" : type_expression { [UnknownTypeConstraint.new(type_expression)] }
+            ;
 
     possibly_mutable_class_constraint : class_constraint '!' {
                                           return (class_constraint << CustomAnnotationConstraint.new(:mutable, true)) }
@@ -72,3 +76,5 @@ I'll be using a pseudo-flex/bison syntax.
     parenthesized_type_expr : nonparenthesized_type_expr
                             | "(" nonparenthesized_type_expr ")" { return nonparenthesized_type_expr; }
                             ;
+    
+    type_expression : parenthesized_type_expr ;

@@ -1,5 +1,7 @@
 # Dependencies
 require 'ripper'
+require 'treetop'
+$:.unshift(File.expand_path(File.dirname(__FILE__)))
 require 'wool/third_party/trollop'
 require 'wool/support/module_extensions'
 require 'wool/advice/advice'
@@ -19,6 +21,10 @@ require 'wool/analysis/scope'
 # 3. Bend at the waist
 # 4. PULL UP ON THEM BOOTSTRAPS!
 Wool::SexpAnalysis::ClassRegistry.initialize_global_scope
+# Load the constraint engine
+require 'wool/constraints/constraints'
+require 'wool/annotation_parser/parsers'
+
 require 'wool/analysis/visitor'
 require 'wool/analysis/annotations'
 require 'wool/advice/comment_advice'

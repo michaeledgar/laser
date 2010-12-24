@@ -55,6 +55,14 @@ module Wool
         end
 
         add :def do |node, name, arglist, body|
+          # Time to create a brand new WoolMethod!
+          # Which class this is added to depends on the value of +self+.
+          # 1. If self is a module or class (as is typical), the method is
+          #    added to self's instance method list.
+          # 2. If self does not have Module in its class hierarchy, then it
+          #    should be added to self's singleton class. You can just skip
+          #    the "class << self" or "def x.methodname" syntax.
+          
         end
 
         add :defs do |node, singleton, op, name, arglist, body|

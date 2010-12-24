@@ -62,6 +62,18 @@ task :rebuild => [:gemspec, :build, :install] do
   %x(rake wool)
 end
 
+task :build_parsers do
+  root = File.dirname(__FILE__)
+  input = File.join(root, 'lib', 'wool', 'annotation_parser', 'annotations.treetop')
+  output = File.join(root, 'lib', 'wool', 'annotation_parser', 'annotation_parser.rb')
+  %x(tt #{input} -o #{output})
+end
+
+# Alias for script/console from rails world lawlz
+task :sc => :build_parsers do
+  system("irb -r./lib/wool")
+end
+
 task :spec => :check_dependencies
 
 task :default => [:spec, :test]

@@ -1,0 +1,25 @@
+module Wool
+  module Parsers
+    grammar Annotation
+      rule type
+        (top / self_type)
+      end
+    
+      rule top
+        "Top" {
+          def constraints
+            []
+          end
+        }
+      end
+  
+      rule self_type
+        "self" {
+          def constraints
+            [Constraints::SelfTypeConstraint.new]
+          end
+        }
+      end
+    end
+  end
+end
