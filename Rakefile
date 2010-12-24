@@ -62,12 +62,17 @@ task :rebuild => [:gemspec, :build, :install] do
   %x(rake wool)
 end
 
-task :build_parsers do
-  root = File.dirname(__FILE__)
-  input = File.join(root, 'lib', 'wool', 'annotation_parser', 'annotations.treetop')
-  output = File.join(root, 'lib', 'wool', 'annotation_parser', 'annotation_parser.rb')
-  %x(tt #{input} -o #{output})
+SRC = FileList['lib/wool/annotation_parser/*.treetop']
+OBJ = SRC.sub(/.treetop$/, '_parser.rb')
+
+SRC.each do |source|
+  result = source.sub(/.treetop$/, '_parser.rb')
+  file result => source do |t|
+    sh "tt #{source} -o #{result}"
+  end
 end
+
+task :build_parsers => OBJ
 
 # Alias for script/console from rails world lawlz
 task :sc => :build_parsers do
