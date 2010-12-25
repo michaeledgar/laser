@@ -1,14 +1,6 @@
 module Wool
   module Parsers
     grammar Class
-      rule constant
-        ( "::"? [A-Z] [A-Za-z_]* )+ {
-          def constraints
-            [Constraints::ClassConstraint.new(text_value, :covariant)]
-          end
-        }
-      end
-
       rule variance_constraint
         constant "=" {
           def constraints
@@ -18,7 +10,6 @@ module Wool
         /
         constant "-" {
           def constraints
-            p constant
             constant.constraints.map {|x| x.variance = :contravariant; x }
           end
         }
@@ -27,6 +18,22 @@ module Wool
           def constraints
             constant.constraints
           end 
+        }
+      end
+      
+      rule hash_constraint
+        variance_constraint '=>' variance_constraint {
+          def constraints
+            [Constraints::GenericClassConstraint.new('Hash', elements.first.class_name, elements[2].class_name)]
+          end
+        } / variance_constraint
+      end
+
+      rule constant
+        ( '::'? [A-Z] [A-Za-z_]* )+ {
+          def constraints
+            [Constraints::ClassConstraint.new(text_value, :covariant)]
+          end
         }
       end
     end

@@ -5,11 +5,11 @@ module Wool
       rule root
         type
       end
-      
+
       rule type
         (top / self_type / variance_constraint)
       end
-    
+
       rule top
         "Top" {
           def constraints
@@ -17,7 +17,7 @@ module Wool
           end
         }
       end
-  
+
       rule self_type
         "self" {
           def constraints
