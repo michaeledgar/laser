@@ -29,6 +29,7 @@ module Wool
 
       def class_inheritable_writer(*syms)
         syms.each do |sym|
+          next if sym.is_a?(Hash)
           class_eval(<<-EOS, __FILE__, __LINE__ + 1)
             def self.#{sym}=(obj)                          # def self.color=(obj)
               write_inheritable_attribute(:#{sym}, obj)    #   write_inheritable_attribute(:color, obj)
@@ -43,6 +44,7 @@ module Wool
 
       def class_inheritable_array_writer(*syms)
         syms.each do |sym|
+          next if sym.is_a?(Hash)
           class_eval(<<-EOS, __FILE__, __LINE__ + 1)
             def self.#{sym}=(obj)                          # def self.levels=(obj)
               write_inheritable_array(:#{sym}, obj)        #   write_inheritable_array(:levels, obj)
@@ -57,6 +59,7 @@ module Wool
 
       def class_inheritable_hash_writer(*syms)
         syms.each do |sym|
+          next if sym.is_a?(Hash)
           class_eval(<<-EOS, __FILE__, __LINE__ + 1)
             def self.#{sym}=(obj)                          # def self.nicknames=(obj)
               write_inheritable_hash(:#{sym}, obj)         #   write_inheritable_hash(:nicknames, obj)
