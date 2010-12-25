@@ -3,7 +3,7 @@ require 'ripper'
 require 'treetop'
 $:.unshift(File.expand_path(File.dirname(__FILE__)))
 require 'wool/third_party/trollop'
-require 'wool/support/inherited_attributes'
+require 'wool/support/inheritable_attributes'
 require 'wool/support/acts_as_struct'
 require 'wool/support/module_extensions'
 require 'wool/advice/advice'
