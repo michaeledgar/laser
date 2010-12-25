@@ -1,16 +1,28 @@
+require 'wool/annotation_parser/useful_parsers_parser'
 module Wool
   module Parsers
-    grammar Class
-      rule variance_constraint
-        constant "=" {
+    grammar Class   
+      include GeneralPurpose
+      rule hash_constraint
+        variance_constraint space* "=>" space* variance_constraint {
           def constraints
-            constant.constraints.map {|x| x.variance = :invariant; x }
+            [Constraints::GenericClassConstraint.new(
+                'Hash', :covariant, variance_constraint1.constraints,
+                variance_constraint2.constraints)]
+          end
+        } / variance_constraint
+      end
+
+      rule variance_constraint
+        constant "=" !'>' {
+          def constraints
+            constant.constraints.map { |x| x.variance = :invariant; x }
           end
         }
         /
         constant "-" {
           def constraints
-            constant.constraints.map {|x| x.variance = :contravariant; x }
+            constant.constraints.map { |x| x.variance = :contravariant; x }
           end
         }
         /
@@ -19,14 +31,6 @@ module Wool
             constant.constraints
           end 
         }
-      end
-      
-      rule hash_constraint
-        variance_constraint '=>' variance_constraint {
-          def constraints
-            [Constraints::GenericClassConstraint.new('Hash', elements.first.class_name, elements[2].class_name)]
-          end
-        } / variance_constraint
       end
 
       rule constant

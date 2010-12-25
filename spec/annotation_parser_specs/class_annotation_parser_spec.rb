@@ -32,4 +32,22 @@ describe Parsers::ClassParser do
           [Constraints::ClassConstraint.new('World::Is::Here', :invariant)]
     end
   end
+  
+  describe 'two constraints separated by =>' do
+    it 'is parsed as a Hash<C1, C2>' do
+      ['Symbol => String', 'Symbol=>String', 'Symbol  =>   String'].each do |input|
+        @parser.parse(input).constraints.should ==
+            [Constraints::GenericClassConstraint.new('Hash', :covariant,
+                [Constraints::ClassConstraint.new('Symbol', :covariant)],
+                [Constraints::ClassConstraint.new('String', :covariant)])]
+      end
+    end
+    
+    it 'allows variance constraints on the key and value types' do
+      @parser.parse('::Hello::World==>Some::Constant-').constraints.should ==
+          [Constraints::GenericClassConstraint.new('Hash', :covariant,
+              [Constraints::ClassConstraint.new('::Hello::World', :invariant)],
+              [Constraints::ClassConstraint.new('Some::Constant', :contravariant)])]
+    end
+  end
 end

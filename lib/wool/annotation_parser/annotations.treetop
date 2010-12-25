@@ -7,7 +7,7 @@ module Wool
       end
 
       rule type
-        (top / self_type / variance_constraint)
+        (top / self_type / hash_constraint)
       end
 
       rule top

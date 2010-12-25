@@ -50,7 +50,7 @@ module Wool
           if r2
             r0 = r2
           else
-            r3 = _nt_variance_constraint
+            r3 = _nt_hash_constraint
             if r3
               r0 = r3
             else

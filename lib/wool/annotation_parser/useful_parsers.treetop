@@ -1,0 +1,9 @@
+module Wool
+  module Parsers
+    grammar GeneralPurpose    
+      rule space
+        [ \t]
+      end
+    end
+  end
+end
