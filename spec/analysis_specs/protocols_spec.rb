@@ -28,11 +28,11 @@ describe Protocols::InstanceProtocol do
     a = WoolClass.new('A')
     @a_proto = ProtocolRegistry['A'].first
     b = WoolClass.new('B') do |b|
-      b.add_method(WoolMethod.new('foo') do |method|
+      b.add_instance_method(WoolMethod.new('foo') do |method|
         method.add_signature(Signature.new('foo', @a_proto, {}))
         method.add_signature(Signature.new('foo', ProtocolRegistry['B'].first, {'a' => @a_proto}))
       end)
-      b.add_method(WoolMethod.new('bar') do |method|
+      b.add_instance_method(WoolMethod.new('bar') do |method|
         method.add_signature(Signature.new('bar', ProtocolRegistry['B'].first, {'a' => @a_proto, 'b' => ProtocolRegistry['B'].first}))
       end)
     end

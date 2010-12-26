@@ -103,7 +103,7 @@ module Wool
         #
         # @return [Array<Signature>] the supported signatures for this protocol.
         def signatures
-          @value.signatures
+          @value.instance_signatures
         end
       end
     end

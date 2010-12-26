@@ -4,11 +4,11 @@ describe WoolModule do
   before do
     @a = WoolModule.new('A')
     @b = WoolModule.new('B') do |b|
-      b.add_method(WoolMethod.new('foo') do |method|
+      b.add_instance_method(WoolMethod.new('foo') do |method|
         method.add_signature(Signature.new('foo', @a.protocol, {}))
         method.add_signature(Signature.new('foo', b.protocol, {'a' => @a.protocol}))
       end)
-      b.add_method(WoolMethod.new('bar') do |method|
+      b.add_instance_method(WoolMethod.new('bar') do |method|
         method.add_signature(Signature.new('bar', b.protocol, {'a' => @a.protocol, 'b' => b.protocol}))
       end)
     end
@@ -21,15 +21,15 @@ describe WoolModule do
     end
   end
   
-  context '#signatures' do
+  context '#instance_signatures' do
     it 'returns an empty list when no methods are declared' do
-      @a.signatures.should be_empty
+      @a.instance_signatures.should be_empty
     end
     
-    it "flattens all its method's signatures" do
-      @b.signatures.should include(Signature.new('foo', @a.protocol, {}))
-      @b.signatures.should include(Signature.new('foo', @b.protocol, {'a' => @a.protocol}))
-      @b.signatures.should include(
+    it "flattens all its normal instance method's signatures" do
+      @b.instance_signatures.should include(Signature.new('foo', @a.protocol, {}))
+      @b.instance_signatures.should include(Signature.new('foo', @b.protocol, {'a' => @a.protocol}))
+      @b.instance_signatures.should include(
           Signature.new('bar', @b.protocol, {'a' => @a.protocol, 'b' => @b.protocol}))
     end
   end
@@ -40,25 +40,25 @@ describe WoolClass do
     @a = WoolClass.new('A')
     @b = WoolClass.new('B') do |b|
       b.superclass = @a
-      b.add_method(WoolMethod.new('foo') do |method|
+      b.add_instance_method(WoolMethod.new('foo') do |method|
         method.add_signature(Signature.new('foo', @a.protocol, {}))
         method.add_signature(Signature.new('foo', b.protocol, {'a' => @a.protocol}))
       end)
-      b.add_method(WoolMethod.new('bar') do |method|
+      b.add_instance_method(WoolMethod.new('bar') do |method|
         method.add_signature(Signature.new('bar', b.protocol, {'a' => @a.protocol, 'b' => b.protocol}))
       end)
     end
   end
   
-  context '#signatures' do
+  context '#instance_signatures' do
     it 'returns an empty list when no methods are declared' do
-      @a.signatures.should be_empty
+      @a.instance_signatures.should be_empty
     end
     
-    it "flattens all its method's signatures" do
-      @b.signatures.should include(Signature.new('foo', @a.protocol, {}))
-      @b.signatures.should include(Signature.new('foo', @b.protocol, {'a' => @a.protocol}))
-      @b.signatures.should include(
+    it "flattens all its normal instance method's signatures" do
+      @b.instance_signatures.should include(Signature.new('foo', @a.protocol, {}))
+      @b.instance_signatures.should include(Signature.new('foo', @b.protocol, {'a' => @a.protocol}))
+      @b.instance_signatures.should include(
           Signature.new('bar', @b.protocol, {'a' => @a.protocol, 'b' => @b.protocol}))
     end
   end

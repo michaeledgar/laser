@@ -2,23 +2,24 @@ module Wool
   module SexpAnalysis
     class WoolObject
       extend ModuleExtensions
-      attr_reader :protocol, :scope, :methods, :klass, :name
+      attr_reader :protocol, :scope, :klass, :name
       
       def initialize(klass = ClassRegistry['Object'], scope = Scope::GlobalScope,
                      name = "#<#{klass.path}:#{object_id.to_s(16)}>")
         @klass = klass
         @protocol = klass.protocol
         @scope = scope
-        @methods = {}
         @name = name
+      end
+      
+      def singleton_class
+        return @singleton_class if singleton_class
+        @singleton_class = WoolClass.new("#<Class:#{name}>")
+        @singleton_class
       end
       
       def signatures
         @methods.values.map(&:signatures).flatten
-      end
-      
-      def add_method(method)
-        @methods[method.name] = method
       end
     end
     
@@ -73,6 +74,14 @@ module Wool
         self.path.split('::').last
       end
       
+      def add_instance_method(method)
+        @instance_methods[method.name] = method
+      end
+      
+      def instance_signatures
+        instance_methods.values.map(&:signatures).flatten
+      end
+      
       def add_signature(signature)
         @instance_methods[signature.name].add_signature(signature)
       end
@@ -86,7 +95,6 @@ module Wool
     # clash with regular Class. This links the class to its protocol.
     # It inherits from WoolModule to pull in everything but superclasses.
     class WoolClass < WoolModule
-      # WoolClass
       attr_reader :superclass, :subclasses
       
       def initialize(*args)
@@ -94,20 +102,25 @@ module Wool
         @subclasses ||= []
       end
       
+      # Adds a subclass.
       def add_subclass!(other)
         subclasses << other
       end
       
+      # Removes a subclass.
       def remove_subclass!(other)
         subclasses -= [other]
       end
       
+      # Sets the superclass, which handles registering/unregistering subclass
+      # ownership elsewhere in the inheritance tree
       def superclass=(other)
         superclass.remove_subclass! self if superclass
         @superclass = other
         superclass.add_subclass! self
       end
       
+      # The set of all superclasses (including the class itself)
       def superset
         if superclass.nil?
         then [self]
@@ -115,14 +128,17 @@ module Wool
         end
       end
       
+      # The set of all superclasses (excluding the class itself)
       def proper_superset
         superset - [self]
       end
       
+      # The set of all subclasses (including the class itself)
       def subset
         [self] + subclasses.map(&:subset).flatten
       end
       
+      # The set of all subclasses (excluding the class itself)
       def proper_subset
         subset - [self]
       end
