@@ -24,7 +24,7 @@ module Wool
       end
       
       def path
-        self_ptr.value.path
+        self_ptr.path
       end
 
       def lookup_or_create_module(new_mod_name)

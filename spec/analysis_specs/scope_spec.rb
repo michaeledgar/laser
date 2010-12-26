@@ -11,8 +11,8 @@ describe Scope::GlobalScope do
   
   it 'has a self pointer that is an Object' do
     # self_ptr is a Symbol
-    Scope::GlobalScope.self_ptr.class_used.path.should == 'Class'
-    Scope::GlobalScope.self_ptr.value.name.should == 'Object'
+    Scope::GlobalScope.self_ptr.klass.path.should == 'Object'
+    Scope::GlobalScope.self_ptr.name.should == 'main'
   end
   
   it 'has Object in its constants table' do

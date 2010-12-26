@@ -39,8 +39,8 @@ describe ScopeAnnotation do
     expectalot(:scope => { Scope::GlobalScope => [tree, list[0], list[0][1], list[0][2]],
                            Scope::GlobalScope.lookup('A').scope => with_new_scope })
 
-    list[1][2].scope.self_ptr.class_used.path.should == 'Module'
-    list[1][2].scope.self_ptr.value.path.should == 'A'
+    list[1][2].scope.self_ptr.klass.path.should == 'Module'
+    list[1][2].scope.self_ptr.path.should == 'A'
   end
   
   # This is the AST that Ripper generates for the parsed code. It is
@@ -78,8 +78,8 @@ describe ScopeAnnotation do
     list = tree[1]
     mod = list[1][2].scope.self_ptr
     #mod.class_used.path.should == 'ABC::DEF'
-    mod.class_used.path.should == 'Module'
-    mod.value.path.should == 'ABC::DEF'
+    mod.klass.path.should == 'Module'
+    mod.path.should == 'ABC::DEF'
     mod.name.should == 'DEF'
     mod.scope.parent.self_ptr.name.should == 'ABC'
     
@@ -136,15 +136,15 @@ describe ScopeAnnotation do
     c_body = b_body[1][1][2]
     a, b, c = [a_body, b_body, c_body].map {|x| x.scope.self_ptr }
     
-    a.class_used.path.should == 'Module'
-    b.class_used.path.should == 'Module'
-    c.class_used.path.should == 'Module'
-    a.value.path.should == 'A'
-    b.value.path.should == 'A::B32'
-    c.value.path.should == 'A::B32::C444'
-    a.value.name.should == 'A'
-    b.value.name.should == 'B32'
-    c.value.name.should == 'C444'
+    a.klass.path.should == 'Module'
+    b.klass.path.should == 'Module'
+    c.klass.path.should == 'Module'
+    a.path.should == 'A'
+    b.path.should == 'A::B32'
+    c.path.should == 'A::B32::C444'
+    a.name.should == 'A'
+    b.name.should == 'B32'
+    c.name.should == 'C444'
   end
   
   # This is the AST that Ripper generates for the parsed code. It is
@@ -162,9 +162,9 @@ describe ScopeAnnotation do
     a = a_body.scope.self_ptr
     
     a_header.scope.should == Scope::GlobalScope
-    a.class_used.path.should == 'Class'
-    a.value.path.should == 'C99'
-    a.value.superclass.should == ClassRegistry['Object']
+    a.klass.path.should == 'Class'
+    a.path.should == 'C99'
+    a.superclass.should == ClassRegistry['Object']
   end
   
   # This is the AST that Ripper generates for the parsed code. It is
@@ -186,12 +186,12 @@ describe ScopeAnnotation do
     a, b = a_body.scope.self_ptr, b_body.scope.self_ptr
     
     a_header.scope.should == Scope::GlobalScope
-    a.class_used.path.should == 'Class'
-    a.value.path.should == 'C89'
-    a.value.superclass.should == ClassRegistry['Object']
-    b.class_used.path.should == 'Class'
-    b.value.path.should == 'CPP'
-    b.value.superclass.should == a.value
+    a.klass.path.should == 'Class'
+    a.path.should == 'C89'
+    a.superclass.should == ClassRegistry['Object']
+    b.klass.path.should == 'Class'
+    b.path.should == 'CPP'
+    b.superclass.should == a
   end
 
   # This is the AST that Ripper generates for the parsed code. It is
@@ -216,11 +216,11 @@ describe ScopeAnnotation do
     wwd, supermod = wwd_body.scope.self_ptr, supermod_body.scope.self_ptr
     
     wwd_header.scope.should == Scope::GlobalScope
-    wwd.class_used.path.should == 'Module'
-    wwd.value.path.should == 'WWD'
-    supermod.class_used.path.should == 'Class'
-    supermod.value.path.should == 'WWD::SuperModule'
-    supermod.value.superclass.should == ClassRegistry['Module']
+    wwd.klass.path.should == 'Module'
+    wwd.path.should == 'WWD'
+    supermod.klass.path.should == 'Class'
+    supermod.path.should == 'WWD::SuperModule'
+    supermod.superclass.should == ClassRegistry['Module']
   end
   
   # This is the AST that Ripper generates for the parsed code. It is
@@ -322,10 +322,10 @@ EOF
     or_body = and_body[1][1][2]
     is_body = or_body[1][1][2]
     and_mod, or_mod, is_mod = [and_body, or_body, is_body].map {|node| node.scope.self_ptr }
-    and_header.scope.self_ptr.value.path.should == 'Object'
-    and_mod.value.path.should == 'And'
-    or_mod.value.path.should == 'And::Or'
-    is_mod.value.path.should == 'And::Or::Is'
+    and_header.scope.self_ptr.name.should == 'main'
+    and_mod.path.should == 'And'
+    or_mod.path.should == 'And::Or'
+    is_mod.path.should == 'And::Or::Is'
     reopen_and_body = list[1][2]
     type_body = reopen_and_body[1][1][3]
     kind_body = reopen_and_body[1][2][3]
@@ -334,11 +334,11 @@ EOF
         [reopen_and_body, type_body, kind_body, silly_body].map do |node|
       node.scope.self_ptr
     end
-    reopen_and_mod.value.path.should == 'And'
-    reopen_and_mod.value.object_id.should == and_mod.value.object_id
-    type_class.value.path.should == 'And::Or::Type'
-    kind_class.value.path.should == 'And::Or::Is::Ten::Kind'
-    kind_class.value.superclass.path.should == 'And::Or::Type'
-    silly_mod.value.path.should == 'And::Or::Is::Ten::Kind::Silly'
+    reopen_and_mod.path.should == 'And'
+    reopen_and_mod.object_id.should == and_mod.object_id
+    type_class.path.should == 'And::Or::Type'
+    kind_class.path.should == 'And::Or::Is::Ten::Kind'
+    kind_class.superclass.path.should == 'And::Or::Type'
+    silly_mod.path.should == 'And::Or::Is::Ten::Kind::Silly'
   end
 end

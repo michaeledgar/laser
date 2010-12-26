@@ -41,7 +41,7 @@ module Wool
         # body with that scope.
         add :class do |node, path_node, superclass_node, body|
           if superclass_node
-          then superclass = @current_scope.lookup_path(const_sexp_name(superclass_node)).self_ptr.value
+          then superclass = @current_scope.lookup_path(const_sexp_name(superclass_node)).self_ptr
           else superclass = ClassRegistry['Object']
           end
           
@@ -62,7 +62,7 @@ module Wool
           # 2. If self does not have Module in its class hierarchy, then it
           #    should be added to self's singleton class. You can just skip
           #    the "class << self" or "def x.methodname" syntax.
-          current_module = @current_scope.self_ptr.value
+          current_module = @current_scope.self_ptr
           new_signature = Signature.new(name, Protocols::UnknownProtocol.new)
           
         end

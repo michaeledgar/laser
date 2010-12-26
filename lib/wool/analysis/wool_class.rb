@@ -2,13 +2,15 @@ module Wool
   module SexpAnalysis
     class WoolObject
       extend ModuleExtensions
-      attr_reader :protocol, :scope, :methods, :klass
+      attr_reader :protocol, :scope, :methods, :klass, :name
       
-      def initialize(klass = ClassRegistry['Object'], scope = Scope::GlobalScope)
+      def initialize(klass = ClassRegistry['Object'], scope = Scope::GlobalScope,
+                     name = "#<#{klass.path}:#{object_id.to_s(16)}>")
         @klass = klass
         @protocol = klass.protocol
         @scope = scope
         @methods = {}
+        @name = name
       end
       
       def signatures
@@ -51,7 +53,7 @@ module Wool
       # table and perform module initialization.
       def initialize_scope
         if @scope && @scope != Scope::GlobalScope
-          @scope.self_ptr = self.object
+          @scope.self_ptr = self.object.value
           @scope.parent.constants[name] = self.object if @scope.parent
         end
       end
