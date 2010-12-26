@@ -62,6 +62,8 @@ module Wool
           #    should be added to self's singleton class. You can just skip
           #    the "class << self" or "def x.methodname" syntax.
           current_module = @current_scope.self_ptr
+          arg_hash = {}
+          
           new_signature = Signature.new(name[1], Protocols::UnknownProtocol.new, {})
           
         end

@@ -68,6 +68,76 @@ describe WoolClass do
       @b.superclass.should == @a
     end
   end
+  
+  context '#subclasses' do
+    it 'returns the set of direct subclasses of the WoolClass' do
+      @a.subclasses.should include(@b)
+    end
+  end
+end
+
+describe 'hierarchy methods' do
+  before do
+    @y = WoolClass.new('Y')
+    @y.superclass = @x = WoolClass.new('X')
+    @x.superclass = ClassRegistry['Object']
+    @y2 = WoolClass.new('Y2')
+    @y2.superclass = @x
+    @z = WoolClass.new('Z')
+    @z.superclass = @y
+    @w = WoolClass.new('W')
+    @w.superclass = @y2
+  end
+  
+  context '#superclass' do
+    it 'should return the direct superclass' do
+      @x.superclass.should == ClassRegistry['Object']
+      @y.superclass.should == @x
+      @y2.superclass.should == @x
+      @z.superclass.should == @y
+      @w.superclass.should == @y2
+    end
+  end
+  
+  context '#superset' do
+    it 'should return all ancestors and the current class, in order' do
+      @x.superset.should == [@x, ClassRegistry['Object']]
+      @y.superset.should == [@y, @x, ClassRegistry['Object']]
+      @y2.superset.should == [@y2, @x, ClassRegistry['Object']]
+      @z.superset.should == [@z, @y, @x, ClassRegistry['Object']]
+      @w.superset.should == [@w, @y2, @x, ClassRegistry['Object']]
+    end
+  end
+  
+  context '#proper_superset' do
+    it 'should return all ancestors, in order' do
+      @x.proper_superset.should == [ClassRegistry['Object']]
+      @y.proper_superset.should == [@x, ClassRegistry['Object']]
+      @y2.proper_superset.should == [@x, ClassRegistry['Object']]
+      @z.proper_superset.should == [@y, @x, ClassRegistry['Object']]
+      @w.proper_superset.should == [@y2, @x, ClassRegistry['Object']]
+    end
+  end
+  
+  context '#subset' do
+    it 'should return all known classes in the class tree rooted at the receiver' do
+      @w.subset.should == [@w]
+      @z.subset.should == [@z]
+      @y2.subset.should == [@y2, @w]
+      @y.subset.should == [@y, @z]
+      @x.subset.should == [@x, @y, @z, @y2, @w]
+    end
+  end
+  
+  context '#proper_subset' do
+    it 'should return all known classes in the class tree rooted at the receiver' do
+      @w.proper_subset.should == []
+      @z.proper_subset.should == []
+      @y2.proper_subset.should== [@w]
+      @y.proper_subset.should == [@z]
+      @x.proper_subset.should == [@y, @z, @y2, @w]
+    end
+  end
 end
 
 describe WoolMethod do

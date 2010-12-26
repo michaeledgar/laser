@@ -87,15 +87,19 @@ module Wool
     # It inherits from WoolModule to pull in everything but superclasses.
     class WoolClass < WoolModule
       # WoolClass
-      attr_reader :superclass
-      attr_accessor_with_default :subclasses, []
+      attr_reader :superclass, :subclasses
+      
+      def initialize(*args)
+        super
+        @subclasses ||= []
+      end
       
       def add_subclass!(other)
         subclasses << other
       end
       
       def remove_subclass!(other)
-        subclasses -= other
+        subclasses -= [other]
       end
       
       def superclass=(other)
@@ -112,7 +116,15 @@ module Wool
       end
       
       def proper_superset
-        superset - self
+        superset - [self]
+      end
+      
+      def subset
+        [self] + subclasses.map(&:subset).flatten
+      end
+      
+      def proper_subset
+        subset - [self]
       end
       
       def class_name
