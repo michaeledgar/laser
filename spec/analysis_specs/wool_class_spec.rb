@@ -37,7 +37,11 @@ end
 
 describe WoolClass do
   before do
-    @a = WoolClass.new('A')
+    @a = WoolClass.new('A') do |a|
+      a.add_instance_method(WoolMethod.new('silly') do |method|
+        method.add_signature(Signature.new('silly', ClassRegistry['Object'].protocol, {}))
+      end)
+    end
     @b = WoolClass.new('B') do |b|
       b.superclass = @a
       b.add_instance_method(WoolMethod.new('foo') do |method|
@@ -51,15 +55,16 @@ describe WoolClass do
   end
   
   context '#instance_signatures' do
-    it 'returns an empty list when no methods are declared' do
-      @a.instance_signatures.should be_empty
-    end
-    
     it "flattens all its normal instance method's signatures" do
+      @a.instance_signatures.should include(Signature.new('silly', ClassRegistry['Object'].protocol, {}))
       @b.instance_signatures.should include(Signature.new('foo', @a.protocol, {}))
       @b.instance_signatures.should include(Signature.new('foo', @b.protocol, {'a' => @a.protocol}))
       @b.instance_signatures.should include(
           Signature.new('bar', @b.protocol, {'a' => @a.protocol, 'b' => @b.protocol}))
+    end
+    
+    it 'inherits from non-overridden superclass methods' do
+      @b.instance_signatures.should include(Signature.new('silly', ClassRegistry['Object'].protocol, {}))
     end
   end
   
