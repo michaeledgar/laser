@@ -44,7 +44,6 @@ module Wool
           then superclass = @current_scope.lookup_path(const_sexp_name(superclass_node)).self_ptr
           else superclass = ClassRegistry['Object']
           end
-          
           default_visit(path_node)
           node.scope = @current_scope
           superclass_node.scope = @current_scope if superclass_node
@@ -63,7 +62,7 @@ module Wool
           #    should be added to self's singleton class. You can just skip
           #    the "class << self" or "def x.methodname" syntax.
           current_module = @current_scope.self_ptr
-          new_signature = Signature.new(name, Protocols::UnknownProtocol.new)
+          new_signature = Signature.new(name[1], Protocols::UnknownProtocol.new, {})
           
         end
 

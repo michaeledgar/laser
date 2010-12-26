@@ -11,6 +11,16 @@ module Wool
     class Signature < Struct.new(:name, :return_protocol, :argument_protocols)
       include Comparable
 
+      def initialize(*args)
+        super
+        # validate state
+        unless String === self.name && Protocols::Base === self.return_protocol &&
+               Hash === self.argument_protocols &&
+               self.argument_protocols.all? { |k, v| String === k && Protocols::Base === v }
+          raise ArgumentError.new("Invalid arguments to a signature: #{args.inspect}")
+        end
+      end
+
       # It's trivially clear that equal Signatures have equal mangled forms.
       # It's nice to notice that by using a space as the delimeter, the mangled
       # form is still all visible characters, but also the space will compare less
