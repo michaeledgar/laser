@@ -22,7 +22,7 @@ require 'wool/analysis/scope'
 # 2. Remove spurs
 # 3. Bend at the waist
 # 4. PULL UP ON THEM BOOTSTRAPS!
-Wool::SexpAnalysis::ClassRegistry.initialize_global_scope
+Wool::SexpAnalysis::ClassRegistry.bootstrap
 # Load the constraint engine
 require 'wool/constraints/constraints'
 require 'wool/annotation_parser/parsers'

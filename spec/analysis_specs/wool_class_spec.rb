@@ -5,11 +5,11 @@ describe WoolModule do
     @a = WoolClass.new('A')
     @b = WoolClass.new('B') do |b|
       b.add_method(WoolMethod.new('foo') do |method|
-        method.add_signature(@a.protocol, [])
-        method.add_signature(b.protocol, [@a.protocol])
+        method.add_signature(Signature.new('foo', @a.protocol, []))
+        method.add_signature(Signature.new('foo', b.protocol, [@a.protocol]))
       end)
       b.add_method(WoolMethod.new('bar') do |method|
-        method.add_signature(b.protocol, [@a.protocol, b.protocol])
+        method.add_signature(Signature.new('bar', b.protocol, [@a.protocol, b.protocol]))
       end)
     end
   end
@@ -41,11 +41,11 @@ describe WoolClass do
     @b = WoolClass.new('B') do |b|
       b.superclass = @a
       b.add_method(WoolMethod.new('foo') do |method|
-        method.add_signature(@a.protocol, [])
-        method.add_signature(b.protocol, [@a.protocol])
+        method.add_signature(Signature.new('foo', @a.protocol, []))
+        method.add_signature(Signature.new('foo', b.protocol, [@a.protocol]))
       end)
       b.add_method(WoolMethod.new('bar') do |method|
-        method.add_signature(b.protocol, [@a.protocol, b.protocol])
+        method.add_signature(Signature.new('bar', b.protocol, [@a.protocol, b.protocol]))
       end)
     end
   end
@@ -79,8 +79,8 @@ describe WoolMethod do
   
   context '#add_signature' do
     it 'creates signature objects and returns them in #signatures' do
-      @method.add_signature(@a.protocol, [])
-      @method.add_signature(@b.protocol, [@a.protocol, @a.protocol])
+      @method.add_signature(Signature.new('foobar', @a.protocol, []))
+      @method.add_signature(Signature.new('foobar', @b.protocol, [@a.protocol, @a.protocol]))
       @method.signatures.should include(Signature.new('foobar', @a.protocol, []))
       @method.signatures.should include(
           Signature.new('foobar', @b.protocol, [@a.protocol, @a.protocol]))

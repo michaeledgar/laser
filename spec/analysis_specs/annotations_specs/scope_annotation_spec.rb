@@ -338,7 +338,7 @@ EOF
     reopen_and_mod.value.object_id.should == and_mod.value.object_id
     type_class.value.path.should == 'And::Or::Type'
     kind_class.value.path.should == 'And::Or::Is::Ten::Kind'
-    kind_class.value.superclass.value.path.should == 'And::Or::Type'
+    kind_class.value.superclass.path.should == 'And::Or::Type'
     silly_mod.value.path.should == 'And::Or::Is::Ten::Kind::Silly'
   end
 end

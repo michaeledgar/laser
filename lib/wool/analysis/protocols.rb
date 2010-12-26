@@ -1,3 +1,4 @@
+require 'set'
 module Wool
   module SexpAnalysis
     # This module contains a class hierarchy that represents the type
@@ -22,7 +23,14 @@ module Wool
         # Compares the protocol to another protocol by comparing their signatures
         # list (sorted).
         def <=>(other)
-          self.signatures.sort <=> other.signatures.sort
+          Set.new(self.signatures) <=> Set.new(other.signatures)
+        end
+      end
+      
+      # This protocol has literally no information known about it. :-(
+      class UnknownProtocol < Base
+        def signatures
+          []
         end
       end
       

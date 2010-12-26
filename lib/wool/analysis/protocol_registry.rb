@@ -37,7 +37,7 @@ module Wool
         end
       end
       
-      def self.initialize_global_scope
+      def self.bootstrap
         class_class = WoolClass.new('Class', nil)
         module_class = WoolClass.new('Module', nil)
         object_class = WoolClass.new('Object', nil)

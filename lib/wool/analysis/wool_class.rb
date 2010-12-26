@@ -2,9 +2,10 @@ module Wool
   module SexpAnalysis
     class WoolObject
       extend ModuleExtensions
-      attr_reader :protocol, :scope, :methods
+      attr_reader :protocol, :scope, :methods, :klass
       
       def initialize(klass = ClassRegistry['Object'], scope = Scope::GlobalScope)
+        @klass = klass
         @protocol = klass.protocol
         @scope = scope
         @methods = {}
@@ -26,18 +27,23 @@ module Wool
       
       def initialize(full_path, scope = Scope::GlobalScope)
         super(self, scope)
+        
         @path = full_path
         @instance_methods = {}
         @scope = scope
         @methods = {}
         initialize_protocol
-        @object = Symbol.new(:protocol => @protocol, :class_used => ClassRegistry[superclass_name], :scope => scope,
+        @object = Symbol.new(:protocol => @protocol, :class_used => klass, :scope => scope,
                              :name => name, :value => self)
         initialize_scope
         yield self if block_given?
       end
 
-      def superclass_name
+      def klass
+        ClassRegistry[class_name]
+      end
+      
+      def class_name
         'Module'
       end
 
@@ -51,11 +57,11 @@ module Wool
       end
       
       def initialize_protocol
-        if ProtocolRegistry[superclass_name].empty?
-          @protocol = Protocols::InstanceProtocol.new(superclass_name)
+        if ProtocolRegistry[class_name].empty?
+          @protocol = Protocols::InstanceProtocol.new(class_name)
           ProtocolRegistry.add_class_protocol(@protocol)
         else
-          @protocol = ProtocolRegistry[superclass_name].first
+          @protocol = ProtocolRegistry[class_name].first
         end
         # for instances of me
         ProtocolRegistry.add_class_protocol(Protocols::InstanceProtocol.new(self))
@@ -65,8 +71,8 @@ module Wool
         self.path.split('::').last
       end
       
-      def add_instance_method(method)
-        @instance_methods[method.name] = method
+      def add_signature(signature)
+        @instance_methods[signature.name].add_signature(signature)
       end
       
       def inspect
@@ -78,9 +84,36 @@ module Wool
     # clash with regular Class. This links the class to its protocol.
     # It inherits from WoolModule to pull in everything but superclasses.
     class WoolClass < WoolModule
-      attr_accessor :superclass
+      # WoolClass
+      attr_reader :superclass
+      attr_accessor_with_default :subclasses, []
       
-      def superclass_name
+      def add_subclass!(other)
+        subclasses << other
+      end
+      
+      def remove_subclass!(other)
+        subclasses -= other
+      end
+      
+      def superclass=(other)
+        superclass.remove_subclass! self if superclass
+        @superclass = other
+        superclass.add_subclass! self
+      end
+      
+      def superset
+        if superclass.nil?
+        then [self]
+        else [self] + superclass.superset
+        end
+      end
+      
+      def proper_superset
+        superset - self
+      end
+      
+      def class_name
         'Class'
       end
       
@@ -102,8 +135,8 @@ module Wool
         yield self if block_given?
       end
 
-      def add_signature(return_proto, arg_protos)
-        @signatures << Signature.new(self.name, return_proto, arg_protos)
+      def add_signature(signature)
+        @signatures << signature
       end
     end
   end

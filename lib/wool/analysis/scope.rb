@@ -33,7 +33,6 @@ module Wool
         rescue Scope::ScopeLookupFailure => err
           # gotta swizzle in the new scope because the module we create is creating
           # the new scope!
-          
           new_scope = Scope.new(self, nil)
           new_mod = WoolModule.new(submodule_path(new_mod_name), new_scope)
           new_scope

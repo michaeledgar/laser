@@ -20,11 +20,11 @@ describe Protocols::InstanceProtocol do
     @a_proto = ProtocolRegistry['A'].first
     b = WoolClass.new('B') do |b|
       b.add_method(WoolMethod.new('foo') do |method|
-        method.add_signature(@a_proto, [])
-        method.add_signature(ProtocolRegistry['B'].first, [@a_proto])
+        method.add_signature(Signature.new('foo', @a_proto, []))
+        method.add_signature(Signature.new('foo', ProtocolRegistry['B'].first, [@a_proto]))
       end)
       b.add_method(WoolMethod.new('bar') do |method|
-        method.add_signature(ProtocolRegistry['B'].first, [@a_proto, ProtocolRegistry['B'].first])
+        method.add_signature(Signature.new('bar', ProtocolRegistry['B'].first, [@a_proto, ProtocolRegistry['B'].first]))
       end)
     end
     @b_proto = ProtocolRegistry['B'].first
