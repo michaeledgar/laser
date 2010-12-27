@@ -4,6 +4,14 @@ module Wool
   # This prevents conflicts with other libraries defining extensions
   # of the same name.
   module ModuleExtensions
+    # Creates a new method that returns the boolean negation of the
+    # specified method.
+    def opposite_method(new_name, old_name)
+      define_method new_name do |*args, &blk|
+        !send(old_name, *args, &blk)
+      end
+    end
+    
     # Creates an attr_accessor that defaults to a certain value.
     def attr_accessor_with_default(name, val)
       ivar_sym = "@#{name}"

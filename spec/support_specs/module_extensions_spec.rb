@@ -9,6 +9,10 @@ describe ModuleExtensions do
       cattr_writer :write1, :write2
       cattr_accessor :both1, :both2
       cattr_accessor_with_default :arr1, []
+      def even?(x)
+        x % 2 == 0
+      end
+      opposite_method :odd?, :even?
     end
   end
 
@@ -99,6 +103,15 @@ describe ModuleExtensions do
         type { 5 + 3 }
       end
       @derived.type.call.should == 8
+    end
+  end
+  
+  describe '#opposite_method' do
+    it 'creates a new method that is the opposite of the specified method' do
+      @class.new.even?(4).should be true
+      @class.new.odd?(4).should be false
+      @class.new.even?(1).should be false
+      @class.new.odd?(1).should be true
     end
   end
 end

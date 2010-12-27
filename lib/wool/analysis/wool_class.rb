@@ -153,6 +153,11 @@ module Wool
         end
       end
       
+      def trivial?
+        @instance_methods.empty?
+      end
+      opposite_method :nontrivial?, :trivial?
+      
       def class_name
         'Class'
       end
