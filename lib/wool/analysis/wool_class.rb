@@ -13,8 +13,10 @@ module Wool
       end
       
       def singleton_class
-        return @singleton_class if singleton_class
-        @singleton_class = WoolClass.new("#<Class:#{name}>")
+        return @singleton_class if @singleton_class
+        @singleton_class = WoolClass.new("#<Class:#{name}>") do |new_singleton_class|
+          new_singleton_class.superclass = self.klass
+        end
         @singleton_class
       end
       
@@ -57,6 +59,7 @@ module Wool
           @scope.self_ptr = self.object.value
           @scope.parent.constants[name] = self.object if @scope.parent
         end
+        @scope.locals['self'] = self.object if @scope
       end
       
       def initialize_protocol
@@ -98,8 +101,8 @@ module Wool
       attr_reader :superclass, :subclasses
       
       def initialize(*args)
-        super
         @subclasses ||= []
+        super # can yield, so must come last
       end
       
       # Adds a subclass.

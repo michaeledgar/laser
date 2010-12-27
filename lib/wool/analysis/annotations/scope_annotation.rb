@@ -61,9 +61,18 @@ module Wool
           # 2. If self does not have Module in its class hierarchy, then it
           #    should be added to self's singleton class. You can just skip
           #    the "class << self" or "def x.methodname" syntax.
-          current_module = @current_scope.self_ptr
+          current_class = @current_scope.self_ptr
+          name = name.children.first # gets the string out of the identifier
           # Ruby 1.9 hashes are *ordered* so we will use this for param order
           new_signature = Signature.for_definition_sexp(arglist, body)
+          unless current_class.respond_to?(:add_instance_method)
+            current_class = current_class.singleton_class
+          end
+          current_class.add_instance_method(WoolMethod.new(name) do |method|
+            method.add_signature(new_signature)
+          end)
+          method_self = WoolObject.new(current_class, nil)
+          
         end
 
         add :defs do |node, singleton, op, name, arglist, body|

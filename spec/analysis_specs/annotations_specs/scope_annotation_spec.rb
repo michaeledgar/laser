@@ -222,7 +222,9 @@ describe ScopeAnnotation do
     supermod.path.should == 'WWD::SuperModule'
     supermod.superclass.should == ClassRegistry['Module']
   end
+end
   
+describe 'complete tests' do
   # This is the AST that Ripper generates for the parsed code. It is
   # provided here because otherwise the test is inscrutable.
   #
