@@ -76,6 +76,11 @@ module Wool
       def name
         self.path.split('::').last
       end
+
+      def trivial?
+        @instance_methods.empty?
+      end
+      opposite_method :nontrivial?, :trivial?
       
       def add_instance_method(method)
         @instance_methods[method.name] = method
@@ -152,11 +157,6 @@ module Wool
         else @instance_methods
         end
       end
-      
-      def trivial?
-        @instance_methods.empty?
-      end
-      opposite_method :nontrivial?, :trivial?
       
       def class_name
         'Class'
