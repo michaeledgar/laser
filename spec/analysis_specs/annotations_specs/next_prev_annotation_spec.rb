@@ -21,8 +21,8 @@ describe NextPrevAnnotation do
     expectalot(:next => { nil => [tree] }, :prev => { nil => [tree] })
     visited = Set.new
     tree.all_subtrees.each do |node|
-      node.prev.next.should == node if is_sexp?(node.prev)
-      node.next.prev.should == node if is_sexp?(node.next)
+      node.prev.next.should == node if node.is_sexp?(node.prev)
+      node.next.prev.should == node if node.is_sexp?(node.next)
     end
   end
 end

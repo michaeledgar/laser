@@ -62,10 +62,8 @@ module Wool
           #    should be added to self's singleton class. You can just skip
           #    the "class << self" or "def x.methodname" syntax.
           current_module = @current_scope.self_ptr
-          arg_hash = {}
-          
-          new_signature = Signature.new(name[1], Protocols::UnknownProtocol.new, {})
-          
+          # Ruby 1.9 hashes are *ordered* so we will use this for param order
+          new_signature = Signature.for_definition_sexp(arglist, body)
         end
 
         add :defs do |node, singleton, op, name, arglist, body|

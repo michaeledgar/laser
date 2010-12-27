@@ -6,10 +6,13 @@ describe WoolModule do
     @b = WoolModule.new('B') do |b|
       b.add_instance_method(WoolMethod.new('foo') do |method|
         method.add_signature(Signature.new('foo', @a.protocol, {}))
-        method.add_signature(Signature.new('foo', b.protocol, {'a' => @a.protocol}))
+        method.add_signature(Signature.new('foo', b.protocol,
+            {'a' => Argument.new('a', :positional, @a.protocol)}))
       end)
       b.add_instance_method(WoolMethod.new('bar') do |method|
-        method.add_signature(Signature.new('bar', b.protocol, {'a' => @a.protocol, 'b' => b.protocol}))
+        method.add_signature(Signature.new('bar', b.protocol,
+            {'a' => Argument.new('a', :positional, @a.protocol),
+             'b' => Argument.new('b', :positional, b.protocol)}))
       end)
     end
   end
@@ -28,9 +31,12 @@ describe WoolModule do
     
     it "flattens all its normal instance method's signatures" do
       @b.instance_signatures.should include(Signature.new('foo', @a.protocol, {}))
-      @b.instance_signatures.should include(Signature.new('foo', @b.protocol, {'a' => @a.protocol}))
+      @b.instance_signatures.should include(Signature.new('foo', @b.protocol,
+          {'a' => Argument.new('a', :positional, @a.protocol)}))
       @b.instance_signatures.should include(
-          Signature.new('bar', @b.protocol, {'a' => @a.protocol, 'b' => @b.protocol}))
+          Signature.new('bar', @b.protocol,
+          {'a' => Argument.new('a', :positional, @a.protocol),
+           'b' => Argument.new('b', :positional, @b.protocol)}))
     end
   end
 end
@@ -46,25 +52,32 @@ describe WoolClass do
       b.superclass = @a
       b.add_instance_method(WoolMethod.new('foo') do |method|
         method.add_signature(Signature.new('foo', @a.protocol, {}))
-        method.add_signature(Signature.new('foo', b.protocol, {'a' => @a.protocol}))
+        method.add_signature(Signature.new('foo', b.protocol,
+            {'a' => Argument.new('a', :positional, @a.protocol)}))
       end)
       b.add_instance_method(WoolMethod.new('bar') do |method|
-        method.add_signature(Signature.new('bar', b.protocol, {'a' => @a.protocol, 'b' => b.protocol}))
+        method.add_signature(Signature.new('bar', b.protocol,
+            {'a' => Argument.new('a', :positional, @a.protocol),
+             'b' => Argument.new('b', :positional, b.protocol)}))
       end)
     end
   end
   
   context '#instance_signatures' do
     it "flattens all its normal instance method's signatures" do
-      @a.instance_signatures.should include(Signature.new('silly', ClassRegistry['Object'].protocol, {}))
+      @a.instance_signatures.should include(
+          Signature.new('silly', ClassRegistry['Object'].protocol, {}))
       @b.instance_signatures.should include(Signature.new('foo', @a.protocol, {}))
-      @b.instance_signatures.should include(Signature.new('foo', @b.protocol, {'a' => @a.protocol}))
-      @b.instance_signatures.should include(
-          Signature.new('bar', @b.protocol, {'a' => @a.protocol, 'b' => @b.protocol}))
+      @b.instance_signatures.should include(Signature.new('foo', @b.protocol,
+          {'a' => Argument.new('a', :positional, @a.protocol)}))
+      @b.instance_signatures.should include(Signature.new('bar', @b.protocol,
+          {'a' => Argument.new('a', :positional, @a.protocol),
+           'b' => Argument.new('b', :positional, @b.protocol)}))
     end
     
     it 'inherits from non-overridden superclass methods' do
-      @b.instance_signatures.should include(Signature.new('silly', ClassRegistry['Object'].protocol, {}))
+      @b.instance_signatures.should include(
+          Signature.new('silly', ClassRegistry['Object'].protocol, {}))
     end
   end
   
@@ -155,10 +168,14 @@ describe WoolMethod do
   context '#add_signature' do
     it 'creates signature objects and returns them in #signatures' do
       @method.add_signature(Signature.new('foobar', @a.protocol, {}))
-      @method.add_signature(Signature.new('foobar', @b.protocol, {'a' => @a.protocol, 'a2' => @a.protocol}))
+      @method.add_signature(Signature.new('foobar', @b.protocol,
+          {'a' => Argument.new('a', :positional, @a.protocol),
+           'a2' => Argument.new('a2', :positional, @a.protocol)}))
       @method.signatures.should include(Signature.new('foobar', @a.protocol, {}))
       @method.signatures.should include(
-          Signature.new('foobar', @b.protocol, {'a' => @a.protocol, 'a2' => @a.protocol}))
+          Signature.new('foobar', @b.protocol,
+              {'a' => Argument.new('a', :positional, @a.protocol),
+               'a2' => Argument.new('a2', :positional, @a.protocol)}))
     end
   end
   

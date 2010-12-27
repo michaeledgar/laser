@@ -1,7 +1,7 @@
 $LOAD_PATH.unshift(File.dirname(__FILE__) + '/../../lib')
 require 'wool'
 
-require 'spec/expectations'
+require 'rspec/expectations'
 require 'stringio'
 
 def swizzling_io

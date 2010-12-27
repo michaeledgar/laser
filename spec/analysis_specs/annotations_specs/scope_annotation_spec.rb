@@ -18,7 +18,7 @@ describe ScopeAnnotation do
   it 'adds scopes to each node with a flat example with no new scopes' do
     tree = Sexp.new(Ripper.sexp('a = nil; b = a; if b; a; end'))
     ScopeAnnotation::Annotator.new.annotate!(tree)
-    all_sexps_in_subtree(tree).each do |node|
+    tree.all_subtrees.each do |node|
       node.scope.should == Scope::GlobalScope
     end
   end

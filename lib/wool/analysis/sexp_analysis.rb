@@ -33,6 +33,21 @@ module Wool
       def type
         self[0]
       end
+
+      # is the given object a sexp?
+      #
+      # @return Boolean
+      def is_sexp?(sexp)
+        SexpAnalysis::Sexp === sexp
+      end
+
+      # Same as #find for Enumerable, only recursively. Useful for "jumping"
+      # past useless parser nodes.
+      def deep_find
+        ([self] + all_subtrees.to_a).each do |node|
+          return node if yield(node)
+        end
+      end
       
       def all_subtrees
         to_visit = self.children.dup
@@ -44,7 +59,7 @@ module Wool
           case todo[0]
           when Array
             to_visit.concat todo
-          when Symbol
+          when ::Symbol
             to_visit.concat todo.children
             visited << todo
           end

@@ -30,10 +30,13 @@ describe Protocols::InstanceProtocol do
     b = WoolClass.new('B') do |b|
       b.add_instance_method(WoolMethod.new('foo') do |method|
         method.add_signature(Signature.new('foo', @a_proto, {}))
-        method.add_signature(Signature.new('foo', ProtocolRegistry['B'].first, {'a' => @a_proto}))
+        method.add_signature(Signature.new('foo', ProtocolRegistry['B'].first,
+            {'a' => Argument.new('a', :positional, @a_proto)}))
       end)
       b.add_instance_method(WoolMethod.new('bar') do |method|
-        method.add_signature(Signature.new('bar', ProtocolRegistry['B'].first, {'a' => @a_proto, 'b' => ProtocolRegistry['B'].first}))
+        method.add_signature(Signature.new('bar', ProtocolRegistry['B'].first,
+            {'a' => Argument.new('a', :positional, @a_proto),
+             'b' => Argument.new('b', :positional, ProtocolRegistry['B'].first)}))
       end)
     end
     @b_proto = ProtocolRegistry['B'].first
@@ -46,8 +49,11 @@ describe Protocols::InstanceProtocol do
     
     it "gets its class's signatures when they are specified, which are its methods' signatures" do
       @b_proto.signatures.should include(Signature.new('foo', @a_proto, {}))
-      @b_proto.signatures.should include(Signature.new('foo', @b_proto, {'a' => @a_proto}))
-      @b_proto.signatures.should include(Signature.new('bar', @b_proto, {'a' => @a_proto, 'b' => @b_proto}))
+      @b_proto.signatures.should include(Signature.new('foo', @b_proto,
+          {'a' => Argument.new('a', :positional, @a_proto)}))
+      @b_proto.signatures.should include(Signature.new('bar', @b_proto,
+          {'a' => Argument.new('a', :positional, @a_proto),
+           'b' => Argument.new('b', :positional, @b_proto)}))
     end
   end
 end

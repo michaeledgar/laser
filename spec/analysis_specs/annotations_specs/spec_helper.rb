@@ -1,27 +1,5 @@
 require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
 
-def is_sexp?(sexp)
-  SexpAnalysis::Sexp === sexp
-end
-
-def all_sexps_in_subtree(tree)
-  to_visit = tree.children.dup
-  visited = Set.new
-  while to_visit.any?
-    todo = to_visit.shift
-    next unless is_sexp?(todo)
-    
-    case todo[0]
-    when Array
-      to_visit.concat todo
-    when Symbol
-      to_visit.concat todo.children
-      visited << todo
-    end
-  end
-  visited
-end
-
 # Runs a shit-ton of expectations common among annotations. Since an annotaiton
 # just adds an attribute to a Sexp, we have a very common set of examples o
 # the form:
