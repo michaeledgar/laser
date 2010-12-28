@@ -10,7 +10,7 @@ class Wool::ExtraBlankLinesWarning < Wool::FileWarning
     body =~ EXTRA_LINE
   end
 
-  def fix
+  def fix(body = self.body)
     body.gsub(/\s*\Z/, '')
   end
 
