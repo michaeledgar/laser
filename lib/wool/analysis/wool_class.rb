@@ -62,8 +62,10 @@ module Wool
         @scope.locals['self'] = self.object if @scope
       end
       
+      # Initializes the protocol for this WoolClass.
       def initialize_protocol
         if ProtocolRegistry[path].any?
+          $stderr.puts "Warning: creating new instance of class #{path}"
           @protocol = ProtocolRegistry[path].first
         else
           @protocol = Protocols::InstanceProtocol.new(self)

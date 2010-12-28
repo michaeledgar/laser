@@ -39,6 +39,26 @@ describe WoolModule do
            'b' => Argument.new('b', :positional, @b.protocol)}))
     end
   end
+  
+  context '#trivial?' do
+    it 'returns true if the module has no methods' do
+      @a.trivial?.should be true
+    end
+    
+    it 'returns false if the module has an instance method' do
+      @b.trivial?.should be false
+    end
+  end
+  
+  context '#nontrivial?' do
+    it 'returns false if the module has no methods' do
+      @a.nontrivial?.should be false
+    end
+    
+    it 'returns true if the module has an instance method' do
+      @b.nontrivial?.should be true
+    end
+  end
 end
 
 describe WoolClass do
