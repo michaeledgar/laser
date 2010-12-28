@@ -18,8 +18,8 @@ describe Protocols::StructuralProtocol do
   before do
     a = WoolClass.new('A')
     @a_proto = ProtocolRegistry['A'].first
-    @sig1 = Signature.new('foo', @a_proto, {})
-    @sig2 = Signature.new('foo', @a_proto, {})
+    @sig1 = Signature.new('foo', @a_proto, [])
+    @sig2 = Signature.new('foo', @a_proto, [])
   end
 end
 
@@ -32,14 +32,14 @@ describe Protocols::InstanceProtocol do
     @a_proto = ProtocolRegistry['A'].first
     b = WoolClass.new('B') do |b|
       b.add_instance_method(WoolMethod.new('foo') do |method|
-        method.add_signature(Signature.new('foo', @a_proto, {}))
+        method.add_signature(Signature.new('foo', @a_proto, []))
         method.add_signature(Signature.new('foo', ProtocolRegistry['B'].first,
-            {'a' => Argument.new('a', :positional, @a_proto)}))
+            [Argument.new('a', :positional, @a_proto)]))
       end)
       b.add_instance_method(WoolMethod.new('bar') do |method|
         method.add_signature(Signature.new('bar', ProtocolRegistry['B'].first,
-            {'a' => Argument.new('a', :positional, @a_proto),
-             'b' => Argument.new('b', :positional, ProtocolRegistry['B'].first)}))
+            [Argument.new('a', :positional, @a_proto),
+             Argument.new('b', :positional, ProtocolRegistry['B'].first)]))
       end)
     end
     @b_proto = ProtocolRegistry['B'].first
@@ -51,12 +51,12 @@ describe Protocols::InstanceProtocol do
     end
     
     it "gets its class's signatures when they are specified, which are its methods' signatures" do
-      @b_proto.signatures.should include(Signature.new('foo', @a_proto, {}))
+      @b_proto.signatures.should include(Signature.new('foo', @a_proto, []))
       @b_proto.signatures.should include(Signature.new('foo', @b_proto,
-          {'a' => Argument.new('a', :positional, @a_proto)}))
+          [Argument.new('a', :positional, @a_proto)]))
       @b_proto.signatures.should include(Signature.new('bar', @b_proto,
-          {'a' => Argument.new('a', :positional, @a_proto),
-           'b' => Argument.new('b', :positional, @b_proto)}))
+          [Argument.new('a', :positional, @a_proto),
+           Argument.new('b', :positional, @b_proto)]))
     end
   end
 end

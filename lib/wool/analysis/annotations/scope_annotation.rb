@@ -72,7 +72,6 @@ module Wool
             method.add_signature(new_signature)
           end)
           method_self = WoolObject.new(current_class, nil)
-          
         end
 
         add :defs do |node, singleton, op, name, arglist, body|
