@@ -24,7 +24,8 @@ module Wool
 
       def self.query(query={})
         if query[:class_path]
-          [self.class_protocols[query[:class_path]]]
+          result = self.class_protocols[query[:class_path]]
+          result ? [result] : []
         end
       end
     end

@@ -63,14 +63,12 @@ module Wool
       end
       
       def initialize_protocol
-        if ProtocolRegistry[class_name].empty?
-          @protocol = Protocols::InstanceProtocol.new(class_name)
-          ProtocolRegistry.add_class_protocol(@protocol)
+        if ProtocolRegistry[path].any?
+          @protocol = ProtocolRegistry[path].first
         else
-          @protocol = ProtocolRegistry[class_name].first
+          @protocol = Protocols::InstanceProtocol.new(self)
+          ProtocolRegistry.add_class_protocol(@protocol)
         end
-        # for instances of me
-        ProtocolRegistry.add_class_protocol(Protocols::InstanceProtocol.new(self))
       end
       
       def name
