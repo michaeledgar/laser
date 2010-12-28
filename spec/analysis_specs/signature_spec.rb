@@ -42,6 +42,8 @@ describe Signature do
           [x, a, y, z, d].each {|arg| arg.protocol.should == Protocols::UnknownProtocol.new }
           rest.protocol.should == ProtocolRegistry['Array'].first
           blk.protocol.should == ProtocolRegistry['Proc'].first
+          a.default_value_sexp.type.should == :@int
+          y.default_value_sexp.type.should == :@int
         end
       end
     end
