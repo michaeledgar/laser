@@ -1,15 +1,8 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 require 'set'
 describe ScopeAnnotation do
-  before(:each) do
-    @backup_all = ProtocolRegistry.protocols.dup
-    @backup_map = ProtocolRegistry.class_protocols.dup
-  end
-  
-  after(:each) do
-    ProtocolRegistry.protocols.replace @backup_all
-    ProtocolRegistry.class_protocols.replace @backup_map
-  end
+  extend AnalysisHelpers
+  clean_registry
   
   it 'adds the #scope method to Sexp' do
     Sexp.instance_methods.should include(:scope)

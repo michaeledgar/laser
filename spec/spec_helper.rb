@@ -12,7 +12,6 @@ require 'stringio'
 
 
 include Wool
-
 module Wool
   module RSpec
     module Matchers

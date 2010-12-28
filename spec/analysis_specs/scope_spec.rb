@@ -21,6 +21,9 @@ describe Scope::GlobalScope do
 end
 
 describe Scope do
+  extend AnalysisHelpers
+  clean_registry
+
   before do
     @new_scope = Scope.new(Scope::GlobalScope, nil)
     WoolModule.new('ABD', @new_scope)  # ignore: unused return

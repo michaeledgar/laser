@@ -24,6 +24,9 @@ describe Protocols::StructuralProtocol do
 end
 
 describe Protocols::InstanceProtocol do
+  extend AnalysisHelpers
+  clean_registry
+
   before do
     a = WoolClass.new('A')
     @a_proto = ProtocolRegistry['A'].first

@@ -2,17 +2,12 @@ require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 require 'ostruct'
 
 describe ProtocolRegistry do
+  extend AnalysisHelpers
+  clean_registry
+
   before(:each) do
-    @backup_all = ProtocolRegistry.protocols.dup
-    @backup_map = ProtocolRegistry.class_protocols.dup
-    
     ProtocolRegistry.protocols = []
     ProtocolRegistry.class_protocols = {}
-  end
-  
-  after(:each) do
-    ProtocolRegistry.protocols = @backup_all
-    ProtocolRegistry.class_protocols = @backup_map
   end
   
   context '#add_protocol' do
@@ -58,15 +53,8 @@ describe ProtocolRegistry do
 end
 
 describe 'ClassRegistry' do
-  before(:each) do
-    @backup_all = ProtocolRegistry.protocols.dup
-    @backup_map = ProtocolRegistry.class_protocols.dup
-  end
-  
-  after(:each) do
-    ProtocolRegistry.protocols.replace @backup_all
-    ProtocolRegistry.class_protocols.replace @backup_map
-  end
+  extend AnalysisHelpers
+  clean_registry
 
   describe '#[]' do
     it 'finds InstanceProtocols and extracts the WoolClass appropriately' do

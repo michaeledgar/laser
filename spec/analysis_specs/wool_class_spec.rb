@@ -1,6 +1,9 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 
 describe WoolModule do
+  extend AnalysisHelpers
+  clean_registry
+
   before do
     @a = WoolModule.new('A')
     @b = WoolModule.new('B') do |b|
@@ -62,6 +65,9 @@ describe WoolModule do
 end
 
 describe WoolClass do
+  extend AnalysisHelpers
+  clean_registry
+
   before do
     @a = WoolClass.new('A') do |a|
       a.add_instance_method(WoolMethod.new('silly') do |method|
@@ -115,6 +121,9 @@ describe WoolClass do
 end
 
 describe 'hierarchy methods' do
+  extend AnalysisHelpers
+  clean_registry
+
   before do
     @y = WoolClass.new('Y')
     @y.superclass = @x = WoolClass.new('X')
@@ -179,6 +188,9 @@ describe 'hierarchy methods' do
 end
 
 describe WoolMethod do
+  extend AnalysisHelpers
+  clean_registry
+
   before do
     @a = WoolClass.new('A')
     @b = WoolClass.new('B')
