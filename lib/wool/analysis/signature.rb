@@ -15,9 +15,9 @@ module Wool
 
         arg_list.concat parse_positionals(positional_1) if positional_1
         arg_list.concat parse_optionals(optionals) if optionals
-        arg_list.concat parse_rest_arg(rest_arg) if rest_arg
+        arg_list << parse_rest_arg(rest_arg) if rest_arg
         arg_list.concat parse_positionals(positional_2) if positional_2
-        arg_list.concat parse_block_arg(block_arg) if block_arg
+        arg_list << parse_block_arg(block_arg) if block_arg
         arg_list
       end
       
@@ -47,7 +47,7 @@ module Wool
       #
       # rest_arg: Sexp
       def parse_rest_arg(rest_arg)
-        Argument.new(rest_arg[1][1], :rest, ClassRegistry['Array'])
+        Argument.new(rest_arg[1][1], :rest, ClassRegistry['Array'].protocol)
       end
       
       # Parses the block argument of an argument list Sexp and adds it to
@@ -55,7 +55,7 @@ module Wool
       #
       # block_arg: Sexp
       def parse_block_arg(block_arg)
-        Argument.new(block_arg[1][1], :block, ClassRegistry['Proc'])
+        Argument.new(block_arg[1][1], :block, ClassRegistry['Proc'].protocol)
       end
     end
     

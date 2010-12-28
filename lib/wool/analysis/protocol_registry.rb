@@ -60,6 +60,10 @@ module Wool
         object_class.instance_variable_set("@scope", object_scope)
         module_class.instance_variable_set("@scope", module_scope)
         class_class.instance_variable_set("@scope", class_scope)
+        # move these to a real ruby file that gets run through the scanner at
+        # boot time
+        WoolClass.new('Array') {|klass| klass.superclass = object_class }
+        WoolClass.new('Proc')  {|klass| klass.superclass = object_class }
       end
     end
   end
