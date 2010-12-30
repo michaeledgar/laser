@@ -47,7 +47,7 @@ module Wool
       class StructuralProtocol < Base
         extend ModuleExtensions
         attr_accessor_with_default :signatures, []
-        def initialize(*sigs)
+        def initialize(sigs)
           @signatures = sigs
         end
       end

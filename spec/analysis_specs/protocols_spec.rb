@@ -34,6 +34,25 @@ describe Protocols::StructuralProtocol do
   end
 end
 
+describe Protocols::StructuralProtocol do
+  extend AnalysisHelpers
+  clean_registry
+  
+  before do
+    @foo = Signature.new('foo', ClassRegistry['Class'].protocol, [])
+    @bizzle = Signature.new('bizzle', ClassRegistry['Array'].protocol, [])
+    @structural = Protocols::StructuralProtocol.new([@foo, @bizzle])
+  end
+  
+  context '#signatures' do
+    it 'returns the current list of signatures, which is initialized during construction' do
+      @structural.signatures.should include(@foo)
+      @structural.signatures.should include(@bizzle)
+      @structural.signatures.should_not include(Signature.new('foo', ClassRegistry['Module'].protocol, []))
+    end
+  end
+end
+
 describe Protocols::InstanceProtocol do
   extend AnalysisHelpers
   clean_registry
