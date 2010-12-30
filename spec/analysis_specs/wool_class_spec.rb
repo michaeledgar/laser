@@ -7,13 +7,13 @@ shared_examples_for 'a Ruby module' do
   before do
     @a = described_class.new('A')
     @b = described_class.new('B') do |b|
-      b.add_instance_method(WoolMethod.new('foo') do |method|
-        method.add_signature(Signature.new('foo', @a.protocol, []))
-        method.add_signature(Signature.new('foo', b.protocol,
+      b.add_instance_method!(WoolMethod.new('foo') do |method|
+        method.add_signature!(Signature.new('foo', @a.protocol, []))
+        method.add_signature!(Signature.new('foo', b.protocol,
             [Argument.new('a', :positional, @a.protocol)]))
       end)
-      b.add_instance_method(WoolMethod.new('bar') do |method|
-        method.add_signature(Signature.new('bar', b.protocol,
+      b.add_instance_method!(WoolMethod.new('bar') do |method|
+        method.add_signature!(Signature.new('bar', b.protocol,
             [Argument.new('a', :positional, @a.protocol),
              Argument.new('b', :positional, b.protocol)]))
       end)
@@ -40,6 +40,20 @@ shared_examples_for 'a Ruby module' do
           Signature.new('bar', @b.protocol,
           [Argument.new('a', :positional, @a.protocol),
            Argument.new('b', :positional, @b.protocol)]))
+    end
+  end
+  
+  context '#add_signature!' do
+    it 'adds the signature to the instance method with the given name' do
+      @b.add_signature! Signature.new('foo', @b.protocol, [])
+      @b.instance_methods['foo'].signatures.should include(
+          Signature.new('foo', @b.protocol, []))
+    end
+    
+    it 'automatically creates the method if it is not already there' do
+      @b.add_signature! Signature.new('foomonkey', @b.protocol, [])
+      @b.instance_methods['foomonkey'].signatures.should include(
+          Signature.new('foomonkey', @b.protocol, []))
     end
   end
   
@@ -175,10 +189,10 @@ describe WoolMethod do
     @method = WoolMethod.new('foobar')
   end
   
-  context '#add_signature' do
+  context '#add_signature!' do
     it 'creates signature objects and returns them in #signatures' do
-      @method.add_signature(Signature.new('foobar', @a.protocol, []))
-      @method.add_signature(Signature.new('foobar', @b.protocol,
+      @method.add_signature!(Signature.new('foobar', @a.protocol, []))
+      @method.add_signature!(Signature.new('foobar', @b.protocol,
           [Argument.new('a', :positional, @a.protocol),
            Argument.new('a2', :positional, @a.protocol)]))
       @method.signatures.should include(Signature.new('foobar', @a.protocol, []))

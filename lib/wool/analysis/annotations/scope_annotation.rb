@@ -65,11 +65,11 @@ module Wool
           name = name.children.first # gets the string out of the identifier
           # Ruby 1.9 hashes are *ordered* so we will use this for param order
           new_signature = Signature.for_definition_sexp(arglist, body)
-          unless current_class.respond_to?(:add_instance_method)
+          unless current_class.respond_to?(:add_instance_method!)
             current_class = current_class.singleton_class
           end
-          current_class.add_instance_method(WoolMethod.new(name) do |method|
-            method.add_signature(new_signature)
+          current_class.add_instance_method!(WoolMethod.new(name) do |method|
+            method.add_signature!(new_signature)
           end)
           method_self = WoolObject.new(current_class, nil)
           method_locals = Hash[new_signature.arguments.map { |arg| [arg.name, arg] }]

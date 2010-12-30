@@ -34,7 +34,7 @@ module Wool
         super(self, scope)
         
         @path = full_path
-        @instance_methods = {}
+        @instance_methods = Hash.new { |hash, name| hash[name] = WoolMethod.new(name) }
         @scope = scope
         @methods = {}
         initialize_protocol
@@ -82,7 +82,7 @@ module Wool
       end
       opposite_method :nontrivial?, :trivial?
       
-      def add_instance_method(method)
+      def add_instance_method!(method)
         @instance_methods[method.name] = method
       end
       
@@ -90,8 +90,8 @@ module Wool
         instance_methods.values.map(&:signatures).flatten
       end
       
-      def add_signature(signature)
-        @instance_methods[signature.name].add_signature(signature)
+      def add_signature!(signature)
+        @instance_methods[signature.name].add_signature!(signature)
       end
       
       def inspect
@@ -180,7 +180,7 @@ module Wool
         yield self if block_given?
       end
 
-      def add_signature(signature)
+      def add_signature!(signature)
         @signatures << signature
       end
     end

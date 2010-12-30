@@ -31,13 +31,13 @@ describe Protocols::InstanceProtocol do
     a = WoolClass.new('A')
     @a_proto = ProtocolRegistry['A'].first
     b = WoolClass.new('B') do |b|
-      b.add_instance_method(WoolMethod.new('foo') do |method|
-        method.add_signature(Signature.new('foo', @a_proto, []))
-        method.add_signature(Signature.new('foo', ProtocolRegistry['B'].first,
+      b.add_instance_method!(WoolMethod.new('foo') do |method|
+        method.add_signature!(Signature.new('foo', @a_proto, []))
+        method.add_signature!(Signature.new('foo', ProtocolRegistry['B'].first,
             [Argument.new('a', :positional, @a_proto)]))
       end)
-      b.add_instance_method(WoolMethod.new('bar') do |method|
-        method.add_signature(Signature.new('bar', ProtocolRegistry['B'].first,
+      b.add_instance_method!(WoolMethod.new('bar') do |method|
+        method.add_signature!(Signature.new('bar', ProtocolRegistry['B'].first,
             [Argument.new('a', :positional, @a_proto),
              Argument.new('b', :positional, ProtocolRegistry['B'].first)]))
       end)
