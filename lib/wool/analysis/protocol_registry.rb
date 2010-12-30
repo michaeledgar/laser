@@ -42,15 +42,15 @@ module Wool
         class_class = WoolClass.new('Class', nil)
         module_class = WoolClass.new('Module', nil)
         object_class = WoolClass.new('Object', nil)
-        class_scope = Scope.new(nil, class_class)
-        module_scope = Scope.new(nil, module_class)
-        object_scope = Scope.new(nil, object_class)
+        class_scope = OpenScope.new(nil, class_class)
+        module_scope = OpenScope.new(nil, module_class)
+        object_scope = OpenScope.new(nil, object_class)
         module_class.superclass = object_class
         class_class.superclass = module_class
         main_object = WoolObject.new(object_class, nil, 'main')
-        global = Scope.new(nil, main_object,
+        global = OpenScope.new(nil, main_object,
             {'Object' => object_class, 'Module' => module_class, 'Class' => class_class})
-        unless SexpAnalysis.const_defined?("GlobalScope")
+        unless Scope.const_defined?("GlobalScope")
           Scope.const_set("GlobalScope", global) 
         end
         class_scope.parent = Scope::GlobalScope

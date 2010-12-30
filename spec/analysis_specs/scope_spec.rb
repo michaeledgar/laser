@@ -1,8 +1,8 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 
 describe Scope::GlobalScope do
-  it 'is a Scope object' do
-    Scope::GlobalScope.should be_a(Scope)
+  it 'is a OpenScope object' do
+    Scope::GlobalScope.should be_a(OpenScope)
   end
   
   it 'has no parent' do
@@ -20,14 +20,14 @@ describe Scope::GlobalScope do
   end
 end
 
-describe Scope do
+describe OpenScope do
   extend AnalysisHelpers
   clean_registry
 
   before do
-    @new_scope = Scope.new(Scope::GlobalScope, nil)
+    @new_scope = OpenScope.new(Scope::GlobalScope, nil)
     WoolModule.new('ABD', @new_scope)  # ignore: unused return
-    @third_scope = Scope.new(@new_scope, nil)
+    @third_scope = OpenScope.new(@new_scope, nil)
     WoolModule.new('OOP', @third_scope)  # ignore: unused return
   end
 

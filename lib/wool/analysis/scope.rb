@@ -8,12 +8,16 @@ module Wool
         attr_accessor :scope, :query
         def initialize(scope, query)
           @scope, @query = scope, query
-          super("Scope #{@scope.inspect} does not contain #{query.inspect}")
+          super("OpenScope #{@scope.inspect} does not contain #{query.inspect}")
         end
       end
 
       attr_accessor :constants, :self_ptr, :parent, :locals
       def initialize(parent, self_ptr, constants={}, locals={})
+        unless respond_to?(:lookup_local)
+          raise NotImplementedError.new(
+              'must create OpenScope or ClosedScope. Not just OpenScope.')
+        end
         @parent, @self_ptr, @constants, @locals = parent, self_ptr, constants, locals
         @locals['self'] = self_ptr
       end
@@ -33,7 +37,7 @@ module Wool
         rescue Scope::ScopeLookupFailure => err
           # gotta swizzle in the new scope because the module we create is creating
           # the new scope!
-          new_scope = Scope.new(self, nil)
+          new_scope = OpenScope.new(self, nil)
           new_mod = WoolModule.new(submodule_path(new_mod_name), new_scope)
           new_scope
         end
@@ -45,7 +49,7 @@ module Wool
         rescue Scope::ScopeLookupFailure => err
           # gotta swizzle in the new scope because the class we create is creating
           # the new scope!
-          new_scope = Scope.new(self, nil)
+          new_scope = OpenScope.new(self, nil)
           new_class = WoolClass.new(submodule_path(new_class_name), new_scope) do |klass|
             klass.superclass = superclass
           end
@@ -69,14 +73,29 @@ module Wool
             err.scope = self
             raise err
           end
-        elsif locals[str] then locals[str]
-        else raise ScopeLookupFailure.new(self, str)
+        else lookup_local str
         end
       end
 
       def lookup_path(path)
         parts = path.split('::')
         parts.inject(self) { |scope, part| scope.lookup(part).scope }
+      end
+    end
+    
+    class OpenScope < Scope
+      def lookup_local(str)
+        if locals[str]
+        then locals[str]
+        elsif parent then parent.lookup_local(str)
+        else raise ScopeLookupFailure.new(self, str)
+        end
+      end
+    end
+    
+    class ClosedScope < Scope
+      def lookup_local(str)
+        locals[str] or raise ScopeLookupFailure.new(self, str)
       end
     end
   end

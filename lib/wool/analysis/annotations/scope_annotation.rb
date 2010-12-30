@@ -72,6 +72,8 @@ module Wool
             method.add_signature(new_signature)
           end)
           method_self = WoolObject.new(current_class, nil)
+          method_locals = Hash[new_signature.arguments.map { |arg| [arg.name, arg] }]
+          new_scope = OpenScope.new(@current_scope, method_self, {}, method_locals)
         end
 
         add :defs do |node, singleton, op, name, arglist, body|
@@ -82,9 +84,9 @@ module Wool
         # scope it will be in. The actual constant need not yet have an existing
         # object representing it yet – it will be lookup_or_created later.
         #
-        # @param [Scope] current_scope the scope to look up the path in
+        # @param [OpenScope] current_scope the scope to look up the path in
         # @param [Sexp] path_node the node that describes the constant
-        # @return [Array[Scope,String]] A tuple of the final scope and the
+        # @return [Array[OpenScope,String]] A tuple of the final scope and the
         #     name of the constant to use (as extracted from the AST)
         def unpack_path(current_scope, path_node)
           case path_node.type
