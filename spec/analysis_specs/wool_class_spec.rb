@@ -1,12 +1,12 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 
-describe WoolModule do
+shared_examples_for 'a Ruby module' do
   extend AnalysisHelpers
   clean_registry
 
   before do
-    @a = WoolModule.new('A')
-    @b = WoolModule.new('B') do |b|
+    @a = described_class.new('A')
+    @b = described_class.new('B') do |b|
       b.add_instance_method(WoolMethod.new('foo') do |method|
         method.add_signature(Signature.new('foo', @a.protocol, []))
         method.add_signature(Signature.new('foo', b.protocol,
@@ -22,7 +22,7 @@ describe WoolModule do
   
   context '#name' do
     it 'extracts the name from the full path' do
-      x = WoolClass.new('::A::B::C::D::EverybodysFavoriteClass')
+      x = described_class.new('::A::B::C::D::EverybodysFavoriteClass')
       x.name.should == 'EverybodysFavoriteClass'
     end
   end
@@ -64,46 +64,17 @@ describe WoolModule do
   end
 end
 
-describe WoolClass do
-  extend AnalysisHelpers
-  clean_registry
+describe WoolModule do
+  it_should_behave_like 'a Ruby module'
+end
 
-  before do
-    @a = WoolClass.new('A') do |a|
-      a.add_instance_method(WoolMethod.new('silly') do |method|
-        method.add_signature(Signature.new('silly', ClassRegistry['Object'].protocol, []))
-      end)
-    end
-    @b = WoolClass.new('B') do |b|
-      b.superclass = @a
-      b.add_instance_method(WoolMethod.new('foo') do |method|
-        method.add_signature(Signature.new('foo', @a.protocol, []))
-        method.add_signature(Signature.new('foo', b.protocol,
-            [Argument.new('a', :positional, @a.protocol)]))
-      end)
-      b.add_instance_method(WoolMethod.new('bar') do |method|
-        method.add_signature(Signature.new('bar', b.protocol,
-            [Argument.new('a', :positional, @a.protocol),
-             Argument.new('b', :positional, b.protocol)]))
-      end)
-    end
-  end
+describe WoolClass do
+  it_should_behave_like 'a Ruby module'
   
-  context '#instance_signatures' do
-    it "flattens all its normal instance method's signatures" do
-      @a.instance_signatures.should include(
-          Signature.new('silly', ClassRegistry['Object'].protocol, []))
-      @b.instance_signatures.should include(Signature.new('foo', @a.protocol, []))
-      @b.instance_signatures.should include(Signature.new('foo', @b.protocol,
-          [Argument.new('a', :positional, @a.protocol)]))
-      @b.instance_signatures.should include(Signature.new('bar', @b.protocol,
-          [Argument.new('a', :positional, @a.protocol),
-           Argument.new('b', :positional, @b.protocol)]))
-    end
-    
-    it 'inherits from non-overridden superclass methods' do
-      @b.instance_signatures.should include(
-          Signature.new('silly', ClassRegistry['Object'].protocol, []))
+  before do
+    @a = described_class.new('A')
+    @b = described_class.new('B') do |b|
+      b.superclass = @a
     end
   end
   
@@ -116,6 +87,13 @@ describe WoolClass do
   context '#subclasses' do
     it 'returns the set of direct subclasses of the WoolClass' do
       @a.subclasses.should include(@b)
+    end
+  end
+  
+  context '#remove_subclass' do
+    it 'allows the removal of direct subclasses (just in case we need to)' do
+      @a.remove_subclass!(@b)
+      @a.subclasses.should_not include(@b)
     end
   end
 end

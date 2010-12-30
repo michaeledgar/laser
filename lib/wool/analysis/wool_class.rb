@@ -117,7 +117,7 @@ module Wool
       
       # Removes a subclass.
       def remove_subclass!(other)
-        subclasses -= [other]
+        subclasses.delete other
       end
       
       # Sets the superclass, which handles registering/unregistering subclass
