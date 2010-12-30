@@ -1,5 +1,7 @@
 module Wool
   module SexpAnalysis
+    # This module contains bootstrapping code. This initializes the first classes
+    # and modules that build up the meta-model (Class, Module, Object).
     module Bootstrap
       def self.bootstrap
         class_class = WoolClass.new('Class', nil)
