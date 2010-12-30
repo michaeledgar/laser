@@ -31,6 +31,14 @@ describe Scope::GlobalScope do
   end
 end
 
+describe Scope do
+  context '#initialize' do
+    it 'refuses to instantiate a Scope' do
+      lambda { Scope.new(mock, mock) }.should raise_error(NotImplementedError)
+    end
+  end
+end
+
 shared_examples_for Scope do
   extend AnalysisHelpers
   clean_registry
