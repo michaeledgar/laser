@@ -96,10 +96,6 @@ module Wool
         "#{name} #{return_protocol} #{arguments.to_a.flatten.map(&:to_s).sort.join(' ')}"
       end
 
-      def hash
-        mangled_form.hash
-      end
-
       def <=>(other)
         mangled_form <=> other.mangled_form
       end
