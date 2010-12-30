@@ -16,13 +16,13 @@ require 'wool/analysis/signature'
 require 'wool/analysis/wool_class'
 require 'wool/analysis/protocol_registry'
 require 'wool/analysis/scope'
-
+require 'wool/analysis/bootstrap'
 # Liftoff Instructions:
 # 1. Tuck in your shirt
 # 2. Remove spurs
 # 3. Bend at the waist
 # 4. PULL UP ON THEM BOOTSTRAPS!
-Wool::SexpAnalysis::ClassRegistry.bootstrap
+Wool::SexpAnalysis::Bootstrap.bootstrap
 # Load the constraint engine
 require 'wool/constraints/constraints'
 require 'wool/annotation_parser/parsers'
