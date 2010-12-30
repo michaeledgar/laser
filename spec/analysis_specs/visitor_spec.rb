@@ -8,8 +8,11 @@ describe Visitor do
       def visit_foo(node)
         node.visited = node[1]
       end
-      def visit_bar(node)
+      add :bar do |node|
         node.product = node[1] * node[2]
+      end
+      add(proc {|node| node.children.any? && node[1] == 5 }) do |node|
+        node.lotto_winner = true
       end
     end
   end
@@ -30,9 +33,16 @@ describe Visitor do
       a = Sexp.new([:foo, true])
       a.should_receive(:visited=).with(true)
       @class.new.visit(a)
+    end
+    it 'matches symbol-based filters as a shortcut for node type matching' do
       b = Sexp.new([:bar, 3, 2])
       b.should_receive(:product=).with(6)
       @class.new.visit(b)
+    end
+    it 'uses arbitrary procs to match nodes' do
+      c = Sexp.new([:lotto_entry, 5])
+      c.should_receive(:lotto_winner=).with(true)
+      @class.new.visit(c)
     end
     
     it 'automatically DFSs the tree to visit nodes when they are not handled' do
