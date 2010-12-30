@@ -24,4 +24,17 @@ describe SexpAnalysis::Symbol do
       sym.value.should == value
     end
   end
+  
+  context '#<=>' do
+    it 'should compare based on name alone' do
+      proto, klass, scope, value = many_mocks(4)
+      sym1 = SexpAnalysis::Symbol.new(
+          :protocol => proto, :class_used => klass, :scope => scope,
+          :name => 'Hello', :value => value)
+      sym2 = SexpAnalysis::Symbol.new(
+          :protocol => proto, :class_used => klass, :scope => scope,
+          :name => 'Helga', :value => value)
+      sym1.should > sym2
+    end
+  end
 end
