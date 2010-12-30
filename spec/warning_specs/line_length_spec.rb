@@ -15,8 +15,16 @@ describe GenericLineLengthWarning do
     warning.severity.should == @eighty_cap.severity
   end
 
-  it 'has a remotely useful description' do
-    @eighty_cap.new('(stdin)', 'x' * 80).desc.should =~ /line length/i
+  context '#desc' do
+    it 'has a remotely useful description' do
+      @eighty_cap.new('(stdin)', 'x' * 80).desc.should =~ /line length/i
+    end
+  end
+  
+  context '#inspect' do  
+    it 'contains the capacity in the description' do
+      @eighty_cap.inspect.should =~ /80/i
+    end
   end
 
   it 'matches lines longer than the specified number of characters' do
