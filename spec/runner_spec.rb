@@ -142,6 +142,19 @@ describe Runner do
       runner.using.each {|w| w.ancestors.should include(Warning) }
     end
   end
+  
+  context '#convert_warning_list' do
+    it 'should have a :whitespace helper' do
+      result = @runner.convert_warning_list([:whitespace])
+      list = ExtraBlankLinesWarning, ExtraWhitespaceWarning, 
+             OperatorSpacing, MisalignedUnindentationWarning
+      (result & list).should == list
+    end
+    
+    it 'should have an :all option' do
+      @runner.convert_warning_list([:all]).should == Warning.all_warnings
+    end
+  end
 
   context '#display_warnings' do
     it 'prints the lines and files where there are warnings' do
