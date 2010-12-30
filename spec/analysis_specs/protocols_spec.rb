@@ -12,6 +12,17 @@ describe Protocols::Base do
       lambda { Protocols::Base.new <=> Protocols::Base.new }.should raise_error(NotImplementedError)
     end
   end
+  
+  context '#|' do
+    it 'creates a protocol that contains both operand protocols' do
+      sigs = many_mocks(5)
+      protocol1, protocol2 = Protocols::Base.new, Protocols::Base.new
+      protocol1.should_receive(:signatures).exactly(5).times.and_return(sigs[0..2])
+      protocol2.should_receive(:signatures).exactly(5).times.and_return(sigs[3..4])
+      unioned = protocol1 | protocol2
+      sigs.each { |sig| unioned.signatures.should include(sig) }
+    end
+  end
 end
 
 describe Protocols::StructuralProtocol do

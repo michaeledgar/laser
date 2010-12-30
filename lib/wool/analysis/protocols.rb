@@ -29,7 +29,7 @@ module Wool
         # Unions the protocol with another.
         # @return [UnionProtocol]
         def |(other)
-          UnionProtocol.new(self, other)
+          UnionProtocol.new([self, other])
         end
       end
       
@@ -73,13 +73,6 @@ module Wool
         # @return [Array<Signature>] the supported signatures for this protocol.
         def signatures
           @protocols.map(&:signatures).inject(:|)
-        end
-        
-        # Unions the UnionProtocol with another. Luckily, that's as simple as
-        # just adding it to the list of protocols.
-        def |(other)
-          @protocols << other
-          self
         end
       end
       
