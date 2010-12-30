@@ -65,6 +65,10 @@ describe 'ClassRegistry' do
       ProtocolRegistry.add_class_protocol x
       ClassRegistry['SillyWilly'].should == temp_class
     end
+    
+    it 'raises on failure' do
+      lambda { ClassRegistry['OogaBoogaBoo'] }.should raise_error(ArgumentError)
+    end
   end
 
   describe 'built-in classes' do

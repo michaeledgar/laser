@@ -70,13 +70,22 @@ describe Runner do
 
   context '#collect_options_and_arguments' do
     before do
-      @runner = Runner.new(['--fix', '--report-fixed', 'hello', 'there'])
+      @runner = Runner.new(['--fix', '--report-fixed', '--line-length', '103', 'hello', 'there'])
       @settings, @arguments = @runner.collect_options_and_arguments
+      @new_warning = Warning.all_warnings.last
+    end
+
+    after do
+      current = @new_warning
+      while (current = current.superclass) && current != Warning.superclass
+        current.all_warnings.delete @new_warning
+      end
     end
 
     it 'finds both flags' do
       @settings[:fix].should be_true
       @settings[:"report-fixed"].should be_true
+      @settings[:"line-length"].should == 103
     end
 
     it 'finds both stray arguments' do
