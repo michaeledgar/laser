@@ -175,10 +175,7 @@ describe ScopeAnnotation do
       new_scope.self_ptr.should be_a(WoolObject)
       new_scope.self_ptr.klass == ClassRegistry['M13']
       new_scope.locals.should_not be_empty
-      rest_arg = new_scope.lookup('rest')
-      rest_arg.should be_a(Argument)
-      rest_arg.protocol.should be ProtocolRegistry['Array'].first
-      rest_arg.kind.should == :rest
+      new_scope.lookup('rest').should == Argument.new('rest', :rest, ProtocolRegistry['Array'].first)
     end
     # now make sure the method got created in the M13 module!
     method = ClassRegistry['M13'].instance_methods['silly']
@@ -301,15 +298,10 @@ describe ScopeAnnotation do
       new_scope.self_ptr.should be_a(WoolObject)
       new_scope.self_ptr.klass == ClassRegistry['Alpha']
       new_scope.locals.should_not be_empty
-      a_arg = new_scope.lookup('a')
-      a_arg.should be_a(Argument)
-      a_arg.protocol.should == Protocols::UnknownProtocol.new
-      a_arg.kind.should == :positional
-      b_arg = new_scope.lookup('b')
-      b_arg.should be_a(Argument)
-      b_arg.protocol.should == Protocols::UnknownProtocol.new
-      b_arg.kind.should == :optional
-      b_arg.default_value_sexp.should == Sexp.new([:var_ref, [:@ident, "a", [1, 29]]])
+      new_scope.lookup('a').should == Argument.new('a', :positional, Protocols::UnknownProtocol.new)
+      new_scope.lookup('b').should ==Argument.new(
+          'b', :optional, Protocols::UnknownProtocol.new,
+          Sexp.new([:var_ref, [:@ident, "a", [1, 29]]]))
     end
     # now make sure the method got created in the M13 module!
     ['Alpha', 'B22'].each do |klass|
@@ -319,6 +311,36 @@ describe ScopeAnnotation do
       signature = method.signatures.first
       signature.arguments.should == [body.scope.lookup('a'), body.scope.lookup('b')]
       signature.name.should == 'do_xyz'
+    end
+  end
+
+  # [:program,
+  #  [[:def,
+  #    [:@ident, "abc", [1, 4]],
+  #    [:paren,
+  #     [:params,
+  #      [[:@ident, "bar", [1, 8]]],
+  #      nil, nil, nil,
+  #      [:blockarg, [:@ident, "blk", [1, 14]]]]],
+  #    [:bodystmt,
+  #     [[:void_stmt],
+  #      [:command,
+  #       [:@ident, "p", [1, 20]],
+  #       [:args_add_block, [[:var_ref, [:@ident, "blk", [1, 22]]]], false]]],
+  #     nil, nil, nil]]]]
+  it 'defines method on the main object, if no scope is otherwise enclosing a method definition' do
+    tree = Sexp.new(Ripper.sexp('def abc(bar, &blk); p blk; end'))
+    ScopeAnnotation::Annotator.new.annotate!(tree)
+    definition = tree[1][0]
+    body = definition[3]
+    [body, *body.all_subtrees].each do |node|
+      new_scope = node.scope
+      new_scope.self_ptr.name.should == 'main'
+      new_scope.self_ptr.should be_a(WoolObject)
+      new_scope.self_ptr.klass == ClassRegistry['Object']
+      new_scope.locals.should_not be_empty
+      new_scope.lookup('bar').should == Argument.new('bar', :positional, Protocols::UnknownProtocol.new)
+      new_scope.lookup('blk').should == Argument.new('blk', :block, ClassRegistry['Proc'].protocol)
     end
   end
 end
