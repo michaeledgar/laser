@@ -12,6 +12,14 @@ module Wool
       class Base
         include Comparable
 
+        # Provide a good generic inspect method: show the class name, and the
+        # to_s form of the protocol. to_s should provide the form of the protocol
+        # in annotation form, if possible, or otherwise be a concise explanation of
+        # what the protocol represents.
+        def inspect
+          "#<#{self.class.name}: #{to_s}>"
+        end
+
         # Returns the list of all known signatures that this protocol responds
         # to.
         #
@@ -64,7 +72,7 @@ module Wool
         end
         
         def to_s
-          @protocols.inject {|a, b| "#{a.to_s} U #{b.to_s}"}
+          @protocols.inject {|a, b| "#{a.to_s} | #{b.to_s}"}
         end
         
         # Returns the list of all known signatures that this protocol responds
@@ -88,7 +96,7 @@ module Wool
         end
         
         def to_s
-          "#<InstanceProtocol: #{value.path}>"
+          value.path
         end
         
         # Returns all the signatures that the class responds to, since this protocol

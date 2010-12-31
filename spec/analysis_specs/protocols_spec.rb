@@ -26,15 +26,6 @@ describe Protocols::Base do
 end
 
 describe Protocols::StructuralProtocol do
-  before do
-    a = WoolClass.new('A')
-    @a_proto = ProtocolRegistry['A'].first
-    @sig1 = Signature.new('foo', @a_proto, [])
-    @sig2 = Signature.new('foo', @a_proto, [])
-  end
-end
-
-describe Protocols::StructuralProtocol do
   extend AnalysisHelpers
   clean_registry
   
@@ -46,9 +37,13 @@ describe Protocols::StructuralProtocol do
   
   context '#signatures' do
     it 'returns the current list of signatures, which is initialized during construction' do
-      @structural.signatures.should include(@foo)
-      @structural.signatures.should include(@bizzle)
-      @structural.signatures.should_not include(Signature.new('foo', ClassRegistry['Module'].protocol, []))
+      Set.new(@structural.signatures).should == Set.new([@bizzle, @foo])
+    end
+  end
+  
+  context '#inspect' do
+    it 'contains the name of the class' do
+      @structural.inspect.should include('StructuralProtocol')
     end
   end
 end
@@ -89,6 +84,13 @@ describe Protocols::InstanceProtocol do
            Argument.new('b', :positional, @b_proto)]))
     end
   end
+  
+  context '#to_s' do
+    it 'returns the name of the class this protocol represents an instance of' do
+      @a_proto.to_s.should == 'A'
+      @b_proto.to_s.should == 'B'
+    end
+  end
 end
 
 describe Protocols::UnionProtocol do
@@ -105,6 +107,15 @@ describe Protocols::UnionProtocol do
       end
       final_sigs = @union.signatures
       sigs.each {|sig| final_sigs.should include(sig)}
+    end
+  end
+  
+  context '#to_s' do
+    it 'returns the union members joined by |, as in the annotation language' do
+      @first.should_receive(:to_s).and_return('AbcDef')
+      @second.should_receive(:to_s).and_return('Hello::World')
+      @third.should_receive(:to_s).and_return('#read -> String')
+      @union.to_s.should == 'AbcDef | Hello::World | #read -> String'
     end
   end
 end
