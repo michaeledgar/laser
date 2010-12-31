@@ -64,7 +64,7 @@ module Wool
           current_self = @current_scope.self_ptr
           name = name.children.first # gets the string out of the identifier
           # Ruby 1.9 hashes are *ordered* so we will use this for param order
-          new_signature = Signature.for_definition_sexp(arglist, body)
+          new_signature = Signature.for_definition_sexp(name, arglist, body)
           current_self.add_instance_method!(WoolMethod.new(name) do |method|
             method.add_signature!(new_signature)
           end)

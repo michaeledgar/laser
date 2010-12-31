@@ -71,10 +71,10 @@ module Wool
       include Comparable
       extend ArgumentListHandling
 
-      def self.for_definition_sexp(arglist, body)
+      def self.for_definition_sexp(name, arglist, body)
         arg_hash = {}
         arglist = arglist.deep_find { |node| node.type == :params }
-        new_signature = Signature.new(name[1], Protocols::UnknownProtocol.new, arg_list_for_arglist(arglist))
+        new_signature = Signature.new(name, Protocols::UnknownProtocol.new, arg_list_for_arglist(arglist))
       end
 
       def initialize(*args)

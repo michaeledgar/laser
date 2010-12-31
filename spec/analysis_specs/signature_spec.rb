@@ -46,7 +46,7 @@ describe Signature do
     context 'when given the definition of an empty method' do
       it 'creates a signature with an empty argument list' do
         sexp = Sexp.new(Ripper.sexp('def a(); end'))
-        signature = Signature.for_definition_sexp(sexp, Sexp.new([]))
+        signature = Signature.for_definition_sexp('a', sexp, Sexp.new([]))
         signature.arguments.should be_empty
       end
     end
@@ -54,7 +54,7 @@ describe Signature do
     context 'when given simple positional arguments' do
       it 'creates a signature with corresponding positional arguments' do
         sexp = Sexp.new(Ripper.sexp('def a(x, y, z); end'))
-        signature = Signature.for_definition_sexp(sexp, Sexp.new([]))
+        signature = Signature.for_definition_sexp('a', sexp, Sexp.new([]))
         signature.arguments.tap do |args|
           args.size.should be 3
           args.each do |arg|
@@ -73,7 +73,7 @@ describe Signature do
     context 'when given a complex definition exercising all argument types' do
       it 'creates the correct, corresponding argument list' do
         sexp = Sexp.new(Ripper.sexp('def a(x, a=2, y=3, *rest, z, d, &blk); end'))
-        signature = Signature.for_definition_sexp(sexp, Sexp.new([]))
+        signature = Signature.for_definition_sexp('a', sexp, Sexp.new([]))
         signature.arguments.tap do |args|
           names = ['x', 'a', 'y', 'rest', 'z', 'd', 'blk']
           kinds = [:positional, :optional, :optional, :rest, :positional, :positional, :block]
