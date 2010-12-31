@@ -12,6 +12,14 @@ module Wool
         @name = name
       end
       
+      def add_instance_method!(method)
+        singleton_class.add_instance_method!(method)
+      end
+      
+      def add_signature!(signature)
+        singleton_class.add_signature!(signature)
+      end
+      
       def singleton_class
         return @singleton_class if @singleton_class
         @singleton_class = WoolClass.new("#<Class:#{name}>") do |new_singleton_class|

@@ -61,19 +61,22 @@ module Wool
           # 2. If self does not have Module in its class hierarchy, then it
           #    should be added to self's singleton class. You can just skip
           #    the "class << self" or "def x.methodname" syntax.
-          current_class = @current_scope.self_ptr
+          current_self = @current_scope.self_ptr
           name = name.children.first # gets the string out of the identifier
           # Ruby 1.9 hashes are *ordered* so we will use this for param order
           new_signature = Signature.for_definition_sexp(arglist, body)
-          unless current_class.respond_to?(:add_instance_method!)
-            current_class = current_class.singleton_class
-          end
-          current_class.add_instance_method!(WoolMethod.new(name) do |method|
+          current_self.add_instance_method!(WoolMethod.new(name) do |method|
             method.add_signature!(new_signature)
           end)
-          method_self = WoolObject.new(current_class, nil)
+          
+          if WoolModule === current_self
+          then method_self = WoolObject.new(current_self, nil)
+          else method_self = current_self
+          end
+
           method_locals = Hash[new_signature.arguments.map { |arg| [arg.name, arg] }]
-          new_scope = OpenScope.new(@current_scope, method_self, {}, method_locals)
+          new_scope = ClosedScope.new(@current_scope, method_self, {}, method_locals)
+          visit_with_scope(body, new_scope)
         end
 
         add :defs do |node, singleton, op, name, arglist, body|
@@ -84,9 +87,9 @@ module Wool
         # scope it will be in. The actual constant need not yet have an existing
         # object representing it yet – it will be lookup_or_created later.
         #
-        # @param [OpenScope] current_scope the scope to look up the path in
+        # @param [Scope] current_scope the scope to look up the path in
         # @param [Sexp] path_node the node that describes the constant
-        # @return [Array[OpenScope,String]] A tuple of the final scope and the
+        # @return [Array[Scope,String]] A tuple of the final scope and the
         #     name of the constant to use (as extracted from the AST)
         def unpack_path(current_scope, path_node)
           case path_node.type

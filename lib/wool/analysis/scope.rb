@@ -37,7 +37,7 @@ module Wool
         rescue Scope::ScopeLookupFailure => err
           # gotta swizzle in the new scope because the module we create is creating
           # the new scope!
-          new_scope = OpenScope.new(self, nil)
+          new_scope = ClosedScope.new(self, nil)
           new_mod = WoolModule.new(submodule_path(new_mod_name), new_scope)
           new_scope
         end
@@ -49,7 +49,7 @@ module Wool
         rescue Scope::ScopeLookupFailure => err
           # gotta swizzle in the new scope because the class we create is creating
           # the new scope!
-          new_scope = OpenScope.new(self, nil)
+          new_scope = ClosedScope.new(self, nil)
           new_class = WoolClass.new(submodule_path(new_class_name), new_scope) do |klass|
             klass.superclass = superclass
           end

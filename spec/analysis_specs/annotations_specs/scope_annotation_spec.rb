@@ -64,7 +64,7 @@ describe ScopeAnnotation do
   #           [:bodystmt, [[:void_stmt], [:assign, [:var_field, [:@ident, "a", [1, 24]]],
   #           [:@int, "10", [1, 28]]]], nil, nil, nil]]]]
   it 'creates a new scope when a pathed module declaration is encountered' do
-    temp_scope = OpenScope.new(Scope::GlobalScope, nil)
+    temp_scope = ClosedScope.new(Scope::GlobalScope, nil)
     temp_mod = WoolModule.new('ABC', temp_scope)
     tree = Sexp.new(Ripper.sexp('a = nil; module ABC::DEF; a = 10; end'))
     ScopeAnnotation::Annotator.new.annotate!(tree)
@@ -90,7 +90,7 @@ describe ScopeAnnotation do
   #         [:module, [:const_path_ref, [:var_ref, [:@const, "A10", [1, 29]]], [:@const, "B12", [1, 34]]],
   #           [:bodystmt, [[:void_stmt]], nil, nil, nil]]]]
   it 'creates a new scope when a simple module declaration is encountered' do
-    temp_scope = OpenScope.new(Scope::GlobalScope, nil)
+    temp_scope = ClosedScope.new(Scope::GlobalScope, nil)
     temp_mod = WoolModule.new('A10', temp_scope)
     tree = Sexp.new(Ripper.sexp('module A10::B12; end; module A10::B12; end'))
     ScopeAnnotation::Annotator.new.annotate!(tree)

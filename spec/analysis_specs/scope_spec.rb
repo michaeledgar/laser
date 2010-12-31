@@ -12,8 +12,8 @@ module ScopeSpecHelpers
 end
 
 describe Scope::GlobalScope do
-  it 'is a OpenScope object' do
-    Scope::GlobalScope.should be_a(OpenScope)
+  it 'is a closed scope' do
+    Scope::GlobalScope.should be_a(ClosedScope)
   end
   
   it 'has no parent' do
