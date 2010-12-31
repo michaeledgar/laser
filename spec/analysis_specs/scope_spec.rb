@@ -97,6 +97,11 @@ describe OpenScope do
       @base_scope.locals['x'] = expected
       @nested_scope.lookup_local('x').should be expected
     end
+    
+    it 'should raise if there is no parent' do
+      scope = OpenScope.new(nil, nil)
+      lambda { scope.lookup('foobarmonkey') }.should raise_error(Scope::ScopeLookupFailure)
+    end
   end
 end
 
