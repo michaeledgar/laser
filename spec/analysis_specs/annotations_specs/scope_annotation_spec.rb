@@ -149,6 +149,49 @@ describe ScopeAnnotation do
   # This is the AST that Ripper generates for the parsed code. It is
   # provided here because otherwise the test is inscrutable.
   #
+  # [:program,
+  #  [[:module,
+  #    [:const_ref, [:@const, "M13", [1, 7]]],
+  #    [:bodystmt,
+  #     [[:void_stmt],
+  #      [:def,
+  #       [:@ident, "silly", [1, 16]],
+  #       [:paren,
+  #        [:params, nil, nil, [:rest_param, [:@ident, "rest", [1, 23]]], nil, nil]],
+  #       [:bodystmt,
+  #        [[:void_stmt],
+  #         [:command,
+  #          [:@ident, "p", [1, 30]],
+  #          [:args_add_block, [[:var_ref, [:@ident, "rest", [1, 32]]]], false]]],
+  #        nil,  nil, nil]]],
+  #     nil, nil, nil]]]]
+  it 'defines methods on the current Module, if inside a module lexically' do
+    tree = Sexp.new(Ripper.sexp('module M13; def silly(*rest); p rest; end; end'))
+    ScopeAnnotation::Annotator.new.annotate!(tree)
+    definition = tree[1][0][2][1][1]
+    body = definition[3]
+    [body, *body.all_subtrees].each do |node|
+      new_scope = node.scope
+      new_scope.self_ptr.should be_a(WoolObject)
+      new_scope.self_ptr.klass == ClassRegistry['M13']
+      new_scope.locals.should_not be_empty
+      rest_arg = new_scope.lookup('rest')
+      rest_arg.should be_a(Argument)
+      rest_arg.protocol.should be ProtocolRegistry['Array'].first
+      rest_arg.kind.should == :rest
+    end
+    # now make sure the method got created in the M13 module!
+    method = ClassRegistry['M13'].instance_methods['silly']
+    method.should_not be_nil
+    method.signatures.size.should == 1
+    signature = method.signatures.first
+    signature.arguments.should == [body.scope.lookup('rest')]
+    signature.name.should == 'silly'
+  end
+  
+  # This is the AST that Ripper generates for the parsed code. It is
+  # provided here because otherwise the test is inscrutable.
+  #
   # sexp = [:program, [
   #         [:class, [:const_ref, [:@const, "A", [1, 6]]], nil,
   #           [:bodystmt, [[:void_stmt]], nil, nil, nil]]]]

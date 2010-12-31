@@ -66,7 +66,7 @@ module Wool
       def lookup(str)
         if str =~ /^[A-Z]/ && constants[str]
         then constants[str]
-        elsif str =~ /^[A-z]/ && parent
+        elsif str =~ /^[A-Z]/ && parent
           begin
             parent.lookup(str)
           rescue ScopeLookupFailure => err
