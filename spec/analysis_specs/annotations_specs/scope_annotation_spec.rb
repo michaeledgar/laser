@@ -267,6 +267,60 @@ describe ScopeAnnotation do
     supermod.path.should == 'WWD::SuperModule'
     supermod.superclass.should == ClassRegistry['Module']
   end
+  
+  # [:program,
+  #  [[:class,
+  #    [:const_ref, [:@const, "Alpha", [1, 6]]],
+  #    nil,
+  #    [:bodystmt,
+  #     [[:def,
+  #       [:@ident, "do_xyz", [1, 17]],
+  #       [:paren,
+  #        [:params,
+  #         [[:@ident, "a", [1, 24]]],
+  #         [[[:@ident, "b", [1, 27]], [:var_ref, [:@ident, "a", [1, 29]]]]],
+  #         nil, nil, nil]],
+  #       [:bodystmt,
+  #        [[:void_stmt],
+  #         [:command,
+  #          [:@ident, "p", [1, 33]],
+  #          [:args_add_block, [[:var_ref, [:@ident, "b", [1, 35]]]], false]]],
+  #        nil, nil, nil]]],
+  #     nil, nil, nil]],
+  #   [:class,
+  #    [:const_ref, [:@const, "B22", [1, 54]]],
+  #    [:var_ref, [:@const, "Alpha", [1, 60]]],
+  #    [:bodystmt, [[:void_stmt]], nil, nil, nil]]]]
+  it 'defines methods on the current Class, which are inherited' do
+    tree = Sexp.new(Ripper.sexp('class Alpha; def do_xyz(a, b=a); p b; end; end; class B22 < Alpha; end'))
+    ScopeAnnotation::Annotator.new.annotate!(tree)
+    definition = tree[1][0][3][1][0]
+    body = definition[3]
+    [body, *body.all_subtrees].each do |node|
+      new_scope = node.scope
+      new_scope.self_ptr.should be_a(WoolObject)
+      new_scope.self_ptr.klass == ClassRegistry['Alpha']
+      new_scope.locals.should_not be_empty
+      a_arg = new_scope.lookup('a')
+      a_arg.should be_a(Argument)
+      a_arg.protocol.should == Protocols::UnknownProtocol.new
+      a_arg.kind.should == :positional
+      b_arg = new_scope.lookup('b')
+      b_arg.should be_a(Argument)
+      b_arg.protocol.should == Protocols::UnknownProtocol.new
+      b_arg.kind.should == :optional
+      b_arg.default_value_sexp.should == Sexp.new([:var_ref, [:@ident, "a", [1, 29]]])
+    end
+    # now make sure the method got created in the M13 module!
+    ['Alpha', 'B22'].each do |klass|
+      method = ClassRegistry[klass].instance_methods['do_xyz']
+      method.should_not be_nil
+      method.signatures.size.should == 1
+      signature = method.signatures.first
+      signature.arguments.should == [body.scope.lookup('a'), body.scope.lookup('b')]
+      signature.name.should == 'do_xyz'
+    end
+  end
 end
   
 describe 'complete tests' do
