@@ -32,6 +32,7 @@ describe ScopeAnnotation do
     expectalot(:scope => { Scope::GlobalScope => [tree, list[0], list[0][1], list[0][2]],
                            Scope::GlobalScope.lookup('A').scope => with_new_scope })
 
+    list[1][2].scope.should be_a(ClosedScope)
     list[1][2].scope.self_ptr.klass.path.should == 'Module'
     list[1][2].scope.self_ptr.path.should == 'A'
   end
@@ -49,6 +50,7 @@ describe ScopeAnnotation do
     ScopeAnnotation::Annotator.new.annotate!(tree)
     list = tree[1]
     list[1][2].scope.self_ptr.name.should == 'B'
+    list[1][2].scope.should be_a(ClosedScope)
 
     with_new_scope = list[1][2], *list[1][2].all_subtrees
     expectalot(:scope => { Scope::GlobalScope => [tree, list[0], list[0][1], list[0][2]],
@@ -75,7 +77,8 @@ describe ScopeAnnotation do
     mod.path.should == 'ABC::DEF'
     mod.name.should == 'DEF'
     mod.scope.parent.self_ptr.name.should == 'ABC'
-    
+    mod.scope.should be_a(ClosedScope)
+
     with_new_scope = list[1][2], *list[1][2].all_subtrees
     expectalot(:scope => { Scope::GlobalScope => [tree, list[0], list[0][1], list[0][2]],
                            temp_scope.lookup('DEF').scope => with_new_scope })
@@ -101,6 +104,7 @@ describe ScopeAnnotation do
     expectalot(:scope => { Scope::GlobalScope => [tree, list[0], list[0][1], list[1][1]],
                            temp_scope.lookup('B12').scope => with_new_scope })
 
+    list[0][2].scope.should be_a(ClosedScope)
     list[0][2].scope.self_ptr.name.should == 'B12'
     list[1][2].scope.self_ptr.name.should == 'B12'
     
@@ -127,7 +131,9 @@ describe ScopeAnnotation do
     a_body = list[0][2]
     b_body = a_body[1][1][2]
     c_body = b_body[1][1][2]
-    a, b, c = [a_body, b_body, c_body].map {|x| x.scope.self_ptr }
+    [a_body, b_body, c_body].each { |x| x.scope.should be_a(ClosedScope) }
+    a, b, c = [a_body, b_body, c_body].map { |x| x.scope.self_ptr }
+    
     
     a.klass.path.should == 'Module'
     b.klass.path.should == 'Module'
@@ -152,6 +158,7 @@ describe ScopeAnnotation do
     list = tree[1]
     a_header = list[0][1]
     a_body = list[0][3]
+    a_body.scope.should be_a(ClosedScope)
     a = a_body.scope.self_ptr
     
     a_header.scope.should == Scope::GlobalScope
@@ -176,6 +183,7 @@ describe ScopeAnnotation do
     a_body = list[0][3]
     b_header = list[1][1]
     b_body = list[1][3]
+    [a_body, b_body].each { |x| x.scope.should be_a(ClosedScope) }
     a, b = a_body.scope.self_ptr, b_body.scope.self_ptr
     
     a_header.scope.should == Scope::GlobalScope
@@ -208,6 +216,7 @@ describe ScopeAnnotation do
     supermod_body = list[1][3]
     wwd, supermod = wwd_body.scope.self_ptr, supermod_body.scope.self_ptr
     
+    [wwd_body, supermod_body].each { |x| x.scope.should be_a(ClosedScope) }
     wwd_header.scope.should == Scope::GlobalScope
     wwd.klass.path.should == 'Module'
     wwd.path.should == 'WWD'
