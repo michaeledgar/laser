@@ -3,6 +3,7 @@ module Wool
     # This module contains bootstrapping code. This initializes the first classes
     # and modules that build up the meta-model (Class, Module, Object).
     module Bootstrap
+      class BootstrappingError < StandardError; end
       def self.bootstrap
         class_class = WoolClass.new('Class', nil)
         module_class = WoolClass.new('Module', nil)
@@ -15,7 +16,9 @@ module Wool
         main_object = WoolObject.new(object_class, nil, 'main')
         global = ClosedScope.new(nil, main_object,
             {'Object' => object_class, 'Module' => module_class, 'Class' => class_class})
-        unless Scope.const_defined?("GlobalScope")
+        if Scope.const_defined?("GlobalScope")
+          raise BootstrappingError.new('GlobalScope has already been initialized')
+        else
           Scope.const_set("GlobalScope", global) 
         end
         class_scope.parent = Scope::GlobalScope

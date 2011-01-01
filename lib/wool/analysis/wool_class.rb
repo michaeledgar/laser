@@ -66,8 +66,8 @@ module Wool
         if @scope && @scope != Scope::GlobalScope
           @scope.self_ptr = self.object.value
           @scope.parent.constants[name] = self.object if @scope.parent
+          @scope.locals['self'] = self.object
         end
-        @scope.locals['self'] = self.object if @scope
       end
       
       # Initializes the protocol for this WoolClass.

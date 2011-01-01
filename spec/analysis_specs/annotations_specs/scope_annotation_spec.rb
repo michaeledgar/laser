@@ -202,7 +202,7 @@ describe ScopeAnnotation do
   #         nil, nil, nil]],
   #       [:bodystmt, [[:void_stmt]], nil, nil, nil]]],
   #     nil, nil, nil]]]]
-  it 'allows singleton method declarations on self' do
+  it "allows singleton method declarations on a Module's self" do
     tree = Sexp.new(Ripper.sexp('module M49; def self.silly(a, b=a); end; end'))
     ScopeAnnotation::Annotator.new.annotate!(tree)
     definition = tree[1][0][2][1][1]
@@ -374,6 +374,38 @@ describe ScopeAnnotation do
     ScopeAnnotation::Annotator.new.annotate!(tree)
     definition = tree[1][0]
     body = definition[3]
+    [body, *body.all_subtrees].each do |node|
+      new_scope = node.scope
+      new_scope.self_ptr.name.should == 'main'
+      new_scope.self_ptr.should be_a(WoolObject)
+      new_scope.self_ptr.klass.should == ClassRegistry['Object']
+      new_scope.locals.should_not be_empty
+      new_scope.lookup('bar').should == Argument.new('bar', :positional, Protocols::UnknownProtocol.new)
+      new_scope.lookup('blk').should == Argument.new('blk', :block, ClassRegistry['Proc'].protocol)
+    end
+  end
+  
+  # [:program,
+  # [[:defs,
+  #   [:var_ref, [:@kw, "self", [1, 4]]],
+  #   [:@period, ".", [1, 8]],
+  #   [:@ident, "abc", [1, 9]],
+  #   [:paren,
+  #    [:params,
+  #     [[:@ident, "bar", [1, 13]]],
+  #     nil, nil, nil,
+  #     [:blockarg, [:@ident, "blk", [1, 19]]]]],
+  #   [:bodystmt,
+  #    [[:void_stmt],
+  #     [:command,
+  #      [:@ident, "p", [1, 25]],
+  #      [:args_add_block, [[:var_ref, [:@ident, "blk", [1, 27]]]], false]]],
+  #    nil, nil, nil]]]]
+  it 'defines singleton methods on the main object, if no scope is otherwise enclosing a method definition' do
+    tree = Sexp.new(Ripper.sexp('def self.abc(bar, &blk); p blk; end'))
+    ScopeAnnotation::Annotator.new.annotate!(tree)
+    definition = tree[1][0]
+    body = definition[5]
     [body, *body.all_subtrees].each do |node|
       new_scope = node.scope
       new_scope.self_ptr.name.should == 'main'
