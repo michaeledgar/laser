@@ -173,7 +173,7 @@ describe ScopeAnnotation do
     [body, *body.all_subtrees].each do |node|
       new_scope = node.scope
       new_scope.self_ptr.should be_a(WoolObject)
-      new_scope.self_ptr.klass == ClassRegistry['M13']
+      new_scope.self_ptr.klass.should == ClassRegistry['M13']
       new_scope.locals.should_not be_empty
       new_scope.lookup('rest').should == Argument.new('rest', :rest, ProtocolRegistry['Array'].first)
     end
@@ -183,6 +183,47 @@ describe ScopeAnnotation do
     method.signatures.size.should == 1
     signature = method.signatures.first
     signature.arguments.should == [body.scope.lookup('rest')]
+    signature.name.should == 'silly'
+  end
+  
+  # [:program,
+  #  [[:module,
+  #    [:const_ref, [:@const, "M49", [1, 7]]],
+  #    [:bodystmt,
+  #     [[:void_stmt],
+  #      [:defs,
+  #       [:var_ref, [:@kw, "self", [1, 16]]],
+  #       [:@period, ".", [1, 20]],
+  #       [:@ident, "silly", [1, 21]],
+  #       [:paren,
+  #        [:params,
+  #         [[:@ident, "a", [1, 27]]],
+  #         [[[:@ident, "b", [1, 30]], [:var_ref, [:@ident, "a", [1, 32]]]]],
+  #         nil, nil, nil]],
+  #       [:bodystmt, [[:void_stmt]], nil, nil, nil]]],
+  #     nil, nil, nil]]]]
+  it 'allows singleton method declarations on self' do
+    tree = Sexp.new(Ripper.sexp('module M49; def self.silly(a, b=a); end; end'))
+    ScopeAnnotation::Annotator.new.annotate!(tree)
+    definition = tree[1][0][2][1][1]
+    body = definition[5]
+    [body, *body.all_subtrees].each do |node|
+      new_scope = node.scope
+      new_scope.self_ptr.should be_a(WoolModule)
+      new_scope.self_ptr.should == ClassRegistry['M49']
+      new_scope.self_ptr.klass.should == ClassRegistry['Module']
+      new_scope.locals.should_not be_empty
+      new_scope.lookup('a').should == Argument.new('a', :positional, Protocols::UnknownProtocol.new)
+      new_scope.lookup('b').should ==Argument.new(
+          'b', :optional, Protocols::UnknownProtocol.new,
+          Sexp.new([:var_ref, [:@ident, "a", [1, 32]]]))
+    end
+    
+    method = ClassRegistry['M49'].singleton_class.instance_methods['silly']
+    method.should_not be_nil
+    method.signatures.size.should == 1
+    signature = method.signatures.first
+    signature.arguments.should == [body.scope.lookup('a'), body.scope.lookup('b')]
     signature.name.should == 'silly'
   end
   
@@ -296,7 +337,7 @@ describe ScopeAnnotation do
     [body, *body.all_subtrees].each do |node|
       new_scope = node.scope
       new_scope.self_ptr.should be_a(WoolObject)
-      new_scope.self_ptr.klass == ClassRegistry['Alpha']
+      new_scope.self_ptr.klass.should == ClassRegistry['Alpha']
       new_scope.locals.should_not be_empty
       new_scope.lookup('a').should == Argument.new('a', :positional, Protocols::UnknownProtocol.new)
       new_scope.lookup('b').should ==Argument.new(
@@ -337,7 +378,7 @@ describe ScopeAnnotation do
       new_scope = node.scope
       new_scope.self_ptr.name.should == 'main'
       new_scope.self_ptr.should be_a(WoolObject)
-      new_scope.self_ptr.klass == ClassRegistry['Object']
+      new_scope.self_ptr.klass.should == ClassRegistry['Object']
       new_scope.locals.should_not be_empty
       new_scope.lookup('bar').should == Argument.new('bar', :positional, Protocols::UnknownProtocol.new)
       new_scope.lookup('blk').should == Argument.new('blk', :block, ClassRegistry['Proc'].protocol)

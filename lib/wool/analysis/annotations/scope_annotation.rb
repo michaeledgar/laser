@@ -53,33 +53,40 @@ module Wool
           visit_with_scope(body, new_scope)
         end
 
-        add :def do |node, name, arglist, body|
+        # Normal method definitions.
+        add :def do |node, (_, name), arglist, body|
+          receiver = @current_scope.self_ptr
           # Time to create a brand new WoolMethod!
           # Which class this is added to depends on the value of +self+.
           # 1. If self is a module or class (as is typical), the method is
           #    added to self's instance method list.
           # 2. If self does not have Module in its class hierarchy, then it
-          #    should be added to self's singleton class. You can just skip
-          #    the "class << self" or "def x.methodname" syntax.
-          current_self = @current_scope.self_ptr
-          name = name.children.first # gets the string out of the identifier
-          # Ruby 1.9 hashes are *ordered* so we will use this for param order
+          #    should be added to self's singleton class.
+          if WoolModule === receiver
+          then method_self = WoolObject.new(receiver, nil)
+          else method_self = receiver
+          end
+
+          add_method_to_object(receiver, method_self, name, arglist, body)
+        end
+
+        # Singleton method definition: def receiver.method_name
+        add :defs do |node, (_, singleton), op, (_, name), arglist, body|
+          method_self = @current_scope.lookup(singleton.children.first).value
+          receiver = method_self.singleton_class
+
+          add_method_to_object(receiver, method_self, name, arglist, body)
+        end
+        
+        def add_method_to_object(receiver, method_self, name, arglist, body)
           new_signature = Signature.for_definition_sexp(name, arglist, body)
-          current_self.add_instance_method!(WoolMethod.new(name) do |method|
+          receiver.add_instance_method!(WoolMethod.new(name) do |method|
             method.add_signature!(new_signature)
           end)
           
-          if WoolModule === current_self
-          then method_self = WoolObject.new(current_self, nil)
-          else method_self = current_self
-          end
-
           method_locals = Hash[new_signature.arguments.map { |arg| [arg.name, arg] }]
           new_scope = ClosedScope.new(@current_scope, method_self, {}, method_locals)
           visit_with_scope(body, new_scope)
-        end
-
-        add :defs do |node, singleton, op, name, arglist, body|
         end
 
         # Given a current scope and any possible way to describe a constant,
