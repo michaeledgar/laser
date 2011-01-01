@@ -20,7 +20,7 @@ describe BasicAnnotation do
     SexpAnalysis.global_annotations.replace @global_annotations
   end
 
-  context 'Sexp#initialize' do
+  describe 'Sexp#initialize' do
     it 'calls all local annotations upon initialization' do
       result = Sexp.new([:foo, [:bar], [:silly]])
       result[0].should == :foololz
@@ -29,7 +29,7 @@ describe BasicAnnotation do
     end
   end
 
-  context '#add_annotator' do
+  describe '#add_annotator' do
     it 'adds the given argument to the list of annotations' do
       foo = Class.new
       @class.add_annotator foo
@@ -37,7 +37,7 @@ describe BasicAnnotation do
     end
   end
 
-  context '#add_global_annotator' do
+  describe '#add_global_annotator' do
     it 'adds the given argument to the list of global annotations' do
       foo = Class.new
       @class.add_global_annotator foo
@@ -45,7 +45,7 @@ describe BasicAnnotation do
     end
   end
   
-  context '#add_property' do
+  describe '#add_property' do
     selectors = [:aaa, :aaa=, :bbb, :bbb=]
     it 'adds accessors to SexpAnalysis::Sexp in a very intrusive manner' do
       @class.add_property :aaa, :bbb

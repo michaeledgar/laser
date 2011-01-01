@@ -1,7 +1,7 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 
 describe Signature do
-  context '#initialize' do
+  describe '#initialize' do
     it 'assigns the basic struct values when successful' do
       result = Signature.new(
           'hello', Protocols::InstanceProtocol.new(ClassRegistry['Array']),
@@ -42,8 +42,8 @@ describe Signature do
     end
   end
   
-  context '::for_definition_sexp' do
-    context 'when given the definition of an empty method' do
+  describe '::for_definition_sexp' do
+    describe 'when given the definition of an empty method' do
       it 'creates a signature with an empty argument list' do
         sexp = Sexp.new(Ripper.sexp('def a(); end'))
         signature = Signature.for_definition_sexp('a', sexp, Sexp.new([]))
@@ -51,7 +51,7 @@ describe Signature do
       end
     end
 
-    context 'when given simple positional arguments' do
+    describe 'when given simple positional arguments' do
       it 'creates a signature with corresponding positional arguments' do
         sexp = Sexp.new(Ripper.sexp('def a(x, y, z); end'))
         signature = Signature.for_definition_sexp('a', sexp, Sexp.new([]))
@@ -70,7 +70,7 @@ describe Signature do
       end
     end
     
-    context 'when given a complex definition exercising all argument types' do
+    describe 'when given a complex definition exercising all argument types' do
       it 'creates the correct, corresponding argument list' do
         sexp = Sexp.new(Ripper.sexp('def a(x, a=2, y=3, *rest, z, d, &blk); end'))
         signature = Signature.for_definition_sexp('a', sexp, Sexp.new([]))

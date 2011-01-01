@@ -10,7 +10,7 @@ describe ProtocolRegistry do
     ProtocolRegistry.class_protocols = {}
   end
   
-  context '#add_protocol' do
+  describe '#add_protocol' do
     it 'adds a protocol to the main protocol list' do
       x = Object.new
       ProtocolRegistry.add_protocol x
@@ -18,7 +18,7 @@ describe ProtocolRegistry do
     end
   end
   
-  context '#add_class_protocol' do
+  describe '#add_class_protocol' do
     it 'adds a protocol to the main protocol list, and adds a shortcut in the class map' do
       x = OpenStruct.new
       x.value = OpenStruct.new
@@ -29,7 +29,7 @@ describe ProtocolRegistry do
     end
   end
   
-  context '#[]' do
+  describe '#[]' do
     it 'looks up quick queries by class path' do
       x = OpenStruct.new
       x.value = OpenStruct.new
@@ -39,8 +39,8 @@ describe ProtocolRegistry do
     end
   end
   
-  context '#query' do
-    context 'with :class_path specified' do
+  describe '#query' do
+    describe 'with :class_path specified' do
       it 'finds the classes in the registry with the given path' do
         x = OpenStruct.new
         x.value = OpenStruct.new

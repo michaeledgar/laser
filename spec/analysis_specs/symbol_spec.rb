@@ -1,7 +1,7 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 
 describe SexpAnalysis::Symbol do
-  context '#initialize' do
+  describe '#initialize' do
     it 'has a simple struct-like initializer' do
       proto, klass, scope, name, value = many_mocks(5)
       sym = SexpAnalysis::Symbol.new(proto, klass, scope, name, value)
@@ -25,7 +25,7 @@ describe SexpAnalysis::Symbol do
     end
   end
   
-  context '#<=>' do
+  describe '#<=>' do
     it 'should compare based on name alone' do
       proto, klass, scope, value = many_mocks(4)
       sym1 = SexpAnalysis::Symbol.new(

@@ -1,7 +1,7 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 
 describe Warning do
-  context 'when subclassed' do
+  describe 'when subclassed' do
     it 'registers the new class in all_warnings' do
       klass = Class.new(Warning)
       Warning.all_warnings.should include(klass)
@@ -35,7 +35,7 @@ describe Warning do
     Warning.should correct_to(' b **   c+1 eval(string) ', ' b **   c+1 eval(string) ')
   end
 
-  context '#concrete_warnings' do
+  describe '#concrete_warnings' do
     before { @concrete = Warning.concrete_warnings }
     it 'returns a list of classes that are subclasses of Warning' do
       @concrete.should_not be_empty
@@ -49,7 +49,7 @@ describe Warning do
     end
   end
 
-  context '#desc' do
+  describe '#desc' do
     it "defaults to the class's name with all info" do
       warning = Warning.new('hello.rb', 'a+b')
       warning.severity = 7
@@ -71,7 +71,7 @@ describe Warning do
     end
   end
 
-  context '#type' do
+  describe '#type' do
     it 'returns the current type when no args are provided' do
       klass = Class.new(Warning) do
         def self.set_type

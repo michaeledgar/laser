@@ -37,7 +37,7 @@ describe RescueExceptionWarning do
     RescueExceptionWarning.should_not warn('begin; puts x; rescue StandardError, StandardError => err; end')
   end
 
-  context '#fix' do
+  describe '#fix' do
     it 'fixes a rescue of Exception as the only type' do
       input = <<-EOF
 begin

@@ -62,7 +62,7 @@ describe OperatorSpacing do
   end
 
   OperatorSpacing::OPERATORS.each do |operator|
-    context "with #{operator}" do
+    describe "with #{operator}" do
       it "matches when there is no space on the left side" do
         OperatorSpacing.should warn("a#{operator} b")
       end
@@ -79,7 +79,7 @@ describe OperatorSpacing do
         OperatorSpacing.should_not warn("a #{operator} b")
       end
 
-      context 'when fixing' do
+      describe 'when fixing' do
         it 'changes nothing when there is one space on both sides' do
           OperatorSpacing.should correct_to("a #{operator} b", "a #{operator} b")
         end

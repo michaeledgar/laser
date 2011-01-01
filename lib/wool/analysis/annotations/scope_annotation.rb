@@ -107,7 +107,7 @@ module Wool
         end
 
         # Evaluates the constant reference/path with the given scope
-        # as context.
+        # as describe.
         def const_sexp_name(sexp)
           case sexp.type
           when :var_ref, :const_ref, :top_const_ref then sexp[1][1]

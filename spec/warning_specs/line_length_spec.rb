@@ -15,13 +15,13 @@ describe GenericLineLengthWarning do
     warning.severity.should == @eighty_cap.severity
   end
 
-  context '#desc' do
+  describe '#desc' do
     it 'has a remotely useful description' do
       @eighty_cap.new('(stdin)', 'x' * 80).desc.should =~ /line length/i
     end
   end
   
-  context '#inspect' do  
+  describe '#inspect' do  
     it 'contains the capacity in the description' do
       @eighty_cap.inspect.should =~ /80/i
     end
@@ -39,7 +39,7 @@ describe GenericLineLengthWarning do
     @eighty_cap.should_not warn('x' * 80)
   end
 
-  context 'when fixing' do
+  describe 'when fixing' do
     before do
       @twenty_cap = Class.new(GenericLineLengthWarning)
       @twenty_cap.line_length_limit = 20
@@ -81,7 +81,7 @@ describe GenericLineLengthWarning do
       @output = @input
     end
 
-    context 'with an indent size of 2' do
+    describe 'with an indent size of 2' do
       before { @settings = {:indent_size => 2} }
       it "doesn't try to convert the 'end if foobar' technique" do
         @input = '  end if should_run_block?'

@@ -5,7 +5,7 @@ describe Runner do
     @runner = Runner.new(['a', :b])
   end
 
-  context '#run' do
+  describe '#run' do
     it 'collects options and arguments, decides what to scan, scans, and displays' do
       runner = Runner.new(['--report-fixed', 'hello', 'world'])
       expected_settings = {:"report-fixed_given"=>true, :"report-fixed"=>true,
@@ -68,7 +68,7 @@ describe Runner do
     end
   end
 
-  context '#collect_options_and_arguments' do
+  describe '#collect_options_and_arguments' do
     before do
       @runner = Runner.new(['--fix', '--report-fixed', '--line-length', '103', 'hello', 'there'])
       @settings, @arguments = @runner.collect_options_and_arguments
@@ -93,7 +93,7 @@ describe Runner do
     end
   end
 
-  context '#swizzling_argv' do
+  describe '#swizzling_argv' do
     it 'changes ARGV to the runner\'s argv value' do
       @runner.swizzling_argv do
         ARGV.should == ['a', :b]
@@ -111,7 +111,7 @@ describe Runner do
     end
   end
 
-  context '#get_settings' do
+  describe '#get_settings' do
     it 'has a --fix option' do
       runner = Runner.new(['--fix'])
       settings = runner.swizzling_argv { runner.get_settings }
@@ -127,7 +127,7 @@ describe Runner do
     end
   end
 
-  context '#handle_global_options' do
+  describe '#handle_global_options' do
     it 'specifies :using and :fix when :only is provided' do
       runner = Runner.new([])
       runner.handle_global_options(:only => 'UselessDoubleQuotesWarning')
@@ -143,7 +143,7 @@ describe Runner do
     end
   end
   
-  context '#convert_warning_list' do
+  describe '#convert_warning_list' do
     it 'should have a :whitespace helper' do
       result = @runner.convert_warning_list([:whitespace])
       list = ExtraBlankLinesWarning, ExtraWhitespaceWarning, 
@@ -156,7 +156,7 @@ describe Runner do
     end
   end
 
-  context '#display_warnings' do
+  describe '#display_warnings' do
     it 'prints the lines and files where there are warnings' do
       warning = Warning.new('hello', 'a+b')
       warning.line_number = 4
@@ -174,7 +174,7 @@ describe Runner do
     end
   end
 
-  context '#collect_warnings' do
+  describe '#collect_warnings' do
     it 'scans each file provided' do
       scanner = mock(:scanner)
       data1, data2 = mock(:data1), mock(:data2)

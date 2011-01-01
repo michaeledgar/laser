@@ -5,7 +5,7 @@ require 'tmpdir'
 require 'wool/rake/task'
 
 describe Rake::WoolTask do
-  context '#initialize' do
+  describe '#initialize' do
     it 'yields to allow setting :libs and :extras' do
       task_name = "temptask1-#{rand(65329)}".to_sym
       task = Rake::WoolTask.new(task_name) do |wool|
@@ -40,7 +40,7 @@ describe Rake::WoolTask do
     end
   end
 
-  context '#run' do
+  describe '#run' do
     it 'searches the listed libraries for files' do
       Dir.should_receive(:[]).with('lib/**/*.rb').and_return([])
       Dir.should_receive(:[]).with('spec/**/*.rb').and_return([])

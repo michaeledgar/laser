@@ -38,7 +38,7 @@ describe SemicolonWarning do
     SemicolonWarning.should_not warn("hello # indeed; i agree")
   end
 
-  context '#fix' do
+  describe '#fix' do
     it 'converts the simplest semicolon use to two lines' do
       SemicolonWarning.should correct_to('a;b', "a\nb")
     end

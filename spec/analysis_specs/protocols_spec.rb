@@ -1,19 +1,19 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 
 describe Protocols::Base do
-  context '#signatures' do
+  describe '#signatures' do
     it 'raises a NotImplementedError' do
       lambda { Protocols::Base.new.signatures }.should raise_error(NotImplementedError)
     end
   end
   
-  context '#signatures' do
+  describe '#signatures' do
     it 'raises a NotImplementedError' do
       lambda { Protocols::Base.new <=> Protocols::Base.new }.should raise_error(NotImplementedError)
     end
   end
   
-  context '#|' do
+  describe '#|' do
     it 'creates a protocol that contains both operand protocols' do
       sigs = many_mocks(5)
       protocol1, protocol2 = Protocols::Base.new, Protocols::Base.new
@@ -35,13 +35,13 @@ describe Protocols::StructuralProtocol do
     @structural = Protocols::StructuralProtocol.new([@foo, @bizzle])
   end
   
-  context '#signatures' do
+  describe '#signatures' do
     it 'returns the current list of signatures, which is initialized during construction' do
       Set.new(@structural.signatures).should == Set.new([@bizzle, @foo])
     end
   end
   
-  context '#inspect' do
+  describe '#inspect' do
     it 'contains the name of the class' do
       @structural.inspect.should include('StructuralProtocol')
     end
@@ -70,7 +70,7 @@ describe Protocols::InstanceProtocol do
     @b_proto = ProtocolRegistry['B'].first
   end
   
-  context '#signatures' do
+  describe '#signatures' do
     it 'returns an empty list when no methods are declared' do
       @a_proto.signatures.should be_empty
     end
@@ -85,7 +85,7 @@ describe Protocols::InstanceProtocol do
     end
   end
   
-  context '#to_s' do
+  describe '#to_s' do
     it 'returns the name of the class this protocol represents an instance of' do
       @a_proto.to_s.should == 'A'
       @b_proto.to_s.should == 'B'
@@ -99,7 +99,7 @@ describe Protocols::UnionProtocol do
     @union = Protocols::UnionProtocol.new([@first, @second, @third])
   end
   
-  context '#signatures' do
+  describe '#signatures' do
     it "returns the union of all the protocols' signatures" do
       sigs = mock(:sig1), mock(:sig2), mock(:sig3), mock(:sig4), mock(:sig5), mock(:sig6)
       [@first, @second, @third].each_with_index do |proto, idx|
@@ -110,7 +110,7 @@ describe Protocols::UnionProtocol do
     end
   end
   
-  context '#to_s' do
+  describe '#to_s' do
     it 'returns the union members joined by |, as in the annotation language' do
       @first.should_receive(:to_s).and_return('AbcDef')
       @second.should_receive(:to_s).and_return('Hello::World')

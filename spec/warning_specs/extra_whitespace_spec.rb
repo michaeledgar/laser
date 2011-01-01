@@ -21,7 +21,7 @@ describe ExtraWhitespaceWarning do
     ExtraWhitespaceWarning.new('(stdin)', 'hello  ').desc.should =~ /whitespace/
   end
 
-  context 'when fixing' do
+  describe 'when fixing' do
     it 'fixes by removing extra spaces' do
       ExtraWhitespaceWarning.should correct_to('a + b  ', 'a + b')
     end

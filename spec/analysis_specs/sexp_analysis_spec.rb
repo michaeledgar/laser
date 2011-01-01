@@ -26,7 +26,7 @@ describe SexpAnalysis do
       end
     end
     
-    context 'with annotations' do
+    describe 'with annotations' do
       describe '#initialize' do
         before do
           annotator_1, annotator_2 = Object.new, Object.new
@@ -73,14 +73,14 @@ describe SexpAnalysis do
     end
   end
 
-  context '#parse' do
+  describe '#parse' do
     it 'parses its body' do
       @class.new('a').parse.should ==
           [:program, [[:var_ref, [:@ident, "a", [1, 0]]]]]
     end
   end
 
-  context '#find_sexps' do
+  describe '#find_sexps' do
     it 'searches its body' do
       @class.new('a + b').find_sexps(:binary).should_not be_empty
     end

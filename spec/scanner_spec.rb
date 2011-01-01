@@ -9,7 +9,7 @@ describe Scanner do
     @fix_scanner = Scanner.new(:fix => true, :output_file => @fix_scanner_stdout)
   end
 
-  context '#scan' do
+  describe '#scan' do
     it 'takes an input and gathers warnings about it' do
       warnings = @scanner.scan('a + b ', '(stdin)')
       warnings.size.should == 1

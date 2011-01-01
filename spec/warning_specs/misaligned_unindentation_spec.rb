@@ -1,7 +1,7 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 
 describe MisalignedUnindentationWarning do
-  context 'when fixing' do
+  describe 'when fixing' do
     it 'is a line-based warning' do
       MisalignedUnindentationWarning.new('(stdin)', 'hello', 80).should be_a(LineWarning)
     end

@@ -17,7 +17,7 @@ module Wool
         # in annotation form, if possible, or otherwise be a concise explanation of
         # what the protocol represents.
         def inspect
-          "#<#{self.class.name}: #{to_s}>"
+          "#<#{self.class.name.split('::').last}: #{to_s}>"
         end
 
         # Returns the list of all known signatures that this protocol responds
@@ -43,6 +43,10 @@ module Wool
       
       # This protocol has literally no information known about it. :-(
       class UnknownProtocol < Base
+        def to_s
+          'Top'
+        end
+
         def signatures
           []
         end

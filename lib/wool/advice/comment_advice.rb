@@ -6,7 +6,7 @@ module Wool
     # class MyWarning < Wool::Warning do
     #   extend Wool::Advice::CommentAdvice
     #
-    #   def self.match?(body, context)
+    #   def self.match?(body, describe)
     #     body.include?('#')
     #   end
     #   remove_comments

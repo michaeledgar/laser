@@ -29,7 +29,7 @@ module Wool
       end
       
       def signatures
-        @methods.values.map(&:signatures).flatten
+        singleton_class.instance_signatures
       end
     end
     
@@ -115,7 +115,21 @@ module Wool
       
       def initialize(*args)
         @subclasses ||= []
+        # bootstrapping exception
+        unless ['Class', 'Module', 'Object'].include?(args.first)
+          @superclass = ClassRegistry['Object']
+        end
         super # can yield, so must come last
+      end
+      
+      def singleton_class
+        @singleton_class ||= WoolClass.new("#<Class:#{name}>") do |new_singleton_class|
+          if superclass
+            new_singleton_class.superclass = superclass.singleton_class
+          else
+            new_singleton_class.superclass = ClassRegistry['Class']
+          end 
+        end
       end
       
       # Adds a subclass.

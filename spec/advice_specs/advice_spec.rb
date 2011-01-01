@@ -1,7 +1,7 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 
 describe Advice do
-  context '#before_advice' do
+  describe '#before_advice' do
     before do
       @class = Class.new do
         extend Advice
@@ -23,7 +23,7 @@ describe Advice do
     end
   end
 
-  context '#after_advice' do
+  describe '#after_advice' do
     before do
       @class = Class.new do
         extend Advice
@@ -47,7 +47,7 @@ describe Advice do
     end
   end
 
-  context '#argument_advice' do
+  describe '#argument_advice' do
     before do
       @class = Class.new do
         extend Advice

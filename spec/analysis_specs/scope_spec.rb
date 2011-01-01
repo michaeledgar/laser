@@ -32,7 +32,7 @@ describe Scope::GlobalScope do
 end
 
 describe Scope do
-  context '#initialize' do
+  describe '#initialize' do
     it 'refuses to instantiate a Scope' do
       lambda { Scope.new(mock, mock) }.should raise_error(NotImplementedError)
     end

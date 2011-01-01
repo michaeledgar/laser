@@ -12,7 +12,7 @@ describe Advice::CommentAdvice do
     end
   end
 
-  context '#remove_comments' do
+  describe '#remove_comments' do
     it 'Returns the empty string unmodified' do
       @class.new('(stdin)', '').match?('').should == ''
     end

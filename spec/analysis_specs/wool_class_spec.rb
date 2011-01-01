@@ -1,5 +1,39 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 
+describe WoolObject do
+  before do
+    @instance = WoolObject.new(ClassRegistry['Array'])
+  end
+  
+  it 'defaults to the global scope' do
+    @instance.scope.should == Scope::GlobalScope
+  end
+  
+  describe '#protocol' do
+    it 'should get its protocol from its class' do
+      @instance.protocol.should == ClassRegistry['Array'].protocol
+    end
+  end
+  
+  describe '#add_instance_method!' do
+    it 'should add the method to its singleton class' do
+      @instance.add_instance_method!(WoolMethod.new('abcdef') do |method|
+        method.add_signature!(Signature.new('abcdef', Protocols::UnknownProtocol.new, []))
+      end)
+      @instance.signatures.should include(
+          Signature.new('abcdef', Protocols::UnknownProtocol.new, []))
+      @instance.singleton_class.instance_signatures.should include(
+          Signature.new('abcdef', Protocols::UnknownProtocol.new, []))
+    end
+  end
+  
+  describe '#singleton_class' do
+    it "should return a singleton class with the object's class as its superclass" do
+      @instance.singleton_class.superclass == ClassRegistry['Array']
+    end
+  end
+end
+
 shared_examples_for 'a Ruby module' do
   extend AnalysisHelpers
   clean_registry
@@ -20,14 +54,14 @@ shared_examples_for 'a Ruby module' do
     end
   end
   
-  context '#name' do
+  describe '#name' do
     it 'extracts the name from the full path' do
       x = described_class.new('::A::B::C::D::EverybodysFavoriteClass')
       x.name.should == 'EverybodysFavoriteClass'
     end
   end
   
-  context '#instance_signatures' do
+  describe '#instance_signatures' do
     it 'returns an empty list when no methods are declared' do
       @a.instance_signatures.should be_empty
     end
@@ -43,7 +77,7 @@ shared_examples_for 'a Ruby module' do
     end
   end
   
-  context '#add_signature!' do
+  describe '#add_signature!' do
     it 'adds the signature to the instance method with the given name' do
       @b.add_signature! Signature.new('foo', @b.protocol, [])
       @b.instance_methods['foo'].signatures.should include(
@@ -57,7 +91,7 @@ shared_examples_for 'a Ruby module' do
     end
   end
   
-  context '#trivial?' do
+  describe '#trivial?' do
     it 'returns true if the module has no methods' do
       @a.trivial?.should be true
     end
@@ -67,7 +101,7 @@ shared_examples_for 'a Ruby module' do
     end
   end
   
-  context '#nontrivial?' do
+  describe '#nontrivial?' do
     it 'returns false if the module has no methods' do
       @a.nontrivial?.should be false
     end
@@ -80,6 +114,12 @@ end
 
 describe WoolModule do
   it_should_behave_like 'a Ruby module'
+
+  describe '#singleton_class' do
+    it 'should return a class with Module as its superclass' do
+      WoolModule.new('A').singleton_class.superclass.should == ClassRegistry['Module']
+    end
+  end
 end
 
 describe WoolClass do
@@ -92,19 +132,26 @@ describe WoolClass do
     end
   end
   
-  context '#superclass' do
+  describe '#singleton_class' do
+    it "should have a superclass that is the superclass's singleton class" do
+      @b.singleton_class.superclass.should == @a.singleton_class
+      @a.singleton_class.superclass.should == ClassRegistry['Object'].singleton_class
+    end
+  end
+  
+  describe '#superclass' do
     it 'returns the superclass specified on the WoolClass' do
       @b.superclass.should == @a
     end
   end
   
-  context '#subclasses' do
+  describe '#subclasses' do
     it 'returns the set of direct subclasses of the WoolClass' do
       @a.subclasses.should include(@b)
     end
   end
   
-  context '#remove_subclass' do
+  describe '#remove_subclass' do
     it 'allows the removal of direct subclasses (just in case we need to)' do
       @a.remove_subclass!(@b)
       @a.subclasses.should_not include(@b)
@@ -128,7 +175,7 @@ describe 'hierarchy methods' do
     @w.superclass = @y2
   end
   
-  context '#superclass' do
+  describe '#superclass' do
     it 'should return the direct superclass' do
       @x.superclass.should == ClassRegistry['Object']
       @y.superclass.should == @x
@@ -138,7 +185,7 @@ describe 'hierarchy methods' do
     end
   end
   
-  context '#superset' do
+  describe '#superset' do
     it 'should return all ancestors and the current class, in order' do
       @x.superset.should == [@x, ClassRegistry['Object']]
       @y.superset.should == [@y, @x, ClassRegistry['Object']]
@@ -148,7 +195,7 @@ describe 'hierarchy methods' do
     end
   end
   
-  context '#proper_superset' do
+  describe '#proper_superset' do
     it 'should return all ancestors, in order' do
       @x.proper_superset.should == [ClassRegistry['Object']]
       @y.proper_superset.should == [@x, ClassRegistry['Object']]
@@ -158,7 +205,7 @@ describe 'hierarchy methods' do
     end
   end
   
-  context '#subset' do
+  describe '#subset' do
     it 'should return all known classes in the class tree rooted at the receiver' do
       @w.subset.should == [@w]
       @z.subset.should == [@z]
@@ -168,7 +215,7 @@ describe 'hierarchy methods' do
     end
   end
   
-  context '#proper_subset' do
+  describe '#proper_subset' do
     it 'should return all known classes in the class tree rooted at the receiver' do
       @w.proper_subset.should == []
       @z.proper_subset.should == []
@@ -189,7 +236,7 @@ describe WoolMethod do
     @method = WoolMethod.new('foobar')
   end
   
-  context '#add_signature!' do
+  describe '#add_signature!' do
     it 'creates signature objects and returns them in #signatures' do
       @method.add_signature!(Signature.new('foobar', @a.protocol, []))
       @method.add_signature!(Signature.new('foobar', @b.protocol,
@@ -203,7 +250,7 @@ describe WoolMethod do
     end
   end
   
-  context '#name' do
+  describe '#name' do
     it 'returns the name' do
       @method.name.should == 'foobar'
     end

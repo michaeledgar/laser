@@ -5,7 +5,7 @@ describe Parsers::ClassParser do
     @parser = Parsers::ClassParser.new
   end
   
-  context 'a simple class name' do
+  describe 'a simple class name' do
     it 'is parsed into a single covariant constraint' do
       @parser.parse('Hello').constraints.should ==
           [Constraints::ClassConstraint.new('Hello', :covariant)]

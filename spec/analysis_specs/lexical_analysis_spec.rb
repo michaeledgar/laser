@@ -11,13 +11,13 @@ describe LexicalAnalysis do
     end
   end
 
-  context '#lex' do
+  describe '#lex' do
     it 'lexes its body' do
       @class.new('a').lex.should == [LexicalAnalysis::Token.new([[1,0], :on_ident, 'a'])]
     end
   end
 
-  context '#text_between_token_positions' do
+  describe '#text_between_token_positions' do
     it 'finds the exclusive text between two simple tokens from a body text' do
       body = "def initialize(body)\n    self.body = body\nend"
       left = LexicalAnalysis::Token.new([[2, 4], :on_kw, "self"])
@@ -58,7 +58,7 @@ describe LexicalAnalysis do
           '.body = body'
     end
     
-    context 'spanning multiple lines' do
+    describe 'spanning multiple lines' do
       it 'allows including the left token with the inclusive :left hash option' do
         body = "def initialize(body)\n    self.body = body\nend # a * b"
         left = LexicalAnalysis::Token.new([[1, 14], :on_lparen, "("])
@@ -93,7 +93,7 @@ describe LexicalAnalysis do
     end
   end
     
-  context '#find_token' do
+  describe '#find_token' do
     it 'lexes its body' do
       @class.new('a + b').find_token(:on_op).should be_true
     end
@@ -112,7 +112,7 @@ describe LexicalAnalysis do
     end
   end
 
-  context '#find_keyword' do
+  describe '#find_keyword' do
     it 'lexes its body' do
       @class.new('class A < B').find_keyword(:class).should be_true
     end
@@ -136,7 +136,7 @@ describe LexicalAnalysis do
     end
   end
 
-  context '#split_on_token' do
+  describe '#split_on_token' do
     it 'splits the input into two parts based on the token searched' do
       left, right = @class.new('a + b; c + d').split_on_token(:on_semicolon)
       left.should == 'a + b'
@@ -157,7 +157,7 @@ describe LexicalAnalysis do
   end
 
 
-  context '#split_on_keyword' do
+  describe '#split_on_keyword' do
     it 'splits the input into two parts based on the token searched' do
       left, right = @class.new('rescue x if y').split_on_keyword(:if)
       left.should == 'rescue x '

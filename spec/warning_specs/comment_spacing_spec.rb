@@ -29,7 +29,7 @@ describe InlineCommentSpaceWarning do
     InlineCommentSpaceWarning.new('(stdin)', 'hello  #').desc.should =~ /inline.*comment/i
   end
 
-  context 'when fixing' do
+  describe 'when fixing' do
     before do
       @settings = {InlineCommentSpaceWarning::OPTION_KEY => 2}
     end

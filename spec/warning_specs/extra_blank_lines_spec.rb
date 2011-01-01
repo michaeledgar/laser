@@ -35,14 +35,14 @@ describe ExtraBlankLinesWarning do
             "a + b\n\n\n\n\n", "a + b\n", "a + b\n  " ]
 
   INPUTS.each do |input|
-    context "When fixing #{input.inspect}" do
+    describe "When fixing #{input.inspect}" do
       it 'fixes by removing all extra whitespace' do
         ExtraBlankLinesWarning.should correct_to(input, 'a + b')
       end
     end
   end
 
-  context 'when fixing a realistic multiline block' do
+  describe 'when fixing a realistic multiline block' do
     before do
       @original = <<-EOF
     # Warning for using semicolons outside of class declarations.

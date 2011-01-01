@@ -37,7 +37,7 @@ describe UselessDoubleQuotesWarning do
     UselessDoubleQuotesWarning.should_not warn("simple %q{string is okay}")
   end
 
-  context '#desc' do
+  describe '#desc' do
     it 'properly quotes the improperly quoted text' do
       matches = UselessDoubleQuotesWarning.new('(stdin)', 'simple "example, #{h "guy"} okay?"').match?
       matches[0].desc.should =~ /'guy'/
@@ -49,7 +49,7 @@ describe UselessDoubleQuotesWarning do
     end
   end
 
-  context '#fix' do
+  describe '#fix' do
     it 'fixes a simple string using double quotes unnecessarily' do
       checker = UselessDoubleQuotesWarning.new('(stdin)', 'simple "example, okay?"')
       warnings = checker.match?

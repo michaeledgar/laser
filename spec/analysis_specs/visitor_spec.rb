@@ -17,7 +17,7 @@ describe Visitor do
     end
   end
   
-  context '#method_missing' do
+  describe '#method_missing' do
     it "calls the default handler if the method looks like 'visit_'" do
       node = OpenStruct.new
       node.children = []
@@ -28,7 +28,7 @@ describe Visitor do
     end
   end
   
-  context '#visit' do
+  describe '#visit' do
     it 'runs the matching method when one is defined' do
       a = Sexp.new([:foo, true])
       a.should_receive(:visited=).with(true)
