@@ -46,8 +46,7 @@ module Wool
         @scope = scope
         @methods = {}
         initialize_protocol
-        @object = Symbol.new(:protocol => @protocol, :class_used => klass, :scope => scope,
-                             :name => name, :value => self)
+        @object = Symbol.new(name, self)
         initialize_scope
         yield self if block_given?
       end

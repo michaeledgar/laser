@@ -74,7 +74,6 @@ module Wool
         add :defs do |node, (_, singleton), op, (_, name), arglist, body|
           method_self = @current_scope.lookup(singleton.children.first).value
           receiver = method_self.singleton_class
-
           add_method_to_object(receiver, method_self, name, arglist, body)
         end
         

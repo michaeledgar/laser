@@ -32,6 +32,10 @@ module Wool
         # boot time
         WoolClass.new('Array') { |klass| klass.superclass = object_class }
         WoolClass.new('Proc')  { |klass| klass.superclass = object_class }
+      rescue StandardError => err
+        new_exception = BootstrappingError.new("Bootstrapping failed: #{err.message}")
+        new_exception.set_backtrace(err.backtrace)
+        raise new_exception
       end
     end
   end

@@ -383,6 +383,12 @@ describe ScopeAnnotation do
       new_scope.lookup('bar').should == Argument.new('bar', :positional, Protocols::UnknownProtocol.new)
       new_scope.lookup('blk').should == Argument.new('blk', :block, ClassRegistry['Proc'].protocol)
     end
+    method = Scope::GlobalScope.self_ptr.singleton_class.instance_methods['abc']
+    method.should_not be_nil
+    method.signatures.size.should == 1
+    signature = method.signatures.first
+    signature.arguments.should == [body.scope.lookup('bar'), body.scope.lookup('blk')]
+    signature.name.should == 'abc'
   end
   
   # [:program,
@@ -402,7 +408,7 @@ describe ScopeAnnotation do
   #      [:args_add_block, [[:var_ref, [:@ident, "blk", [1, 27]]]], false]]],
   #    nil, nil, nil]]]]
   it 'defines singleton methods on the main object, if no scope is otherwise enclosing a method definition' do
-    tree = Sexp.new(Ripper.sexp('def self.abc(bar, &blk); p blk; end'))
+    tree = Sexp.new(Ripper.sexp('def self.abcd(bar, &blk); p blk; end'))
     ScopeAnnotation::Annotator.new.annotate!(tree)
     definition = tree[1][0]
     body = definition[5]
@@ -415,6 +421,12 @@ describe ScopeAnnotation do
       new_scope.lookup('bar').should == Argument.new('bar', :positional, Protocols::UnknownProtocol.new)
       new_scope.lookup('blk').should == Argument.new('blk', :block, ClassRegistry['Proc'].protocol)
     end
+    method = Scope::GlobalScope.self_ptr.singleton_class.instance_methods['abcd']
+    method.should_not be_nil
+    method.signatures.size.should == 1
+    signature = method.signatures.first
+    signature.arguments.should == [body.scope.lookup('bar'), body.scope.lookup('blk')]
+    signature.name.should == 'abcd'
   end
 end
   

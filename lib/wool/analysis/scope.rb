@@ -19,12 +19,12 @@ module Wool
               'must create OpenScope or ClosedScope. Not just OpenScope.')
         end
         @parent, @self_ptr, @constants, @locals = parent, self_ptr, constants, locals
-        @locals['self'] = self_ptr
+        @locals['self'] = Symbol.new('self', self_ptr)
       end
       
       def self_ptr=(other)
         @self_ptr = other
-        @locals['self'] = other
+        @locals['self'] = Symbol.new('self', other)
       end
       
       def path
