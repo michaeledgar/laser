@@ -39,4 +39,5 @@ require 'wool/scanner'
 
 module Wool
   VERSION = "0.5.0"
+  TESTS_ACTIVATED = false
 end

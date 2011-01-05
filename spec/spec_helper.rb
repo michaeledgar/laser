@@ -13,6 +13,7 @@ require 'stringio'
 
 include Wool
 module Wool
+  TESTS_ACTIVATED = true
   module RSpec
     module Matchers
       # Matcher for checking if #match? returns trues

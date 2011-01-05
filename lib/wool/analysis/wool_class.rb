@@ -71,8 +71,8 @@ module Wool
       
       # Initializes the protocol for this WoolClass.
       def initialize_protocol
-        if ProtocolRegistry[path].any?
-          $stderr.puts "Warning: creating new instance of class #{path}"
+        if ProtocolRegistry[path].any? && !TESTS_ACTIVATED
+          $stderr.puts "Warning: creating new instance of #{class_name} #{path}"
           @protocol = ProtocolRegistry[path].first
         else
           @protocol = Protocols::InstanceProtocol.new(self)
