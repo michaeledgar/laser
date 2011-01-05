@@ -1,8 +1,8 @@
 module Wool
   module SexpAnalysis
-    # This class represents a Symbol in Ruby. It may have a known protocol (type),
+    # This class represents a GenericBinding in Ruby. It may have a known protocol (type),
     # class, value (if constant!), and a variety of other details.
-    class Symbol
+    class GenericBinding
       include Comparable
       attr_accessor :name, :value
 
@@ -28,7 +28,7 @@ module Wool
       end
       
       def inspect
-        "#<Symbol: #{name}>"
+        "#<GenericBinding: #{name}>"
       end
     end
   end

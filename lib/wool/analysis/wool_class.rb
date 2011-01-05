@@ -46,7 +46,7 @@ module Wool
         @scope = scope
         @methods = {}
         initialize_protocol
-        @object = Symbol.new(name, self)
+        @object = GenericBinding.new(name, self)
         initialize_scope
         yield self if block_given?
       end
