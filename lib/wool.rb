@@ -10,7 +10,7 @@ require 'wool/advice/advice'
 require 'wool/analysis/lexical_analysis'
 require 'wool/analysis/sexp_analysis'
 
-require 'wool/analysis/symbol'
+require 'wool/analysis/bindings'
 require 'wool/analysis/protocols'
 require 'wool/analysis/signature'
 require 'wool/analysis/wool_class'
