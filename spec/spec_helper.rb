@@ -10,6 +10,12 @@ require 'rspec'
 require 'rspec/autorun'
 require 'stringio'
 
+class Object
+  def debug_print
+    p self
+    self
+  end
+end
 
 include Wool
 module Wool

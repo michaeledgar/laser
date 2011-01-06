@@ -91,7 +91,7 @@ module Wool
       # than any other visible character. Thus, when sorted, we can achieve
       # a piecewise comparison purely lexicographically.
       def mangled_form
-        "#{name} #{return_protocol} #{arguments.to_a.flatten.map(&:to_s).sort.join(' ')}".tap {|x| p x}
+        "#{name} #{return_protocol} #{arguments.to_a.flatten.map(&:to_s).sort.join(' ')}"
       end
 
       def <=>(other)
