@@ -5,39 +5,39 @@ describe Signature do
     it 'assigns the basic struct values when successful' do
       result = Signature.new(
           'hello', Protocols::InstanceProtocol.new(ClassRegistry['Array']),
-          [Argument.new('a1', :positional, Protocols::UnknownProtocol.new)])
+          [ArgumentBinding.new('a1', WoolObject.new, :positional)])
       result.name.should == 'hello'
       result.return_protocol.should == ClassRegistry['Array']
       result.arguments.size.should == 1
       result.arguments.first.should ==
-          Argument.new('a1', :positional, Protocols::UnknownProtocol.new)
+          ArgumentBinding.new('a1', WoolObject.new, :positional)
     end
     
     it 'requires a string name' do
       lambda {
         Signature.new(:hello, Protocols::InstanceProtocol.new(ClassRegistry['Array']),
-            [Argument.new('a1', :positional, Protocols::UnknownProtocol.new)])
+            [ArgumentBinding.new('a1', WoolObject.new, :positional)])
       }.should raise_error(ArgumentError)
     end
     
     it 'requires a protocol for a return protocol' do
       lambda {
         Signature.new('hello', 'Array',
-            [Argument.new('a1', :positional, Protocols::UnknownProtocol.new)])
+            [ArgumentBinding.new('a1', WoolObject.new, :positional)])
       }.should raise_error(ArgumentError)
     end
     
     it 'requires an array for its argument list' do
       lambda {
         Signature.new('hello', Protocols::InstanceProtocol.new(ClassRegistry['Array']),
-            Argument.new('a1', :positional, Protocols::UnknownProtocol.new))
+            ArgumentBinding.new('a1', WoolObject.new, :positional))
       }.should raise_error(ArgumentError)
     end
     
     it 'requires its argument list be an array of Argument objects' do
       lambda {
         Signature.new(
-            'hello', Protocols::InstanceProtocol.new(ClassRegistry['Array']), ['a1'])
+            'hello', ClassRegistry['Array'], ['a1'])
       }.should raise_error(ArgumentError)
     end
   end

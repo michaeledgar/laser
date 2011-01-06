@@ -36,8 +36,12 @@ module Wool
         value.klass
       end
       
+      def to_s
+        inspect
+      end
+      
       def inspect
-        "#<GenericBinding: #{name}>"
+        "#<#{self.class.name.split('::').last}: #{name}>"
       end
     end
     
@@ -53,6 +57,15 @@ module Wool
           raise TypeError.new('Cannot rebind a constant binding without const_set')
         end
         super(val)
+      end
+    end
+    
+    class ArgumentBinding < GenericBinding
+      attr_reader :kind, :default_value_sexp
+      def initialize(name, value, kind, default_value = nil)
+        super(name, value)
+        @kind = kind
+        @default_value_sexp = default_value
       end
     end
   end

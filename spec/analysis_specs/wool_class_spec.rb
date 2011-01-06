@@ -44,12 +44,12 @@ shared_examples_for 'a Ruby module' do
       b.add_instance_method!(WoolMethod.new('foo') do |method|
         method.add_signature!(Signature.new('foo', @a.protocol, []))
         method.add_signature!(Signature.new('foo', b.protocol,
-            [Argument.new('a', :positional, @a.protocol)]))
+            [ArgumentBinding.new('a', @a, :positional)]))
       end)
       b.add_instance_method!(WoolMethod.new('bar') do |method|
         method.add_signature!(Signature.new('bar', b.protocol,
-            [Argument.new('a', :positional, @a.protocol),
-             Argument.new('b', :positional, b.protocol)]))
+            [ArgumentBinding.new('a', @a, :positional),
+             ArgumentBinding.new('b', b, :positional)]))
       end)
     end
   end
@@ -69,11 +69,11 @@ shared_examples_for 'a Ruby module' do
     it "flattens all its normal instance method's signatures" do
       @b.instance_signatures.should include(Signature.new('foo', @a.protocol, []))
       @b.instance_signatures.should include(Signature.new('foo', @b.protocol,
-          [Argument.new('a', :positional, @a.protocol)]))
+          [ArgumentBinding.new('a', :positional, @a.protocol)]))
       @b.instance_signatures.should include(
           Signature.new('bar', @b.protocol,
-          [Argument.new('a', :positional, @a.protocol),
-           Argument.new('b', :positional, @b.protocol)]))
+          [ArgumentBinding.new('a', @a, :positional),
+           ArgumentBinding.new('b', @b, :positional)]))
     end
   end
   
@@ -240,13 +240,13 @@ describe WoolMethod do
     it 'creates signature objects and returns them in #signatures' do
       @method.add_signature!(Signature.new('foobar', @a.protocol, []))
       @method.add_signature!(Signature.new('foobar', @b.protocol,
-          [Argument.new('a', :positional, @a.protocol),
-           Argument.new('a2', :positional, @a.protocol)]))
+          [ArgumentBinding.new('a', @a, :positional),
+           ArgumentBinding.new('a2', @a, :positional)]))
       @method.signatures.should include(Signature.new('foobar', @a.protocol, []))
       @method.signatures.should include(
           Signature.new('foobar', @b.protocol,
-              [Argument.new('a', :positional, @a.protocol),
-               Argument.new('a2', :positional, @a.protocol)]))
+              [ArgumentBinding.new('a', @a, :positional),
+               ArgumentBinding.new('a2', @a, :positional)]))
     end
   end
   
