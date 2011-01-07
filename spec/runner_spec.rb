@@ -102,11 +102,11 @@ describe Runner do
 
     it 'restores ARGV despite an exception' do
       old_argv = ARGV.dup
-      proc {
+      expect {
         @runner.swizzling_argv do
           raise SystemExit.new('exiting')
         end
-      }.should raise_error(SystemExit)
+      }.to raise_error(SystemExit)
       ARGV.should == old_argv
     end
   end

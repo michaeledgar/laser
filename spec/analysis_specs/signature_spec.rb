@@ -7,38 +7,38 @@ describe Signature do
           'hello', Protocols::InstanceProtocol.new(ClassRegistry['Array']),
           [ArgumentBinding.new('a1', WoolObject.new, :positional)])
       result.name.should == 'hello'
-      result.return_protocol.should == ClassRegistry['Array']
+      result.return_protocol.should == ClassRegistry['Array'].protocol
       result.arguments.size.should == 1
       result.arguments.first.should ==
           ArgumentBinding.new('a1', WoolObject.new, :positional)
     end
     
     it 'requires a string name' do
-      lambda {
+      expect {
         Signature.new(:hello, Protocols::InstanceProtocol.new(ClassRegistry['Array']),
             [ArgumentBinding.new('a1', WoolObject.new, :positional)])
-      }.should raise_error(ArgumentError)
+      }.to raise_error(ArgumentError)
     end
     
     it 'requires a protocol for a return protocol' do
-      lambda {
+      expect {
         Signature.new('hello', 'Array',
             [ArgumentBinding.new('a1', WoolObject.new, :positional)])
-      }.should raise_error(ArgumentError)
+      }.to raise_error(ArgumentError)
     end
     
     it 'requires an array for its argument list' do
-      lambda {
+      expect {
         Signature.new('hello', Protocols::InstanceProtocol.new(ClassRegistry['Array']),
             ArgumentBinding.new('a1', WoolObject.new, :positional))
-      }.should raise_error(ArgumentError)
+      }.to raise_error(ArgumentError)
     end
     
     it 'requires its argument list be an array of Argument objects' do
-      lambda {
+      expect {
         Signature.new(
             'hello', ClassRegistry['Array'], ['a1'])
-      }.should raise_error(ArgumentError)
+      }.to raise_error(ArgumentError)
     end
   end
   

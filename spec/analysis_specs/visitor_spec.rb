@@ -21,10 +21,10 @@ describe Visitor do
     it "calls the default handler if the method looks like 'visit_'" do
       node = OpenStruct.new
       node.children = []
-      lambda { @class.new.visit_sillybar(node) }.should_not raise_error
+      expect { @class.new.visit_sillybar(node) }.to_not raise_error
     end
     it 'raises if no handler method is defined' do
-      lambda { @class.new.sillybar }.should raise_error(NoMethodError)
+      expect { @class.new.sillybar }.to raise_error(NoMethodError)
     end
   end
   

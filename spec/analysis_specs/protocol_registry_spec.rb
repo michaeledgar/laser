@@ -67,7 +67,7 @@ describe 'ClassRegistry' do
     end
     
     it 'raises on failure' do
-      lambda { ClassRegistry['OogaBoogaBoo'] }.should raise_error(ArgumentError)
+      expect { ClassRegistry['OogaBoogaBoo'] }.to raise_error(ArgumentError)
     end
   end
 

@@ -54,6 +54,16 @@ shared_examples_for 'a Ruby module' do
     end
   end
   
+  describe '#initialize' do
+    it 'should raise if the path contains a component that does not start with a capital' do
+      expect { described_class.new('::A::b::C') }.to raise_error(ArgumentError)
+    end
+    
+    it 'should raise if the path has one component that does not start with a capital' do
+      expect { described_class.new('acd') }.to raise_error(ArgumentError)
+    end
+  end
+  
   describe '#name' do
     it 'extracts the name from the full path' do
       x = described_class.new('::A::B::C::D::EverybodysFavoriteClass')

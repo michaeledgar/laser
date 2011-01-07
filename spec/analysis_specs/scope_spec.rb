@@ -34,7 +34,7 @@ end
 describe Scope do
   describe '#initialize' do
     it 'refuses to instantiate a Scope' do
-      lambda { Scope.new(mock, mock) }.should raise_error(NotImplementedError)
+      expect { Scope.new(mock, mock) }.to raise_error(NotImplementedError)
     end
   end
 end
@@ -57,7 +57,7 @@ shared_examples_for Scope do
     end
 
     it 'raises a ScopeLookupFailure on failure' do
-      lambda { Scope::GlobalScope.lookup('ABC987') }.should raise_error(Scope::ScopeLookupFailure)
+      expect { Scope::GlobalScope.lookup('ABC987') }.to raise_error(Scope::ScopeLookupFailure)
       begin
         Scope::GlobalScope.lookup('ABC987')
       rescue Scope::ScopeLookupFailure => err
@@ -73,9 +73,9 @@ shared_examples_for Scope do
     end
     
     it 'raises a ScopeLookupFailure on failure' do
-      lambda {
+      expect {
         Scope::GlobalScope.lookup_path('ABD::ABC987') 
-      }.should raise_error(Scope::ScopeLookupFailure)
+      }.to raise_error(Scope::ScopeLookupFailure)
       begin
         Scope::GlobalScope.lookup_path('ABD::ABC987')
       rescue Scope::ScopeLookupFailure => err
@@ -100,7 +100,7 @@ describe OpenScope do
     
     it 'should raise if there is no parent' do
       scope = OpenScope.new(nil, nil)
-      lambda { scope.lookup('foobarmonkey') }.should raise_error(Scope::ScopeLookupFailure)
+      expect { scope.lookup('foobarmonkey') }.to raise_error(Scope::ScopeLookupFailure)
     end
   end
 end
@@ -114,9 +114,9 @@ describe ClosedScope do
     it 'should not look in parent scopes when lookup fails' do
       value = Object.new
       @base_scope.locals['x'] = value
-      lambda {
+      expect {
         @nested_scope.lookup_local('x')
-      }.should raise_error(Scope::ScopeLookupFailure)
+      }.to raise_error(Scope::ScopeLookupFailure)
     end
   end
 end

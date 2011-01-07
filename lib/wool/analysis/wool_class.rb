@@ -22,7 +22,7 @@ module Wool
       
       def singleton_class
         return @singleton_class if @singleton_class
-        @singleton_class = WoolClass.new("#<Class:#{name}>") do |new_singleton_class|
+        @singleton_class = WoolClass.new("Class:#{name}") do |new_singleton_class|
           new_singleton_class.superclass = self.klass
         end
         @singleton_class
@@ -39,6 +39,7 @@ module Wool
       attr_reader :path, :instance_methods, :object
       
       def initialize(full_path, scope = Scope::GlobalScope)
+        validate_module_path!(full_path)
         super(self, scope)
         
         @path = full_path
@@ -46,9 +47,18 @@ module Wool
         @scope = scope
         @methods = {}
         initialize_protocol
-        @object = GenericBinding.new(name, self)
+        @object = ConstantBinding.new(name, self)
         initialize_scope
         yield self if block_given?
+      end
+
+      def validate_module_path!(path)
+        path.split('::').each do |component|
+          if !component.empty? && component[0,1] !~ /[A-Z]/
+            raise ArgumentError.new("Path component #{component} in #{path}" +
+                                    " does not start with a capital letter, A-Z.")
+          end
+        end
       end
 
       def klass
@@ -122,7 +132,7 @@ module Wool
       end
       
       def singleton_class
-        @singleton_class ||= WoolClass.new("#<Class:#{name}>") do |new_singleton_class|
+        @singleton_class ||= WoolClass.new("Class:#{name}") do |new_singleton_class|
           if superclass
             new_singleton_class.superclass = superclass.singleton_class
           else

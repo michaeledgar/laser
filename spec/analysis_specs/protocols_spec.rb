@@ -3,13 +3,13 @@ require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 describe Protocols::Base do
   describe '#signatures' do
     it 'raises a NotImplementedError' do
-      lambda { Protocols::Base.new.signatures }.should raise_error(NotImplementedError)
+      expect { Protocols::Base.new.signatures }.to raise_error(NotImplementedError)
     end
   end
   
   describe '#signatures' do
     it 'raises a NotImplementedError' do
-      lambda { Protocols::Base.new <=> Protocols::Base.new }.should raise_error(NotImplementedError)
+      expect { Protocols::Base.new <=> Protocols::Base.new }.to raise_error(NotImplementedError)
     end
   end
   

@@ -24,7 +24,7 @@ describe SexpAnalysis::ConstantBinding do
   describe '#bind!' do
     it 'should raise on a rebinding when not forcing' do
       sym = SexpAnalysis::ConstantBinding.new('hi', 1)
-      lambda { sym.bind!(2) }.should raise_error(TypeError)
+      expect { sym.bind!(2) }.to raise_error(TypeError)
     end
     
     it 'should not raise on a rebinding when forcing' do

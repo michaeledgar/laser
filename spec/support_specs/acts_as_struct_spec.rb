@@ -46,7 +46,7 @@ describe ActsAsStruct do
       end
     
       it 'raises on too many positional arguments' do
-        lambda { @class.new(1,2,3,4,5,6) }.should raise_error(ArgumentError)
+        expect { @class.new(1,2,3,4,5,6) }.to raise_error(ArgumentError)
       end
     end
     
