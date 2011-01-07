@@ -76,13 +76,13 @@ module Wool
           receiver = method_self.singleton_class
           add_method_to_object(receiver, method_self, name, arglist, body)
         end
-        
+
         def add_method_to_object(receiver, method_self, name, arglist, body)
           new_signature = Signature.for_definition_sexp(name, arglist, body)
           receiver.add_instance_method!(WoolMethod.new(name) do |method|
             method.add_signature!(new_signature)
           end)
-          
+
           method_locals = Hash[new_signature.arguments.map { |arg| [arg.name, arg] }]
           new_scope = ClosedScope.new(@current_scope, method_self, {}, method_locals)
           visit_with_scope(body, new_scope)

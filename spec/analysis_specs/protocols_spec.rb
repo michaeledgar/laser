@@ -1,3 +1,4 @@
+# encoding: UTF-8
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 
 describe Protocols::Base do
@@ -95,7 +96,7 @@ end
 
 describe Protocols::UnionProtocol do
   before do
-    @first, @second, @third = mock(:proto1), mock(:proto2), mock(:proto3)
+    @first, @second, @third = many_mocks 3
     @union = Protocols::UnionProtocol.new([@first, @second, @third])
   end
   
@@ -116,6 +117,36 @@ describe Protocols::UnionProtocol do
       @second.should_receive(:to_s).and_return('Hello::World')
       @third.should_receive(:to_s).and_return('#read -> String')
       @union.to_s.should == 'AbcDef | Hello::World | #read -> String'
+    end
+  end
+end
+
+
+describe Protocols::IntersectionProtocol do
+  before do
+    @mocks = many_mocks(3)
+    @intersection = Protocols::IntersectionProtocol.new(@mocks)
+  end
+  
+  describe '#signatures' do
+    it "returns the union of all the protocols' signatures" do
+      sigs = many_mocks 10
+      @mocks[0].should_receive(:signatures).and_return([sigs[0], sigs[2], sigs[3], sigs[4], sigs[7]])
+      @mocks[1].should_receive(:signatures).and_return([sigs[1], sigs[2], sigs[3], sigs[5], sigs[7]])
+      @mocks[2].should_receive(:signatures).and_return([sigs[7], sigs[9], sigs[3], sigs[8], sigs[4]])
+      final_sigs = @intersection.signatures
+      final_sigs.should include(sigs[3])
+      final_sigs.should include(sigs[7])
+    end
+  end
+  
+  describe '#to_s' do
+    it 'returns the union members joined by |, as in the annotation language' do
+      intersection = Protocols::IntersectionProtocol.new(@mocks)
+      @mocks[0].should_receive(:to_s).and_return('AbcDef')
+      @mocks[1].should_receive(:to_s).and_return('Hello::World')
+      @mocks[2].should_receive(:to_s).and_return('#read -> String')
+      intersection.to_s.should == 'AbcDef ∩ Hello::World ∩ #read -> String'
     end
   end
 end

@@ -1,3 +1,4 @@
+# encoding: UTF-8
 require 'set'
 module Wool
   module SexpAnalysis
@@ -85,6 +86,30 @@ module Wool
         # @return [Array<Signature>] the supported signatures for this protocol.
         def signatures
           @protocols.map(&:signatures).inject(:|)
+        end
+      end
+
+      # This is a simple protocol whose signature set is just the intersection of the
+      # signature sets of its constituent protocols.
+      class IntersectionProtocol < Base
+        # Initializes the Intersection protocol to a set of constituent protocols.
+        #
+        # @param [Array<Base>] constituents the set of constituent protocols that
+        #    this protocol is a union of.
+        def initialize(constituents)
+          @protocols = constituents
+        end
+        
+        def to_s
+          @protocols.inject {|a, b| "#{a.to_s} ∩ #{b.to_s}"}
+        end
+        
+        # Returns the list of all known signatures that this protocol responds
+        # to, which is the union of all the constituent protocols.
+        #
+        # @return [Array<Signature>] the supported signatures for this protocol.
+        def signatures
+          @protocols.map(&:signatures).inject(:&)
         end
       end
       
