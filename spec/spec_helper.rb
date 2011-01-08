@@ -19,7 +19,8 @@ end
 
 include Wool
 module Wool
-  TESTS_ACTIVATED = true
+  remove_const(:TESTS_ACTIVATED)
+  const_set(:TESTS_ACTIVATED, true)
   module RSpec
     module Matchers
       # Matcher for checking if #match? returns trues

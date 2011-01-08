@@ -1,4 +1,4 @@
-  # Warning for using semicolons outside of class declarations.
+# Warning for using semicolons outside of class declarations.
 class Wool::UselessDoubleQuotesWarning < Wool::FileWarning
   type :style
   severity 1
