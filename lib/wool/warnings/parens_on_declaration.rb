@@ -9,7 +9,7 @@ class Wool::ParensOnDeclarationWarning < Wool::FileWarning
   end
   
   def match?(body = self.body)
-    list = find_sexps(:def).select do |sym, name, args, body|
+    def_list = find_sexps(:def).select do |sym, name, args, body|
       case args.type
       when :params then args.children.any?
       when :paren then !args[1].children.any?
@@ -17,10 +17,14 @@ class Wool::ParensOnDeclarationWarning < Wool::FileWarning
     end.map do |sym, name, args, body|
       ParensOnDeclarationWarning.new(file, body, :method_name => name[1])
     end
+    sdef_list = find_sexps(:defs).select do |sym, target, op, name, args, body|
+      case args.type
+      when :params then args.children.any?
+      when :paren then !args[1].children.any?
+      end
+    end.map do |sym, target, op, name, args, body|
+      ParensOnDeclarationWarning.new(file, body, :method_name => name[1])
+    end
+    def_list + sdef_list
   end
-  # 
-  # def fix(body = self.body)
-  #   body.gsub("\"#{quoted_string}\"", "'#{quoted_string}'").
-  #        gsub("%Q{#{quoted_string}}", "%q{#{quoted_string}}")
-  # end
 end
