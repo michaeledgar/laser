@@ -3,10 +3,6 @@ class Wool::AssignmentInConditionWarning < Wool::FileWarning
   type :gotcha
   severity 3
   short_desc 'Assignment in condition not in parentheses'
-  # setting_accessor :method_name
-  # desc do
-  #   "The method #{method_name} should have its arguments wrapped in parentheses."
-  # end
   
   def match?(body = self.body)
     to_search = find_sexps(:if) + find_sexps(:unless) + find_sexps(:elsif)
