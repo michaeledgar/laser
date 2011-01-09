@@ -9,7 +9,9 @@ class Wool::AssignmentInConditionWarning < Wool::FileWarning
     to_search.map do |sym, condition, success_body, failure_body|
       assignments = find_sexps(:assign, condition)
       assignments.reject do |node|
-        node.ancestors.map(&:type).include?(:paren)
+        ancestors = node.ancestors.map(&:type)
+        path_to_node = ancestors[ancestors.rindex(sym)..-1]
+        path_to_node.include?(:paren)
       end
     end.compact.flatten.map do |node|
       AssignmentInConditionWarning.new(file, body)

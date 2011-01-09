@@ -46,6 +46,10 @@ describe AssignmentInConditionWarning do
       AssignmentInConditionWarning.should warn('unless (x && y) || x = 5; end')
     end
   end
+  
+  it 'is not fooled when the entire if expression is in parentheses' do
+    AssignmentInConditionWarning.should warn('(if true; elsif x = 5; end)')
+  end
 
   # it 'does not match when arguments are surrounded by parentheses' do
   #   AssignmentInConditionWarning.should_not warn('def abc(arg); end')
