@@ -25,6 +25,9 @@ module Wool
         SexpAnalysis::Sexp.__send__(:attr_accessor, *args)
       end
       alias_method :add_properties, :add_property
+      def add_computed_property(name, &blk)
+        SexpAnalysis::Sexp.__send__(:define_method, name, &blk)
+      end
     end
   end
 end
