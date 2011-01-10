@@ -36,7 +36,7 @@ module Wool
     # Wool representation of a module. Named WoolModule to avoid naming
     # conflicts. It has lists of methods, instance variables, and so on.
     class WoolModule < WoolObject
-      attr_reader :path, :instance_methods, :object
+      attr_reader :path, :instance_methods, :binding
       
       def initialize(full_path, scope = Scope::GlobalScope)
         validate_module_path!(full_path)
@@ -47,7 +47,7 @@ module Wool
         @scope = scope
         @methods = {}
         initialize_protocol
-        @object = ConstantBinding.new(name, self)
+        @binding = ConstantBinding.new(name, self)
         initialize_scope
         yield self if block_given?
       end
@@ -73,9 +73,9 @@ module Wool
       # table and perform module initialization.
       def initialize_scope
         if @scope && @scope != Scope::GlobalScope
-          @scope.self_ptr = self.object.value
-          @scope.parent.constants[name] = self.object if @scope.parent
-          @scope.locals['self'] = self.object
+          @scope.self_ptr = self.binding.value
+          @scope.parent.constants[name] = self.binding if @scope.parent
+          @scope.locals['self'] = self.binding
         end
       end
       

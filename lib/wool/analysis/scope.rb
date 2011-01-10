@@ -16,7 +16,7 @@ module Wool
       def initialize(parent, self_ptr, constants={}, locals={})
         unless respond_to?(:lookup_local)
           raise NotImplementedError.new(
-              'must create OpenScope or ClosedScope. Not just OpenScope.')
+              'must create OpenScope or ClosedScope. Not just Scope.')
         end
         @parent, @self_ptr, @constants, @locals = parent, self_ptr, constants, locals
         @locals['self'] = GenericBinding.new('self', self_ptr)
@@ -31,30 +31,39 @@ module Wool
         self_ptr.path
       end
 
-      def lookup_or_create_module(new_mod_name)
+      # Provides a general-purpose method for looking up a binding,
+      # and yielding on failure.
+      def lookup_or_create(name)
         begin
-          lookup(new_mod_name).scope
+          lookup(name).scope
         rescue Scope::ScopeLookupFailure => err
-          # gotta swizzle in the new scope because the module we create is creating
-          # the new scope!
+          yield
+        end
+      end
+
+      # Looks up a module, and creates it on failure.
+      def lookup_or_create_module(new_mod_name)
+        lookup_or_create(new_mod_name) do
           new_scope = ClosedScope.new(self, nil)
           new_mod = WoolModule.new(submodule_path(new_mod_name), new_scope)
           new_scope
         end
       end
 
+      # Looks up a class, and creates it on failure.
       def lookup_or_create_class(new_class_name, superclass)
-        begin
-          lookup(new_class_name).scope
-        rescue Scope::ScopeLookupFailure => err
-          # gotta swizzle in the new scope because the class we create is creating
-          # the new scope!
+        lookup_or_create(new_class_name) do
           new_scope = ClosedScope.new(self, nil)
           new_class = WoolClass.new(submodule_path(new_class_name), new_scope) do |klass|
             klass.superclass = superclass
           end
           new_scope
         end
+      end
+      
+      # Looks up the local and returns it – initializing it to nil (as Ruby does)
+      def lookup_or_create_local(local_name)
+        locals[local_name] ||= LocalBinding.new(local_name, nil)
       end
       
       def submodule_path(new_mod_name)
