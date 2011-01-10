@@ -31,47 +31,6 @@ module Wool
         self_ptr.path
       end
 
-      # Provides a general-purpose method for looking up a binding,
-      # and yielding on failure.
-      def lookup_or_create(name)
-        begin
-          lookup(name).scope
-        rescue Scope::ScopeLookupFailure => err
-          yield
-        end
-      end
-
-      # Looks up a module, and creates it on failure.
-      def lookup_or_create_module(new_mod_name)
-        lookup_or_create(new_mod_name) do
-          new_scope = ClosedScope.new(self, nil)
-          new_mod = WoolModule.new(submodule_path(new_mod_name), new_scope)
-          new_scope
-        end
-      end
-
-      # Looks up a class, and creates it on failure.
-      def lookup_or_create_class(new_class_name, superclass)
-        lookup_or_create(new_class_name) do
-          new_scope = ClosedScope.new(self, nil)
-          new_class = WoolClass.new(submodule_path(new_class_name), new_scope) do |klass|
-            klass.superclass = superclass
-          end
-          new_scope
-        end
-      end
-      
-      # Looks up the local and returns it – initializing it to nil (as Ruby does)
-      def lookup_or_create_local(local_name)
-        locals[local_name] ||= LocalBinding.new(local_name, nil)
-      end
-      
-      def submodule_path(new_mod_name)
-        new_mod_full_path = self == GlobalScope ? '' : path
-        new_mod_full_path += "::" unless new_mod_full_path.empty?
-        new_mod_full_path += new_mod_name
-      end
-
       def lookup(str)
         if str =~ /^[A-Z]/ && constants[str]
         then constants[str]
