@@ -33,6 +33,15 @@ module Wool
         @locals['self'] = GenericBinding.new('self', other)
       end
       
+      def add_binding!(new_binding)
+        case new_binding.name[0,1]
+        when /[A-Z]/
+          constants[new_binding.name] = new_binding
+        else
+          locals[new_binding.name] = new_binding
+        end
+      end
+      
       def path
         self_ptr.path
       end

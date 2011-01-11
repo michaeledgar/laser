@@ -60,6 +60,12 @@ module Wool
       end
     end
     
+    # We may want to track # of assignments/reads from local vars, so we should subclass
+    # GenericBinding for it.
+    class LocalVariableBinding < GenericBinding
+      
+    end
+    
     class ArgumentBinding < GenericBinding
       attr_reader :kind, :default_value_sexp
       def initialize(name, value, kind, default_value = nil)

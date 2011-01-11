@@ -9,7 +9,7 @@ describe ScopeAnnotation do
   end
   
   it 'adds scopes to each node with a flat example with no new scopes' do
-    tree = Sexp.new(Ripper.sexp('a = nil; b = a; if b; a; end'))
+    tree = Sexp.new(Ripper.sexp('p 5; if b; a; end'))
     ScopeAnnotation::Annotator.new.annotate!(tree)
     tree.all_subtrees.each do |node|
       node.scope.should == Scope::GlobalScope
@@ -25,7 +25,7 @@ describe ScopeAnnotation do
   #           [:bodystmt, [[:void_stmt], [:assign, [:var_field, [:@ident, "a", [1, 19]]],
   #           [:@int, "10", [1, 23]]]], nil, nil, nil]]]]
   it 'creates a new scope when a simple module declaration is encountered' do
-    tree = Sexp.new(Ripper.sexp('a = nil; module A; a = 10; end'))
+    tree = Sexp.new(Ripper.sexp('p 5; module A; end'))
     ScopeAnnotation::Annotator.new.annotate!(tree)
     list = tree[1]
     with_new_scope = list[1][2], *list[1][2].all_subtrees
@@ -46,7 +46,7 @@ describe ScopeAnnotation do
   #           [:bodystmt, [[:void_stmt], [:assign, [:var_field, [:@ident, "a", [1, 21]]],
   #           [:@int, "10", [1, 25]]]], nil, nil, nil]]]]
   it 'creates a new scope when a simple top-pathed module declaration is encountered' do
-    tree = Sexp.new(Ripper.sexp('a = nil; module ::B; a = 10; end'))
+    tree = Sexp.new(Ripper.sexp('p 5; module ::B; end'))
     ScopeAnnotation::Annotator.new.annotate!(tree)
     list = tree[1]
     list[1][2].scope.self_ptr.name.should == 'B'
@@ -60,15 +60,16 @@ describe ScopeAnnotation do
   # This is the AST that Ripper generates for the parsed code. It is
   # provided here because otherwise the test is inscrutable.
   #
-  # sexp = [:program,
-  #        [[:assign, [:var_field, [:@ident, "a", [1, 0]]], [:var_ref, [:@kw, "nil", [1, 4]]]],
-  #         [:module, [:const_path_ref, [:var_ref, [:@const, "ABC", [1, 16]]], [:@const, "B", [1, 21]]],
-  #           [:bodystmt, [[:void_stmt], [:assign, [:var_field, [:@ident, "a", [1, 24]]],
-  #           [:@int, "10", [1, 28]]]], nil, nil, nil]]]]
+  # [:program,
+  # [[:module,
+  #   [:const_path_ref,
+  #    [:var_ref, [:@const, "ABC", [1, 7]]],
+  #    [:@const, "DEF", [1, 12]]],
+  #   [:bodystmt, [[:void_stmt]], nil, nil, nil]]]]
   it 'creates a new scope when a pathed module declaration is encountered' do
     temp_scope = ClosedScope.new(Scope::GlobalScope, nil)
     temp_mod = WoolModule.new('ABC', temp_scope)
-    tree = Sexp.new(Ripper.sexp('a = nil; module ABC::DEF; a = 10; end'))
+    tree = Sexp.new(Ripper.sexp('p 5; module ABC::DEF; end'))
     ScopeAnnotation::Annotator.new.annotate!(tree)
     list = tree[1]
     mod = list[1][2].scope.self_ptr

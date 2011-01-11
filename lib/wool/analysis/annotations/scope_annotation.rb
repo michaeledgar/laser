@@ -171,9 +171,30 @@ module Wool
           visit_with_scope(body, new_scope)
         end
         
-        add :for do |sym, vars, iterable, body|
-          
+        # Single assignment. Update/Create 1 binding.
+        add :assign do |node, name, val|
+          @current_scope = @current_scope.dup
+          case node
+          when :var_field
+            begin
+              object = scope.lookup(name[1][1])
+            rescue Scope::ScopeResolutionError
+              object = WoolObject.new(ClassRegistry['Object'], @current_scope)
+              scope.add_binding!(LocalVariableBinding.new(name[1][1], object))
+            end
+          end
+          visit_with_scope(name, @current_scope)
+          visit_with_scope(val, @current_scope)
         end
+        
+        # add :for do |sym, vars, iterable, body|
+        #   case vars.first
+        #   when :var_field
+        #     # one variable
+        #   when Sexp
+        #     # vars is an array of variables
+        #   end
+        # end
       end
       add_global_annotator Annotator
     end
