@@ -84,6 +84,43 @@ module Wool
           end
         end
         
+        
+        # Given a current scope and any possible way to describe a constant,
+        # break it into two parts: the name of the final constant, and the
+        # scope it will be in. The actual constant need not yet have an existing
+        # object representing it yet – it will be lookup_or_created later.
+        #
+        # @param [Scope] current_scope the scope to look up the path in
+        # @param [Sexp] path_node the node that describes the constant
+        # @return [Array[Scope,String]] A tuple of the final scope and the
+        #     name of the constant to use (as extracted from the AST)
+        def unpack_path(current_scope, path_node)
+          case path_node.type
+          when :const_path_ref
+            left, right = path_node.children
+            new_class_name = const_sexp_name(right)
+            current_scope = current_scope.lookup_path(const_sexp_name(left))
+          when :top_const_ref
+            current_scope = Scope::GlobalScope
+            new_class_name = const_sexp_name(path_node)
+          else
+            new_class_name = const_sexp_name(path_node)
+          end
+          [current_scope, new_class_name]
+        end
+
+        # Evaluates the constant reference/path with the given scope
+        # as describe.
+        def const_sexp_name(sexp)
+          case sexp.type
+          when :var_ref, :const_ref, :top_const_ref then sexp[1][1]
+          when :@const then sexp[1]
+          when :const_path_ref 
+            left, right = sexp.children
+            const_sexp_name(left) + '::' + const_sexp_name(right)
+          end
+        end
+        
         # Looks up the local and returns it – initializing it to nil (as Ruby does)
         def lookup_or_create_local(local_name)
           locals[local_name] ||= LocalBinding.new(local_name, nil)
@@ -133,41 +170,9 @@ module Wool
           new_scope = ClosedScope.new(@current_scope, method_self, {}, method_locals)
           visit_with_scope(body, new_scope)
         end
-
-        # Given a current scope and any possible way to describe a constant,
-        # break it into two parts: the name of the final constant, and the
-        # scope it will be in. The actual constant need not yet have an existing
-        # object representing it yet – it will be lookup_or_created later.
-        #
-        # @param [Scope] current_scope the scope to look up the path in
-        # @param [Sexp] path_node the node that describes the constant
-        # @return [Array[Scope,String]] A tuple of the final scope and the
-        #     name of the constant to use (as extracted from the AST)
-        def unpack_path(current_scope, path_node)
-          case path_node.type
-          when :const_path_ref
-            left, right = path_node.children
-            new_class_name = const_sexp_name(right)
-            current_scope = current_scope.lookup_path(const_sexp_name(left))
-          when :top_const_ref
-            current_scope = Scope::GlobalScope
-            new_class_name = const_sexp_name(path_node)
-          else
-            new_class_name = const_sexp_name(path_node)
-          end
-          [current_scope, new_class_name]
-        end
-
-        # Evaluates the constant reference/path with the given scope
-        # as describe.
-        def const_sexp_name(sexp)
-          case sexp.type
-          when :var_ref, :const_ref, :top_const_ref then sexp[1][1]
-          when :@const then sexp[1]
-          when :const_path_ref 
-            left, right = sexp.children
-            const_sexp_name(left) + '::' + const_sexp_name(right)
-          end
+        
+        add :for do |sym, vars, iterable, body|
+          
         end
       end
       add_global_annotator Annotator

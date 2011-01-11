@@ -84,6 +84,52 @@ shared_examples_for Scope do
       end
     end
   end
+  
+  describe '#dup' do
+    before do
+      @a, @b, @c = many_mocks(3)
+      @nested_scope.locals['a'] = @a
+      @nested_scope.locals['b'] = @b
+      @nested_scope.locals['c'] = @c
+      @duplicate = @nested_scope.dup
+    end
+    it 'can duplicate itself, shallowly, retaining references to old bindings' do
+      @duplicate.lookup_path('ABD::OOP').should be @nested_scope.lookup_path('ABD::OOP')
+      @duplicate.lookup('a').should be @a
+      @duplicate.lookup('b').should be @b
+      @duplicate.lookup('c').should be @c
+    end
+    
+    it 'retains the same reference to parent scopes' do
+      @duplicate.parent.should be @nested_scope.parent
+    end
+    
+    it 'retains the same reference to the self object' do
+      @duplicate.self_ptr.should be @nested_scope.self_ptr
+    end
+    
+    it "ensures changes to a duplicate's locals do not affect the original" do
+      new_a = mock
+      @duplicate.locals['a'] = new_a
+      @nested_scope.lookup('a').should be @a
+      @duplicate.lookup('a').should be new_a
+    end
+    
+    it "ensures changes to a duplicate's constants do not affect the original" do
+      new_a = mock
+      @duplicate.constants['ABC999'] = new_a
+      expect {
+        @nested_scope.lookup_path('ABC999')
+      }.to raise_error(Scope::ScopeLookupFailure)
+      begin
+        @nested_scope.lookup_path('ABC999')
+      rescue Scope::ScopeLookupFailure => err
+        err.scope.should == @nested_scope
+        err.query.should == 'ABC999'
+      end
+      @duplicate.lookup('ABC999').should be new_a
+    end
+  end
 end
 
 describe OpenScope do

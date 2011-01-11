@@ -12,7 +12,8 @@ module Wool
         end
       end
 
-      attr_accessor :constants, :self_ptr, :parent, :locals
+      attr_accessor :constants, :parent, :locals
+      attr_reader :self_ptr
       def initialize(parent, self_ptr, constants={}, locals={})
         unless respond_to?(:lookup_local)
           raise NotImplementedError.new(
@@ -20,6 +21,11 @@ module Wool
         end
         @parent, @self_ptr, @constants, @locals = parent, self_ptr, constants, locals
         @locals['self'] = GenericBinding.new('self', self_ptr)
+      end
+      
+      def initialize_copy(other)
+        @locals = other.locals.dup
+        @constants = other.constants.dup
       end
       
       def self_ptr=(other)
