@@ -26,8 +26,8 @@ module Wool
       module HashConstraint1
         def constraints
           [Constraints::GenericClassConstraint.new(
-              'Hash', :covariant, variance_constraint1.constraints,
-              variance_constraint2.constraints)]
+              'Hash', :covariant, [variance_constraint1.constraints.first,
+              variance_constraint2.constraints.first])]
         end
       end
 
@@ -97,7 +97,7 @@ module Wool
         if r1
           r0 = r1
         else
-          r9 = _nt_variance_constraint
+          r9 = _nt_generic_constraint
           if r9
             r0 = r9
           else
@@ -107,6 +107,225 @@ module Wool
         end
 
         node_cache[:hash_constraint][start_index] = r0
+
+        r0
+      end
+
+      module GenericConstraint0
+        def variance_constraint
+          elements[0]
+        end
+
+        def generic_list
+          elements[4]
+        end
+
+      end
+
+      module GenericConstraint1
+        def constraints
+          class_constraint = variance_constraint.constraints.first
+          [Constraints::GenericClassConstraint.new(
+              class_constraint.class_name, class_constraint.variance,
+              generic_list.constraints)]
+        end
+      end
+
+      def _nt_generic_constraint
+        start_index = index
+        if node_cache[:generic_constraint].has_key?(index)
+          cached = node_cache[:generic_constraint][index]
+          if cached
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            @index = cached.interval.end
+          end
+          return cached
+        end
+
+        i0 = index
+        i1, s1 = index, []
+        r2 = _nt_variance_constraint
+        s1 << r2
+        if r2
+          s3, i3 = [], index
+          loop do
+            r4 = _nt_space
+            if r4
+              s3 << r4
+            else
+              break
+            end
+          end
+          r3 = instantiate_node(SyntaxNode,input, i3...index, s3)
+          s1 << r3
+          if r3
+            if has_terminal?('<', false, index)
+              r5 = instantiate_node(SyntaxNode,input, index...(index + 1))
+              @index += 1
+            else
+              terminal_parse_failure('<')
+              r5 = nil
+            end
+            s1 << r5
+            if r5
+              s6, i6 = [], index
+              loop do
+                r7 = _nt_space
+                if r7
+                  s6 << r7
+                else
+                  break
+                end
+              end
+              r6 = instantiate_node(SyntaxNode,input, i6...index, s6)
+              s1 << r6
+              if r6
+                r8 = _nt_generic_list
+                s1 << r8
+                if r8
+                  s9, i9 = [], index
+                  loop do
+                    r10 = _nt_space
+                    if r10
+                      s9 << r10
+                    else
+                      break
+                    end
+                  end
+                  r9 = instantiate_node(SyntaxNode,input, i9...index, s9)
+                  s1 << r9
+                  if r9
+                    if has_terminal?('>', false, index)
+                      r11 = instantiate_node(SyntaxNode,input, index...(index + 1))
+                      @index += 1
+                    else
+                      terminal_parse_failure('>')
+                      r11 = nil
+                    end
+                    s1 << r11
+                  end
+                end
+              end
+            end
+          end
+        end
+        if s1.last
+          r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
+          r1.extend(GenericConstraint0)
+          r1.extend(GenericConstraint1)
+        else
+          @index = i1
+          r1 = nil
+        end
+        if r1
+          r0 = r1
+        else
+          r12 = _nt_variance_constraint
+          if r12
+            r0 = r12
+          else
+            @index = i0
+            r0 = nil
+          end
+        end
+
+        node_cache[:generic_constraint][start_index] = r0
+
+        r0
+      end
+
+      module GenericList0
+        def type
+          elements[0]
+        end
+
+        def generic_list
+          elements[4]
+        end
+      end
+
+      module GenericList1
+        def constraints
+          type.constraints + generic_list.constraints
+        end
+      end
+
+      def _nt_generic_list
+        start_index = index
+        if node_cache[:generic_list].has_key?(index)
+          cached = node_cache[:generic_list][index]
+          if cached
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            @index = cached.interval.end
+          end
+          return cached
+        end
+
+        i0 = index
+        i1, s1 = index, []
+        r2 = _nt_type
+        s1 << r2
+        if r2
+          s3, i3 = [], index
+          loop do
+            r4 = _nt_space
+            if r4
+              s3 << r4
+            else
+              break
+            end
+          end
+          r3 = instantiate_node(SyntaxNode,input, i3...index, s3)
+          s1 << r3
+          if r3
+            if has_terminal?(',', false, index)
+              r5 = instantiate_node(SyntaxNode,input, index...(index + 1))
+              @index += 1
+            else
+              terminal_parse_failure(',')
+              r5 = nil
+            end
+            s1 << r5
+            if r5
+              s6, i6 = [], index
+              loop do
+                r7 = _nt_space
+                if r7
+                  s6 << r7
+                else
+                  break
+                end
+              end
+              r6 = instantiate_node(SyntaxNode,input, i6...index, s6)
+              s1 << r6
+              if r6
+                r8 = _nt_generic_list
+                s1 << r8
+              end
+            end
+          end
+        end
+        if s1.last
+          r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
+          r1.extend(GenericList0)
+          r1.extend(GenericList1)
+        else
+          @index = i1
+          r1 = nil
+        end
+        if r1
+          r0 = r1
+        else
+          r9 = _nt_type
+          if r9
+            r0 = r9
+          else
+            @index = i0
+            r0 = nil
+          end
+        end
+
+        node_cache[:generic_list][start_index] = r0
 
         r0
       end

@@ -7,10 +7,31 @@ module Wool
         variance_constraint space* "=>" space* variance_constraint {
           def constraints
             [Constraints::GenericClassConstraint.new(
-                'Hash', :covariant, variance_constraint1.constraints,
-                variance_constraint2.constraints)]
+                'Hash', :covariant, [variance_constraint1.constraints.first,
+                variance_constraint2.constraints.first])]
+          end
+        } / generic_constraint
+      end
+      
+      rule generic_constraint
+        variance_constraint space* '<' space* generic_list space* '>' {
+          def constraints
+            class_constraint = variance_constraint.constraints.first
+            [Constraints::GenericClassConstraint.new(
+                class_constraint.class_name, class_constraint.variance,
+                generic_list.constraints)]
           end
         } / variance_constraint
+      end
+      
+      rule generic_list
+        type space* ',' space* generic_list {
+          def constraints
+            type.constraints + generic_list.constraints
+          end
+        }
+        /
+        type
       end
 
       rule variance_constraint

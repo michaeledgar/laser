@@ -2,52 +2,69 @@ require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 
 describe Parsers::ClassParser do
   before do
-    @parser = Parsers::ClassParser.new
+    @parser = Parsers::AnnotationParser.new
   end
   
   describe 'a simple class name' do
     it 'is parsed into a single covariant constraint' do
-      @parser.parse('Hello').constraints.should ==
-          [Constraints::ClassConstraint.new('Hello', :covariant)]
+      'Hello'.should parse_to([Constraints::ClassConstraint.new('Hello', :covariant)])
+      'Hello'.should_not parse_to([Constraints::ClassConstraint.new('Hello', :contravariant)])
     end
   end
   
   describe "a complex class path" do
     it "is parsed into a single covariant constraint" do
-      @parser.parse('::Hello::World::Is::Here').constraints.should ==
-          [Constraints::ClassConstraint.new('::Hello::World::Is::Here', :covariant)]
+      '::Hello::World::Is::Here'.should parse_to(
+          [Constraints::ClassConstraint.new('::Hello::World::Is::Here', :covariant)])
     end
   end
   
   describe 'a class name followed by -' do
     it "is parsed into a contravariant class constraint" do
-      @parser.parse('World::Is::Here-').constraints.should ==
-          [Constraints::ClassConstraint.new('World::Is::Here', :contravariant)]
+      'World::Is::Here-'.should parse_to(
+          [Constraints::ClassConstraint.new('World::Is::Here', :contravariant)])
     end
   end
   
   describe 'a class name followed by =' do
     it "is parsed into a contravariant class constraint" do
-      @parser.parse('World::Is::Here=').constraints.should ==
-          [Constraints::ClassConstraint.new('World::Is::Here', :invariant)]
+      'World::Is::Here='.should parse_to(
+          [Constraints::ClassConstraint.new('World::Is::Here', :invariant)])
     end
   end
   
   describe 'two constraints separated by =>' do
     it 'is parsed as a Hash<C1, C2>' do
       ['Symbol => String', 'Symbol=>String', 'Symbol  =>   String'].each do |input|
-        @parser.parse(input).constraints.should ==
+        input.should parse_to(
             [Constraints::GenericClassConstraint.new('Hash', :covariant,
-                [Constraints::ClassConstraint.new('Symbol', :covariant)],
-                [Constraints::ClassConstraint.new('String', :covariant)])]
+                [Constraints::ClassConstraint.new('Symbol', :covariant),
+                 Constraints::ClassConstraint.new('String', :covariant)])])
       end
     end
     
     it 'allows variance constraints on the key and value types' do
-      @parser.parse('::Hello::World==>Some::Constant-').constraints.should ==
+      '::Hello::World==>Some::Constant-'.should parse_to(
           [Constraints::GenericClassConstraint.new('Hash', :covariant,
-              [Constraints::ClassConstraint.new('::Hello::World', :invariant)],
-              [Constraints::ClassConstraint.new('Some::Constant', :contravariant)])]
+              [Constraints::ClassConstraint.new('::Hello::World', :invariant),
+               Constraints::ClassConstraint.new('Some::Constant', :contravariant)])])
+    end
+  end
+  
+  describe 'a generic Array definition' do
+    it 'is parsed as a GenericClassConstraint' do
+      'Array<String>'.should parse_to(
+          [Constraints::GenericClassConstraint.new('Array', :covariant,
+              [Constraints::ClassConstraint.new('String', :covariant)])])
+    end
+  end
+  
+  describe 'a generic Hash definition' do
+    it 'is parsed as a GenericClassConstraint' do
+      'Hash- < Symbol=,   String  >'.should parse_to(
+          [Constraints::GenericClassConstraint.new('Hash', :contravariant,
+              [Constraints::ClassConstraint.new('Symbol', :invariant),
+               Constraints::ClassConstraint.new('String', :covariant)])])
     end
   end
 end

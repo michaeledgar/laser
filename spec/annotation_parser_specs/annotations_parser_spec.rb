@@ -7,14 +7,13 @@ describe Parsers::AnnotationParser do
   
   describe 'a self type' do
     it 'should parse as a single self type constraint' do
-      @parser.parse('self').constraints.should be ==
-          [Constraints::SelfTypeConstraint.new]
+      'self'.should parse_to([Constraints::SelfTypeConstraint.new])
     end
   end
   
   describe 'the top type' do
     it 'should have no constraints' do
-      @parser.parse('Top').constraints.should be_empty
+      'Top'.should parse_to([])
     end
   end
 end

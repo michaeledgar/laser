@@ -12,6 +12,12 @@ module Wool
 
       include Class
 
+      module Root0
+        def type
+          Type.new(constraints)
+        end
+      end
+
       def _nt_root
         start_index = index
         if node_cache[:root].has_key?(index)
@@ -24,6 +30,7 @@ module Wool
         end
 
         r0 = _nt_type
+        r0.extend(Root0)
 
         node_cache[:root][start_index] = r0
 

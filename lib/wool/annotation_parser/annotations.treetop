@@ -3,7 +3,11 @@ module Wool
     grammar Annotation
       include Class
       rule root
-        type
+        type {
+          def type
+            Type.new(constraints)
+          end
+        }
       end
 
       rule type

@@ -177,7 +177,7 @@ module Wool
           case node
           when :var_field
             begin
-              object = scope.lookup(name[1][1])
+              binding = scope.lookup(name[1][1])
             rescue Scope::ScopeResolutionError
               object = WoolObject.new(ClassRegistry['Object'], @current_scope)
               scope.add_binding!(LocalVariableBinding.new(name[1][1], object))

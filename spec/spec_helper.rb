@@ -71,6 +71,31 @@ module Wool
       def correct_to(input, output, *args)
         CorrectsTo.new(input, output, *args)
       end
+      
+      # Matcher for parsing type annotations
+      class ParsesTo
+        def initialize(output)
+          @output = output
+        end
+
+        def matches?(actual)
+          @input = actual
+          @result = Parsers::AnnotationParser.new.parse(actual)
+          @result && @result.constraints == @output && @result.type.constraints == Set.new(@output)
+        end
+
+        def failure_message
+          "expected '#{@input}' to parse to #{@output.inspect}, not #{@result.constraints.inspect}"
+        end
+
+        def negative_failure_message
+          "expected '#{@input}' to not parse to #{@output.inspect}"
+        end
+      end
+
+      def parse_to(output)
+        ParsesTo.new(output)
+      end
     end
   end
 end
