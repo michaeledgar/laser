@@ -67,4 +67,14 @@ describe Parsers::ClassParser do
                Constraints::ClassConstraint.new('String', :covariant)])])
     end
   end
+  
+  describe 'a nested generic definition' do
+    it 'should parse correctly as nested GenericClassConstraint' do
+      'Array<Hash<Symbol, String>>'.should parse_to(
+          [Constraints::GenericClassConstraint.new('Array', :covariant,
+              [Constraints::GenericClassConstraint.new('Hash', :covariant,
+                  [Constraints::ClassConstraint.new('Symbol', :covariant),
+                   Constraints::ClassConstraint.new('String', :covariant)])])])
+    end
+  end
 end
