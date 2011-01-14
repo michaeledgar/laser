@@ -3,6 +3,7 @@ module Wool
     # This module contains bootstrapping code. This initializes the first classes
     # and modules that build up the meta-model (Class, Module, Object).
     module Bootstrap
+      extend SexpAnalysis
       class BootstrappingError < StandardError; end
       def self.bootstrap
         class_class = WoolClass.new('Class', nil)
@@ -24,7 +25,6 @@ module Wool
         class_scope.parent = Scope::GlobalScope
         module_scope.parent = Scope::GlobalScope
         object_scope.parent = Scope::GlobalScope
-        object_class.instance_variable_set("@scope", main_object)
         object_class.instance_variable_set("@scope", object_scope)
         module_class.instance_variable_set("@scope", module_scope)
         class_class.instance_variable_set("@scope", class_scope)
@@ -36,6 +36,10 @@ module Wool
         new_exception = BootstrappingError.new("Bootstrapping failed: #{err.message}")
         new_exception.set_backtrace(err.backtrace)
         raise new_exception
+      end
+    
+      def self.load_prepackaged_annotations(file)
+        parse(File.read(File.join(Wool::ROOT, 'wool', 'standard_library', file)))
       end
     end
   end

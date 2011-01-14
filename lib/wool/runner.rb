@@ -10,11 +10,14 @@ module Wool
 
     def run
       settings, files = collect_options_and_arguments
+      # parse_forest: Array<Array<String, Sexp>>
+      parse_forest = files.zip(files.map { |file| Ripper.sexp(read_file(file))})
       settings[:__using__] = warnings_to_consider
       settings[:__fix__] = warnings_to_fix
       scanner = Scanner.new(settings)
       warnings = collect_warnings(files, scanner)
       display_warnings(warnings, settings) if settings[:display]
+      print_modules if settings[:"list-modules"]
     end
 
     def collect_options_and_arguments
@@ -61,6 +64,7 @@ module Wool
         opt :"line-length", 'Warn at the given line length', :short => '-l', :type => :int
         opt :only, 'Only consider the given warning (by short or full name)', :short => '-O', :type => :string
         opt :stdin, 'Read Ruby code from standard input', :short => '-s'
+        opt :"list-modules", 'Print the discovered, loaded modules'
         warning_opts.each { |warning| opt(*warning) }
       end
     end
@@ -78,6 +82,17 @@ module Wool
         result
       end
       all_options.values
+    end
+
+    def print_modules
+      SexpAnalysis::WoolModule.all_modules.sort_by(&:name).each { |mod| puts mod.name }
+    end
+
+    def read_file(file)
+      case file
+      when '(stdin)' then $stdin.read
+      else File.read(file)
+      end
     end
 
     # Converts a list of warnings and symbol shortcuts for warnings to just a

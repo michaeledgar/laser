@@ -356,13 +356,6 @@ module Wool
         end
       end
 
-      module VarianceConstraint4
-
-        def constraints
-          constant.constraints
-        end
-      end
-
       def _nt_variance_constraint
         start_index = index
         if node_cache[:variance_constraint].has_key?(index)

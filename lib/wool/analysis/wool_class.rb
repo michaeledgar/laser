@@ -37,6 +37,7 @@ module Wool
     # conflicts. It has lists of methods, instance variables, and so on.
     class WoolModule < WoolObject
       attr_reader :path, :instance_methods, :binding
+      cattr_accessor_with_default :all_modules, []
       
       def initialize(full_path, scope = Scope::GlobalScope)
         validate_module_path!(full_path)
@@ -50,6 +51,7 @@ module Wool
         @binding = ConstantBinding.new(name, self)
         initialize_scope
         yield self if block_given?
+        WoolModule.all_modules << self
       end
 
       def validate_module_path!(path)

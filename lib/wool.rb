@@ -1,3 +1,9 @@
+module Wool
+  VERSION = "0.5.0"
+  TESTS_ACTIVATED = false
+  ROOT = File.expand_path(File.dirname(__FILE__))
+end
+
 # Dependencies
 require 'ripper'
 require 'treetop'
@@ -36,8 +42,3 @@ require 'wool/rake/task'
 # Program logic
 require 'wool/warning'
 require 'wool/scanner'
-
-module Wool
-  VERSION = "0.5.0"
-  TESTS_ACTIVATED = false
-end

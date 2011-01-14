@@ -17,7 +17,7 @@ class Wool::RescueExceptionWarning < Wool::FileWarning
       list.map do |type|
         if type[0] == :var_ref &&
            type[1][0] == :@const && type[1][1] == "Exception"
-          warning = RescueExceptionWarning.new(file, body, :position => type[1][2])
+          warning = Wool::RescueExceptionWarning.new(file, body, :position => type[1][2])
           warning.position[0] -= 1
           warning.line_number = type[1][2][1]
           warning
@@ -26,9 +26,9 @@ class Wool::RescueExceptionWarning < Wool::FileWarning
     end.flatten
   end
 
-  def fix
+  def fix(body = self.body)
     result = ""
-    all_lines = self.body.lines.to_a
+    all_lines = body.lines.to_a
     result << all_lines[0..position[0]-1].join if position[0]-1 >= 0
     result << all_lines[position[0]][0,position[1]]
     result << 'StandardError'

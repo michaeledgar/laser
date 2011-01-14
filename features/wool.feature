@@ -10,6 +10,7 @@ Feature: Find Warnings
       | 2_input   | 4       |
       | 3_input   | 6       |
       | 4_input   | 3       |
+      | 5_input   | 4       |
     When I scan for warnings
     Then the input and output tables should match
 

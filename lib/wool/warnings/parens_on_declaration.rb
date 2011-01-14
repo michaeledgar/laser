@@ -15,7 +15,7 @@ class Wool::ParensOnDeclarationWarning < Wool::FileWarning
       when :paren then !args[1].children.any?
       end
     end.map do |sym, name, args, body|
-      ParensOnDeclarationWarning.new(file, body, :method_name => name[1])
+      Wool::ParensOnDeclarationWarning.new(file, body, :method_name => name[1])
     end
     sdef_list = find_sexps(:defs).select do |sym, target, op, name, args, body|
       case args.type
@@ -23,7 +23,7 @@ class Wool::ParensOnDeclarationWarning < Wool::FileWarning
       when :paren then !args[1].children.any?
       end
     end.map do |sym, target, op, name, args, body|
-      ParensOnDeclarationWarning.new(file, body, :method_name => name[1])
+      Wool::ParensOnDeclarationWarning.new(file, body, :method_name => name[1])
     end
     def_list + sdef_list
   end

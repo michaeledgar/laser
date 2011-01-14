@@ -14,7 +14,7 @@ class Wool::AssignmentInConditionWarning < Wool::FileWarning
         path_to_node.include?(:paren)
       end
     end.compact.flatten.map do |node|
-      AssignmentInConditionWarning.new(file, body)
+      Wool::AssignmentInConditionWarning.new(file, body)
     end
   end
 end

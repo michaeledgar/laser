@@ -29,9 +29,7 @@ module Wool
           def constraints
             type.constraints + generic_list.constraints
           end
-        }
-        /
-        type
+        } / type
       end
 
       rule variance_constraint
@@ -39,19 +37,11 @@ module Wool
           def constraints
             constant.constraints.map { |x| x.variance = :invariant; x }
           end
-        }
-        /
-        constant "-" {
+        } / constant "-" {
           def constraints
             constant.constraints.map { |x| x.variance = :contravariant; x }
           end
-        }
-        /
-        (constant) { 
-          def constraints
-            constant.constraints
-          end 
-        }
+        } / constant
       end
 
       rule constant
