@@ -29,7 +29,7 @@ describe ScopeAnnotation do
     ScopeAnnotation::Annotator.new.annotate!(tree)
     list = tree[1]
     with_new_scope = list[1][2], *list[1][2].all_subtrees
-    expectalot(:scope => { Scope::GlobalScope => [tree, list[0], list[0][1], list[0][2]],
+    expectalot(scope: { Scope::GlobalScope => [tree, list[0], list[0][1], list[0][2]],
                            Scope::GlobalScope.lookup('A').scope => with_new_scope })
 
     list[1][2].scope.should be_a(ClosedScope)
@@ -53,7 +53,7 @@ describe ScopeAnnotation do
     list[1][2].scope.should be_a(ClosedScope)
 
     with_new_scope = list[1][2], *list[1][2].all_subtrees
-    expectalot(:scope => { Scope::GlobalScope => [tree, list[0], list[0][1], list[0][2]],
+    expectalot(scope: { Scope::GlobalScope => [tree, list[0], list[0][1], list[0][2]],
                            Scope::GlobalScope.lookup('B').scope => with_new_scope })
   end
   
@@ -81,7 +81,7 @@ describe ScopeAnnotation do
     mod.scope.should be_a(ClosedScope)
 
     with_new_scope = list[1][2], *list[1][2].all_subtrees
-    expectalot(:scope => { Scope::GlobalScope => [tree, list[0], list[0][1], list[0][2]],
+    expectalot(scope: { Scope::GlobalScope => [tree, list[0], list[0][1], list[0][2]],
                            temp_scope.lookup('DEF').scope => with_new_scope })
   end
   
@@ -102,7 +102,7 @@ describe ScopeAnnotation do
     list = tree[1]
     with_new_scope = [list[0][2], *list[0][2].all_subtrees] +
                      [list[1][2], *list[1][2].all_subtrees]
-    expectalot(:scope => { Scope::GlobalScope => [tree, list[0], list[0][1], list[1][1]],
+    expectalot(scope: { Scope::GlobalScope => [tree, list[0], list[0][1], list[1][1]],
                            temp_scope.lookup('B12').scope => with_new_scope })
 
     list[0][2].scope.should be_a(ClosedScope)

@@ -9,7 +9,7 @@ require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
 #   tree[2][2].new_attribute.should == cool_inferred_val
 # and so on. A ton of repetitiveness can be captured by using hashes in the form:
 #
-#     {:new_attribute => { some_val => [tree[1][0], tree[0], ...],
+#     {new_attribute: { some_val => [tree[1][0], tree[0], ...],
 #                        { cool_inferred_val => [tree[2][2], ...] }}}
 #
 # Each attribute is a key in the toplevel hash, and each possible value is a key

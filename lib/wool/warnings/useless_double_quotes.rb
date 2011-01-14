@@ -23,7 +23,7 @@ class Wool::UselessDoubleQuotesWarning < Wool::FileWarning
       uses_q_braces = (previous_char == '{' && body.lines.to_a[pos[0] - 1][pos[1]-3,2] == '%Q')
       if previous_char == '"' || uses_q_braces
         warning = Wool::UselessDoubleQuotesWarning.new(
-            file, body, :quoted_string => text, :uses_q_braces => uses_q_braces)
+            file, body, quoted_string: text, uses_q_braces: uses_q_braces)
         warning.line_number = pos[0]
         warning
       end

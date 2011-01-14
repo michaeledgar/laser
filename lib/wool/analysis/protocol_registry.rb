@@ -19,7 +19,7 @@ module Wool
       end
 
       def self.[](class_name)
-        query(:class_path => class_name.gsub(/^::/, ''))
+        query(class_path: class_name.gsub(/^::/, ''))
       end
 
       def self.query(query={})

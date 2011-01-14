@@ -176,7 +176,7 @@ class Parser
         opts[:type]
       end
 
-    ## for options with :multi => true, an array default doesn't imply
+    ## for options with multi: true, an array default doesn't imply
     ## a multi-valued argument. for that you have to specify a :type
     ## as well. (this is how we disambiguate an ambiguous situation;
     ## see the docs for Parser#opt for details.)
@@ -532,7 +532,7 @@ class Parser
           ""
         end
       end
-      stream.puts wrap(desc, :width => width - rightcol_start - 1, :prefix => rightcol_start)
+      stream.puts wrap(desc, width: width - rightcol_start - 1, prefix: rightcol_start)
     end
   end
 
@@ -749,21 +749,21 @@ end
 ##   opts = Trollop::options do
 ##     opt :monkey, "Use monkey mode"                     # a flag --monkey,
 ##     defaulting to false
-##     opt :goat, "Use goat mode", :default => true       # a flag --goat,
+##     opt :goat, "Use goat mode", default: true       # a flag --goat,
 ##     defaulting to true
-##     opt :num_limbs, "Number of limbs", :default => 4   # an integer
+##     opt :num_limbs, "Number of limbs", default: 4   # an integer
 ##     --num-limbs <i>, defaulting to 4
-##     opt :num_thumbs, "Number of thumbs", :type => :int # an integer
+##     opt :num_thumbs, "Number of thumbs", type: :int # an integer
 ##     --num-thumbs <i>, defaulting to nil
 ##   end
 ##
 ##   ## if called with no arguments
-##   p opts # => { :monkey => false, :goat => true, :num_limbs => 4, :num_thumbs
+##   p opts # => { monkey: false, goat: true, num_limbs: 4, :num_thumbs
 ##   => nil }
 ##
 ##   ## if called with --monkey
-##   p opts # => {:monkey_given=>true, :monkey=>true, :goat=>true,
-##   :num_limbs=>4, :help=>false, :num_thumbs=>nil}
+##   p opts # => {monkey_given:true, monkey:true, goat:true,
+##   num_limbs:4, help:false, num_thumbs:nil}
 ##
 ## See more examples at http://trollop.rubyforge.org.
 def options args=ARGV, *a, &b
@@ -786,7 +786,7 @@ end
 ##   p = Trollop::Parser.new do
 ##     opt :monkey, "Use monkey mode"                     # a flag --monkey,
 ##     defaulting to false
-##     opt :goat, "Use goat mode", :default => true       # a flag --goat,
+##     opt :goat, "Use goat mode", default: true       # a flag --goat,
 ##     defaulting to true
 ##   end
 ##
@@ -818,7 +818,7 @@ end
 ## 'msg', and dies. Example:
 ##
 ##   options do
-##     opt :volume, :default => 0.0
+##     opt :volume, default: 0.0
 ##   end
 ##
 ##   die :volume, "too loud" if opts[:volume] > 10.0

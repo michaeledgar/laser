@@ -9,12 +9,12 @@ describe Runner do
     it 'collects options and arguments, decides what to scan, scans, and displays' do
       runner = Runner.new(['--report-fixed', 'hello', 'world'])
       expected_settings = {:"report-fixed_given"=>true, :"report-fixed"=>true,
-                           :fix => false, :help => false, :debug => false,
+                           fix: false, help: false, debug: false,
                            InlineCommentSpaceWarning::OPTION_KEY => 2,
-                           :"line-length" => nil, :only => nil, :stdin => false,
-                           :display => true, :"list-modules" => false,
-                           :__using__ => Warning.all_warnings,
-                           :__fix__ => Warning.all_warnings}
+                           :"line-length" => nil, only: nil, stdin: false,
+                           display: true, :"list-modules" => false,
+                           __using__: Warning.all_warnings,
+                           __fix__: Warning.all_warnings}
       scanner = mock(:scanner)
       Scanner.should_receive(:new, expected_settings).and_return(scanner)
 
@@ -41,15 +41,15 @@ describe Runner do
       runner.run
     end
     
-    it 'works with :stdin => true' do
+    it 'works with stdin: true' do
       runner = Runner.new(['--stdin', '--only', 'UselessDoubleQuotesWarning'])
-      expected_settings = {:"report-fixed"=>false, :fix => false, :help => false,
-                           :debug => false, InlineCommentSpaceWarning::OPTION_KEY => 2,
-                           :"line-length" => nil, :only => 'UselessDoubleQuotesWarning',
-                           :stdin => true, :stdin_given => true, :only_given => true,
-                           :display => true, :"list-modules" => false,
-                           :__using__ => [UselessDoubleQuotesWarning],
-                           :__fix__ => [UselessDoubleQuotesWarning]}
+      expected_settings = {:"report-fixed"=>false, fix: false, help: false,
+                           debug: false, InlineCommentSpaceWarning::OPTION_KEY => 2,
+                           :"line-length" => nil, only: 'UselessDoubleQuotesWarning',
+                           stdin: true, stdin_given: true, only_given: true,
+                           display: true, :"list-modules" => false,
+                           __using__: [UselessDoubleQuotesWarning],
+                           __fix__: [UselessDoubleQuotesWarning]}
       scanner = mock(:scanner)
       Scanner.should_receive(:new, expected_settings).and_return(scanner)
 
@@ -130,14 +130,14 @@ describe Runner do
   describe '#handle_global_options' do
     it 'specifies :using and :fix when :only is provided' do
       runner = Runner.new([])
-      runner.handle_global_options(:only => 'UselessDoubleQuotesWarning')
+      runner.handle_global_options(only: 'UselessDoubleQuotesWarning')
       runner.using.should == [UselessDoubleQuotesWarning]
       runner.fix.should == [UselessDoubleQuotesWarning]
     end
     
     it 'works with multiple short names' do
       runner = Runner.new([])
-      runner.handle_global_options(:only => 'ST1,ST3')
+      runner.handle_global_options(only: 'ST1,ST3')
       runner.using.size.should == 2
       runner.using.each {|w| w.ancestors.should include(Warning) }
     end

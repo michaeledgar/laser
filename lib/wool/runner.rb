@@ -58,12 +58,12 @@ module Wool
       warning_opts = get_warning_options
       Trollop::options do
         banner 'Ask Peeves - the Ruby Linter'
-        opt :fix, 'Should errors be fixed in-line?', :short => '-f'
-        opt :display, 'Should errors be displayed?', :short => '-b', :default => true
-        opt :"report-fixed", 'Should fixed errors be reported anyway?', :short => '-r'
-        opt :"line-length", 'Warn at the given line length', :short => '-l', :type => :int
-        opt :only, 'Only consider the given warning (by short or full name)', :short => '-O', :type => :string
-        opt :stdin, 'Read Ruby code from standard input', :short => '-s'
+        opt :fix, 'Should errors be fixed in-line?', short: '-f'
+        opt :display, 'Should errors be displayed?', short: '-b', default: true
+        opt :"report-fixed", 'Should fixed errors be reported anyway?', short: '-r'
+        opt :"line-length", 'Warn at the given line length', short: '-l', type: :int
+        opt :only, 'Only consider the given warning (by short or full name)', short: '-O', type: :string
+        opt :stdin, 'Read Ruby code from standard input', short: '-s'
         opt :"list-modules", 'Print the discovered, loaded modules'
         warning_opts.each { |warning| opt(*warning) }
       end

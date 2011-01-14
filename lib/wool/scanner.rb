@@ -3,9 +3,9 @@ module Wool
     attr_accessor :settings
     attr_accessor :indent_stack
 
-    DEFAULT_SETTINGS = {:fix => false, :output => STDOUT, :indent_size => 2,
-                        :__using__ => Wool::Warning.all_warnings,
-                        :__fix__ => Wool::Warning.all_warnings}
+    DEFAULT_SETTINGS = {fix: false, output: STDOUT, indent_size: 2,
+                        __using__: Wool::Warning.all_warnings,
+                        __fix__: Wool::Warning.all_warnings}
 
     # Initializes the scanner with the given settings
     #

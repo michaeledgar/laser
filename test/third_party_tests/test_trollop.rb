@@ -37,9 +37,9 @@ class Trollop < ::Test::Unit::TestCase
   end
 
   def test_required_flags_are_required
-    @p.opt "arg", "desc", :required => true
-    @p.opt "arg2", "desc", :required => false
-    @p.opt "arg3", "desc", :required => false
+    @p.opt "arg", "desc", required: true
+    @p.opt "arg2", "desc", required: false
+    @p.opt "arg3", "desc", required: false
 
     assert_nothing_raised { @p.parse(%w(--arg)) }
     assert_nothing_raised { @p.parse(%w(--arg --arg2)) }
@@ -49,8 +49,8 @@ class Trollop < ::Test::Unit::TestCase
   
   ## flags that take an argument error unless given one
   def test_argflags_demand_args
-    @p.opt "goodarg", "desc", :type => String
-    @p.opt "goodarg2", "desc", :type => String
+    @p.opt "goodarg", "desc", type: String
+    @p.opt "goodarg2", "desc", type: String
 
     assert_nothing_raised { @p.parse(%w(--goodarg goat)) }
     assert_raise(CommandlineError) { @p.parse(%w(--goodarg --goodarg2 goat)) }
@@ -71,8 +71,8 @@ class Trollop < ::Test::Unit::TestCase
   ## flags that require args of a specific type refuse args of other
   ## types
   def test_typed_args_refuse_args_of_other_types
-    assert_nothing_raised { @p.opt "goodarg", "desc", :type => :int }
-    assert_raise(ArgumentError) { @p.opt "badarg", "desc", :type => :asdf }
+    assert_nothing_raised { @p.opt "goodarg", "desc", type: :int }
+    assert_raise(ArgumentError) { @p.opt "badarg", "desc", type: :asdf }
 
     assert_nothing_raised { @p.parse(%w(--goodarg 3)) }
     assert_raise(CommandlineError) { @p.parse(%w(--goodarg 4.2)) }
@@ -81,14 +81,14 @@ class Trollop < ::Test::Unit::TestCase
 
   ## type is correctly derived from :default
   def test_type_correctly_derived_from_default
-    assert_raise(ArgumentError) { @p.opt "badarg", "desc", :default => [] }
-    assert_raise(ArgumentError) { @p.opt "badarg3", "desc", :default => [{1 => 2}] }
-    assert_raise(ArgumentError) { @p.opt "badarg4", "desc", :default => Hash.new }
+    assert_raise(ArgumentError) { @p.opt "badarg", "desc", default: [] }
+    assert_raise(ArgumentError) { @p.opt "badarg3", "desc", default: [{1 => 2}] }
+    assert_raise(ArgumentError) { @p.opt "badarg4", "desc", default: Hash.new }
     
     opts = nil
 
     # single arg: int
-    assert_nothing_raised { @p.opt "argsi", "desc", :default => 0 }
+    assert_nothing_raised { @p.opt "argsi", "desc", default: 0 }
     assert_nothing_raised { opts = @p.parse(%w(--)) }
     assert_equal 0, opts["argsi"]
     assert_nothing_raised { opts = @p.parse(%w(--argsi 4)) }
@@ -97,7 +97,7 @@ class Trollop < ::Test::Unit::TestCase
     assert_raise(CommandlineError) { @p.parse(%w(--argsi hello)) }
 
     # single arg: float
-    assert_nothing_raised { @p.opt "argsf", "desc", :default => 3.14 }
+    assert_nothing_raised { @p.opt "argsf", "desc", default: 3.14 }
     assert_nothing_raised { opts = @p.parse(%w(--)) }
     assert_equal 3.14, opts["argsf"]
     assert_nothing_raised { opts = @p.parse(%w(--argsf 2.41)) }
@@ -110,7 +110,7 @@ class Trollop < ::Test::Unit::TestCase
 
     # single arg: date
     date = Date.today
-    assert_nothing_raised { @p.opt "argsd", "desc", :default => date }
+    assert_nothing_raised { @p.opt "argsd", "desc", default: date }
     assert_nothing_raised { opts = @p.parse(%w(--)) }
     assert_equal Date.today, opts["argsd"]
     assert_nothing_raised { opts = @p.parse(['--argsd', 'Jan 4, 2007']) }
@@ -118,7 +118,7 @@ class Trollop < ::Test::Unit::TestCase
     assert_raise(CommandlineError) { @p.parse(%w(--argsd hello)) }
 
     # single arg: string
-    assert_nothing_raised { @p.opt "argss", "desc", :default => "foobar" }
+    assert_nothing_raised { @p.opt "argss", "desc", default: "foobar" }
     assert_nothing_raised { opts = @p.parse(%w(--)) }
     assert_equal "foobar", opts["argss"]
     assert_nothing_raised { opts = @p.parse(%w(--argss 2.41)) }
@@ -127,7 +127,7 @@ class Trollop < ::Test::Unit::TestCase
     assert_equal "hello", opts["argss"]
 
     # multi args: ints
-    assert_nothing_raised { @p.opt "argmi", "desc", :default => [3, 5] }
+    assert_nothing_raised { @p.opt "argmi", "desc", default: [3, 5] }
     assert_nothing_raised { opts = @p.parse(%w(--)) }
     assert_equal [3, 5], opts["argmi"]
     assert_nothing_raised { opts = @p.parse(%w(--argmi 4)) }
@@ -136,7 +136,7 @@ class Trollop < ::Test::Unit::TestCase
     assert_raise(CommandlineError) { @p.parse(%w(--argmi hello)) }
 
     # multi args: floats
-    assert_nothing_raised { @p.opt "argmf", "desc", :default => [3.34, 5.21] }
+    assert_nothing_raised { @p.opt "argmf", "desc", default: [3.34, 5.21] }
     assert_nothing_raised { opts = @p.parse(%w(--)) }
     assert_equal [3.34, 5.21], opts["argmf"]
     assert_nothing_raised { opts = @p.parse(%w(--argmf 2)) }
@@ -147,7 +147,7 @@ class Trollop < ::Test::Unit::TestCase
 
     # multi args: dates
     dates = [Date.today, Date.civil(2007, 1, 4)]
-    assert_nothing_raised { @p.opt "argmd", "desc", :default => dates }
+    assert_nothing_raised { @p.opt "argmd", "desc", default: dates }
     assert_nothing_raised { opts = @p.parse(%w(--)) }
     assert_equal dates, opts["argmd"]
     assert_nothing_raised { opts = @p.parse(['--argmd', 'Jan 4, 2007']) }
@@ -155,7 +155,7 @@ class Trollop < ::Test::Unit::TestCase
     assert_raise(CommandlineError) { @p.parse(%w(--argmd hello)) }
 
     # multi args: strings
-    assert_nothing_raised { @p.opt "argmst", "desc", :default => %w(hello world) }
+    assert_nothing_raised { @p.opt "argmst", "desc", default: %w(hello world) }
     assert_nothing_raised { opts = @p.parse(%w(--)) }
     assert_equal %w(hello world), opts["argmst"]
     assert_nothing_raised { opts = @p.parse(%w(--argmst 3.4)) }
@@ -166,36 +166,36 @@ class Trollop < ::Test::Unit::TestCase
 
   ## :type and :default must match if both are specified
   def test_type_and_default_must_match
-    assert_raise(ArgumentError) { @p.opt "badarg", "desc", :type => :int, :default => "hello" }
-    assert_raise(ArgumentError) { @p.opt "badarg2", "desc", :type => :String, :default => 4 }
-    assert_raise(ArgumentError) { @p.opt "badarg2", "desc", :type => :String, :default => ["hi"] }
-    assert_raise(ArgumentError) { @p.opt "badarg2", "desc", :type => :ints, :default => [3.14] }
+    assert_raise(ArgumentError) { @p.opt "badarg", "desc", type: :int, default: "hello" }
+    assert_raise(ArgumentError) { @p.opt "badarg2", "desc", type: :String, default: 4 }
+    assert_raise(ArgumentError) { @p.opt "badarg2", "desc", type: :String, default: ["hi"] }
+    assert_raise(ArgumentError) { @p.opt "badarg2", "desc", type: :ints, default: [3.14] }
 
-    assert_nothing_raised { @p.opt "argsi", "desc", :type => :int, :default => 4 }
-    assert_nothing_raised { @p.opt "argsf", "desc", :type => :float, :default => 3.14 }
-    assert_nothing_raised { @p.opt "argsd", "desc", :type => :date, :default => Date.today }
-    assert_nothing_raised { @p.opt "argss", "desc", :type => :string, :default => "yo" }
-    assert_nothing_raised { @p.opt "argmi", "desc", :type => :ints, :default => [4] }
-    assert_nothing_raised { @p.opt "argmf", "desc", :type => :floats, :default => [3.14] }
-    assert_nothing_raised { @p.opt "argmd", "desc", :type => :dates, :default => [Date.today] }
-    assert_nothing_raised { @p.opt "argmst", "desc", :type => :strings, :default => ["yo"] }
+    assert_nothing_raised { @p.opt "argsi", "desc", type: :int, default: 4 }
+    assert_nothing_raised { @p.opt "argsf", "desc", type: :float, default: 3.14 }
+    assert_nothing_raised { @p.opt "argsd", "desc", type: :date, default: Date.today }
+    assert_nothing_raised { @p.opt "argss", "desc", type: :string, default: "yo" }
+    assert_nothing_raised { @p.opt "argmi", "desc", type: :ints, default: [4] }
+    assert_nothing_raised { @p.opt "argmf", "desc", type: :floats, default: [3.14] }
+    assert_nothing_raised { @p.opt "argmd", "desc", type: :dates, default: [Date.today] }
+    assert_nothing_raised { @p.opt "argmst", "desc", type: :strings, default: ["yo"] }
   end
 
   def test_long_detects_bad_names
-    assert_nothing_raised { @p.opt "goodarg", "desc", :long => "none" }
-    assert_nothing_raised { @p.opt "goodarg2", "desc", :long => "--two" }
-    assert_raise(ArgumentError) { @p.opt "badarg", "desc", :long => "" }
-    assert_raise(ArgumentError) { @p.opt "badarg2", "desc", :long => "--" }
-    assert_raise(ArgumentError) { @p.opt "badarg3", "desc", :long => "-one" }
-    assert_raise(ArgumentError) { @p.opt "badarg4", "desc", :long => "---toomany" }
+    assert_nothing_raised { @p.opt "goodarg", "desc", long: "none" }
+    assert_nothing_raised { @p.opt "goodarg2", "desc", long: "--two" }
+    assert_raise(ArgumentError) { @p.opt "badarg", "desc", long: "" }
+    assert_raise(ArgumentError) { @p.opt "badarg2", "desc", long: "--" }
+    assert_raise(ArgumentError) { @p.opt "badarg3", "desc", long: "-one" }
+    assert_raise(ArgumentError) { @p.opt "badarg4", "desc", long: "---toomany" }
   end
 
   def test_short_detects_bad_names
-    assert_nothing_raised { @p.opt "goodarg", "desc", :short => "a" }
-    assert_nothing_raised { @p.opt "goodarg2", "desc", :short => "-b" }
-    assert_raise(ArgumentError) { @p.opt "badarg", "desc", :short => "" }
-    assert_raise(ArgumentError) { @p.opt "badarg2", "desc", :short => "-ab" }
-    assert_raise(ArgumentError) { @p.opt "badarg3", "desc", :short => "--t" }
+    assert_nothing_raised { @p.opt "goodarg", "desc", short: "a" }
+    assert_nothing_raised { @p.opt "goodarg2", "desc", short: "-b" }
+    assert_raise(ArgumentError) { @p.opt "badarg", "desc", short: "" }
+    assert_raise(ArgumentError) { @p.opt "badarg2", "desc", short: "-ab" }
+    assert_raise(ArgumentError) { @p.opt "badarg3", "desc", short: "--t" }
   end
 
   def test_short_names_created_automatically
@@ -233,7 +233,7 @@ class Trollop < ::Test::Unit::TestCase
 
   def test_short_can_be_nothing
     assert_nothing_raised do
-      @p.opt "arg", "desc", :short => :none
+      @p.opt "arg", "desc", short: :none
       @p.parse []
     end
 
@@ -252,19 +252,19 @@ class Trollop < ::Test::Unit::TestCase
 
   ## two args can't have the same :long
   def test_conflicting_longs_detected
-    assert_nothing_raised { @p.opt "goodarg", "desc", :long => "--goodarg" }
-    assert_raise(ArgumentError) { @p.opt "badarg", "desc", :long => "--goodarg" }
+    assert_nothing_raised { @p.opt "goodarg", "desc", long: "--goodarg" }
+    assert_raise(ArgumentError) { @p.opt "badarg", "desc", long: "--goodarg" }
   end  
 
   ## two args can't have the same :short
   def test_conflicting_shorts_detected
-    assert_nothing_raised { @p.opt "goodarg", "desc", :short => "-g" }
-    assert_raise(ArgumentError) { @p.opt "badarg", "desc", :short => "-g" }
+    assert_nothing_raised { @p.opt "goodarg", "desc", short: "-g" }
+    assert_raise(ArgumentError) { @p.opt "badarg", "desc", short: "-g" }
   end  
 
   def test_flag_defaults
     @p.opt "defaultfalse", "desc"
-    @p.opt "defaulttrue", "desc", :default => true
+    @p.opt "defaulttrue", "desc", default: true
     opts = @p.parse []
     assert_equal false, opts["defaultfalse"]
     assert_equal true, opts["defaulttrue"]
@@ -281,9 +281,9 @@ class Trollop < ::Test::Unit::TestCase
   end
 
   def test_short_options_combine
-    @p.opt :arg1, "desc", :short => "a"
-    @p.opt :arg2, "desc", :short => "b"
-    @p.opt :arg3, "desc", :short => "c", :type => :int
+    @p.opt :arg1, "desc", short: "a"
+    @p.opt :arg2, "desc", short: "b"
+    @p.opt :arg3, "desc", short: "c", type: :int
 
     opts = nil
     assert_nothing_raised { opts = @p.parse %w(-a -b) }
@@ -313,8 +313,8 @@ class Trollop < ::Test::Unit::TestCase
   end
 
   def test_doubledash_ends_option_processing
-    @p.opt :arg1, "desc", :short => "a", :default => 0
-    @p.opt :arg2, "desc", :short => "b", :default => 0
+    @p.opt :arg1, "desc", short: "a", default: 0
+    @p.opt :arg2, "desc", short: "b", default: 0
     opts = nil
     assert_nothing_raised { opts = @p.parse %w(-- -a 3 -b 2) }
     assert_equal opts[:arg1], 0
@@ -333,16 +333,16 @@ class Trollop < ::Test::Unit::TestCase
   def test_wrap
     assert_equal [""], @p.wrap("")
     assert_equal ["a"], @p.wrap("a")
-    assert_equal ["one two", "three"], @p.wrap("one two three", :width => 8)
-    assert_equal ["one two three"], @p.wrap("one two three", :width => 80)
-    assert_equal ["one", "two", "three"], @p.wrap("one two three", :width => 3)
-    assert_equal ["onetwothree"], @p.wrap("onetwothree", :width => 3)
+    assert_equal ["one two", "three"], @p.wrap("one two three", width: 8)
+    assert_equal ["one two three"], @p.wrap("one two three", width: 80)
+    assert_equal ["one", "two", "three"], @p.wrap("one two three", width: 3)
+    assert_equal ["onetwothree"], @p.wrap("onetwothree", width: 3)
     assert_equal [
       "Test is an awesome program that does something very, very important.",
       "",
       "Usage:",
       "  test [options] <filenames>+",
-      "where [options] are:"], @p.wrap(<<EOM, :width => 100)
+      "where [options] are:"], @p.wrap(<<EOM, width: 100)
 Test is an awesome program that does something very, very important.
 
 Usage:
@@ -352,7 +352,7 @@ EOM
   end
 
   def test_floating_point_formatting
-    @p.opt :arg, "desc", :type => :float, :short => "f"
+    @p.opt :arg, "desc", type: :float, short: "f"
     opts = nil
     assert_nothing_raised { opts = @p.parse %w(-f 1) }
     assert_equal 1.0, opts[:arg]
@@ -382,27 +382,27 @@ EOM
   end
 
   def test_date_formatting
-    @p.opt :arg, "desc", :type => :date, :short => 'd'
+    @p.opt :arg, "desc", type: :date, short: 'd'
     opts = nil
     assert_nothing_raised { opts = @p.parse(['-d', 'Jan 4, 2007']) }
     assert_equal Date.civil(2007, 1, 4), opts[:arg]
   end
 
   def test_short_options_cant_be_numeric
-    assert_raises(ArgumentError) { @p.opt :arg, "desc", :short => "-1" }
+    assert_raises(ArgumentError) { @p.opt :arg, "desc", short: "-1" }
     @p.opt :a1b, "desc"
     @p.opt :a2b, "desc"
     assert_not_equal "2", @p.specs[:a2b][:short]
   end
 
   def test_short_options_can_be_weird
-    assert_nothing_raised { @p.opt :arg1, "desc", :short => "#" }
-    assert_nothing_raised { @p.opt :arg2, "desc", :short => "." }
-    assert_raises(ArgumentError) { @p.opt :arg3, "desc", :short => "-" }
+    assert_nothing_raised { @p.opt :arg1, "desc", short: "#" }
+    assert_nothing_raised { @p.opt :arg2, "desc", short: "." }
+    assert_raises(ArgumentError) { @p.opt :arg3, "desc", short: "-" }
   end
 
   def test_options_cant_be_set_multiple_times_if_not_specified
-    @p.opt :arg, "desc", :short => "-x"
+    @p.opt :arg, "desc", short: "-x"
     assert_nothing_raised { @p.parse %w(-x) }
     assert_raises(CommandlineError) { @p.parse %w(-x -x) }
     assert_raises(CommandlineError) { @p.parse %w(-xx) }
@@ -410,7 +410,7 @@ EOM
 
   def test_options_can_be_set_multiple_times_if_specified
     assert_nothing_raised do
-      @p.opt :arg, "desc", :short => "-x", :multi => true
+      @p.opt :arg, "desc", short: "-x", multi: true
     end
     assert_nothing_raised { @p.parse %w(-x) }
     assert_nothing_raised { @p.parse %w(-x -x) }
@@ -421,7 +421,7 @@ EOM
     opts = nil
 
     assert_nothing_raised do
-       @p.opt :xarg, "desc", :short => "-x", :type => String, :multi => true
+       @p.opt :xarg, "desc", short: "-x", type: String, multi: true
     end
     assert_nothing_raised { opts = @p.parse %w(-x a -x b) }
     assert_equal %w(a b), opts[:xarg]
@@ -432,7 +432,7 @@ EOM
     opts = nil
 
     assert_nothing_raised do
-      @p.opt :xarg, "desc", :short => "-x", :type => :flag, :multi => true
+      @p.opt :xarg, "desc", short: "-x", type: :flag, multi: true
     end
 
     assert_nothing_raised { opts = @p.parse %w(-x a) }
@@ -451,17 +451,17 @@ EOM
   def test_short_options_with_multiple_arguments
     opts = nil
 
-    @p.opt :xarg, "desc", :type => :ints
+    @p.opt :xarg, "desc", type: :ints
     assert_nothing_raised { opts = @p.parse %w(-x 3 4 0) }
     assert_equal [3, 4, 0], opts[:xarg]
     assert_equal [], @p.leftovers
 
-    @p.opt :yarg, "desc", :type => :floats
+    @p.opt :yarg, "desc", type: :floats
     assert_nothing_raised { opts = @p.parse %w(-y 3.14 4.21 0.66) }
     assert_equal [3.14, 4.21, 0.66], opts[:yarg]
     assert_equal [], @p.leftovers
 
-    @p.opt :zarg, "desc", :type => :strings
+    @p.opt :zarg, "desc", type: :strings
     assert_nothing_raised { opts = @p.parse %w(-z a b c) }
     assert_equal %w(a b c), opts[:zarg]
     assert_equal [], @p.leftovers
@@ -470,27 +470,27 @@ EOM
   def test_short_options_with_multiple_options_and_arguments
     opts = nil
 
-    @p.opt :xarg, "desc", :type => :ints, :multi => true
+    @p.opt :xarg, "desc", type: :ints, multi: true
     assert_nothing_raised { opts = @p.parse %w(-x 3 4 5 -x 6 7) }
     assert_equal [[3, 4, 5], [6, 7]], opts[:xarg]
     assert_equal [], @p.leftovers
 
-    @p.opt :yarg, "desc", :type => :floats, :multi => true
+    @p.opt :yarg, "desc", type: :floats, multi: true
     assert_nothing_raised { opts = @p.parse %w(-y 3.14 4.21 5.66 -y 6.99 7.01) }
     assert_equal [[3.14, 4.21, 5.66], [6.99, 7.01]], opts[:yarg]
     assert_equal [], @p.leftovers
 
-    @p.opt :zarg, "desc", :type => :strings, :multi => true
+    @p.opt :zarg, "desc", type: :strings, multi: true
     assert_nothing_raised { opts = @p.parse %w(-z a b c -z d e) }
     assert_equal [%w(a b c), %w(d e)], opts[:zarg]
     assert_equal [], @p.leftovers
   end
 
   def test_combined_short_options_with_multiple_arguments
-    @p.opt :arg1, "desc", :short => "a"
-    @p.opt :arg2, "desc", :short => "b"
-    @p.opt :arg3, "desc", :short => "c", :type => :ints
-    @p.opt :arg4, "desc", :short => "d", :type => :floats
+    @p.opt :arg1, "desc", short: "a"
+    @p.opt :arg2, "desc", short: "b"
+    @p.opt :arg3, "desc", short: "c", type: :ints
+    @p.opt :arg4, "desc", short: "d", type: :floats
 
     opts = nil
 
@@ -509,7 +509,7 @@ EOM
   end
 
   def test_long_options_with_multiple_options
-    @p.opt :xarg, "desc", :type => String, :multi => true
+    @p.opt :xarg, "desc", type: String, multi: true
     opts = nil
     assert_nothing_raised { opts = @p.parse %w(--xarg=a --xarg=b) }
     assert_equal %w(a b), opts[:xarg]
@@ -522,7 +522,7 @@ EOM
   def test_long_options_with_multiple_arguments
     opts = nil
 
-    @p.opt :xarg, "desc", :type => :ints
+    @p.opt :xarg, "desc", type: :ints
     assert_nothing_raised { opts = @p.parse %w(--xarg 3 2 5) }
     assert_equal [3, 2, 5], opts[:xarg]
     assert_equal [], @p.leftovers
@@ -530,7 +530,7 @@ EOM
     assert_equal [3], opts[:xarg]
     assert_equal [], @p.leftovers
 
-    @p.opt :yarg, "desc", :type => :floats
+    @p.opt :yarg, "desc", type: :floats
     assert_nothing_raised { opts = @p.parse %w(--yarg 3.14 2.41 5.66) }
     assert_equal [3.14, 2.41, 5.66], opts[:yarg]
     assert_equal [], @p.leftovers
@@ -538,7 +538,7 @@ EOM
     assert_equal [3.14], opts[:yarg]
     assert_equal [], @p.leftovers
 
-    @p.opt :zarg, "desc", :type => :strings
+    @p.opt :zarg, "desc", type: :strings
     assert_nothing_raised { opts = @p.parse %w(--zarg a b c) }
     assert_equal %w(a b c), opts[:zarg]
     assert_equal [], @p.leftovers
@@ -550,7 +550,7 @@ EOM
   def test_long_options_with_multiple_options_and_arguments
     opts = nil
 
-    @p.opt :xarg, "desc", :type => :ints, :multi => true
+    @p.opt :xarg, "desc", type: :ints, multi: true
     assert_nothing_raised { opts = @p.parse %w(--xarg 3 2 5 --xarg 2 1) }
     assert_equal [[3, 2, 5], [2, 1]], opts[:xarg]
     assert_equal [], @p.leftovers
@@ -558,7 +558,7 @@ EOM
     assert_equal [[3], [2]], opts[:xarg]
     assert_equal [], @p.leftovers
 
-    @p.opt :yarg, "desc", :type => :floats, :multi => true
+    @p.opt :yarg, "desc", type: :floats, multi: true
     assert_nothing_raised { opts = @p.parse %w(--yarg 3.14 2.72 5 --yarg 2.41 1.41) }
     assert_equal [[3.14, 2.72, 5], [2.41, 1.41]], opts[:yarg]
     assert_equal [], @p.leftovers
@@ -566,7 +566,7 @@ EOM
     assert_equal [[3.14], [2.41]], opts[:yarg]
     assert_equal [], @p.leftovers
 
-    @p.opt :zarg, "desc", :type => :strings, :multi => true
+    @p.opt :zarg, "desc", type: :strings, multi: true
     assert_nothing_raised { opts = @p.parse %w(--zarg a b c --zarg d e) }
     assert_equal [%w(a b c), %w(d e)], opts[:zarg]
     assert_equal [], @p.leftovers
@@ -576,7 +576,7 @@ EOM
   end
 
   def test_long_options_also_take_equals
-    @p.opt :arg, "desc", :long => "arg", :type => String, :default => "hello"
+    @p.opt :arg, "desc", long: "arg", type: String, default: "hello"
     opts = nil
     assert_nothing_raised { opts = @p.parse %w() }
     assert_equal "hello", opts[:arg]
@@ -643,16 +643,16 @@ EOM
   end
   
   def test_help_includes_option_types
-    @p.opt :arg1, 'arg', :type => :int
-    @p.opt :arg2, 'arg', :type => :ints
-    @p.opt :arg3, 'arg', :type => :string
-    @p.opt :arg4, 'arg', :type => :strings
-    @p.opt :arg5, 'arg', :type => :float
-    @p.opt :arg6, 'arg', :type => :floats
-    @p.opt :arg7, 'arg', :type => :io
-    @p.opt :arg8, 'arg', :type => :ios
-    @p.opt :arg9, 'arg', :type => :date
-    @p.opt :arg10, 'arg', :type => :dates
+    @p.opt :arg1, 'arg', type: :int
+    @p.opt :arg2, 'arg', type: :ints
+    @p.opt :arg3, 'arg', type: :string
+    @p.opt :arg4, 'arg', type: :strings
+    @p.opt :arg5, 'arg', type: :float
+    @p.opt :arg6, 'arg', type: :floats
+    @p.opt :arg7, 'arg', type: :io
+    @p.opt :arg8, 'arg', type: :ios
+    @p.opt :arg9, 'arg', type: :date
+    @p.opt :arg10, 'arg', type: :dates
     sio = StringIO.new "w"
     @p.educate sio
     
@@ -670,8 +670,8 @@ EOM
   end
   
   def test_help_has_grammatical_default_text
-    @p.opt :arg1, 'description with period.', :default => 'hello'
-    @p.opt :arg2, 'description without period', :default => 'world'
+    @p.opt :arg1, 'description with period.', default: 'hello'
+    @p.opt :arg2, 'description without period', default: 'world'
     sio = StringIO.new 'w'
     @p.educate sio
     
@@ -681,8 +681,8 @@ EOM
   end
 
   def test_version_and_help_short_args_can_be_overridden
-    @p.opt :verbose, "desc", :short => "-v"
-    @p.opt :hello, "desc", :short => "-h"
+    @p.opt :verbose, "desc", short: "-v"
+    @p.opt :hello, "desc", short: "-h"
     @p.version "version"
 
     assert_nothing_raised { @p.parse(%w(-v)) }
@@ -692,8 +692,8 @@ EOM
   end
 
   def test_version_and_help_long_args_can_be_overridden
-    @p.opt :asdf, "desc", :long => "help"
-    @p.opt :asdf2, "desc2", :long => "version"
+    @p.opt :asdf, "desc", long: "help"
+    @p.opt :asdf2, "desc2", long: "version"
     assert_nothing_raised { @p.parse %w() }
     assert_nothing_raised { @p.parse %w(--help) }
     assert_nothing_raised { @p.parse %w(--version) }
@@ -702,7 +702,7 @@ EOM
   end
 
   def test_version_and_help_override_errors
-    @p.opt :asdf, "desc", :type => String
+    @p.opt :asdf, "desc", type: String
     @p.version "version"
     assert_nothing_raised { @p.parse %w(--asdf goat) }
     assert_raises(CommandlineError) { @p.parse %w(--asdf) }
@@ -807,8 +807,8 @@ EOM
 
   ## courtesy neill zero
   def test_two_required_one_missing_accuses_correctly
-    @p.opt "arg1", "desc1", :required => true
-    @p.opt "arg2", "desc2", :required => true
+    @p.opt "arg1", "desc1", required: true
+    @p.opt "arg2", "desc2", required: true
 
     begin
       @p.parse(%w(--arg1))
@@ -828,8 +828,8 @@ EOM
   end
 
   def test_stopwords_mixed
-    @p.opt "arg1", :default => false
-    @p.opt "arg2", :default => false
+    @p.opt "arg1", default: false
+    @p.opt "arg2", default: false
     @p.stop_on %w(happy sad)
 
     opts = @p.parse %w(--arg1 happy --arg2)
@@ -844,8 +844,8 @@ EOM
   end
 
   def test_stopwords_no_stopwords
-    @p.opt "arg1", :default => false
-    @p.opt "arg2", :default => false
+    @p.opt "arg1", default: false
+    @p.opt "arg2", default: false
     @p.stop_on %w(happy sad)
 
     opts = @p.parse %w(--arg1 --arg2)
@@ -860,8 +860,8 @@ EOM
   end
 
   def test_stopwords_multiple_stopwords
-    @p.opt "arg1", :default => false
-    @p.opt "arg2", :default => false
+    @p.opt "arg1", default: false
+    @p.opt "arg2", default: false
     @p.stop_on %w(happy sad)
 
     opts = @p.parse %w(happy sad --arg1 --arg2)
@@ -882,14 +882,14 @@ EOM
   end
 
   def test_stopwords_with_short_args
-    @p.opt :global_option, "This is a global option", :short => "-g"
+    @p.opt :global_option, "This is a global option", short: "-g"
     @p.stop_on %w(sub-command-1 sub-command-2)
 
     global_opts = @p.parse %w(-g sub-command-1 -c)
     cmd = @p.leftovers.shift
 
     @q = Parser.new
-    @q.opt :cmd_option, "This is an option only for the subcommand", :short => "-c"
+    @q.opt :cmd_option, "This is an option only for the subcommand", short: "-c"
     cmd_opts = @q.parse @p.leftovers
 
     assert_equal true, global_opts[:global_option]
@@ -910,11 +910,11 @@ EOM
   end
 
   def test_unknown_subcommand
-    @p.opt :global_flag, "Global flag", :short => "-g", :type => :flag
-    @p.opt :global_param, "Global parameter", :short => "-p", :default => 5
+    @p.opt :global_flag, "Global flag", short: "-g", type: :flag
+    @p.opt :global_param, "Global parameter", short: "-p", default: 5
     @p.stop_on_unknown
 
-    expected_opts = { :global_flag => true, :help => false, :global_param => 5, :global_flag_given => true }
+    expected_opts = { global_flag: true, help: false, global_param: 5, global_flag_given: true }
     expected_leftovers = [ "my_subcommand", "-c" ]
 
     assert_parses_correctly @p, %w(--global-flag my_subcommand -c), \
@@ -922,7 +922,7 @@ EOM
     assert_parses_correctly @p, %w(-g my_subcommand -c), \
       expected_opts, expected_leftovers
 
-    expected_opts = { :global_flag => false, :help => false, :global_param => 5, :global_param_given => true }
+    expected_opts = { global_flag: false, help: false, global_param: 5, global_param_given: true }
     expected_leftovers = [ "my_subcommand", "-c" ]
 
     assert_parses_correctly @p, %w(-p 5 my_subcommand -c), \
@@ -935,9 +935,9 @@ EOM
     args = %w(-a -b -c)
 
     opts = ::Trollop.options(args) do
-      opt :alpher, "Ralph Alpher", :short => "-a"
-      opt :bethe, "Hans Bethe", :short => "-b"
-      opt :gamow, "George Gamow", :short => "-c"
+      opt :alpher, "Ralph Alpher", short: "-a"
+      opt :bethe, "Hans Bethe", short: "-b"
+      opt :gamow, "George Gamow", short: "-c"
     end
 
     physicists_with_humor = [:alpher, :bethe, :gamow]
@@ -948,9 +948,9 @@ EOM
   
   def test_date_arg_type
     temp = Date.new
-    @p.opt :arg, 'desc', :type => :date
-    @p.opt :arg2, 'desc', :type => Date
-    @p.opt :arg3, 'desc', :default => temp
+    @p.opt :arg, 'desc', type: :date
+    @p.opt :arg2, 'desc', type: Date
+    @p.opt :arg3, 'desc', default: temp
     
     opts = nil
     assert_nothing_raised { opts = @p.parse }
@@ -967,14 +967,14 @@ EOM
   
   def test_unknown_arg_class_type
     assert_raise ArgumentError do
-      @p.opt :arg, 'desc', :type => Hash
+      @p.opt :arg, 'desc', type: Hash
     end
   end
   
   def test_io_arg_type
-    @p.opt :arg, "desc", :type => :io
-    @p.opt :arg2, "desc", :type => IO
-    @p.opt :arg3, "desc", :default => $stdout
+    @p.opt :arg, "desc", type: :io
+    @p.opt :arg2, "desc", type: IO
+    @p.opt :arg3, "desc", default: $stdout
 
     opts = nil
     assert_nothing_raised { opts = @p.parse() }
@@ -995,8 +995,8 @@ EOM
   end
 
   def test_openstruct_style_access
-    @p.opt "arg1", "desc", :type => :int
-    @p.opt :arg2, "desc", :type => :int
+    @p.opt "arg1", "desc", type: :int
+    @p.opt :arg2, "desc", type: :int
 
     opts = @p.parse(%w(--arg1 3 --arg2 4))
 
@@ -1007,8 +1007,8 @@ EOM
   end
 
   def test_multi_args_autobox_defaults
-    @p.opt :arg1, "desc", :default => "hello", :multi => true
-    @p.opt :arg2, "desc", :default => ["hello"], :multi => true
+    @p.opt :arg1, "desc", default: "hello", multi: true
+    @p.opt :arg2, "desc", default: ["hello"], multi: true
 
     opts = @p.parse
     assert_equal ["hello"], opts[:arg1]
@@ -1023,10 +1023,10 @@ EOM
   end
 
   def test_ambigious_multi_plus_array_default_resolved_as_specified_by_documentation
-    @p.opt :arg1, "desc", :default => ["potato"], :multi => true
-    @p.opt :arg2, "desc", :default => ["potato"], :multi => true, :type => :strings
-    @p.opt :arg3, "desc", :default => ["potato"]
-    @p.opt :arg4, "desc", :default => ["potato", "rhubarb"], :short => :none, :multi => true
+    @p.opt :arg1, "desc", default: ["potato"], multi: true
+    @p.opt :arg2, "desc", default: ["potato"], multi: true, type: :strings
+    @p.opt :arg3, "desc", default: ["potato"]
+    @p.opt :arg4, "desc", default: ["potato", "rhubarb"], short: :none, multi: true
 
     ## arg1 should be multi-occurring but not multi-valued
     opts = @p.parse %w(--arg1 one two)
@@ -1076,8 +1076,8 @@ EOM
   def test_default_shorts_assigned_only_after_user_shorts
     @p.opt :aab, "aaa" # should be assigned to -b
     @p.opt :ccd, "bbb" # should be assigned to -d
-    @p.opt :user1, "user1", :short => 'a'
-    @p.opt :user2, "user2", :short => 'c'
+    @p.opt :user1, "user1", short: 'a'
+    @p.opt :user2, "user2", short: 'c'
 
     opts = @p.parse %w(-a -b)
     assert opts[:user1]
@@ -1093,8 +1093,8 @@ EOM
   end
 
   def test_accepts_arguments_with_spaces
-    @p.opt :arg1, "arg", :type => String
-    @p.opt :arg2, "arg2", :type => String
+    @p.opt :arg1, "arg", type: String
+    @p.opt :arg2, "arg2", type: String
 
     opts = @p.parse ["--arg1", "hello there", "--arg2=hello there"]
     assert_equal "hello there", opts[:arg1]
@@ -1103,7 +1103,7 @@ EOM
   end
 
   def test_multi_args_default_to_empty_array
-    @p.opt :arg1, "arg", :multi => true
+    @p.opt :arg1, "arg", multi: true
     opts = @p.parse []
     assert_equal [], opts[:arg1]
   end

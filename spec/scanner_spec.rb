@@ -6,7 +6,7 @@ describe Scanner do
     @scanner = Scanner.new(InlineCommentSpaceWarning::OPTION_KEY => 2)
 
     @fix_scanner_stdout = StringIO.new
-    @fix_scanner = Scanner.new(:fix => true, :output_file => @fix_scanner_stdout)
+    @fix_scanner = Scanner.new(fix: true, output_file: @fix_scanner_stdout)
   end
 
   describe '#scan' do

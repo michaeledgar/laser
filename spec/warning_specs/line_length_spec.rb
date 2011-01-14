@@ -82,7 +82,7 @@ describe GenericLineLengthWarning do
     end
 
     describe 'with an indent size of 2' do
-      before { @settings = {:indent_size => 2} }
+      before { @settings = {indent_size: 2} }
       it "doesn't try to convert the 'end if foobar' technique" do
         @input = '  end if should_run_block?'
         @output = '  end if should_run_block?'

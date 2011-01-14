@@ -99,13 +99,13 @@ class ClassInheritableAttributesTest < Test::Unit::TestCase
     assert_nil @klass.a
     assert_nil @klass.new.a
 
-    @klass.a = { :a => 'a' }
-    assert_equal({ :a => 'a' }, @klass.a)
-    assert_equal({ :a => 'a' }, @klass.new.a)
+    @klass.a = { a: 'a' }
+    assert_equal({ a: 'a' }, @klass.a)
+    assert_equal({ a: 'a' }, @klass.new.a)
 
-    @klass.new.a = { :b => 'b' }
-    assert_equal({ :a => 'a', :b => 'b' }, @klass.a)
-    assert_equal({ :a => 'a', :b => 'b' }, @klass.new.a)
+    @klass.new.a = { b: 'b' }
+    assert_equal({ a: 'a', b: 'b' }, @klass.a)
+    assert_equal({ a: 'a', b: 'b' }, @klass.new.a)
   end
 
   def test_inheritance

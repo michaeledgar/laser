@@ -1,0 +1,13 @@
+module A
+  class B
+    def silly args
+      begin
+        if x = 10
+          p args
+        end
+      rescue Exception => err
+        p "err"
+      end
+    end
+  end
+end

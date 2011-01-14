@@ -11,15 +11,15 @@ module Wool
     end
 
     def before_advice(meth, advice)
-      with_advice(meth, :before => proc { send(advice) })
+      with_advice(meth, before: proc { send(advice) })
     end
 
     def after_advice(meth, advice)
-      with_advice(meth, :after => proc { send(advice) })
+      with_advice(meth, after: proc { send(advice) })
     end
 
     def argument_advice(meth, argument_tweaker)
-      with_advice(meth, :args => argument_tweaker)
+      with_advice(meth, args: argument_tweaker)
     end
 
     def with_advice(meth, settings)

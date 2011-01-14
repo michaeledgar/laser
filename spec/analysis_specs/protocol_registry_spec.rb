@@ -46,7 +46,7 @@ describe ProtocolRegistry do
         x.value = OpenStruct.new
         x.value.path = 'SuperPath'
         ProtocolRegistry.add_class_protocol x
-        ProtocolRegistry.query(:class_path => 'SuperPath').should == [x]
+        ProtocolRegistry.query(class_path: 'SuperPath').should == [x]
       end
     end
   end

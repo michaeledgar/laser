@@ -24,7 +24,7 @@ RSpec::Core::RakeTask.new(:spec) do |spec|
   spec.pattern = FileList['spec/**/*_spec.rb']
 end
 
-task :rcov => :default
+task rcov: :default
 
 require 'rake/testtask'
 Rake::TestTask.new do |t|
@@ -58,7 +58,7 @@ if true
   end
 end
 
-task :rebuild => [:gemspec, :build, :install] do
+task rebuild: [:gemspec, :build, :install] do
   %x(rake wool)
 end
 
@@ -72,16 +72,16 @@ SRC.each do |source|
   end
 end
 
-task :build_parsers => OBJ
+task build_parsers: OBJ
 
 # Alias for script/console from rails world lawlz
-task :sc => :build_parsers do
+task sc: :build_parsers do
   system("irb -r./lib/wool")
 end
 
-task :spec => :check_dependencies
+task spec: :check_dependencies
 
-task :default => [:spec, :test]
+task default: [:spec, :test]
 
 begin
   require 'yard'
