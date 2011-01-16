@@ -1,5 +1,29 @@
+require 'yaml'
 module Wool
   module SexpAnalysis
+    module Annotations
+      extend ModuleExtensions
+      # Global annotations are only run once, at the root. 
+      cattr_accessor_with_default :global_annotations, []
+      
+      def self.annotate_inputs(inputs)
+        ordered_annotations.each do |annotator|
+          inputs.each do |filename, tree|
+            annotator.annotate!(tree)
+          end
+        end
+      end
+      
+      def self.annotation_ordered
+        @order ||= YAML.load_file(File.join(File.dirname(__FILE__), 'annotations', 'annotation_config.yaml'))
+      end
+      
+      def self.ordered_annotations
+        annotation_ordered.map do |mod_name|
+          global_annotations.select { |annotation| annotation.class.name.include?(mod_name) }.first
+        end
+      end
+    end
     # This is the base module for all annotations that can run on ASTs.
     # It includes all other annotation modules to provide all the
     # annotations to the Sexp class. These annotations are run at initialize
@@ -14,7 +38,7 @@ module Wool
     # this bad form!
     module BasicAnnotation
       def add_global_annotator(*args)
-        SexpAnalysis.global_annotations.concat args.map(&:new)
+        Annotations.global_annotations.concat args.map(&:new)
       end
       alias_method :add_global_annotators, :add_global_annotator
       def add_property(*args)

@@ -2,8 +2,8 @@ require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 
 describe BasicAnnotation do
   before(:each) do
-    @global_annotations = SexpAnalysis.global_annotations.dup
-    SexpAnalysis.global_annotations = []
+    @global_annotations = Annotations.global_annotations.dup
+    Annotations.global_annotations = []
     @class = Class.new do
       extend BasicAnnotation
       def annotate!(node)
@@ -13,14 +13,14 @@ describe BasicAnnotation do
   end
 
   after(:each) do
-    SexpAnalysis.global_annotations.replace @global_annotations
+    Annotations.global_annotations.replace @global_annotations
   end
 
   describe '#add_global_annotator' do
     it 'adds the given argument to the list of global annotations' do
       foo = Class.new
       @class.add_global_annotator foo
-      SexpAnalysis.global_annotations.last.should be_a(foo)
+      Annotations.global_annotations.last.should be_a(foo)
     end
   end
   

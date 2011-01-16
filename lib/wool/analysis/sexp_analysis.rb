@@ -72,18 +72,11 @@ module Wool
       private :replace_children!
     end
     
-    # Global annotations are only run once, at the root. 
-    cattr_accessor_with_default :global_annotations, []
-    
     # inputs: Array<(String, String)>
     #   Array of (filename, body) tuples.
     def self.analyze_inputs(inputs)
       inputs.map! { |filename, text| [filename, Sexp.new(Ripper.sexp(text))] }
-      SexpAnalysis.global_annotations.each do |annotator|
-        inputs.each do |filename, tree|
-          annotator.annotate!(tree)
-        end
-      end
+      Annotations.annotate_inputs(inputs)
       inputs
     end
     
