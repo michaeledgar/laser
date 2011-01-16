@@ -13,10 +13,6 @@ module Wool
     # the Sexp class. Since that's what an annotation is, I don't consider
     # this bad form!
     module BasicAnnotation
-      def add_annotator(*args)
-        SexpAnalysis::Sexp.annotations.concat args.map(&:new)
-      end
-      alias_method :add_annotators, :add_annotator
       def add_global_annotator(*args)
         SexpAnalysis.global_annotations.concat args.map(&:new)
       end

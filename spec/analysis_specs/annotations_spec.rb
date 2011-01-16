@@ -2,8 +2,6 @@ require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 
 describe BasicAnnotation do
   before(:each) do
-    @annotations = Sexp.annotations.dup
-    Sexp.annotations = []
     @global_annotations = SexpAnalysis.global_annotations.dup
     SexpAnalysis.global_annotations = []
     @class = Class.new do
@@ -11,30 +9,11 @@ describe BasicAnnotation do
       def annotate!(node)
         node[0] = (node[0].to_s + 'lolz').intern
       end
-      add_annotator self
     end
   end
 
   after(:each) do
-    Sexp.annotations.replace @annotations
     SexpAnalysis.global_annotations.replace @global_annotations
-  end
-
-  describe 'Sexp#initialize' do
-    it 'calls all local annotations upon initialization' do
-      result = Sexp.new([:foo, [:bar], [:silly]])
-      result[0].should == :foololz
-      result[1][0].should == :barlolz
-      result[2][0].should == :sillylolz
-    end
-  end
-
-  describe '#add_annotator' do
-    it 'adds the given argument to the list of annotations' do
-      foo = Class.new
-      @class.add_annotator foo
-      Sexp.annotations.last.should be_a(foo)
-    end
   end
 
   describe '#add_global_annotator' do
@@ -54,6 +33,16 @@ describe BasicAnnotation do
     end
     after do
       selectors.each {|sel| Sexp.__send__(:undef_method, sel)}
+    end
+  end
+  
+  describe '#add_computed_property' do
+    it 'adds a no-arg method that computes a property' do
+      @class.add_computed_property(:childsize) { self.children.size }
+      @class.add_global_annotator(@class)
+      sexp = Sexp.new([:abc, :cde, :aaa, :bbb, [:hi, 1, 2]])
+      sexp.childsize.should == 4
+      sexp.children[3].childsize.should == 2
     end
   end
 end

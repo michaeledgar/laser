@@ -7,21 +7,13 @@ module Wool
     # Replaces the ParseTree Sexps by adding a few handy-dandy methods.
     class Sexp < Array
       extend ModuleExtensions
-      
-      # Returns a mutable reference to the list of annotations that will run
-      # upon initializing a new Sexp.
-      #
-      # @return [Array[Class < Annotation]] the activated annotations, in the
-      #    order they will run in.
-      cattr_accessor_with_default :annotations, []
-      
+
       # Initializes the Sexp with the contents of the array returned by Ripper.
       #
       # @param [Array<Object>] other the other 
       def initialize(other)
         replace other
         replace_children!
-        self.class.annotations.each {|annotator| annotator.annotate!(self) }
       end
       
       # @return [Array<Object>] the children of the node.
