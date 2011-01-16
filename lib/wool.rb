@@ -33,6 +33,7 @@ Wool::SexpAnalysis::Bootstrap.bootstrap
 require 'wool/constraints/constraints'
 require 'wool/annotation_parser/parsers'
 
+require 'wool/analysis/class_estimate'
 require 'wool/analysis/visitor'
 require 'wool/analysis/annotations'
 require 'wool/advice/comment_advice'
