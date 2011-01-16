@@ -15,14 +15,21 @@ module Wool
       
       # This is the annotator for the parent annotation.
       class Annotator
+        include Visitor
         def annotate!(root)
-          root.parent = nil
-          root.children.select {|x| SexpAnalysis::Sexp === x}.each do |sexp|
-            sexp.parent = root
+          visit(root)
+        end
+
+        # Replaces the general node visit method with one that assigns
+        # the current scope to the visited node.
+        def default_visit(node)
+          node.children.select { |x| SexpAnalysis::Sexp === x }.each do |sexp|
+            sexp.parent = node
           end
+          visit_children(node)
         end
       end
-      add_annotator Annotator
+      add_global_annotator Annotator
     end
   end
 end

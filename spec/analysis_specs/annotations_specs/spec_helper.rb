@@ -21,7 +21,12 @@ def expectalot(expectation)
     examples = expectation[message]
     examples.each do |expected_value, recipients|
       recipients.each do |recipient|
-        recipient.send(message).should == expected_value
+        begin
+          recipient.send(message).should == expected_value
+        rescue Exception => err
+          p "#{recipient.inspect}'s #{message} should be #{expected_value.inspect}"
+          raise err
+        end
       end
     end
   end 

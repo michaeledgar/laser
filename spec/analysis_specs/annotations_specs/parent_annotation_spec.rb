@@ -17,6 +17,7 @@ describe ParentAnnotation do
   # proper parent set. It's a complex, but thorough test.
   it 'adds parents to each node with a real-world parse result' do
     tree = Sexp.new(Ripper.sexp('x = proc {|x, *rst, &blk| p x ** rst[0]; blk.call(rst[1..-1])}'))
+    ParentAnnotation::Annotator.new.annotate!(tree)
     expectalot(parent: { nil => [tree], tree => [tree.children.first] })
     tree.all_subtrees.each do |node|
       node.parent.children.should include(node)
@@ -39,6 +40,7 @@ describe ParentAnnotation do
   # proper parent set. It's a complex, but thorough test.
   it 'adds parents to each node with a real-world parse result' do
     tree = Sexp.new(Ripper.sexp('x = proc {|x, *rst, &blk| p x ** rst[0]; blk.call(rst[1..-1])}'))
+    ParentAnnotation::Annotator.new.annotate!(tree)
     expectalot(parent: { nil => [tree], tree => [tree.children.first] })
     tree.all_subtrees.each do |node|
       if node.parent

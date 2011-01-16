@@ -9,8 +9,13 @@ module Wool
       
       # This is the annotator for the next and prev annotation.
       class Annotator
-        def annotate!(root)
-          children = root.children
+        include Visitor
+        def annotate!(node)
+          visit(node)
+        end
+
+        def default_visit(node)
+          children = node.children
           children.each_with_index do |elt, idx|
             # ignore non-sexps. Primitives can't be annotated, sadly.
             if SexpAnalysis::Sexp === elt
@@ -18,9 +23,10 @@ module Wool
               elt.prev = children[idx-1] if idx >= 1
             end
           end
+          visit_children(node)
         end
       end
-      add_annotator Annotator
+      add_global_annotator Annotator
     end
   end
 end

@@ -83,14 +83,25 @@ module Wool
     # Global annotations are only run once, at the root. 
     cattr_accessor_with_default :global_annotations, []
     
+    # inputs: Array<(String, String)>
+    #   Array of (filename, body) tuples.
+    def self.analyze_inputs(inputs)
+      inputs.map! { |filename, text| [filename, Sexp.new(Ripper.sexp(text))] }
+      SexpAnalysis.global_annotations.each do |annotator|
+        inputs.each do |filename, tree|
+          annotator.annotate!(tree)
+        end
+      end
+      inputs
+    end
+    
     # Parses the given text.
     #
     # @param [String] body (self.body) The text to parse
     # @return [Sexp, NilClass] the sexp representing the input text.
     def parse(body = self.body)
-      result = Sexp.new Ripper.sexp(body)
-      SexpAnalysis.global_annotations.each {|annotator| annotator.annotate!(result)}
-      result
+      pairs = SexpAnalysis.analyze_inputs([['(stdin)', body]])
+      pairs[0][1]
     end
     
     # Finds all sexps of the given type in the given Sexp tree.

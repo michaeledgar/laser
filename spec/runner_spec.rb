@@ -23,14 +23,14 @@ describe Runner do
       file1, file2 = mock(:file1), mock(:file2)
 
       scanner.should_receive(:settings).exactly(3).times.and_return({:"report-fixed" => true})
-      File.should_receive(:read).with('hello').and_return(data1)
+      File.should_receive(:read).with('hello').twice.and_return(data1)
       scanner.should_receive(:scan).
               with(data1, 'hello').
               and_return([warning1])
       warning1.should_receive(:to_ary)
 
       scanner.should_receive(:settings).and_return({})
-      File.should_receive(:read).with('world').and_return(data2)
+      File.should_receive(:read).with('world').twice.and_return(data2)
       scanner.should_receive(:scan).
               with(data2, 'world').
               and_return([warning2])
@@ -43,7 +43,7 @@ describe Runner do
     
     it 'works with stdin: true' do
       runner = Runner.new(['--stdin', '--only', 'UselessDoubleQuotesWarning'])
-      expected_settings = {:"report-fixed"=>false, fix: false, help: false,
+      expected_settings = {:"report-fixed" => false, fix: false, help: false,
                            debug: false, InlineCommentSpaceWarning::OPTION_KEY => 2,
                            :"line-length" => nil, only: 'UselessDoubleQuotesWarning',
                            stdin: true, stdin_given: true, only_given: true,
@@ -57,7 +57,7 @@ describe Runner do
       warning1 = mock(:warning1)
 
       scanner.should_receive(:settings).twice.and_return({:"report-fixed" => true})
-      STDIN.should_receive(:read).and_return(data1)
+      STDIN.should_receive(:read).twice.and_return(data1)
       scanner.should_receive(:scan).
               with(data1, '(stdin)').
               and_return([warning1])
@@ -65,6 +65,17 @@ describe Runner do
 
       runner.should_receive(:display_warnings).with([warning1], expected_settings)
       runner.run
+    end
+    
+    it 'works with --list-modules' do
+      output = swizzling_io do
+        runner = Runner.new(['--list-modules'])
+        runner.run
+      end
+      modules = output.split("\n")
+      modules.should_not be_empty
+      modules.should == modules.sort
+      %w(Array Module Proc Class Object).each {|mod| modules.should include(mod)}
     end
   end
 
