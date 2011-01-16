@@ -22,10 +22,10 @@ module Wool
       #
       # current_arg_hash: (Symbol => Argument)
       # positional_list: Array<Sexp>
-      # return: Array<ArgumentBinding>
+      # return: Array<Bindings::ArgumentBinding>
       def parse_positionals(positional_list)
         positional_list.map do |tag, name, lex|
-          ArgumentBinding.new(name, WoolObject.new, :positional)
+          Bindings::ArgumentBinding.new(name, WoolObject.new, :positional)
         end
       end
       
@@ -36,7 +36,7 @@ module Wool
       # optionals: Array<Sexp>
       def parse_optionals(optionals)
         optionals.map do |id, default_value|
-          ArgumentBinding.new(id.children.first, WoolObject.new, :optional, default_value)
+          Bindings::ArgumentBinding.new(id.children.first, WoolObject.new, :optional, default_value)
         end
       end
       
@@ -45,7 +45,7 @@ module Wool
       #
       # rest_arg: Sexp
       def parse_rest_arg(rest_arg)
-        ArgumentBinding.new(rest_arg[1][1], ClassRegistry['Array'], :rest)
+        Bindings::ArgumentBinding.new(rest_arg[1][1], ClassRegistry['Array'], :rest)
       end
       
       # Parses the block argument of an argument list Sexp and adds it to
@@ -53,7 +53,7 @@ module Wool
       #
       # block_arg: Sexp
       def parse_block_arg(block_arg)
-        ArgumentBinding.new(block_arg[1][1], ClassRegistry['Proc'], :block)
+        Bindings::ArgumentBinding.new(block_arg[1][1], ClassRegistry['Proc'], :block)
       end
     end
     
@@ -79,7 +79,7 @@ module Wool
         super
         # validate state
         unless String === self.name && Protocols::Base === self.return_protocol &&
-               Array === self.arguments && self.arguments.all? { |v| ArgumentBinding === v }
+               Array === self.arguments && self.arguments.all? { |v| Bindings::ArgumentBinding === v }
           raise ArgumentError.new("Invalid arguments to a signature: #{args.inspect}")
         end
         @argument_hash = Hash[arguments.map {|arg| [arg.name, arg]}]

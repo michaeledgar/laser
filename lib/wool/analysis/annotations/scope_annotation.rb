@@ -180,7 +180,7 @@ module Wool
               binding = @current_scope.lookup(name[1][1])
             rescue Scope::ScopeLookupFailure
               object = WoolObject.new(ClassRegistry['Object'], @current_scope)
-              @current_scope.add_binding!(LocalVariableBinding.new(name[1][1], object))
+              @current_scope.add_binding!(Bindings::LocalVariableBinding.new(name[1][1], object))
             end
           end
           node.scope = @current_scope

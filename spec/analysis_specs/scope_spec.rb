@@ -21,7 +21,7 @@ describe Scope::GlobalScope do
   end
   
   it 'has a self pointer that is an Object' do
-    # self_ptr is a GenericBinding
+    # self_ptr is a Bindings::GenericBinding
     Scope::GlobalScope.self_ptr.klass.path.should == 'Object'
     Scope::GlobalScope.self_ptr.name.should == 'main'
   end

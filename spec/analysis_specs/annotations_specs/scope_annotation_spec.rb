@@ -176,7 +176,7 @@ describe ScopeAnnotation do
       new_scope.self_ptr.should be_a(WoolObject)
       new_scope.self_ptr.klass.should == ClassRegistry['M13']
       new_scope.locals.should_not be_empty
-      new_scope.lookup('rest').should == ArgumentBinding.new('rest', WoolObject.new(ClassRegistry['Array']), :rest)
+      new_scope.lookup('rest').should == Bindings::ArgumentBinding.new('rest', WoolObject.new(ClassRegistry['Array']), :rest)
     end
     # now make sure the method got created in the M13 module!
     method = ClassRegistry['M13'].instance_methods['silly']
@@ -214,8 +214,8 @@ describe ScopeAnnotation do
       new_scope.self_ptr.should == ClassRegistry['M49']
       new_scope.self_ptr.klass.should == ClassRegistry['Module']
       new_scope.locals.should_not be_empty
-      new_scope.lookup('a').should == ArgumentBinding.new('a', WoolObject.new, :positional)
-      new_scope.lookup('b').should == ArgumentBinding.new(
+      new_scope.lookup('a').should == Bindings::ArgumentBinding.new('a', WoolObject.new, :positional)
+      new_scope.lookup('b').should == Bindings::ArgumentBinding.new(
           'b', WoolObject.new, :optional,
           Sexp.new([:var_ref, [:@ident, "a", [1, 32]]]))
     end
@@ -340,8 +340,8 @@ describe ScopeAnnotation do
       new_scope.self_ptr.should be_a(WoolObject)
       new_scope.self_ptr.klass.should == ClassRegistry['Alpha']
       new_scope.locals.should_not be_empty
-      new_scope.lookup('a').should == ArgumentBinding.new('a', WoolObject.new, :positional)
-      new_scope.lookup('b').should == ArgumentBinding.new(
+      new_scope.lookup('a').should == Bindings::ArgumentBinding.new('a', WoolObject.new, :positional)
+      new_scope.lookup('b').should == Bindings::ArgumentBinding.new(
           'b', WoolObject.new, :optional,
           Sexp.new([:var_ref, [:@ident, "a", [1, 29]]]))
     end
@@ -381,8 +381,8 @@ describe ScopeAnnotation do
       new_scope.self_ptr.should be_a(WoolObject)
       new_scope.self_ptr.klass.should == ClassRegistry['Object']
       new_scope.locals.should_not be_empty
-      new_scope.lookup('bar').should == ArgumentBinding.new('bar', WoolObject.new, :positional)
-      new_scope.lookup('blk').should == ArgumentBinding.new('blk', ClassRegistry['Proc'], :block)
+      new_scope.lookup('bar').should == Bindings::ArgumentBinding.new('bar', WoolObject.new, :positional)
+      new_scope.lookup('blk').should == Bindings::ArgumentBinding.new('blk', ClassRegistry['Proc'], :block)
     end
     method = Scope::GlobalScope.self_ptr.singleton_class.instance_methods['abc']
     method.should_not be_nil
@@ -419,8 +419,8 @@ describe ScopeAnnotation do
       new_scope.self_ptr.should be_a(WoolObject)
       new_scope.self_ptr.klass.should == ClassRegistry['Object']
       new_scope.locals.should_not be_empty
-      new_scope.lookup('bar').should == ArgumentBinding.new('bar', WoolObject.new, :positional)
-      new_scope.lookup('blk').should == ArgumentBinding.new('blk', ClassRegistry['Proc'], :block)
+      new_scope.lookup('bar').should == Bindings::ArgumentBinding.new('bar', WoolObject.new, :positional)
+      new_scope.lookup('blk').should == Bindings::ArgumentBinding.new('blk', ClassRegistry['Proc'], :block)
     end
     method = Scope::GlobalScope.self_ptr.singleton_class.instance_methods['abcd']
     method.should_not be_nil
@@ -457,10 +457,10 @@ describe ScopeAnnotation do
     body_def = body[1][1..-1]
 
     expect { body_def[0].scope.lookup('a') }.to raise_error(Scope::ScopeLookupFailure)
-    body_def[1].scope.lookup('a').should be_a(LocalVariableBinding)
+    body_def[1].scope.lookup('a').should be_a(Bindings::LocalVariableBinding)
     expect { body_def[1].scope.lookup('z') }.to raise_error(Scope::ScopeLookupFailure)
-    body_def[2].scope.lookup('z').should be_a(LocalVariableBinding)
-    body_def[2].scope.lookup('a').should be_a(LocalVariableBinding)
+    body_def[2].scope.lookup('z').should be_a(Bindings::LocalVariableBinding)
+    body_def[2].scope.lookup('a').should be_a(Bindings::LocalVariableBinding)
     
     body_def[2].scope.should_not == body_def[1].scope
   end

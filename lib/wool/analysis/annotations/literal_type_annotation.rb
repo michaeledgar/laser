@@ -14,6 +14,7 @@ module Wool
           visit root
         end
         
+        
       end
       add_global_annotator Annotator
     end

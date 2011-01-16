@@ -48,7 +48,7 @@ module Wool
         @scope = scope
         @methods = {}
         initialize_protocol
-        @binding = ConstantBinding.new(name, self)
+        @binding = Bindings::ConstantBinding.new(name, self)
         initialize_scope
         yield self if block_given?
         WoolModule.all_modules << self
