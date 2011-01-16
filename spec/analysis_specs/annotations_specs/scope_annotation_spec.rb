@@ -429,6 +429,41 @@ describe ScopeAnnotation do
     signature.arguments.should == [body.scope.lookup('bar'), body.scope.lookup('blk')]
     signature.name.should == 'abcd'
   end
+  
+  # [:program,
+  #  [[:def,
+  #    [:@ident, "abc", [1, 4]],
+  #    [:paren,
+  #     [:params,
+  #      [[:@ident, "bar", [1, 8]]], nil, nil, nil,
+  #      [:blockarg, [:@ident, "blk", [1, 14]]]]],
+  #    [:bodystmt,
+  #     [[:void_stmt],
+  #      [:command,
+  #       [:@ident, "p", [1, 20]],
+  #       [:args_add_block, [[:var_ref, [:@ident, "blk", [1, 22]]]], false]],
+  #      [:assign,
+  #       [:var_field, [:@ident, "a", [1, 27]]],
+  #       [:var_ref, [:@ident, "bar", [1, 31]]]],
+  #      [:assign,
+  #       [:var_field, [:@ident, "z", [1, 36]]],
+  #       [:var_ref, [:@ident, "a", [1, 40]]]]],
+  #     nil, nil, nil]]]]
+  it 'creates new scopes on single assignments' do
+    tree = Sexp.new(Ripper.sexp('def abc(bar, &blk); p blk; a = bar; z = a; end'))
+    ScopeAnnotation::Annotator.new.annotate!(tree)
+    definition = tree[1][0]
+    body = definition[3]
+    body_def = body[1][1..-1]
+
+    expect { body_def[0].scope.lookup('a') }.to raise_error(Scope::ScopeLookupFailure)
+    body_def[1].scope.lookup('a').should be_a(LocalVariableBinding)
+    expect { body_def[1].scope.lookup('z') }.to raise_error(Scope::ScopeLookupFailure)
+    body_def[2].scope.lookup('z').should be_a(LocalVariableBinding)
+    body_def[2].scope.lookup('a').should be_a(LocalVariableBinding)
+    
+    body_def[2].scope.should_not == body_def[1].scope
+  end
 end
   
 describe 'complete tests' do

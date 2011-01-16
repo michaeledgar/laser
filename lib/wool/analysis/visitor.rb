@@ -40,7 +40,6 @@ module Wool
             send("visit_#{node[0]}", node)
           when Array
             default_visit(node)
-            node.each {|x| visit(x)}
           end
         end
       end

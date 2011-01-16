@@ -13,6 +13,7 @@ module Wool
         def annotate!(root)
           visit root
         end
+        
       end
       add_global_annotator Annotator
     end
