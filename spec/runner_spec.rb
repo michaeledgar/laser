@@ -75,7 +75,9 @@ describe Runner do
       modules = output.split("\n")
       modules.should_not be_empty
       modules.should == modules.sort
-      %w(Array Module Proc Class Object).each {|mod| modules.should include(mod)}
+      ["Array < Object", "Module < Object", "Proc < Object", "Class < Module", "Object"].each do |mod|
+        modules.should include(mod)
+      end
     end
   end
 

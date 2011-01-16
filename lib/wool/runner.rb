@@ -85,7 +85,12 @@ module Wool
     end
 
     def print_modules
-      SexpAnalysis::WoolModule.all_modules.sort_by(&:name).each { |mod| puts mod.name }
+      SexpAnalysis::WoolModule.all_modules.map do |mod|
+        if SexpAnalysis::WoolClass === mod && mod.superclass
+        then "#{mod.name} < #{mod.superclass.name}"
+        else mod.name
+        end
+      end.sort.each { |name| puts name }
     end
 
     def read_file(file)

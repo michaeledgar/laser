@@ -30,8 +30,6 @@ module Wool
         class_class.instance_variable_set("@scope", class_scope)
         # move these to a real ruby file that gets run through the scanner at
         # boot time
-        WoolClass.new('Array') { |klass| klass.superclass = object_class }
-        WoolClass.new('Proc')  { |klass| klass.superclass = object_class }
       rescue StandardError => err
         new_exception = BootstrappingError.new("Bootstrapping failed: #{err.message}")
         new_exception.set_backtrace(err.backtrace)

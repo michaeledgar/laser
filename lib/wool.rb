@@ -42,3 +42,6 @@ require 'wool/rake/task'
 # Program logic
 require 'wool/warning'
 require 'wool/scanner'
+
+Wool::SexpAnalysis.analyze_inputs([[File.join(File.dirname(__FILE__), 'wool', 'standard_library', 'class_definitions.rb'),
+                                    File.read(File.join(File.dirname(__FILE__), 'wool', 'standard_library', 'class_definitions.rb'))]])
