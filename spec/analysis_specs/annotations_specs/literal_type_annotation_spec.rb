@@ -44,4 +44,91 @@ describe ScopeAnnotation do
     estimate.should be_exact
     estimate.exact_class.should == ClassRegistry['String']
   end
+  
+  # [:program,
+  # [[:assign,
+  #    [:var_field, [:@ident, "x", [1, 0]]],
+  #    [:@float, "3.14", [1, 4]]]]]
+  it 'discovers the class for float literals' do
+    tree = Sexp.new(Ripper.sexp('x = 3.14'))
+    LiteralTypeAnnotation::Annotator.new.annotate!(tree)
+    list = tree[1]
+    estimate = list[0][2].class_estimate
+    estimate.should be_exact
+    estimate.exact_class.should == ClassRegistry['Float']
+  end
+  
+  # [:program,
+  # [[:assign,
+  #   [:var_field, [:@ident, "x", [1, 0]]],
+  #   [:regexp_literal,
+  #    [[:@tstring_content, "abc", [1, 5]]],
+  #    [:@regexp_end, "/im", [1, 8]]]]]]
+  it 'discovers the class for regexp literals' do
+    tree = Sexp.new(Ripper.sexp('x = /abc/im'))
+    LiteralTypeAnnotation::Annotator.new.annotate!(tree)
+    list = tree[1]
+    estimate = list[0][2].class_estimate
+    estimate.should be_exact
+    estimate.exact_class.should == ClassRegistry['Regexp']
+  end
+  
+  # [:program,
+  #  [[:assign,
+  #    [:var_field, [:@ident, "x", [1, 0]]],
+  #    [:array, [[:@int, "1", [1, 5]], [:@int, "2", [1, 8]]]]]]]
+  it 'discovers the class for array literals' do
+    tree = Sexp.new(Ripper.sexp('x = [1, 2]'))
+    LiteralTypeAnnotation::Annotator.new.annotate!(tree)
+    list = tree[1]
+    estimate = list[0][2].class_estimate
+    estimate.should be_exact
+    estimate.exact_class.should == ClassRegistry['Array']
+  end
+  
+  # [:program,
+  #  [[:assign,
+  #    [:var_field, [:@ident, "x", [1, 0]]],
+  #    [:hash,
+  #     [:assoclist_from_args,
+  #      [[:assoc_new,
+  #        [:@label, "a:", [1, 5]],
+  #        [:symbol_literal, [:symbol, [:@ident, "b", [1, 9]]]]]]]]]]]
+  it 'discovers the class for hash literals' do
+    tree = Sexp.new(Ripper.sexp('x = {a: :b}'))
+    LiteralTypeAnnotation::Annotator.new.annotate!(tree)
+    list = tree[1]
+    estimate = list[0][2].class_estimate
+    estimate.should be_exact
+    estimate.exact_class.should == ClassRegistry['Hash']
+  end
+  
+  # [:program,
+  #  [[:assign,
+  #    [:var_field, [:@ident, "x", [1, 0]]],
+  #    [:symbol_literal, [:symbol, [:@ident, "abcdef", [1, 5]]]]]]]
+  it 'discovers the class for symbol literals' do
+    tree = Sexp.new(Ripper.sexp('x = :abcdef'))
+    LiteralTypeAnnotation::Annotator.new.annotate!(tree)
+    list = tree[1]
+    estimate = list[0][2].class_estimate
+    estimate.should be_exact
+    estimate.exact_class.should == ClassRegistry['Symbol']
+  end
+  
+  # [:program,
+  #  [[:assign,
+  #    [:var_field, [:@ident, "x", [1, 0]]],
+  #    [:dyna_symbol,
+  #     [[:@tstring_content, "abc", [1, 6]],
+  #      [:string_embexpr, [[:var_ref, [:@ident, "xyz", [1, 11]]]]],
+  #      [:@tstring_content, "def", [1, 15]]]]]]]
+  it 'discovers the class for dynamic symbol literals' do
+    tree = Sexp.new(Ripper.sexp('x = :"abc{xyz}def"'))
+    LiteralTypeAnnotation::Annotator.new.annotate!(tree)
+    list = tree[1]
+    estimate = list[0][2].class_estimate
+    estimate.should be_exact
+    estimate.exact_class.should == ClassRegistry['Symbol']
+  end
 end

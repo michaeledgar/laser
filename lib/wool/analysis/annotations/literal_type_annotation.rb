@@ -32,32 +32,32 @@ module Wool
         end
         
         add :regexp_literal do |node, *rest|
-          node.class_estimate = ClassRegistry.new(ClassRegistry['Regexp'], ClassRegistry['Regexp'])
+          node.class_estimate = ClassEstimate.new(ClassRegistry['Regexp'], ClassRegistry['Regexp'])
           visit_children(node)
         end
         
         add :hash do |node, *rest|
-          node.class_estimate = ClassRegistry.new(ClassRegistry['Hash'], ClassRegistry['Hash'])
+          node.class_estimate = ClassEstimate.new(ClassRegistry['Hash'], ClassRegistry['Hash'])
           visit_children(node)
         end
         
         add :hash do |node, *rest|
-          node.class_estimate = ClassRegistry.new(ClassRegistry['Hash'], ClassRegistry['Hash'])
+          node.class_estimate = ClassEstimate.new(ClassRegistry['Hash'], ClassRegistry['Hash'])
           visit_children(node)
         end
         
         add :symbol_literal do |node, *rest|
-          node.class_estimate = ClassRegistry.new(ClassRegistry['Symbol'], ClassRegistry['Symbol'])
+          node.class_estimate = ClassEstimate.new(ClassRegistry['Symbol'], ClassRegistry['Symbol'])
           visit_children(node)
         end
         
         add :dyna_symbol do |node, *rest|
-          node.class_estimate = ClassRegistry.new(ClassRegistry['Symbol'], ClassRegistry['Symbol'])
+          node.class_estimate = ClassEstimate.new(ClassRegistry['Symbol'], ClassRegistry['Symbol'])
           visit_children(node)
         end
         
         add :array do |node, *rest|
-          node.class_estimate = ClassRegistry.new(ClassRegistry['Array'], ClassRegistry['Array'])
+          node.class_estimate = ClassEstimate.new(ClassRegistry['Array'], ClassRegistry['Array'])
           visit_children(node)
         end
       end
