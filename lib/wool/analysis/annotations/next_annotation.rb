@@ -10,10 +10,6 @@ module Wool
       # This is the annotator for the next and prev annotation.
       class Annotator
         include Visitor
-        def annotate!(node)
-          visit(node)
-        end
-
         def default_visit(node)
           children = node.children
           children.each_with_index do |elt, idx|

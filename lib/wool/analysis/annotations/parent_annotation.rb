@@ -16,10 +16,6 @@ module Wool
       # This is the annotator for the parent annotation.
       class Annotator
         include Visitor
-        def annotate!(root)
-          visit(root)
-        end
-
         # Replaces the general node visit method with one that assigns
         # the current scope to the visited node.
         def default_visit(node)

@@ -32,6 +32,10 @@ module Wool
         end
       end
 
+      def annotate!(root)
+        visit root
+      end
+
       def visit(node)
         case node
         when Sexp
