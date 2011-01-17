@@ -23,6 +23,7 @@ module Wool
       end
       attr_writer name
     end
+
     # Creates a reader for the given instance variables on the class object.
     def cattr_reader(*attrs)
       attrs.each do |attr|
