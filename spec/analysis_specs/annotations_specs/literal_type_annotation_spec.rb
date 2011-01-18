@@ -40,6 +40,21 @@ describe ScopeAnnotation do
     tree = Sexp.new(Ripper.sexp('a = "abc = #{run_method - 5}"'))
     LiteralTypeAnnotation::Annotator.new.annotate!(tree)
     list = tree[1]
+    [list[0][2], list[0][2][1], list[0][2][1][1], list[0][2][1][2]].each do |entry|
+      estimate = entry.class_estimate
+      estimate.should be_exact
+      estimate.exact_class.should == ClassRegistry['String']
+    end
+  end
+  
+  # [:program,
+  #  [[:assign,
+  #     [:var_field, [:@ident, "a", [1, 0]]],
+  #     [:@CHAR, "?a", [1, 4]]]]]
+  it 'discovers the class for character literals' do
+    tree = Sexp.new(Ripper.sexp('a = ?a'))
+    LiteralTypeAnnotation::Annotator.new.annotate!(tree)
+    list = tree[1]
     estimate = list[0][2].class_estimate
     estimate.should be_exact
     estimate.exact_class.should == ClassRegistry['String']
@@ -169,5 +184,31 @@ describe ScopeAnnotation do
     estimate = list[0][2].class_estimate
     estimate.should be_exact
     estimate.exact_class.should == ClassRegistry['NilClass']
+  end
+
+  # [:program,
+  #  [[:assign,
+  #    [:var_field, [:@ident, "x", [1, 0]]],
+  #    [:var_ref, [:@kw, "__FILE__", [1, 4]]]]]]
+  it 'discovers the class for nil' do
+    tree = Sexp.new(Ripper.sexp('x = __FILE__'))
+    LiteralTypeAnnotation::Annotator.new.annotate!(tree)
+    list = tree[1]
+    estimate = list[0][2].class_estimate
+    estimate.should be_exact
+    estimate.exact_class.should == ClassRegistry['String']
+  end
+
+  # [:program,
+  #  [[:assign,
+  #    [:var_field, [:@ident, "x", [1, 0]]],
+  #    [:var_ref, [:@kw, "__LINE__", [1, 4]]]]]]
+  it 'discovers the class for nil' do
+    tree = Sexp.new(Ripper.sexp('x = __LINE__'))
+    LiteralTypeAnnotation::Annotator.new.annotate!(tree)
+    list = tree[1]
+    estimate = list[0][2].class_estimate
+    estimate.should be_exact
+    estimate.exact_class.should == ClassRegistry['Fixnum']
   end
 end

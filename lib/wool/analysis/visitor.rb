@@ -16,19 +16,21 @@ module Wool
       end
       module ClassMethods
         extend ModuleExtensions
-        class Filter < Struct.new(:filter, :args, :blk)
+        class Filter < Struct.new(:args, :blk)
           def matches?(node)
-            case filter
-            when ::Symbol then node.type == filter
-            when Proc then filter.call(node, *args)
+            args.any? do |filter|
+              case filter
+              when ::Symbol then node.type == filter
+              when Proc then filter.call(node, *node.children)
+              end
             end
           end
           def run(node, visitor)
             visitor.instance_exec(node, *node.children, &blk)
           end
         end
-        def add(filter, *args, &blk)
-          (self.filters ||= []) << Filter.new(filter, args, blk)
+        def add(*args, &blk)
+          (self.filters ||= []) << Filter.new(args, blk)
         end
       end
 

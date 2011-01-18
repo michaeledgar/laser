@@ -16,7 +16,7 @@ module Wool
           visit_children(node)
         end
         
-        add :string_literal do |node, *rest|
+        add :string_literal, :@CHAR, :@tstring_content, :string_embexpr, :string_content do |node, *rest|
           node.class_estimate = ClassEstimate.new(ClassRegistry['String'], ClassRegistry['String'])
           visit_children(node)
         end
@@ -41,17 +41,7 @@ module Wool
           visit_children(node)
         end
         
-        add :hash do |node, *rest|
-          node.class_estimate = ClassEstimate.new(ClassRegistry['Hash'], ClassRegistry['Hash'])
-          visit_children(node)
-        end
-        
-        add :symbol_literal do |node, *rest|
-          node.class_estimate = ClassEstimate.new(ClassRegistry['Symbol'], ClassRegistry['Symbol'])
-          visit_children(node)
-        end
-        
-        add :dyna_symbol do |node, *rest|
+        add :symbol_literal, :dyna_symbol do |node, *rest|
           node.class_estimate = ClassEstimate.new(ClassRegistry['Symbol'], ClassRegistry['Symbol'])
           visit_children(node)
         end
@@ -63,11 +53,14 @@ module Wool
         
         add :var_ref do |node, ref|
           if ref.type == :@kw
-            case ref[1]
-            when 'nil' then node.class_estimate = ClassEstimate.new(ClassRegistry['NilClass'], ClassRegistry['NilClass'])
-            when 'true' then node.class_estimate = ClassEstimate.new(ClassRegistry['TrueClass'], ClassRegistry['TrueClass'])
-            when 'false' then node.class_estimate = ClassEstimate.new(ClassRegistry['FalseClass'], ClassRegistry['FalseClass'])
-            end
+            node.class_estimate =
+                case ref[1]
+                when 'nil' then ClassEstimate.new(ClassRegistry['NilClass'], ClassRegistry['NilClass'])
+                when 'true' then ClassEstimate.new(ClassRegistry['TrueClass'], ClassRegistry['TrueClass'])
+                when 'false' then ClassEstimate.new(ClassRegistry['FalseClass'], ClassRegistry['FalseClass'])
+                when '__FILE__' then ClassEstimate.new(ClassRegistry['String'], ClassRegistry['String'])
+                when '__LINE__' then ClassEstimate.new(ClassRegistry['Fixnum'], ClassRegistry['Fixnum'])
+                end
           end
           visit_children(node)
         end
