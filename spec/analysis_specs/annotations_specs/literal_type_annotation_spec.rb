@@ -190,7 +190,7 @@ describe ScopeAnnotation do
   #  [[:assign,
   #    [:var_field, [:@ident, "x", [1, 0]]],
   #    [:var_ref, [:@kw, "__FILE__", [1, 4]]]]]]
-  it 'discovers the class for nil' do
+  it 'discovers the class for __FILE__' do
     tree = Sexp.new(Ripper.sexp('x = __FILE__'))
     LiteralTypeAnnotation::Annotator.new.annotate!(tree)
     list = tree[1]
@@ -203,12 +203,54 @@ describe ScopeAnnotation do
   #  [[:assign,
   #    [:var_field, [:@ident, "x", [1, 0]]],
   #    [:var_ref, [:@kw, "__LINE__", [1, 4]]]]]]
-  it 'discovers the class for nil' do
+  it 'discovers the class for __LINE__' do
     tree = Sexp.new(Ripper.sexp('x = __LINE__'))
     LiteralTypeAnnotation::Annotator.new.annotate!(tree)
     list = tree[1]
     estimate = list[0][2].class_estimate
     estimate.should be_exact
     estimate.exact_class.should == ClassRegistry['Fixnum']
+  end
+  
+
+  # [:program,
+  #  [[:assign,
+  #    [:var_field, [:@ident, "x", [1, 0]]],
+  #    [:var_ref, [:@kw, "__LINE__", [1, 4]]]]]]
+  it 'discovers the class for __ENCODING__' do
+    tree = Sexp.new(Ripper.sexp('x = __ENCODING__'))
+    LiteralTypeAnnotation::Annotator.new.annotate!(tree)
+    list = tree[1]
+    estimate = list[0][2].class_estimate
+    estimate.should be_exact
+    estimate.exact_class.should == ClassRegistry['Encoding']
+  end
+  
+  
+  # [:program,
+  # [[:assign,
+  #   [:var_field, [:@ident, "x", [1, 0]]],
+  #   [:dot2, [:@int, "2", [1, 4]], [:@int, "9", [1, 7]]]]]]
+  it 'discovers the class for inclusive ranges' do
+    tree = Sexp.new(Ripper.sexp('x = 2..9'))
+    LiteralTypeAnnotation::Annotator.new.annotate!(tree)
+    list = tree[1]
+    estimate = list[0][2].class_estimate
+    estimate.should be_exact
+    estimate.exact_class.should == ClassRegistry['Range']
+  end
+  
+  
+  # [:program,
+  # [[:assign,
+  #   [:var_field, [:@ident, "x", [1, 0]]],
+  #   [:dot3, [:@int, "2", [1, 4]], [:@int, "9", [1, 8]]]]]]
+  it 'discovers the class for exclusive ranges' do
+    tree = Sexp.new(Ripper.sexp('x = 2...9'))
+    LiteralTypeAnnotation::Annotator.new.annotate!(tree)
+    list = tree[1]
+    estimate = list[0][2].class_estimate
+    estimate.should be_exact
+    estimate.exact_class.should == ClassRegistry['Range']
   end
 end

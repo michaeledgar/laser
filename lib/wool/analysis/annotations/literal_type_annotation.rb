@@ -65,6 +65,11 @@ module Wool
           end
           visit_children(node)
         end
+        
+        add :dot2, :dot3 do |node, *rest|
+          node.class_estimate = ExactClassEstimate.new(ClassRegistry['Range'])
+          visit_children(node)
+        end
       end
       add_global_annotator Annotator
     end

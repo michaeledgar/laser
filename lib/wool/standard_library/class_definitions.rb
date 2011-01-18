@@ -8,6 +8,8 @@ class Hash
 end
 class Array
 end
+class Range
+end
 class Proc
 end
 class String
