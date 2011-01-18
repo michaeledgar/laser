@@ -66,6 +66,11 @@ module Wool
       class LocalVariableBinding < GenericBinding
       
       end
+      
+      # Possible extension ideas:
+      # - Initial definition point?
+      class GlobalVariableBinding < GenericBinding
+      end
     
       class ArgumentBinding < GenericBinding
         attr_reader :kind, :default_value_sexp

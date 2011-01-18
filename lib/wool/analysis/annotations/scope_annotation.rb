@@ -178,14 +178,31 @@ module Wool
             begin
               binding = @current_scope.lookup(name[1][1])
             rescue Scope::ScopeLookupFailure
-              @current_scope = @current_scope.dup
               object = WoolObject.new(ClassRegistry['Object'], @current_scope)
-              @current_scope.add_binding!(Bindings::LocalVariableBinding.new(name[1][1], object))
+              binding = create_binding(name[1], object)
             end
           end
           node.scope = @current_scope
           visit name
           visit val
+        end
+        
+        # Creates a binding for a thus-far unbound name.
+        # This *only* applies to local variables and constants! All other binding types
+        # ($globals, @ivars, @@cvars) are all created on-demand when looked up, and this
+        # is reflected in the Scope#lookup method.
+        def create_binding(name_sexp, value)
+          raw_name = name_sexp[1]
+          case name_sexp.type
+          when :@ident
+            @current_scope = @current_scope.dup
+            binding = Bindings::LocalVariableBinding.new(raw_name, value)
+            @current_scope.add_binding!(binding)
+          when :@const
+            @current_scope = @current_scope.dup
+            binding = Bindings::ConstantBinding.new(raw_name, value)
+            @current_scope.add_binding!(binding)
+          end
         end
         
         # add :for do |sym, vars, iterable, body|

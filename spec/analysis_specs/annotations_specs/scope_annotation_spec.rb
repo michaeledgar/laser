@@ -456,15 +456,34 @@ describe ScopeAnnotation do
     body = definition[3]
     body_def = body[1][1..-1]
 
-    expect { body_def[0].scope.lookup('a') }.to raise_error(Scope::ScopeLookupFailure)
+    body_def[0].should_not see_var('a')
     body_def[1].scope.lookup('a').should be_a(Bindings::LocalVariableBinding)
-    expect { body_def[1].scope.lookup('z') }.to raise_error(Scope::ScopeLookupFailure)
+    body_def[1].should_not see_var('z')
     body_def[2].scope.lookup('z').should be_a(Bindings::LocalVariableBinding)
     body_def[2].scope.lookup('a').should be_a(Bindings::LocalVariableBinding)
     
     body_def[2].scope.should_not == body_def[1].scope
   end
   
+  # [:program,
+  #  [[:def,
+  #    [:@ident, "abc", [1, 4]],
+  #    [:paren,
+  #     [:params,
+  #      [[:@ident, "bar", [1, 8]]], nil, nil, nil,
+  #      [:blockarg, [:@ident, "blk", [1, 14]]]]],
+  #    [:bodystmt,
+  #     [[:void_stmt],
+  #      [:command,
+  #       [:@ident, "p", [1, 20]],
+  #       [:args_add_block, [[:var_ref, [:@ident, "blk", [1, 22]]]], false]],
+  #      [:assign,
+  #       [:var_field, [:@ident, "a", [1, 27]]],
+  #       [:var_ref, [:@ident, "bar", [1, 31]]]],
+  #      [:assign,
+  #       [:var_field, [:@ident, "a", [1, 36]]],
+  #       [:var_ref, [:@ident, "blk", [1, 40]]]]],
+  #     nil, nil, nil]]]]
   it 'does not create new scopes when re-using a binding' do
     tree = Sexp.new(Ripper.sexp('def abc(bar, &blk); p blk; a = bar; a = blk; end'))
     ScopeAnnotation::Annotator.new.annotate!(tree)
@@ -472,12 +491,59 @@ describe ScopeAnnotation do
     body = definition[3]
     body_def = body[1][1..-1]
 
-    expect { body_def[0].scope.lookup('a') }.to raise_error(Scope::ScopeLookupFailure)
+    body_def[0].should_not see_var('a')
+    body_def[1].should see_var('a')
+    body_def[2].should see_var('a')
     body_def[1].scope.lookup('a').should be_a(Bindings::LocalVariableBinding)
     body_def[2].scope.lookup('a').should be_a(Bindings::LocalVariableBinding)
     
     body_def[2].scope.object_id.should == body_def[1].scope.object_id
     body_def[1].scope.lookup('a').object_id.should == body_def[2].scope.lookup('a').object_id
+  end
+  
+  # [:program,
+  #  [[:module,
+  #    [:const_ref, [:@const, "TestA", [1, 7]]],
+  #    [:bodystmt,
+  #     [[:void_stmt],
+  #      [:assign,
+  #       [:var_field, [:@const, "PI", [1, 14]]],
+  #       [:@float, "3.14", [1, 19]]],
+  #      [:assign,
+  #       [:var_field, [:@const, "TAU", [1, 25]]],
+  #       [:binary,
+  #        [:var_ref, [:@const, "PI", [1, 31]]],
+  #        :*,
+  #        [:@int, "2", [1, 36]]]]],
+  #     nil, nil, nil]]]]
+  it 'creates new scopes as new constants are assigned to' do
+    tree = Sexp.new(Ripper.sexp('module TestA; PI = 3.14; TAU = PI * 2; end'))
+    ScopeAnnotation::Annotator.new.annotate!(tree)
+    body = tree[1][0][2][1]
+    
+    body[0].should_not see_var('PI')
+    body[0].should_not see_var('TAU')
+    body[1].should see_var('PI')
+    body[1].should_not see_var('TAU')
+    body[2].should see_var('PI')
+    body[2].should see_var('TAU')
+    
+    body[1].scope.lookup('PI').should be_a(Bindings::ConstantBinding)
+    body[2].scope.lookup('TAU').should be_a(Bindings::ConstantBinding)
+
+    body[1].scope.object_id.should_not == body[2].scope.object_id
+  end
+  
+  it 'creates global variable bindings when discovered' do
+    tree = Sexp.new(Ripper.sexp('module TestA; PI = 3.14; $TEST_TAU = PI * 2; end'))
+    ScopeAnnotation::Annotator.new.annotate!(tree)
+    
+    # just by annotating this, the new gvar should've been discovered.
+    Scope::GlobalScope.lookup('$TEST_TAU').should be_a(Bindings::GlobalVariableBinding)
+    body = tree[1][0][2][1]
+    body[1].should see_var('PI')
+    # and this is why dynamic scoping is bad:
+    body[1].should see_var('$TEST_TAU')
   end
 end
   

@@ -46,6 +46,8 @@ module Wool
         self_ptr.path
       end
 
+      # Looks up a binding with the given name.
+      # Raises ScopeLookupFailure if the binding is not found.
       def lookup(str)
         if str =~ /^[A-Z]/ && constants[str]
         then constants[str]
@@ -56,6 +58,9 @@ module Wool
             err.scope = self
             raise err
           end
+        elsif str[0,1] == '$'
+          # global, create on demand.
+          Scope::GlobalScope.locals[str] ||= Bindings::GlobalVariableBinding.new(str, WoolObject.new)
         else lookup_local str
         end
       end

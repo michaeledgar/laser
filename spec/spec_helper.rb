@@ -96,6 +96,35 @@ module Wool
       def parse_to(output)
         ParsesTo.new(output)
       end
+      
+      # Matcher for checking if a scope sees a variable
+      class SeesVariable
+        def initialize(named)
+          @name = named
+        end
+
+        def matches?(node)
+          @node = node
+          begin
+            node.scope.lookup(@name)
+            return true
+          rescue Scope::ScopeLookupFailure
+            return false
+          end
+        end
+
+        def failure_message
+          "scope #{@node} should have had variable #{@name}, but it didn't."
+        end
+
+        def negative_failure_message
+          "scope #{@node} should have not been able to see variable #{@name}, but it can."
+        end
+      end
+
+      def see_var(named)
+        SeesVariable.new(named)
+      end
     end
   end
 end
