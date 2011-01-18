@@ -26,3 +26,5 @@ class Bignum < Integer
 end
 class Float < Numeric
 end
+class Encoding
+end

@@ -98,3 +98,29 @@ describe SexpAnalysis::ClassEstimate do
     end
   end
 end
+
+describe SexpAnalysis::ExactClassEstimate do
+  describe '#initialize' do
+    it 'takes a single class to specify exactly' do
+      estimate = ExactClassEstimate.new(ClassRegistry['Numeric'])
+      estimate.upper_bound.should == ClassRegistry['Numeric']
+      estimate.lower_bound.should == ClassRegistry['Numeric']
+    end
+  end
+  
+  describe 'as an exact class estimate' do
+    before do
+      @estimate = ExactClassEstimate.new(ClassRegistry['String'])
+    end
+    describe '#exact_class' do
+      it 'should return the exact class' do
+        @estimate.exact_class.should == ClassRegistry['String']
+      end
+    end
+    describe '#exact?' do
+      it 'should be true' do
+        @estimate.should be_exact
+      end
+    end
+  end
+end

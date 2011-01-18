@@ -73,5 +73,11 @@ module Wool
         end
       end
     end
+    
+    class ExactClassEstimate < ClassEstimate
+      def initialize(exact_class)
+        super(exact_class, exact_class)
+      end
+    end
   end
 end
