@@ -60,6 +60,17 @@ module Wool
           node.class_estimate = ClassEstimate.new(ClassRegistry['Array'], ClassRegistry['Array'])
           visit_children(node)
         end
+        
+        add :var_ref do |node, ref|
+          if ref.type == :@kw
+            case ref[1]
+            when 'nil' then node.class_estimate = ClassEstimate.new(ClassRegistry['NilClass'], ClassRegistry['NilClass'])
+            when 'true' then node.class_estimate = ClassEstimate.new(ClassRegistry['TrueClass'], ClassRegistry['TrueClass'])
+            when 'false' then node.class_estimate = ClassEstimate.new(ClassRegistry['FalseClass'], ClassRegistry['FalseClass'])
+            end
+          end
+          visit_children(node)
+        end
       end
       add_global_annotator Annotator
     end

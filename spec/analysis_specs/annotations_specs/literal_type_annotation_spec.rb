@@ -131,4 +131,43 @@ describe ScopeAnnotation do
     estimate.should be_exact
     estimate.exact_class.should == ClassRegistry['Symbol']
   end
+
+  # [:program,
+  #  [[:assign,
+  #    [:var_field, [:@ident, "x", [1, 0]]],
+  #    [:var_ref, [:@kw, "true", [1, 4]]]]]]
+  it 'discovers the class for true' do
+    tree = Sexp.new(Ripper.sexp('x = true'))
+    LiteralTypeAnnotation::Annotator.new.annotate!(tree)
+    list = tree[1]
+    estimate = list[0][2].class_estimate
+    estimate.should be_exact
+    estimate.exact_class.should == ClassRegistry['TrueClass']
+  end
+
+  # [:program,
+  #  [[:assign,
+  #    [:var_field, [:@ident, "x", [1, 0]]],
+  #    [:var_ref, [:@kw, "false", [1, 4]]]]]]
+  it 'discovers the class for false' do
+    tree = Sexp.new(Ripper.sexp('x = false'))
+    LiteralTypeAnnotation::Annotator.new.annotate!(tree)
+    list = tree[1]
+    estimate = list[0][2].class_estimate
+    estimate.should be_exact
+    estimate.exact_class.should == ClassRegistry['FalseClass']
+  end
+
+  # [:program,
+  #  [[:assign,
+  #    [:var_field, [:@ident, "x", [1, 0]]],
+  #    [:var_ref, [:@kw, "nil", [1, 4]]]]]]
+  it 'discovers the class for nil' do
+    tree = Sexp.new(Ripper.sexp('x = nil'))
+    LiteralTypeAnnotation::Annotator.new.annotate!(tree)
+    list = tree[1]
+    estimate = list[0][2].class_estimate
+    estimate.should be_exact
+    estimate.exact_class.should == ClassRegistry['NilClass']
+  end
 end
