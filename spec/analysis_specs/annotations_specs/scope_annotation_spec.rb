@@ -228,6 +228,50 @@ describe ScopeAnnotation do
     signature.name.should == 'silly'
   end
   
+  # [:program,
+  # [[:module,
+  #   [:const_ref, [:@const, "M49", [1, 7]]],
+  #   [:bodystmt,
+  #    [[:void_stmt],
+  #     [:sclass,
+  #      [:var_ref, [:@kw, "self", [1, 21]]],
+  #      [:bodystmt,
+  #       [[:def,
+  #         [:@ident, "silly", [1, 31]],
+  #         [:paren,
+  #          [:params,
+  #           [[:@ident, "a", [1, 37]]],
+  #           [[[:@ident, "b", [1, 40]], [:var_ref, [:@ident, "a", [1, 42]]]]],
+  #           nil, nil, nil]],
+  #         [:bodystmt, [[:void_stmt]], nil, nil, nil]]],
+  #       nil, nil, nil]]],
+  #    nil, nil, nil]]]]
+  it "allows singleton method declarations on a Module's self using sclass opening" do
+    tree = Sexp.new(Ripper.sexp('module M50; class << self; def silly(a, b=a); end; end; end'))
+    ScopeAnnotation::Annotator.new.annotate!(tree)
+    sclass_body = tree[1][0][2][1][1][2]
+    definition = sclass_body[1][0]
+    body = definition[3]
+    [body, *body.all_subtrees].each do |node|
+      new_scope = node.scope
+      new_scope.self_ptr.should be_a(WoolModule)
+      new_scope.self_ptr.should == ClassRegistry['M50']
+      new_scope.self_ptr.klass.should == ClassRegistry['Module']
+      new_scope.locals.should_not be_empty
+      new_scope.lookup('a').should == Bindings::ArgumentBinding.new('a', WoolObject.new, :positional)
+      new_scope.lookup('b').should == Bindings::ArgumentBinding.new(
+          'b', WoolObject.new, :optional,
+          Sexp.new([:var_ref, [:@ident, "a", [1, 32]]]))
+    end
+    
+    method = ClassRegistry['M50'].singleton_class.instance_methods['silly']
+    method.should_not be_nil
+    method.signatures.size.should == 1
+    signature = method.signatures.first
+    signature.arguments.should == [body.scope.lookup('a'), body.scope.lookup('b')]
+    signature.name.should == 'silly'
+  end
+  
   # This is the AST that Ripper generates for the parsed code. It is
   # provided here because otherwise the test is inscrutable.
   #
@@ -534,6 +578,21 @@ describe ScopeAnnotation do
     body[1].scope.object_id.should_not == body[2].scope.object_id
   end
   
+  # [:program,
+  #  [[:module,
+  #    [:const_ref, [:@const, "TestA", [1, 7]]],
+  #    [:bodystmt,
+  #     [[:void_stmt],
+  #      [:assign,
+  #       [:var_field, [:@const, "PI", [1, 14]]],
+  #       [:@float, "3.14", [1, 19]]],
+  #      [:assign,
+  #       [:var_field, [:@gvar, "$TEST_TAU", [1, 25]]],
+  #       [:binary,
+  #        [:var_ref, [:@const, "PI", [1, 37]]],
+  #        :*,
+  #        [:@int, "2", [1, 42]]]]],
+  #     nil, nil, nil]]]]
   it 'creates global variable bindings when discovered' do
     tree = Sexp.new(Ripper.sexp('module TestA; PI = 3.14; $TEST_TAU = PI * 2; end'))
     ScopeAnnotation::Annotator.new.annotate!(tree)

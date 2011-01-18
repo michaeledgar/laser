@@ -53,7 +53,6 @@ module Wool
           visit_with_scope(body, new_scope)
         end
         
-        
         # Provides a general-purpose method for looking up a binding,
         # and yielding on failure.
         def lookup_or_create(scope, name)
@@ -83,7 +82,6 @@ module Wool
             new_scope
           end
         end
-        
         
         # Given a current scope and any possible way to describe a constant,
         # break it into two parts: the name of the final constant, and the
@@ -136,6 +134,14 @@ module Wool
           new_mod_full_path += new_mod_name
         end
 
+        # Enter the singleton class.
+        add :sclass do |node, (_, singleton), body|
+          method_self = @current_scope.lookup(singleton.children.first).value
+          receiver = method_self.singleton_class
+          singleton.scope = @current_scope
+          visit_with_scope(body, receiver.scope)
+        end
+
         # Normal method definitions.
         add :def do |node, (_, name), arglist, body|
           receiver = @current_scope.self_ptr
@@ -146,7 +152,7 @@ module Wool
           # 2. If self does not have Module in its class hierarchy, then it
           #    should be added to self's singleton class.
           if WoolModule === receiver
-          then method_self = WoolObject.new(receiver, nil)
+          then method_self = receiver.get_instance
           else method_self = receiver
           end
 

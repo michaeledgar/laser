@@ -22,7 +22,8 @@ module Wool
       
       def singleton_class
         return @singleton_class if @singleton_class
-        @singleton_class = WoolClass.new("Class:#{name}") do |new_singleton_class|
+        new_scope = ClosedScope.new(self.scope, nil)
+        @singleton_class = WoolSingletonClass.new("Class:#{name}", new_scope, self) do |new_singleton_class|
           new_singleton_class.superclass = self.klass
         end
         @singleton_class
@@ -113,6 +114,10 @@ module Wool
         @instance_methods[signature.name].add_signature!(signature)
       end
       
+      def get_instance
+        WoolObject.new(self, nil)
+      end
+      
       def inspect
         "#<WoolModule: #{path}>"
       end
@@ -134,7 +139,9 @@ module Wool
       end
       
       def singleton_class
-        @singleton_class ||= WoolClass.new("Class:#{name}") do |new_singleton_class|
+        return @singleton_class if @singleton_class
+        new_scope = ClosedScope.new(self.scope, nil)
+        @singleton_class = WoolSingletonClass.new("Class:#{name}", new_scope, self) do |new_singleton_class|
           if superclass
             new_singleton_class.superclass = superclass.singleton_class
           else
@@ -199,6 +206,16 @@ module Wool
         "#<WoolClass: #{path} superclass=#{superclass.inspect}>"
       end
     end
+
+    class WoolSingletonClass < WoolClass
+      attr_reader :singleton_instance
+      def initialize(path, scope, instance)
+        super(path, scope)
+        @singleton_instance = instance
+      end
+      alias_method :get_instance, :singleton_instance
+    end
+        
 
     # Wool representation of a method. This name is tweaked so it doesn't
     # collide with ::Method.
