@@ -16,7 +16,8 @@ module Wool
           visit_children(node)
         end
         
-        add :string_literal, :@CHAR, :@tstring_content, :string_embexpr, :string_content do |node, *rest|
+        add :string_literal, :@CHAR, :@tstring_content, :string_embexpr, :string_content,
+            :xstring_literal do |node, *rest|
           node.class_estimate = ExactClassEstimate.new(ClassRegistry['String'])
           visit_children(node)
         end

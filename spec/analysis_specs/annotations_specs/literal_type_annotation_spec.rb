@@ -46,7 +46,20 @@ describe ScopeAnnotation do
       estimate.exact_class.should == ClassRegistry['String']
     end
   end
-  
+
+  # [:program,
+  # [[:assign,
+  #   [:var_field, [:@ident, "a", [1, 0]]],
+  #   [:xstring_literal, [[:@tstring_content, "find .", [1, 7]]]]]]]
+  it 'discovers the class for executed string literals' do
+    tree = Sexp.new(Ripper.sexp('a = %x(find .)'))
+    LiteralTypeAnnotation::Annotator.new.annotate!(tree)
+    list = tree[1]
+    estimate = list[0][2].class_estimate
+    estimate.should be_exact
+    estimate.exact_class.should == ClassRegistry['String']
+  end
+
   # [:program,
   #  [[:assign,
   #     [:var_field, [:@ident, "a", [1, 0]]],
