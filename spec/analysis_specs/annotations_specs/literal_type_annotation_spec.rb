@@ -266,4 +266,19 @@ describe ScopeAnnotation do
     estimate.should be_exact
     estimate.exact_class.should == ClassRegistry['Range']
   end
+  
+  # [:program,
+  #  [[:assign,
+  #    [:var_field, [:@ident, "x", [1, 0]]],
+  #    [:lambda,
+  #     [:paren, [:params, [[:@ident, "a", [1, 7]]], nil, nil, nil, nil]],
+  #     [[:var_ref, [:@ident, "a", [1, 10]]]]]]]]
+  it "discovers the class for 1.9's stabby lambdas" do
+    tree = Sexp.new(Ripper.sexp('x = ->(a, b=2){ a + b }'))
+    LiteralTypeAnnotation::Annotator.new.annotate!(tree)
+    list = tree[1]
+    estimate = list[0][2].class_estimate
+    estimate.should be_exact
+    estimate.exact_class.should == ClassRegistry['Proc']
+  end
 end

@@ -464,6 +464,21 @@ describe ScopeAnnotation do
     
     body_def[2].scope.should_not == body_def[1].scope
   end
+  
+  it 'does not create new scopes when re-using a binding' do
+    tree = Sexp.new(Ripper.sexp('def abc(bar, &blk); p blk; a = bar; a = blk; end'))
+    ScopeAnnotation::Annotator.new.annotate!(tree)
+    definition = tree[1][0]
+    body = definition[3]
+    body_def = body[1][1..-1]
+
+    expect { body_def[0].scope.lookup('a') }.to raise_error(Scope::ScopeLookupFailure)
+    body_def[1].scope.lookup('a').should be_a(Bindings::LocalVariableBinding)
+    body_def[2].scope.lookup('a').should be_a(Bindings::LocalVariableBinding)
+    
+    body_def[2].scope.object_id.should == body_def[1].scope.object_id
+    body_def[1].scope.lookup('a').object_id.should == body_def[2].scope.lookup('a').object_id
+  end
 end
   
 describe 'complete tests' do

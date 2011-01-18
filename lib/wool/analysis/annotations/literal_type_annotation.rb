@@ -71,6 +71,11 @@ module Wool
           node.class_estimate = ExactClassEstimate.new(ClassRegistry['Range'])
           visit_children(node)
         end
+        
+        add :lambda do |node, *rest|
+          node.class_estimate = ExactClassEstimate.new(ClassRegistry['Proc'])
+          visit_children(node)
+        end
       end
       add_global_annotator Annotator
     end

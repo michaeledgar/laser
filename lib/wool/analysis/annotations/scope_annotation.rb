@@ -173,12 +173,12 @@ module Wool
         
         # Single assignment. Update/Create 1 binding.
         add :assign do |node, name, val|
-          @current_scope = @current_scope.dup
           case name.type
           when :var_field
             begin
               binding = @current_scope.lookup(name[1][1])
             rescue Scope::ScopeLookupFailure
+              @current_scope = @current_scope.dup
               object = WoolObject.new(ClassRegistry['Object'], @current_scope)
               @current_scope.add_binding!(Bindings::LocalVariableBinding.new(name[1][1], object))
             end
