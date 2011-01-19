@@ -177,38 +177,12 @@ module Wool
           visit_with_scope(body, new_scope)
         end
         
-        # Single assignment. Update/Create 1 binding.
-        add :assign do |node, name, val|
-          unless @current_scope.sees_var?(name[1][1])
-            object = WoolObject.new(ClassRegistry['Object'], @current_scope)
-            create_binding(name[1], object)
-          end
-          node.scope = @current_scope
-          visit name
-          visit val
-        end
-        
-        # Creates a binding for a thus-far unbound name.
-        # This *only* applies to local variables and constants! All other binding types
-        # ($globals, @ivars, @@cvars) are all created on-demand when looked up, and this
-        # is reflected in the Scope#lookup method.
-        def create_binding(name_sexp, value)
-          raw_name = name_sexp[1]
-          binding_class = case name_sexp.type
-                          when :@ident then Bindings::LocalVariableBinding
-                          when :@const then Bindings::ConstantBinding
-                          end
-          @current_scope = @current_scope.dup
-          binding = binding_class.new(raw_name, value)
-          @current_scope.add_binding!(binding)
-        end
-        
-        add :massign do |node, names, vals|
+        add :assign, :massign do |node, names, vals|
           all_binding_names = extract_names(names)
-          unless names.all? { |name| @current_scope.sees_var?(name) }
+          unless all_binding_names.all? { |name| @current_scope.sees_var?(name) }
             @current_scope = @current_scope.dup
             all_binding_names.each do |name|
-              next if  @current_scope.sees_var?(name)
+              next if @current_scope.sees_var?(name)
               binding_class = case name[0,1]
                               when /[A-Z]/ then Bindings::ConstantBinding
                               else Bindings::LocalVariableBinding
@@ -226,6 +200,7 @@ module Wool
         def extract_names(node)
           case node[0]
           when Array then node.map { |x| extract_names(x) }.flatten
+          when :var_field then [extract_names(node[1])]
           when :mlhs_paren then extract_names(node[1])
           when :mlhs_add_star then node.children.map { |x| extract_names(x) }.flatten
           when :@ident, :@const, :@gvar, :@ivar, :@cvar then node[1]
