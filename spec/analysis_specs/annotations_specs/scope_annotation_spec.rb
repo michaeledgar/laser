@@ -648,6 +648,42 @@ describe ScopeAnnotation do
     # and this is why dynamic scoping is bad:
     body[1].should see_var('$TEST_TAU')
   end
+  
+  # [:program,
+  # [[:command,
+  #   [:@ident, "p", [1, 0]],
+  #   [:args_add_block, [[:var_ref, [:@kw, "nil", [1, 2]]]], false]],
+  #  [:massign,
+  #   [[:@ident, "a", [1, 7]],
+  #    [:mlhs_paren,
+  #     [:mlhs_add_star,
+  #      [[:@const, "Z", [1, 11]],
+  #       [:mlhs_paren,
+  #        [[:mlhs_paren,
+  #          [[:@ivar, "@b", [1, 16]],
+  #           [:@gvar, "$f", [1, 20]],
+  #           [:@cvar, "@@j", [1, 24]]]],
+  #         [:mlhs_paren, [[:@ident, "i", [1, 31]], [:@ident, "p", [1, 34]]]]]]],
+  #      [:@ident, "d", [1, 40]]]],
+  #    [:@ident, "c", [1, 44]]],
+  #   [:mrhs_new_from_args, [[:@int, "1", [1, 48]]], [:@int, "2", [1, 51]]]],
+  #  [:command,
+  #   [:@ident, "p", [1, 54]],
+  #   [:args_add_block, [[:var_ref, [:@ident, "c", [1, 56]]]], false]]]]
+  
+  it 'creates multiple bindings all at once during multiple assignments' do
+    tree = Sexp.new(Ripper.sexp('p nil; a, (Z, ((b, $f, j), (i, p)), *d), c = 1, 2; p c'))
+    ScopeAnnotation::Annotator.new.annotate!(tree)
+    
+    list = tree[1]
+    %w(a Z b j i p d c).each do |var|
+      list[0].should_not see_var(var)
+      list[1].should see_var(var)
+      list[2].should see_var(var)
+    end
+    list[0].should see_var('$f')
+    list[1].should see_var('$f')
+  end
 end
   
 describe 'complete tests' do

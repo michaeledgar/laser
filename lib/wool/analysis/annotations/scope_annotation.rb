@@ -179,14 +179,11 @@ module Wool
         
         # Single assignment. Update/Create 1 binding.
         add :assign do |node, name, val|
-          case name.type
-          when :var_field
-            begin
-              binding = @current_scope.lookup(name[1][1])
-            rescue Scope::ScopeLookupFailure
-              object = WoolObject.new(ClassRegistry['Object'], @current_scope)
-              binding = create_binding(name[1], object)
-            end
+          begin
+            @current_scope.lookup(name[1][1])
+          rescue Scope::ScopeLookupFailure
+            object = WoolObject.new(ClassRegistry['Object'], @current_scope)
+            create_binding(name[1], object)
           end
           node.scope = @current_scope
           visit name
@@ -199,16 +196,49 @@ module Wool
         # is reflected in the Scope#lookup method.
         def create_binding(name_sexp, value)
           raw_name = name_sexp[1]
-          case name_sexp.type
-          when :@ident
+          binding_class = case name_sexp.type
+                          when :@ident then Bindings::LocalVariableBinding
+                          when :@const then Bindings::ConstantBinding
+                          end
+          @current_scope = @current_scope.dup
+          binding = binding_class.new(raw_name, value)
+          @current_scope.add_binding!(binding)
+        end
+        
+        add :massign do |node, names, vals|
+          all_binding_names = extract_names(names)
+          unless all_names_exist?(names)
             @current_scope = @current_scope.dup
-            binding = Bindings::LocalVariableBinding.new(raw_name, value)
-            @current_scope.add_binding!(binding)
-          when :@const
-            @current_scope = @current_scope.dup
-            binding = Bindings::ConstantBinding.new(raw_name, value)
-            @current_scope.add_binding!(binding)
+            all_binding_names.each do |name|
+              begin
+                @current_scope.lookup(name)
+              rescue
+                binding_class = case name[0,1]
+                                when /[A-Z]/ then Bindings::ConstantBinding
+                                else Bindings::LocalVariableBinding
+                                end
+                value = WoolObject.new(ClassRegistry['Object'], @current_scope)
+                binding = binding_class.new(name, value)
+                @current_scope.add_binding!(binding)
+              end
+            end
           end
+          node.scope = @current_scope
+          visit names
+          visit vals
+        end
+        
+        def extract_names(node)
+          case node[0]
+          when Array then node.map { |x| extract_names(x) }.flatten
+          when :mlhs_paren then extract_names(node[1])
+          when :mlhs_add_star then node.children.map { |x| extract_names(x) }.flatten
+          when :@ident, :@const, :@gvar, :@ivar, :@cvar then node[1]
+          end
+        end
+
+        def all_names_exist?(names)
+          names.all { |name| @current_scope.lookup(name) } rescue false
         end
         
         # add :for do |sym, vars, iterable, body|

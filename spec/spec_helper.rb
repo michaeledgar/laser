@@ -114,11 +114,11 @@ module Wool
         end
 
         def failure_message
-          "scope #{@node} should have had variable #{@name}, but it didn't."
+          "scope #{@node.scope.inspect} should have had variable #{@name}, but it didn't."
         end
 
         def negative_failure_message
-          "scope #{@node} should have not been able to see variable #{@name}, but it can."
+          "scope #{@node.scope.inspect} should have not been able to see variable #{@name}, but it can."
         end
       end
 
