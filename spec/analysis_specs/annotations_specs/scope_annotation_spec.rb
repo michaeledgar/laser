@@ -684,6 +684,59 @@ describe ScopeAnnotation do
     list[0].should see_var('$f')
     list[1].should see_var('$f')
   end
+  
+  # [:program,
+  #  [[:command,
+  #    [:@ident, "p", [1, 0]],
+  #    [:args_add_block, [[:var_ref, [:@kw, "nil", [1, 2]]]], false]],
+  #   [:for,
+  #    [:var_field, [:@ident, "x", [1, 11]]],
+  #    [:array, nil],
+  #    [[:command,
+  #      [:@ident, "p", [1, 20]],
+  #      [:args_add_block, [[:var_ref, [:@ident, "x", [1, 22]]]], false]]]]]]
+  it 'creates a single binding with a simple for loop' do
+    tree = Sexp.new(Ripper.sexp('p nil; for x in []; p x; end'))
+    ScopeAnnotation::Annotator.new.annotate!(tree)
+    list = tree[1]
+    list[0].should_not see_var('x')
+
+    forloop = list[1]
+    forloop.should see_var('x')
+    forloop[3].should see_var('x')
+  end
+  
+  # [:program,
+  #  [[:command,
+  #    [:@ident, "p", [1, 0]],
+  #    [:args_add_block, [[:var_ref, [:@kw, "nil", [1, 2]]]], false]],
+  #   [:for,
+  #    [[:@const, "A92", [1, 11]],
+  #     [:@ident, "x", [1, 16]],
+  #     [:mlhs_paren,
+  #      [[:@ident, "y", [1, 20]],
+  #       [:mlhs_paren, [[:@ident, "z", [1, 24]], [:@gvar, "$f", [1, 27]]]]]]],
+  #    [:array, nil],
+  #    [[:command,
+  #      [:@ident, "p", [1, 39]],
+  #      [:args_add_block, [[:var_ref, [:@ident, "x", [1, 41]]]], false]]]]]]
+  it 'creates many bindings with a complex for loop initializer' do
+    tree = Sexp.new(Ripper.sexp('p nil; for A92, x, (y, (z, $f)) in []; p x; end'))
+    ScopeAnnotation::Annotator.new.annotate!(tree)
+    list = tree[1]
+    list[0].should_not see_var('A92')
+    list[0].should_not see_var('x')
+    list[0].should_not see_var('y')
+    list[0].should_not see_var('z')
+    list[0].should see_var('$f')
+
+    forloop = list[1]
+    forloop.should see_var('A92')
+    forloop.should see_var('x')
+    forloop.should see_var('y')
+    forloop.should see_var('z')
+    forloop.should see_var('$f')
+  end
 end
   
 describe 'complete tests' do

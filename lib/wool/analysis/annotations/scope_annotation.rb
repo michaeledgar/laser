@@ -178,10 +178,16 @@ module Wool
         end
         
         add :assign, :massign do |node, names, vals|
-          all_binding_names = extract_names(names)
-          unless all_binding_names.all? { |name| @current_scope.sees_var?(name) }
+          bind_variable_names(extract_names(names))
+          node.scope = @current_scope
+          visit names
+          visit vals
+        end
+        
+        def bind_variable_names(names)
+          unless names.all? { |name| @current_scope.sees_var?(name) }
             @current_scope = @current_scope.dup
-            all_binding_names.each do |name|
+            names.each do |name|
               next if @current_scope.sees_var?(name)
               binding_class = case name[0,1]
                               when /[A-Z]/ then Bindings::ConstantBinding
@@ -192,9 +198,6 @@ module Wool
               @current_scope.add_binding!(binding)
             end
           end
-          node.scope = @current_scope
-          visit names
-          visit vals
         end
         
         def extract_names(node)
@@ -207,14 +210,12 @@ module Wool
           end
         end
         
-        # add :for do |sym, vars, iterable, body|
-        #   case vars.first
-        #   when :var_field
-        #     # one variable
-        #   when Sexp
-        #     # vars is an array of variables
-        #   end
-        # end
+        add :for do |node, vars, iterable, body|
+          bind_variable_names(extract_names(vars))
+          node.scope = @current_scope
+          visit vars
+          visit body
+        end
       end
       add_global_annotator Annotator
     end
