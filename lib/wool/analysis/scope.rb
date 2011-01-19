@@ -69,6 +69,11 @@ module Wool
         parts = path.split('::')
         parts.inject(self) { |scope, part| scope.lookup(part).scope }
       end
+      
+      # Does this scope see the given variable name?
+      def sees_var?(var)
+        lookup(var) rescue false
+      end
     end
     
     class OpenScope < Scope

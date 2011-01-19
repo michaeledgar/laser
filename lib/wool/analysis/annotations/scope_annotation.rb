@@ -179,9 +179,7 @@ module Wool
         
         # Single assignment. Update/Create 1 binding.
         add :assign do |node, name, val|
-          begin
-            @current_scope.lookup(name[1][1])
-          rescue Scope::ScopeLookupFailure
+          unless @current_scope.sees_var?(name[1][1])
             object = WoolObject.new(ClassRegistry['Object'], @current_scope)
             create_binding(name[1], object)
           end
@@ -207,20 +205,17 @@ module Wool
         
         add :massign do |node, names, vals|
           all_binding_names = extract_names(names)
-          unless all_names_exist?(names)
+          unless names.all? { |name| @current_scope.sees_var?(name) }
             @current_scope = @current_scope.dup
             all_binding_names.each do |name|
-              begin
-                @current_scope.lookup(name)
-              rescue
-                binding_class = case name[0,1]
-                                when /[A-Z]/ then Bindings::ConstantBinding
-                                else Bindings::LocalVariableBinding
-                                end
-                value = WoolObject.new(ClassRegistry['Object'], @current_scope)
-                binding = binding_class.new(name, value)
-                @current_scope.add_binding!(binding)
-              end
+              next if  @current_scope.sees_var?(name)
+              binding_class = case name[0,1]
+                              when /[A-Z]/ then Bindings::ConstantBinding
+                              else Bindings::LocalVariableBinding
+                              end
+              value = WoolObject.new(ClassRegistry['Object'], @current_scope)
+              binding = binding_class.new(name, value)
+              @current_scope.add_binding!(binding)
             end
           end
           node.scope = @current_scope
@@ -235,10 +230,6 @@ module Wool
           when :mlhs_add_star then node.children.map { |x| extract_names(x) }.flatten
           when :@ident, :@const, :@gvar, :@ivar, :@cvar then node[1]
           end
-        end
-
-        def all_names_exist?(names)
-          names.all { |name| @current_scope.lookup(name) } rescue false
         end
         
         # add :for do |sym, vars, iterable, body|

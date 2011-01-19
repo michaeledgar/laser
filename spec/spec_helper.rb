@@ -105,12 +105,7 @@ module Wool
 
         def matches?(node)
           @node = node
-          begin
-            node.scope.lookup(@name)
-            return true
-          rescue Scope::ScopeLookupFailure
-            return false
-          end
+          node.scope.sees_var?(@name)
         end
 
         def failure_message
