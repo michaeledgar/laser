@@ -132,6 +132,24 @@ describe ScopeAnnotation do
   end
   
   # [:program,
+  #  [[:method_add_arg,
+  #    [:fcall, [:@ident, "p", [1, 0]]],
+  #    [:arg_paren,
+  #     [:args_add_block,
+  #      [[:bare_assoc_hash,
+  #        [[:assoc_new, [:@label, "a:", [1, 2]], [:@int, "3", [1, 5]]],
+  #         [:assoc_new, [:@label, "b:", [1, 8]], [:@int, "3", [1, 11]]]]]],
+  #      false]]]]]
+  it 'discovers the class for hash literals using the no-brace shorthand' do
+    tree = Sexp.new(Ripper.sexp('p(a: 3, b: 3)'))
+    LiteralTypeAnnotation::Annotator.new.annotate!(tree)
+    list = tree[1]
+    estimate = list[0][2][1][1][0].class_estimate
+    estimate.should be_exact
+    estimate.exact_class.should == ClassRegistry['Hash']
+  end
+  
+  # [:program,
   #  [[:assign,
   #    [:var_field, [:@ident, "x", [1, 0]]],
   #    [:symbol_literal, [:symbol, [:@ident, "abcdef", [1, 5]]]]]]]
@@ -156,6 +174,23 @@ describe ScopeAnnotation do
     LiteralTypeAnnotation::Annotator.new.annotate!(tree)
     list = tree[1]
     estimate = list[0][2].class_estimate
+    estimate.should be_exact
+    estimate.exact_class.should == ClassRegistry['Symbol']
+  end
+  
+  # [:program,
+  #  [[:assign,
+  #    [:var_field, [:@ident, "x", [1, 0]]],
+  #    [:hash,
+  #     [:assoclist_from_args,
+  #      [[:assoc_new,
+  #        [:@label, "a:", [1, 5]],
+  #        [:symbol_literal, [:symbol, [:@ident, "b", [1, 9]]]]]]]]]]]
+  it 'discovers the class for the label-style symbols in Ruby 1.9' do
+    tree = Sexp.new(Ripper.sexp('x = {a: :b}'))
+    LiteralTypeAnnotation::Annotator.new.annotate!(tree)
+    list = tree[1]
+    estimate = list[0][2][1][1][0][1].class_estimate  # aye carumba
     estimate.should be_exact
     estimate.exact_class.should == ClassRegistry['Symbol']
   end

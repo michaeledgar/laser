@@ -37,12 +37,12 @@ module Wool
           visit_children(node)
         end
         
-        add :hash do |node, *rest|
+        add :hash, :bare_assoc_hash do |node, *rest|
           node.class_estimate = ExactClassEstimate.new(ClassRegistry['Hash'])
           visit_children(node)
         end
         
-        add :symbol_literal, :dyna_symbol do |node, *rest|
+        add :symbol_literal, :dyna_symbol, :@label do |node, *rest|
           node.class_estimate = ExactClassEstimate.new(ClassRegistry['Symbol'])
           visit_children(node)
         end
