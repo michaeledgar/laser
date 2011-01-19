@@ -272,6 +272,50 @@ describe ScopeAnnotation do
     signature.name.should == 'silly'
   end
   
+  # [:program,
+  # [[:class,
+  #   [:const_ref, [:@const, "C51", [1, 6]]],
+  #   nil,
+  #   [:bodystmt, [[:void_stmt]], nil, nil, nil]],
+  #  [:sclass,
+  #   [:var_ref, [:@const, "C51", [1, 25]]],
+  #   [:bodystmt,
+  #    [[:def,
+  #      [:@ident, "silly", [1, 34]],
+  #      [:paren,
+  #       [:params,
+  #        [[:@ident, "a", [1, 40]]],
+  #        [[[:@ident, "b", [1, 43]], [:var_ref, [:@ident, "a", [1, 45]]]]],
+  #        nil, nil, nil]],
+  #      [:bodystmt, [[:void_stmt]], nil, nil, nil]]],
+  #    nil, nil, nil]]]]
+  
+  it "allows singleton method declarations on a Module's self using sclass opening" do
+    tree = Sexp.new(Ripper.sexp('class C51; end; class << C51; def silly(a, b=a); end; end'))
+    ScopeAnnotation::Annotator.new.annotate!(tree)
+    sclass_body = tree[1][1][2]
+    definition = sclass_body[1][0]
+    body = definition[3]
+    [body, *body.all_subtrees].each do |node|
+      new_scope = node.scope
+      new_scope.self_ptr.should be_a(WoolClass)
+      new_scope.self_ptr.should == ClassRegistry['C51']
+      new_scope.self_ptr.klass.should == ClassRegistry['Class']
+      new_scope.locals.should_not be_empty
+      new_scope.lookup('a').should == Bindings::ArgumentBinding.new('a', WoolObject.new, :positional)
+      new_scope.lookup('b').should == Bindings::ArgumentBinding.new(
+          'b', WoolObject.new, :optional,
+          Sexp.new([:var_ref, [:@ident, "a", [1, 32]]]))
+    end
+    
+    method = ClassRegistry['C51'].singleton_class.instance_methods['silly']
+    method.should_not be_nil
+    method.signatures.size.should == 1
+    signature = method.signatures.first
+    signature.arguments.should == [body.scope.lookup('a'), body.scope.lookup('b')]
+    signature.name.should == 'silly'
+  end
+  
   # This is the AST that Ripper generates for the parsed code. It is
   # provided here because otherwise the test is inscrutable.
   #
