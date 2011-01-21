@@ -737,6 +737,153 @@ describe ScopeAnnotation do
     forloop.should see_var('z')
     forloop.should see_var('$f')
   end
+  
+  # [:program,
+  # [[:command,
+  #   [:@ident, "p", [1, 0]],
+  #   [:args_add_block, [[:var_ref, [:@kw, "nil", [1, 2]]]], false]],
+  #  [:method_add_block,
+  #   [:method_add_arg,
+  #    [:call,
+  #     [:array, [[:@int, "1", [1, 8]], [:@int, "2", [1, 10]]]],
+  #     :".",
+  #     [:@ident, "crazy_blocker", [1, 13]]],
+  #    [:arg_paren,
+  #     [:args_add_block,
+  #      [[:@int, "2", [1, 27]], [:@int, "5", [1, 29]]],
+  #      false]]],
+  #   [:do_block,
+  #    [:block_var,
+  #     [:params,
+  #      [[:@ident, "x", [1, 36]]],
+  #      [[[:@ident, "y", [1, 39]], [:var_ref, [:@ident, "x", [1, 41]]]]],
+  #      [:rest_param, [:@ident, "rest", [1, 45]]],
+  #      nil,
+  #      [:blockarg, [:@ident, "blk", [1, 52]]]],
+  #     nil],
+  #    [[:void_stmt],
+  #     [:command,
+  #      [:@ident, "p", [1, 58]],
+  #      [:args_add_block, [[:var_ref, [:@ident, "x", [1, 60]]]], false]]]]]]]
+  it 'creates a new open scope when a block is used' do
+    tree = Sexp.new(Ripper.sexp('p nil; [1,2].crazy_blocker(2,5) do |x, y=x, *rest, &blk|; p x; end'))
+    ScopeAnnotation::Annotator.new.annotate!(tree)
+    list = tree[1]
+    list[0].should_not see_var('x')
+    list[0].should_not see_var('y')
+    list[0].should_not see_var('rest')
+    list[0].should_not see_var('blk')
+
+    block_body = list[1][2][2]
+    block_body.scope.should be_a(OpenScope)
+    block_body.should see_var('x')
+    block_body.should see_var('y')
+    block_body.should see_var('rest')
+    block_body.should see_var('blk')
+  end
+  
+  
+  # [:program,
+  # [[:assign, [:var_field, [:@ident, "z", [1, 0]]], [:@int, "10", [1, 4]]],
+  #  [:method_add_block,
+  #   [:method_add_arg,
+  #    [:call,
+  #     [:array, [[:@int, "1", [1, 9]], [:@int, "2", [1, 11]]]],
+  #     :".",
+  #     [:@ident, "crazy_blocker", [1, 14]]],
+  #    [:arg_paren,
+  #     [:args_add_block,
+  #      [[:@int, "2", [1, 28]], [:@int, "5", [1, 30]]],
+  #      false]]],
+  #   [:do_block,
+  #    [:block_var,
+  #     [:params,
+  #      [[:@ident, "x", [1, 37]]],
+  #      [[[:@ident, "y", [1, 40]], [:var_ref, [:@ident, "x", [1, 42]]]]],
+  #      nil, nil, nil],
+  #     nil],
+  #    [[:void_stmt],
+  #     [:command,
+  #      [:@ident, "p", [1, 46]],
+  #      [:args_add_block, [[:var_ref, [:@ident, "x", [1, 48]]]], false]]]]]]]
+  it 'creates a scope that can reference parent scope variables when a block is found' do
+    tree = Sexp.new(Ripper.sexp('z = 10; [1,2].crazy_blocker(2,5) do |x, y=x|; p x; end'))
+    ScopeAnnotation::Annotator.new.annotate!(tree)
+    list = tree[1]
+    list[0].should see_var('z')
+    list[0].should_not see_var('x')
+    list[0].should_not see_var('y')
+
+    block_body = list[1][2][2]
+    block_body.should see_var('z')
+    block_body.should see_var('x')
+    block_body.should see_var('y')
+  end
+  
+  # [:program,
+  #  [[:assign, [:var_field, [:@ident, "z", [1, 0]]], [:@int, "10", [1, 4]]],
+  #   [:method_add_block,
+  #    [:call, [:array, nil], :".", [:@ident, "each", [1, 11]]],
+  #    [:brace_block,
+  #     [:block_var,
+  #      [:params,
+  #       [[:@ident, "x", [1, 19]]],
+  #       [[[:@ident, "y", [1, 22]], [:var_ref, [:@ident, "x", [1, 24]]]]],
+  #       nil, nil, nil],
+  #      nil],
+  #     [[:method_add_block,
+  #       [:call,
+  #        [:var_ref, [:@ident, "x", [1, 27]]],
+  #        :".",
+  #        [:@ident, "each", [1, 29]]],
+  #       [:brace_block,
+  #        [:block_var,
+  #         [:params,
+  #          [[:@ident, "abc", [1, 37]], [:@ident, "jkl", [1, 42]]],
+  #          nil, nil, nil, nil],
+  #         nil],
+  #        [[:method_add_block,
+  #          [:call,
+  #           [:var_ref, [:@ident, "abc", [1, 47]]],
+  #           :".",
+  #           [:@ident, "each", [1, 51]]],
+  #          [:brace_block,
+  #           [:block_var,
+  #            [:params, [[:@ident, "oo", [1, 59]]], nil, nil, nil, nil],
+  #            nil],
+  #           [[:var_ref, [:@ident, "oo", [1, 63]]]]]]]]]]]]]]
+  it 'handles deep block nesting' do
+    tree = Sexp.new(Ripper.sexp('z = 10; [].each { |x, y=x| x.each { |abc, jkl| abc.each { |oo| oo }}}'))
+    ScopeAnnotation::Annotator.new.annotate!(tree)
+    list = tree[1]
+    list[0].should see_var('z')
+    list[0].should_not see_var('x')
+    list[0].should_not see_var('y')
+
+    first_block_body = list[1][2][2]
+    first_block_body.should see_var('z')
+    first_block_body.should see_var('x')
+    first_block_body.should see_var('y')
+    first_block_body.should_not see_var('abc')
+    first_block_body.should_not see_var('jkl')
+    first_block_body.should_not see_var('oo')
+    
+    second_block_body = first_block_body[0][2][2]
+    second_block_body.should see_var('z')
+    second_block_body.should see_var('x')
+    second_block_body.should see_var('y')
+    second_block_body.should see_var('abc')
+    second_block_body.should see_var('jkl')
+    second_block_body.should_not see_var('oo')
+    
+    third_block_body = second_block_body[0][2][2]
+    third_block_body.should see_var('z')
+    third_block_body.should see_var('x')
+    third_block_body.should see_var('y')
+    third_block_body.should see_var('abc')
+    third_block_body.should see_var('jkl')
+    third_block_body.should see_var('oo')
+  end
 end
   
 describe 'complete tests' do

@@ -207,6 +207,15 @@ module Wool
           visit vars
           visit body
         end
+        
+        add :method_add_block do |node, callnode, blocknode|
+          argnode, body = blocknode.children
+          arglist = Signature.arg_list_for_arglist(argnode[1])
+          
+          method_locals = Hash[arglist.map { |arg| [arg.name, arg] }]
+          new_scope = OpenScope.new(@current_scope, @current_scope.self_ptr, {}, method_locals)
+          visit_with_scope(body, new_scope)
+        end
       end
       add_global_annotator Annotator
     end
