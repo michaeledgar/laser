@@ -118,11 +118,6 @@ module Wool
             const_sexp_name(left) + '::' + const_sexp_name(right)
           end
         end
-        
-        # Looks up the local and returns it – initializing it to nil (as Ruby does)
-        def lookup_or_create_local(local_name)
-          locals[local_name] ||= LocalBinding.new(local_name, nil)
-        end
 
         # Enter the singleton class.
         add :sclass do |node, (_, singleton), body|
