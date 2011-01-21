@@ -883,6 +883,8 @@ describe ScopeAnnotation do
     third_block_body.should see_var('abc')
     third_block_body.should see_var('jkl')
     third_block_body.should see_var('oo')
+    
+    third_block_body.scope.lookup('z').should be list[0].scope.lookup('z')
   end
   
   # [:program,
