@@ -884,6 +884,34 @@ describe ScopeAnnotation do
     third_block_body.should see_var('jkl')
     third_block_body.should see_var('oo')
   end
+  
+  # [:program,
+  #  [[:assign, [:var_field, [:@ident, "x", [1, 0]]], [:@int, "10", [1, 4]]],
+  #   [:method_add_block,
+  #    [:call, [:array, nil], :".", [:@ident, "each", [1, 11]]],
+  #    [:brace_block,
+  #     [:block_var,
+  #      [:params,
+  #       [[:@ident, "x", [1, 19]]],
+  #       [[[:@ident, "y", [1, 22]], [:var_ref, [:@ident, "x", [1, 24]]]]],
+  #       nil,
+  #       nil,
+  #       nil],
+  #      nil],
+  #     [[:var_ref, [:@ident, "y", [1, 27]]]]]]]]
+  it 'handles block variables shadowing outside variables' do
+    tree = Sexp.new(Ripper.sexp('x = 10; [].each { |x, y=x| y }'))
+    ScopeAnnotation::Annotator.new.annotate!(tree)
+    list = tree[1]
+    list[0].should see_var('x')
+    list[0].should_not see_var('y')
+
+    first_block_body = list[1][2][2]
+    first_block_body.should see_var('x')
+    first_block_body.should see_var('y')
+    
+    first_block_body.scope.lookup('x').should_not be list[0].scope.lookup('x')
+  end
 end
   
 describe 'complete tests' do
