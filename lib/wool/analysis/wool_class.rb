@@ -41,6 +41,7 @@ module Wool
       cattr_accessor_with_default :all_modules, []
       
       def initialize(full_path, scope = Scope::GlobalScope)
+        full_path = submodule_path(scope.parent, full_path) if scope && scope.parent
         validate_module_path!(full_path)
         super(self, scope)
         
@@ -55,11 +56,19 @@ module Wool
         WoolModule.all_modules << self
       end
 
+      # Returns the canonical path for a (soon-to-be-created) submodule of the given
+      # scope. This is computed before creating the module.
+      def submodule_path(scope, new_mod_name)
+        new_mod_full_path = scope == Scope::GlobalScope ? '' : scope.path
+        new_mod_full_path += '::' unless new_mod_full_path.empty?
+        new_mod_full_path += new_mod_name
+      end
+
       def validate_module_path!(path)
         path.split('::').each do |component|
           if !component.empty? && component[0,1] !~ /[A-Z]/
             raise ArgumentError.new("Path component #{component} in #{path}" +
-                                    " does not start with a capital letter, A-Z.")
+                                    ' does not start with a capital letter, A-Z.')
           end
         end
       end

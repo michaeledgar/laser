@@ -17,37 +17,37 @@ module Wool
         end
         
         add :string_literal, :@CHAR, :@tstring_content, :string_embexpr, :string_content,
-            :xstring_literal do |node, *rest|
+            :xstring_literal do |node|
           node.class_estimate = ExactClassEstimate.new(ClassRegistry['String'])
           visit_children(node)
         end
         
-        add :@int do |node, *rest|
+        add :@int do |node|
           node.class_estimate = ExactClassEstimate.new(ClassRegistry['Fixnum'])
           visit_children(node)
         end
         
-        add :@float do |node, *rest|
+        add :@float do |node|
           node.class_estimate = ExactClassEstimate.new(ClassRegistry['Float'])
           visit_children(node)
         end
         
-        add :regexp_literal do |node, *rest|
+        add :regexp_literal do |node|
           node.class_estimate = ExactClassEstimate.new(ClassRegistry['Regexp'])
           visit_children(node)
         end
         
-        add :hash, :bare_assoc_hash do |node, *rest|
+        add :hash, :bare_assoc_hash do |node|
           node.class_estimate = ExactClassEstimate.new(ClassRegistry['Hash'])
           visit_children(node)
         end
         
-        add :symbol_literal, :dyna_symbol, :@label do |node, *rest|
+        add :symbol_literal, :dyna_symbol, :@label do |node|
           node.class_estimate = ExactClassEstimate.new(ClassRegistry['Symbol'])
           visit_children(node)
         end
         
-        add :array do |node, *rest|
+        add :array do |node|
           node.class_estimate = ExactClassEstimate.new(ClassRegistry['Array'])
           visit_children(node)
         end
@@ -67,12 +67,12 @@ module Wool
           visit_children(node)
         end
         
-        add :dot2, :dot3 do |node, *rest|
+        add :dot2, :dot3 do |node|
           node.class_estimate = ExactClassEstimate.new(ClassRegistry['Range'])
           visit_children(node)
         end
         
-        add :lambda do |node, *rest|
+        add :lambda do |node|
           node.class_estimate = ExactClassEstimate.new(ClassRegistry['Proc'])
           visit_children(node)
         end

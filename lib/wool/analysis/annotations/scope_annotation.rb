@@ -7,7 +7,7 @@ module Wool
     module ScopeAnnotation
       extend BasicAnnotation
       add_property :scope
-      
+
       # This is the annotator for the parent annotation.
       class Annotator
         attr_reader :scope_stack
@@ -67,7 +67,7 @@ module Wool
         def lookup_or_create_module(scope, new_mod_name)
           lookup_or_create(scope, new_mod_name) do
             new_scope = ClosedScope.new(scope, nil)
-            new_mod = WoolModule.new(submodule_path(scope, new_mod_name), new_scope)
+            new_mod = WoolModule.new(new_mod_name, new_scope)
             new_scope
           end
         end
@@ -76,7 +76,7 @@ module Wool
         def lookup_or_create_class(scope, new_class_name, superclass)
           lookup_or_create(scope, new_class_name) do
             new_scope = ClosedScope.new(scope, nil)
-            new_class = WoolClass.new(submodule_path(scope, new_class_name), new_scope) do |klass|
+            new_class = WoolClass.new(new_class_name, new_scope) do |klass|
               klass.superclass = superclass
             end
             new_scope
@@ -122,16 +122,6 @@ module Wool
         # Looks up the local and returns it – initializing it to nil (as Ruby does)
         def lookup_or_create_local(local_name)
           locals[local_name] ||= LocalBinding.new(local_name, nil)
-        end
-
-        # Returns the canonical path for a (soon-to-be-created) submodule of the given
-        # scope. This is computed before creating the module.
-        #
-        # TODO(adgar): make this compute inside the WoolModule/WooLClass constructors.
-        def submodule_path(scope, new_mod_name)
-          new_mod_full_path = scope == Scope::GlobalScope ? '' : scope.path
-          new_mod_full_path += "::" unless new_mod_full_path.empty?
-          new_mod_full_path += new_mod_name
         end
 
         # Enter the singleton class.
@@ -203,6 +193,7 @@ module Wool
         def extract_names(node)
           case node[0]
           when Array then node.map { |x| extract_names(x) }.flatten
+          when :field, :aref_field then []  # useless for discovering names and new scopes
           when :var_field then [extract_names(node[1])]
           when :mlhs_paren then extract_names(node[1])
           when :mlhs_add_star then node.children.map { |x| extract_names(x) }.flatten
