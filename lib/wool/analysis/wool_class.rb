@@ -41,9 +41,9 @@ module Wool
       cattr_accessor_with_default :all_modules, []
       
       def initialize(full_path, scope = Scope::GlobalScope)
-        full_path = submodule_path(scope.parent, full_path) if scope && scope.parent
-        validate_module_path!(full_path)
         super(self, scope)
+        full_path = submodule_path(full_path) if scope && scope.parent
+        validate_module_path!(full_path)
         
         @path = full_path
         @instance_methods = Hash.new { |hash, name| hash[name] = WoolMethod.new(name) }
@@ -58,7 +58,8 @@ module Wool
 
       # Returns the canonical path for a (soon-to-be-created) submodule of the given
       # scope. This is computed before creating the module.
-      def submodule_path(scope, new_mod_name)
+      def submodule_path(new_mod_name)
+        scope = self.scope.parent
         new_mod_full_path = scope == Scope::GlobalScope ? '' : scope.path
         new_mod_full_path += '::' unless new_mod_full_path.empty?
         new_mod_full_path += new_mod_name
