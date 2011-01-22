@@ -2,16 +2,22 @@ module Wool
   module Parsers
     grammar Annotation
       include Class
+      include Structural
+      include GeneralPurpose
+
       rule root
-        type {
+        space* type space* {
           def type
             Type.new(constraints)
+          end
+          def constraints
+            elements[1].constraints
           end
         }
       end
 
       rule type
-        (top / self_type / hash_constraint)
+        (top / self_type / class_based_constraint / structural_constraint)
       end
 
       rule top

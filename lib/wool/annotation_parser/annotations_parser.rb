@@ -12,9 +12,23 @@ module Wool
 
       include Class
 
+      include Structural
+
+      include GeneralPurpose
+
       module Root0
         def type
+          elements[1]
+        end
+
+      end
+
+      module Root1
+        def type
           Type.new(constraints)
+        end
+        def constraints
+          elements[1].constraints
         end
       end
 
@@ -29,8 +43,43 @@ module Wool
           return cached
         end
 
-        r0 = _nt_type
-        r0.extend(Root0)
+        i0, s0 = index, []
+        s1, i1 = [], index
+        loop do
+          r2 = _nt_space
+          if r2
+            s1 << r2
+          else
+            break
+          end
+        end
+        r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
+        s0 << r1
+        if r1
+          r3 = _nt_type
+          s0 << r3
+          if r3
+            s4, i4 = [], index
+            loop do
+              r5 = _nt_space
+              if r5
+                s4 << r5
+              else
+                break
+              end
+            end
+            r4 = instantiate_node(SyntaxNode,input, i4...index, s4)
+            s0 << r4
+          end
+        end
+        if s0.last
+          r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
+          r0.extend(Root0)
+          r0.extend(Root1)
+        else
+          @index = i0
+          r0 = nil
+        end
 
         node_cache[:root][start_index] = r0
 
@@ -57,12 +106,17 @@ module Wool
           if r2
             r0 = r2
           else
-            r3 = _nt_hash_constraint
+            r3 = _nt_class_based_constraint
             if r3
               r0 = r3
             else
-              @index = i0
-              r0 = nil
+              r4 = _nt_structural_constraint
+              if r4
+                r0 = r4
+              else
+                @index = i0
+                r0 = nil
+              end
             end
           end
         end

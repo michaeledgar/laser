@@ -38,16 +38,16 @@ describe Parsers::ClassParser do
       ['Symbol => String', 'Symbol=>String', 'Symbol  =>   String'].each do |input|
         input.should parse_to(
             [Constraints::GenericClassConstraint.new('Hash', :covariant,
-                [Constraints::ClassConstraint.new('Symbol', :covariant),
-                 Constraints::ClassConstraint.new('String', :covariant)])])
+                [[Constraints::ClassConstraint.new('Symbol', :covariant)],
+                 [Constraints::ClassConstraint.new('String', :covariant)]])])
       end
     end
     
     it 'allows variance constraints on the key and value types' do
       '::Hello::World==>Some::Constant-'.should parse_to(
           [Constraints::GenericClassConstraint.new('Hash', :covariant,
-              [Constraints::ClassConstraint.new('::Hello::World', :invariant),
-               Constraints::ClassConstraint.new('Some::Constant', :contravariant)])])
+              [[Constraints::ClassConstraint.new('::Hello::World', :invariant)],
+               [Constraints::ClassConstraint.new('Some::Constant', :contravariant)]])])
     end
   end
   
@@ -55,7 +55,7 @@ describe Parsers::ClassParser do
     it 'is parsed as a GenericClassConstraint' do
       'Array<String>'.should parse_to(
           [Constraints::GenericClassConstraint.new('Array', :covariant,
-              [Constraints::ClassConstraint.new('String', :covariant)])])
+              [[Constraints::ClassConstraint.new('String', :covariant)]])])
     end
   end
   
@@ -63,8 +63,8 @@ describe Parsers::ClassParser do
     it 'is parsed as a GenericClassConstraint' do
       'Hash- < Symbol=,   String  >'.should parse_to(
           [Constraints::GenericClassConstraint.new('Hash', :contravariant,
-              [Constraints::ClassConstraint.new('Symbol', :invariant),
-               Constraints::ClassConstraint.new('String', :covariant)])])
+              [[Constraints::ClassConstraint.new('Symbol', :invariant)],
+               [Constraints::ClassConstraint.new('String', :covariant)]])])
     end
   end
   
@@ -72,9 +72,9 @@ describe Parsers::ClassParser do
     it 'should parse correctly as nested GenericClassConstraint' do
       'Array<Hash<Symbol, String>>'.should parse_to(
           [Constraints::GenericClassConstraint.new('Array', :covariant,
-              [Constraints::GenericClassConstraint.new('Hash', :covariant,
-                  [Constraints::ClassConstraint.new('Symbol', :covariant),
-                   Constraints::ClassConstraint.new('String', :covariant)])])])
+              [[Constraints::GenericClassConstraint.new('Hash', :covariant,
+                  [[Constraints::ClassConstraint.new('Symbol', :covariant)],
+                   [Constraints::ClassConstraint.new('String', :covariant)]])]])])
     end
   end
   
@@ -82,7 +82,7 @@ describe Parsers::ClassParser do
     it 'should parse as a covariant generic array constraint' do
       '[   String= ]'.should parse_to(
           [Constraints::GenericClassConstraint.new('Array', :covariant,
-              [Constraints::ClassConstraint.new('String', :invariant)])])
+              [[Constraints::ClassConstraint.new('String', :invariant)]])])
     end
   end
   
@@ -90,6 +90,26 @@ describe Parsers::ClassParser do
     it 'should parse as a covariant Object constraint, which matches any object' do
       '_'.should parse_to(
           [Constraints::ClassConstraint.new('Object', :covariant)])
+    end
+  end
+
+  describe 'tuples' do
+    describe 'a simple tuple type' do
+      it 'should parse to a TupleConstraint' do
+        '(String- , _ , Symbol= => Fixnum)'.should parse_to(
+            [Constraints::TupleConstraint.new(
+              [[Constraints::ClassConstraint.new('String', :contravariant)],
+               [Constraints::ClassConstraint.new('Object', :covariant)],
+               [Constraints::GenericClassConstraint.new('Hash', :covariant,
+                   [[Constraints::ClassConstraint.new('Symbol', :invariant)],
+                    [Constraints::ClassConstraint.new('Fixnum', :covariant)]])]])])
+      end
+    end
+  
+    describe 'an empty tuple type' do
+      it 'should parse to a (relatively useless) TupleConstraint' do
+        '(  )'.should parse_to([Constraints::TupleConstraint.new([])])
+      end
     end
   end
 end

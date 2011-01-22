@@ -36,6 +36,21 @@ module Wool
       end
     end
     
+    class StructuralConstraint < TypeConstraint
+      attr_reader :method_name, :arg_constraint_list, :return_constraints
+      
+      def initialize(method_name, arg_constraint_list, return_constraints)
+        @method_name = method_name
+        @arg_constraint_list = arg_constraint_list
+        @return_constraints = return_constraints
+      end
+      
+      def signature
+        {method_name: method_name, arg_constraint_list: arg_constraint_list,
+         return_constraints: return_constraints}
+      end
+    end
+    
     class ClassConstraint < Base
       acts_as_struct :class_name, :variance
       
@@ -57,6 +72,27 @@ module Wool
 
       def signature
         super.merge(subtype_constraints: subtype_constraints)
+      end
+    end
+    
+    # Represents a Tuple: an array of a given, fixed size, with each position
+    # in the array possessing a set of constraints.
+    class TupleConstraint < TypeConstraint
+      attr_reader :element_constraints
+      def initialize(element_constraints)
+        @element_constraints = element_constraints
+      end
+      
+      def size
+        element_constraints.size
+      end
+      
+      def [](idx)
+        element_constraints[idx]
+      end
+      
+      def signature
+        {element_constraints: element_constraints}
       end
     end
   end

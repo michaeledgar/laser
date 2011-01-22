@@ -4,6 +4,40 @@ module Wool
       rule space
         [ \t]
       end
+      
+      rule method_name
+        [A-Za-z0-9_]+ [=!?]? / operator
+      end
+      
+      rule operator
+        '[]=' / '[]' / '|' / '^' / '&' / '<=>' / '===' / '==' / '=~' / '>>' /
+        '>=' / '>'/ '<<' / '<=' / '<' / '+@' / '-@' / '+' / '-' / '**' / '*' /
+         '/' / '!' / '~' / '%'
+      end
+      
+      rule parenthesized_type_list
+        '(' space* ')' {
+          def constraints
+            []
+          end
+        } / '(' type_list ')' {
+          def constraints
+            type_list.constraints
+          end
+        }
+      end
+      
+      rule type_list
+        type space* ',' space* type_list {
+          def constraints
+            [type.constraints] + type_list.constraints
+          end
+        } / type {
+          def constraints
+            [super]
+          end
+        }
+      end
     end
   end
 end
