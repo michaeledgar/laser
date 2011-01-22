@@ -10,7 +10,7 @@ module Wool
                 'Hash', :covariant, [variance_constraint1.constraints.first,
                 variance_constraint2.constraints.first])]
           end
-        } / array_constraint / generic_constraint / dont_care_constraint
+        } / array_constraint / generic_constraint / dont_care_constraint / tuple_constraint
       end
       
       rule dont_care_constraint
@@ -30,21 +30,30 @@ module Wool
         }
       end
       
+      rule tuple_constraint
+        '(' space* type_list space* ')' {
+          def constraints
+            [Constraints::TupleConstraint.new(
+                type_list.constraints)]
+          end
+        }
+      end
+      
       rule generic_constraint
-        variance_constraint space* '<' space* generic_list space* '>' {
+        variance_constraint space* '<' space* type_list space* '>' {
           def constraints
             class_constraint = variance_constraint.constraints.first
             [Constraints::GenericClassConstraint.new(
                 class_constraint.class_name, class_constraint.variance,
-                generic_list.constraints)]
+                type_list.constraints)]
           end
         } / variance_constraint
       end
       
-      rule generic_list
-        type space* ',' space* generic_list {
+      rule type_list
+        type space* ',' space* type_list {
           def constraints
-            type.constraints + generic_list.constraints
+            type.constraints + type_list.constraints
           end
         } / type
       end

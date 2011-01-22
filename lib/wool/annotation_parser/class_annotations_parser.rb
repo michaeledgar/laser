@@ -109,8 +109,13 @@ module Wool
               if r11
                 r0 = r11
               else
-                @index = i0
-                r0 = nil
+                r12 = _nt_tuple_constraint
+                if r12
+                  r0 = r12
+                else
+                  @index = i0
+                  r0 = nil
+                end
               end
             end
           end
@@ -240,12 +245,100 @@ module Wool
         r0
       end
 
+      module TupleConstraint0
+        def type_list
+          elements[2]
+        end
+
+      end
+
+      module TupleConstraint1
+        def constraints
+          [Constraints::TupleConstraint.new(
+              type_list.constraints)]
+        end
+      end
+
+      def _nt_tuple_constraint
+        start_index = index
+        if node_cache[:tuple_constraint].has_key?(index)
+          cached = node_cache[:tuple_constraint][index]
+          if cached
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            @index = cached.interval.end
+          end
+          return cached
+        end
+
+        i0, s0 = index, []
+        if has_terminal?('(', false, index)
+          r1 = instantiate_node(SyntaxNode,input, index...(index + 1))
+          @index += 1
+        else
+          terminal_parse_failure('(')
+          r1 = nil
+        end
+        s0 << r1
+        if r1
+          s2, i2 = [], index
+          loop do
+            r3 = _nt_space
+            if r3
+              s2 << r3
+            else
+              break
+            end
+          end
+          r2 = instantiate_node(SyntaxNode,input, i2...index, s2)
+          s0 << r2
+          if r2
+            r4 = _nt_type_list
+            s0 << r4
+            if r4
+              s5, i5 = [], index
+              loop do
+                r6 = _nt_space
+                if r6
+                  s5 << r6
+                else
+                  break
+                end
+              end
+              r5 = instantiate_node(SyntaxNode,input, i5...index, s5)
+              s0 << r5
+              if r5
+                if has_terminal?(')', false, index)
+                  r7 = instantiate_node(SyntaxNode,input, index...(index + 1))
+                  @index += 1
+                else
+                  terminal_parse_failure(')')
+                  r7 = nil
+                end
+                s0 << r7
+              end
+            end
+          end
+        end
+        if s0.last
+          r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
+          r0.extend(TupleConstraint0)
+          r0.extend(TupleConstraint1)
+        else
+          @index = i0
+          r0 = nil
+        end
+
+        node_cache[:tuple_constraint][start_index] = r0
+
+        r0
+      end
+
       module GenericConstraint0
         def variance_constraint
           elements[0]
         end
 
-        def generic_list
+        def type_list
           elements[4]
         end
 
@@ -256,7 +349,7 @@ module Wool
           class_constraint = variance_constraint.constraints.first
           [Constraints::GenericClassConstraint.new(
               class_constraint.class_name, class_constraint.variance,
-              generic_list.constraints)]
+              type_list.constraints)]
         end
       end
 
@@ -309,7 +402,7 @@ module Wool
               r6 = instantiate_node(SyntaxNode,input, i6...index, s6)
               s1 << r6
               if r6
-                r8 = _nt_generic_list
+                r8 = _nt_type_list
                 s1 << r8
                 if r8
                   s9, i9 = [], index
@@ -363,26 +456,26 @@ module Wool
         r0
       end
 
-      module GenericList0
+      module TypeList0
         def type
           elements[0]
         end
 
-        def generic_list
+        def type_list
           elements[4]
         end
       end
 
-      module GenericList1
+      module TypeList1
         def constraints
-          type.constraints + generic_list.constraints
+          type.constraints + type_list.constraints
         end
       end
 
-      def _nt_generic_list
+      def _nt_type_list
         start_index = index
-        if node_cache[:generic_list].has_key?(index)
-          cached = node_cache[:generic_list][index]
+        if node_cache[:type_list].has_key?(index)
+          cached = node_cache[:type_list][index]
           if cached
             cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
@@ -428,7 +521,7 @@ module Wool
               r6 = instantiate_node(SyntaxNode,input, i6...index, s6)
               s1 << r6
               if r6
-                r8 = _nt_generic_list
+                r8 = _nt_type_list
                 s1 << r8
               end
             end
@@ -436,8 +529,8 @@ module Wool
         end
         if s1.last
           r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
-          r1.extend(GenericList0)
-          r1.extend(GenericList1)
+          r1.extend(TypeList0)
+          r1.extend(TypeList1)
         else
           @index = i1
           r1 = nil
@@ -454,7 +547,7 @@ module Wool
           end
         end
 
-        node_cache[:generic_list][start_index] = r0
+        node_cache[:type_list][start_index] = r0
 
         r0
       end
