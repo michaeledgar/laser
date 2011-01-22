@@ -75,9 +75,7 @@ module Wool
     # inputs: Array<(String, String)>
     #   Array of (filename, body) tuples.
     def self.analyze_inputs(inputs)
-      inputs.map! { |filename, text| [filename, Sexp.new(Ripper.sexp(text))] }
       Annotations.annotate_inputs(inputs)
-      inputs
     end
     
     # Parses the given text.

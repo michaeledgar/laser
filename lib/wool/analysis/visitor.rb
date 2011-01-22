@@ -33,11 +33,31 @@ module Wool
           (self.filters ||= []) << Filter.new(args, blk)
         end
       end
-
+      
+      attr_reader :text
+      # Annotates the given node +root+, assuming the tree represents the source contained in
+      # +text+. This is useful for text-based discovery that has to happen, often to capture
+      # lexing information lost by the Ripper parser.s
+      #
+      # root: Sexp
+      # text: String
+      def annotate_with_text(root, text)
+        @text = text
+        annotate! root
+      end
+      
+      # Entry point for annotation. Should be called on the root of the tree we
+      # are interested in annotating.
+      #
+      # root: Sexp
       def annotate!(root)
         visit root
       end
 
+      # Visits a given node. Will be automatically called by the visitor and can (and often
+      # should) be called manually.
+      #
+      # node: Sexp
       def visit(node)
         case node
         when Sexp
@@ -49,6 +69,49 @@ module Wool
           end
         end
       end
+      
+      # Visits the children of the node, by calling #visit on every child of
+      # node that is a Sexp.
+      #
+      # node: Sexp
+      def visit_children(node)
+        node.children.select {|x| Sexp === x}.each {|x| visit(x) }
+      end
+      # By default, we should visit every child, trying to find something the visitor
+      # subclass has overridden.
+      alias_method :default_visit, :visit_children
+      
+      # Tries all known filters on the given node, and if the filter matches, then
+      # the filter is run on the node. Returns whether or not any filters matched.
+      #
+      # node: Sexp
+      # return: Boolean
+      def try_filters(node)
+        filters = self.class.filters.select { |filter| filter.matches?(node) }
+        if filters.any?
+          filters.each { |filter| filter.run(node, self) }
+          true
+        end
+      end
+      
+      # The visitor handles dispatch on a node of type :type by calling visit_type.
+      #
+      # generates: /visit_([a-z]+)/
+      def method_missing(meth, *args, &blk)
+        if meth.to_s[0,6] == 'visit_' && meth.to_s.size > 6
+          try_filters args.first or default_visit args.first
+        else
+          super
+        end
+      end
+      
+      ################## Source text manipulation methods ###############
+      
+      def lines
+        text.lines.to_a
+      end
+      
+      ################## Scope management methods #######################
       
       attr_accessor_with_default :scope_stack, [Scope::GlobalScope]
       def enter_scope(scope)
@@ -71,27 +134,6 @@ module Wool
       
       def visit_with_scope(node, scope)
         with_scope(scope) { visit(node) }
-      end
-      
-      def visit_children(node)
-        node.children.select {|x| Sexp === x}.each {|x| visit(x) }
-      end
-      alias_method :default_visit, :visit_children
-      
-      def try_filters(node)
-        filters = self.class.filters.select { |filter| filter.matches?(node) }
-        if filters.any?
-          filters.each { |filter| filter.run(node, self) }
-          true
-        end
-      end
-      
-      def method_missing(meth, *args, &blk)
-        if meth.to_s[0,6] == 'visit_'
-          try_filters args.first or default_visit args.first
-        else
-          super
-        end
       end
     end
   end

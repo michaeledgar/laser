@@ -59,11 +59,11 @@ module Wool
           r3 = instantiate_node(SyntaxNode,input, i3...index, s3)
           s1 << r3
           if r3
-            if has_terminal?("=>", false, index)
+            if has_terminal?('=>', false, index)
               r5 = instantiate_node(SyntaxNode,input, index...(index + 2))
               @index += 2
             else
-              terminal_parse_failure("=>")
+              terminal_parse_failure('=>')
               r5 = nil
             end
             s1 << r5
@@ -97,16 +97,145 @@ module Wool
         if r1
           r0 = r1
         else
-          r9 = _nt_generic_constraint
+          r9 = _nt_array_constraint
           if r9
             r0 = r9
           else
-            @index = i0
-            r0 = nil
+            r10 = _nt_generic_constraint
+            if r10
+              r0 = r10
+            else
+              r11 = _nt_dont_care_constraint
+              if r11
+                r0 = r11
+              else
+                @index = i0
+                r0 = nil
+              end
+            end
           end
         end
 
         node_cache[:hash_constraint][start_index] = r0
+
+        r0
+      end
+
+      module DontCareConstraint0
+        def constraints
+          [Constraints::ClassConstraint.new('Object', :covariant)]
+        end
+      end
+
+      def _nt_dont_care_constraint
+        start_index = index
+        if node_cache[:dont_care_constraint].has_key?(index)
+          cached = node_cache[:dont_care_constraint][index]
+          if cached
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            @index = cached.interval.end
+          end
+          return cached
+        end
+
+        if has_terminal?('_', false, index)
+          r0 = instantiate_node(SyntaxNode,input, index...(index + 1))
+          r0.extend(DontCareConstraint0)
+          @index += 1
+        else
+          terminal_parse_failure('_')
+          r0 = nil
+        end
+
+        node_cache[:dont_care_constraint][start_index] = r0
+
+        r0
+      end
+
+      module ArrayConstraint0
+        def type
+          elements[2]
+        end
+
+      end
+
+      module ArrayConstraint1
+        def constraints
+          [Constraints::GenericClassConstraint.new(
+              'Array', :covariant, [elements[2].constraints.first])]
+        end
+      end
+
+      def _nt_array_constraint
+        start_index = index
+        if node_cache[:array_constraint].has_key?(index)
+          cached = node_cache[:array_constraint][index]
+          if cached
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            @index = cached.interval.end
+          end
+          return cached
+        end
+
+        i0, s0 = index, []
+        if has_terminal?('[', false, index)
+          r1 = instantiate_node(SyntaxNode,input, index...(index + 1))
+          @index += 1
+        else
+          terminal_parse_failure('[')
+          r1 = nil
+        end
+        s0 << r1
+        if r1
+          s2, i2 = [], index
+          loop do
+            r3 = _nt_space
+            if r3
+              s2 << r3
+            else
+              break
+            end
+          end
+          r2 = instantiate_node(SyntaxNode,input, i2...index, s2)
+          s0 << r2
+          if r2
+            r4 = _nt_type
+            s0 << r4
+            if r4
+              s5, i5 = [], index
+              loop do
+                r6 = _nt_space
+                if r6
+                  s5 << r6
+                else
+                  break
+                end
+              end
+              r5 = instantiate_node(SyntaxNode,input, i5...index, s5)
+              s0 << r5
+              if r5
+                if has_terminal?(']', false, index)
+                  r7 = instantiate_node(SyntaxNode,input, index...(index + 1))
+                  @index += 1
+                else
+                  terminal_parse_failure(']')
+                  r7 = nil
+                end
+                s0 << r7
+              end
+            end
+          end
+        end
+        if s0.last
+          r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
+          r0.extend(ArrayConstraint0)
+          r0.extend(ArrayConstraint1)
+        else
+          @index = i0
+          r0 = nil
+        end
+
+        node_cache[:array_constraint][start_index] = r0
 
         r0
       end

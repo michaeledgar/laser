@@ -7,11 +7,13 @@ module Wool
       cattr_accessor_with_default :global_annotations, []
       
       def self.annotate_inputs(inputs)
+        inputs.map! { |filename, text| [filename, text, Sexp.new(Ripper.sexp(text))] }
         ordered_annotations.each do |annotator|
-          inputs.each do |filename, tree|
-            annotator.annotate!(tree)
+          inputs.each do |filename, text, tree|
+            annotator.annotate_with_text(tree, text)
           end
         end
+        inputs.map! { |filename, _, tree| [filename, tree] }
       end
       
       def self.annotation_ordered

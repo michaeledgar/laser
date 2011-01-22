@@ -4,13 +4,30 @@ module Wool
     grammar Class   
       include GeneralPurpose
       rule hash_constraint
-        variance_constraint space* "=>" space* variance_constraint {
+        variance_constraint space* '=>' space* variance_constraint {
           def constraints
             [Constraints::GenericClassConstraint.new(
                 'Hash', :covariant, [variance_constraint1.constraints.first,
                 variance_constraint2.constraints.first])]
           end
-        } / generic_constraint
+        } / array_constraint / generic_constraint / dont_care_constraint
+      end
+      
+      rule dont_care_constraint
+        '_' {
+          def constraints
+            [Constraints::ClassConstraint.new('Object', :covariant)]
+          end
+        }
+      end
+      
+      rule array_constraint
+        '[' space* type space* ']' {
+          def constraints
+            [Constraints::GenericClassConstraint.new(
+                'Array', :covariant, [elements[2].constraints.first])]
+          end
+        }
       end
       
       rule generic_constraint

@@ -77,4 +77,19 @@ describe Parsers::ClassParser do
                    Constraints::ClassConstraint.new('String', :covariant)])])])
     end
   end
+  
+  describe 'an array generic shorthand' do
+    it 'should parse as a covariant generic array constraint' do
+      '[   String= ]'.should parse_to(
+          [Constraints::GenericClassConstraint.new('Array', :covariant,
+              [Constraints::ClassConstraint.new('String', :invariant)])])
+    end
+  end
+  
+  describe 'a dont-care shorthand' do
+    it 'should parse as a covariant Object constraint, which matches any object' do
+      '_'.should parse_to(
+          [Constraints::ClassConstraint.new('Object', :covariant)])
+    end
+  end
 end
