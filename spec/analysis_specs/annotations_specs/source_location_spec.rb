@@ -182,4 +182,54 @@ describe SourceLocationAnnotation do
     assign[2].source_begin.should == [1, 6]
     assign[2].source_end.should == [2, 3]
   end
+  
+  # [:program,
+  #  [[:def,
+  #    [:@ident, "abc", [2, 0]],
+  #    [:params, nil, nil, nil, nil, nil],
+  #    [:bodystmt,
+  #     [[:assign, [:var_field, [:@ident, "x", [3, 2]]], [:@int, "10", [3, 6]]]],
+  #     nil, nil, nil]]]]
+  it 'discovers the locations of method definitons' do
+    input = " def \nabc\n  x = 10\n end"
+    tree = Sexp.new(Ripper.sexp(input))
+    SourceLocationAnnotation::Annotator.new.annotate_with_text(tree, input)
+    definition = tree[1][0]
+    definition.source_begin.should == [1, 1]
+  end
+  
+  it 'discovers the locations of singleton method definitons' do
+    input = " def \n self.abc\n  x = 10\n end"
+    tree = Sexp.new(Ripper.sexp(input))
+    SourceLocationAnnotation::Annotator.new.annotate_with_text(tree, input)
+    definition = tree[1][0]
+    definition.source_begin.should == [1, 1]
+  end
+  
+  # [:program,
+  #  [[:class,
+  #    [:const_ref, [:@const, "A", [2, 0]]],
+  #    [:var_ref, [:@const, "B", [2, 4]]],
+  #    [:bodystmt,
+  #     [[:module,
+  #       [:const_ref, [:@const, "D", [4, 0]]],
+  #       [:bodystmt, [[:void_stmt]], nil, nil, nil]]],
+  #     nil, nil, nil]]]]
+  it 'discovers the locations of class and module definitons' do
+    input = "   class\nA < B; module\n\nD;end\n   end"
+    tree = Sexp.new(Ripper.sexp(input))
+    SourceLocationAnnotation::Annotator.new.annotate_with_text(tree, input)
+    klass = tree[1][0]
+    klass.source_begin.should == [1, 3]
+    klass[3][1][0].source_begin.should == [2, 7]
+  end
+  
+  it 'discovers the locations of singleton class definitons' do
+    input = "   class\nA < B;   class <<\nB;end\n   end"
+    tree = Sexp.new(Ripper.sexp(input))
+    SourceLocationAnnotation::Annotator.new.annotate_with_text(tree, input)
+    klass = tree[1][0]
+    klass.source_begin.should == [1, 3]
+    klass[3][1][0].source_begin.should == [2, 9]
+  end
 end

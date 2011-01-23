@@ -16,8 +16,8 @@ module Wool
           if (first_child = node.children.find { |child| Sexp === child })
             node.source_begin = first_child.source_begin
           end
-          if (last_child = node.children.reverse.find { |child| Sexp === child })
-            node.source_end = last_child.source_end
+          if (last_end = node.children.select { |child| Sexp === child }.map(&:source_end).compact.last)
+            node.source_end = last_end
           end
         end
         
@@ -28,7 +28,7 @@ module Wool
           node.source_end[1] += text.size
         end
         
-        add :regexp_literal do |node, components, regexp_end|
+        add :regexp_literal do |node|
           default_visit node
           node.source_begin = node.source_begin.dup  # make a copy we can mutate
           if backtrack_expecting!(node.source_begin, -1, '/')
@@ -38,7 +38,7 @@ module Wool
           end
         end
         
-        add :string_literal do |node, content|
+        add :string_literal do |node|
           default_visit node
           # make sure we have some hints as to source location
           if node.source_begin
@@ -52,7 +52,7 @@ module Wool
           end
         end
         
-        add :string_embexpr do |node, content|
+        add :string_embexpr do |node|
           default_visit node
           if node.source_begin
             node.source_begin = node.source_begin.dup
@@ -62,7 +62,7 @@ module Wool
           end
         end
         
-        add :dyna_symbol do |node, content|
+        add :dyna_symbol do |node|
           default_visit node
           if node.source_begin
             node.source_begin = node.source_begin.dup
@@ -72,13 +72,13 @@ module Wool
           end
         end
         
-        add :symbol_literal do |node, content|
+        add :symbol_literal do |node|
           default_visit node
           node.source_begin = node.source_begin.dup
           node.source_begin[1] -= 1  # always prefixed with :
         end
         
-        add :hash do |node, content|
+        add :hash do |node|
           default_visit node
           # Ensure we found some source location hints
           if node.source_begin            
@@ -89,7 +89,7 @@ module Wool
           end
         end
         
-        add :array do |node, content|
+        add :array do |node|
           default_visit node
           # Ensure we found some source location hints
           if node.source_begin            
@@ -98,6 +98,24 @@ module Wool
             backtrack_searching!(node.source_begin, '[')
             forwardtrack_searching!(node.source_end, ']')
           end
+        end
+        
+        add :def, :defs do |node|
+          default_visit node
+          node.source_begin = node.source_begin.dup
+          backtrack_searching!(node.source_begin, 'def')
+        end
+        
+        add :class, :sclass do |node|
+          default_visit node
+          node.source_begin = node.source_begin.dup
+          backtrack_searching!(node.source_begin, 'class')
+        end
+        
+        add :module do |node|
+          default_visit node
+          node.source_begin = node.source_begin.dup
+          backtrack_searching!(node.source_begin, 'module')
         end
         
         # Searches for the given text starting at the given location, going backwards.
@@ -138,7 +156,7 @@ module Wool
             location[0] += 1
             location[1] = 0
             line = lines[location[0] - 1]
-          end while location[0] < lines.size
+          end while location[0] <= lines.size
           false
         end
         
