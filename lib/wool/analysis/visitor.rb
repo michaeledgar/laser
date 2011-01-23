@@ -108,7 +108,7 @@ module Wool
       ################## Source text manipulation methods ###############
       
       def lines
-        text.lines.to_a
+        @lines ||= text.lines.to_a
       end
       
       ################## Scope management methods #######################

@@ -31,8 +31,79 @@ module Wool
         add :regexp_literal do |node, components, regexp_end|
           default_visit node
           node.source_begin = node.source_begin.dup  # make a copy we can mutate
-          if text_at(node.source_begin, -1, 1) == '/'
-            node.source_begin[1] -= 1
+          if backtrack_expecting!(node.source_begin, -1, '/')
+            # matched a / before the node
+          elsif backtrack_expecting!(node.source_begin, -3, '%r')
+            # matched a %r[]/%r{}/...
+          end
+        end
+        
+        add :string_literal do |node, content|
+          default_visit node
+          node.source_begin = node.source_begin.dup  # make a copy we can mutate
+          node.source_end = node.source_end.dup  # make a copy we can mutate
+          if backtrack_expecting!(node.source_begin, -1, "'") ||
+             backtrack_expecting!(node.source_begin, -1, '"')
+            # matched a single-quoted-string
+            node.source_end[1] += 1
+          end
+        end
+        
+        add :string_embexpr do |node, content|
+          default_visit node
+          node.source_begin = node.source_begin.dup
+          node.source_end = node.source_end.dup
+          node.source_begin[1] -= 2  # always prefixed with #{
+          node.source_end[1] += 1  # always suffixed with }
+        end
+        
+        add :dyna_symbol do |node, content|
+          default_visit node
+          node.source_begin = node.source_begin.dup
+          node.source_end = node.source_end.dup
+          node.source_begin[1] -= 2  # always prefixed with :' or :"
+          node.source_end[1] += 1  # always suffixed with "
+        end
+        
+        add :symbol_literal do |node, content|
+          default_visit node
+          node.source_begin = node.source_begin.dup
+          node.source_begin[1] -= 1  # always prefixed with :
+        end
+        
+        add :hash do |node, content|
+          default_visit node
+          node.source_begin = node.source_begin.dup
+          node.source_end = node.source_end.dup
+          backtrack_searching!(node.source_begin, '{')
+        end
+        
+        # Searches for the given text starting at the given location, going backwards.
+        # Modifies the location to match the discovered expected text on success.
+        #
+        # location: [Fixnum, Fixnum]
+        # expectation: String
+        # returns: Boolean
+        def backtrack_searching!(location, expectation)
+          line = lines[location[0] - 1]
+          begin
+            if (expectation_location = line.rindex(expectation, location[1]))
+              location[1] = expectation_location
+              return true
+            end
+            location[0] -= 1
+            line = lines[location[0] - 1]
+            location[1] = line.size
+          end while location[0] >= 0
+          false
+        end
+        
+        # Attempts to backtrack for the given string from the given location.
+        # Returns true if successful.
+        def backtrack_expecting!(location, offset, expectation)
+          if text_at(location, offset, expectation.length) == expectation
+            location[1] += offset
+            true
           end
         end
         
