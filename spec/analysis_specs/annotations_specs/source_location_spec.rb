@@ -165,4 +165,21 @@ describe SourceLocationAnnotation do
     hash[1][1][0][2][1].source_end.should == [1, 79]
     hash[1][1][0][2][1][1].source_end.should == [1, 79]
   end
+  
+  # [:program,
+  #  [[:assign,
+  #    [:var_field, [:@ident, "arr", [1, 0]]],
+  #    [:array, [[:@int, "1", [1, 8]], [:@int, "2", [2, 0]]]]]]]
+  
+  it 'discovers the locations of array literals' do
+    input = "arr = [ 1, \n2 ]"
+    tree = Sexp.new(Ripper.sexp(input))
+    SourceLocationAnnotation::Annotator.new.annotate_with_text(tree, input)
+    assign = tree[1][0]
+    assign.source_begin.should == [1, 0]
+    assign[1].source_begin.should == [1, 0]
+    assign[1].source_end.should == [1, 3]
+    assign[2].source_begin.should == [1, 6]
+    assign[2].source_end.should == [2, 3]
+  end
 end

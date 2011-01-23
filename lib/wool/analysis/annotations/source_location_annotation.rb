@@ -40,29 +40,36 @@ module Wool
         
         add :string_literal do |node, content|
           default_visit node
-          node.source_begin = node.source_begin.dup  # make a copy we can mutate
-          node.source_end = node.source_end.dup  # make a copy we can mutate
-          if backtrack_expecting!(node.source_begin, -1, "'") ||
-             backtrack_expecting!(node.source_begin, -1, '"')
-            # matched a single-quoted-string
-            node.source_end[1] += 1
+          # make sure we have some hints as to source location
+          if node.source_begin
+            node.source_begin = node.source_begin.dup  # make a copy we can mutate
+            node.source_end = node.source_end.dup  # make a copy we can mutate
+            if backtrack_expecting!(node.source_begin, -1, "'") ||
+               backtrack_expecting!(node.source_begin, -1, '"')
+              # matched a single-quoted-string
+              node.source_end[1] += 1
+            end
           end
         end
         
         add :string_embexpr do |node, content|
           default_visit node
-          node.source_begin = node.source_begin.dup
-          node.source_end = node.source_end.dup
-          node.source_begin[1] -= 2  # always prefixed with #{
-          node.source_end[1] += 1  # always suffixed with }
+          if node.source_begin
+            node.source_begin = node.source_begin.dup
+            node.source_end = node.source_end.dup
+            node.source_begin[1] -= 2  # always prefixed with #{
+            node.source_end[1] += 1  # always suffixed with }
+          end
         end
         
         add :dyna_symbol do |node, content|
           default_visit node
-          node.source_begin = node.source_begin.dup
-          node.source_end = node.source_end.dup
-          node.source_begin[1] -= 2  # always prefixed with :' or :"
-          node.source_end[1] += 1  # always suffixed with "
+          if node.source_begin
+            node.source_begin = node.source_begin.dup
+            node.source_end = node.source_end.dup
+            node.source_begin[1] -= 2  # always prefixed with :' or :"
+            node.source_end[1] += 1  # always suffixed with "
+          end
         end
         
         add :symbol_literal do |node, content|
@@ -73,10 +80,24 @@ module Wool
         
         add :hash do |node, content|
           default_visit node
-          node.source_begin = node.source_begin.dup
-          node.source_end = node.source_end.dup
-          backtrack_searching!(node.source_begin, '{')
-          forwardtrack_searching!(node.source_end, '}')
+          # Ensure we found some source location hints
+          if node.source_begin            
+            node.source_begin = node.source_begin.dup
+            node.source_end = node.source_end.dup
+            backtrack_searching!(node.source_begin, '{')
+            forwardtrack_searching!(node.source_end, '}')
+          end
+        end
+        
+        add :array do |node, content|
+          default_visit node
+          # Ensure we found some source location hints
+          if node.source_begin            
+            node.source_begin = node.source_begin.dup
+            node.source_end = node.source_end.dup
+            backtrack_searching!(node.source_begin, '[')
+            forwardtrack_searching!(node.source_end, ']')
+          end
         end
         
         # Searches for the given text starting at the given location, going backwards.
