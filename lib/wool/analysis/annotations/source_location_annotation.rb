@@ -76,11 +76,13 @@ module Wool
           node.source_begin = node.source_begin.dup
           node.source_end = node.source_end.dup
           backtrack_searching!(node.source_begin, '{')
+          forwardtrack_searching!(node.source_end, '}')
         end
         
         # Searches for the given text starting at the given location, going backwards.
         # Modifies the location to match the discovered expected text on success.
         #
+        # complexity: O(N) wrt input source
         # location: [Fixnum, Fixnum]
         # expectation: String
         # returns: Boolean
@@ -95,6 +97,27 @@ module Wool
             line = lines[location[0] - 1]
             location[1] = line.size
           end while location[0] >= 0
+          false
+        end
+        
+        # Searches for the given text starting at the given location, going backwards.
+        # Modifies the location to match the discovered expected text on success.
+        #
+        # complexity: O(N) wrt input source
+        # location: [Fixnum, Fixnum]
+        # expectation: String
+        # returns: Boolean
+        def forwardtrack_searching!(location, expectation)
+          line = lines[location[0] - 1]
+          begin
+            if (expectation_location = line.index(expectation, location[1]))
+              location[1] = expectation_location + expectation.size
+              return true
+            end
+            location[0] += 1
+            location[1] = 0
+            line = lines[location[0] - 1]
+          end while location[0] < lines.size
           false
         end
         

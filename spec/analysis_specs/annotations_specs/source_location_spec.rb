@@ -43,7 +43,7 @@ describe SourceLocationAnnotation do
     list[0].source_begin.should == [1, 0]
     
     arglist = list[0][2]
-    arglist.source_begin.should == [1, 6]  # for 'true'
+    arglist.source_begin.should == [1, 6]
     args = arglist[1]
     # true
     args[0].source_begin.should == [1, 6]
@@ -71,7 +71,7 @@ describe SourceLocationAnnotation do
     args[6][1][2][1][0].source_begin.should == [1, 47]
     args[6][1][2][1][0][1].source_begin.should == [1, 47]
     # :"hello #{there}"
-    args[7].source_begin.should == [1, 53]  # This requires backtracking to find the : char!
+    args[7].source_begin.should == [1, 53]
     args[7][1].source_begin.should == [1, 55]
     args[7][1][0].source_begin.should == [1, 55]
     args[7][1][1].source_begin.should == [1, 61]
@@ -81,7 +81,7 @@ describe SourceLocationAnnotation do
 
     # { a: :b }
     hash = arglist[2]
-    hash.source_begin.should == [1, 72]  # This requires backtracking to find the { char!
+    hash.source_begin.should == [1, 72]
     hash[1].source_begin.should == [1, 74]
     hash[1][1].source_begin.should == [1, 74]
     hash[1][1][0].source_begin.should == [1, 74]
@@ -124,10 +124,10 @@ describe SourceLocationAnnotation do
     
     list[0][1][1].source_end.should == [1, 3]
     list[0][1].source_end.should == [1, 3]
-    #list[0].source_end.should == [1, 3]  requires that we get the hash right, which we don't. TODO(adgar)
+    list[0].source_end.should == [1, 81]  # requires that we get the hash right, which we don't. TODO(adgar)
     
     arglist = list[0][2]
-    # arglist.source_end.should == [1, 81]  # for all rhs, requires forward-tracking
+    arglist.source_end.should == [1, 81]  # for all rhs, requires forward-tracking
     args = arglist[1]
     args[0].source_end.should == [1, 10]
     args[0][1].source_end.should == [1, 10]
@@ -147,22 +147,22 @@ describe SourceLocationAnnotation do
     args[6][1][2][1].source_end.should == [1, 49]
     args[6][1][2][1][0].source_end.should == [1, 49]
     args[6][1][2][1][0][1].source_end.should == [1, 49]
-    #args[7].source_end.should == [1, 54]  # This requires backtracking to find the : char!
-    # args[7][1].source_end.should == [1, 68]
-    # args[7][1][0].source_end.should == [1, 55]
-    # args[7][1][1].source_end.should == [1, 63]
-    # args[7][1][1][1].source_end.should == [1, 63]
-    # args[7][1][1][1][0].source_end.should == [1, 63]
-    # args[7][1][1][1][0][1].source_end.should == [1, 63]
+    args[7].source_end.should == [1, 70]
+    args[7][1].source_end.should == [1, 69]
+    args[7][1][0].source_end.should == [1, 61]
+    args[7][1][1].source_end.should == [1, 69]
+    args[7][1][1][1].source_end.should == [1, 68]
+    args[7][1][1][1][0].source_end.should == [1, 68]
+    args[7][1][1][1][0][1].source_end.should == [1, 68]
     # 
-    # hash = arglist[2]
-    # #hash.source_end.should == [1, 72]  # This requires backtracking to find the { char!
-    # hash[1].source_end.should == [1, 74]
-    # hash[1][1].source_end.should == [1, 74]
-    # hash[1][1][0].source_end.should == [1, 74]
-    # hash[1][1][0][1].source_end.should == [1, 74]
-    # hash[1][1][0][2].source_end.should == [1, 78]
-    # hash[1][1][0][2][1].source_end.should == [1, 78]
-    # hash[1][1][0][2][1][1].source_end.should == [1, 78]
+    hash = arglist[2]
+    hash.source_end.should == [1, 81]
+    hash[1].source_end.should == [1, 79]
+    hash[1][1].source_end.should == [1, 79]
+    hash[1][1][0].source_end.should == [1, 79]
+    hash[1][1][0][1].source_end.should == [1, 76]
+    hash[1][1][0][2].source_end.should == [1, 79]
+    hash[1][1][0][2][1].source_end.should == [1, 79]
+    hash[1][1][0][2][1][1].source_end.should == [1, 79]
   end
 end
