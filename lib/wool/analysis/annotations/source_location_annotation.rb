@@ -31,9 +31,9 @@ module Wool
         add :regexp_literal do |node|
           default_visit node
           node.source_begin = node.source_begin.dup  # make a copy we can mutate
-          if backtrack_expecting!(node.source_begin, -1, '/')
+          if backtrack_expecting(node.source_begin, -1, '/')
             # matched a / before the node
-          elsif backtrack_expecting!(node.source_begin, -3, '%r')
+          elsif backtrack_expecting(node.source_begin, -3, '%r')
             # matched a %r[]/%r{}/...
           end
         end
@@ -44,8 +44,8 @@ module Wool
           if node.source_begin
             node.source_begin = node.source_begin.dup  # make a copy we can mutate
             node.source_end = node.source_end.dup  # make a copy we can mutate
-            if backtrack_expecting!(node.source_begin, -1, "'") ||
-               backtrack_expecting!(node.source_begin, -1, '"')
+            if backtrack_expecting(node.source_begin, -1, "'") ||
+               backtrack_expecting(node.source_begin, -1, '"')
               # matched a single-quoted-string
               node.source_end[1] += 1
             end
@@ -82,10 +82,8 @@ module Wool
           default_visit node
           # Ensure we found some source location hints
           if node.source_begin            
-            node.source_begin = node.source_begin.dup
-            node.source_end = node.source_end.dup
-            backtrack_searching!(node.source_begin, '{')
-            forwardtrack_searching!(node.source_end, '}')
+            node.source_begin = backtrack_searching!(node.source_begin, '{')
+            node.source_end = forwardtrack_searching(node.source_end, '}')
           end
         end
         
@@ -93,29 +91,24 @@ module Wool
           default_visit node
           # Ensure we found some source location hints
           if node.source_begin            
-            node.source_begin = node.source_begin.dup
-            node.source_end = node.source_end.dup
-            backtrack_searching!(node.source_begin, '[')
-            forwardtrack_searching!(node.source_end, ']')
+            node.source_begin = backtrack_searching!(node.source_begin, '[')
+            node.source_end = forwardtrack_searching(node.source_end, ']')
           end
         end
         
         add :def, :defs do |node|
           default_visit node
-          node.source_begin = node.source_begin.dup
-          backtrack_searching!(node.source_begin, 'def')
+          node.source_begin = backtrack_searching!(node.source_begin, 'def')
         end
         
         add :class, :sclass do |node|
           default_visit node
-          node.source_begin = node.source_begin.dup
-          backtrack_searching!(node.source_begin, 'class')
+          node.source_begin = backtrack_searching!(node.source_begin, 'class')
         end
         
         add :module do |node|
           default_visit node
-          node.source_begin = node.source_begin.dup
-          backtrack_searching!(node.source_begin, 'module')
+          node.source_begin = backtrack_searching!(node.source_begin, 'module')
         end
         
         # Searches for the given text starting at the given location, going backwards.
@@ -126,17 +119,18 @@ module Wool
         # expectation: String
         # returns: Boolean
         def backtrack_searching!(location, expectation)
-          line = lines[location[0] - 1]
+          result = location.dup
+          line = lines[result[0] - 1]
           begin
-            if (expectation_location = line.rindex(expectation, location[1]))
-              location[1] = expectation_location
-              return true
+            if (expectation_location = line.rindex(expectation, result[1]))
+              result[1] = expectation_location
+              return result
             end
-            location[0] -= 1
-            line = lines[location[0] - 1]
-            location[1] = line.size
-          end while location[0] >= 0
-          false
+            result[0] -= 1
+            line = lines[result[0] - 1]
+            result[1] = line.size
+          end while result[0] >= 0
+          location
         end
         
         # Searches for the given text starting at the given location, going backwards.
@@ -146,23 +140,24 @@ module Wool
         # location: [Fixnum, Fixnum]
         # expectation: String
         # returns: Boolean
-        def forwardtrack_searching!(location, expectation)
-          line = lines[location[0] - 1]
+        def forwardtrack_searching(location, expectation)
+          result = location.dup
+          line = lines[result[0] - 1]
           begin
-            if (expectation_location = line.index(expectation, location[1]))
-              location[1] = expectation_location + expectation.size
-              return true
+            if (expectation_location = line.index(expectation, result[1]))
+              result[1] = expectation_location + expectation.size
+              return result
             end
-            location[0] += 1
-            location[1] = 0
-            line = lines[location[0] - 1]
-          end while location[0] <= lines.size
-          false
+            result[0] += 1
+            result[1] = 0
+            line = lines[result[0] - 1]
+          end while result[0] <= lines.size
+          location
         end
         
         # Attempts to backtrack for the given string from the given location.
         # Returns true if successful.
-        def backtrack_expecting!(location, offset, expectation)
+        def backtrack_expecting(location, offset, expectation)
           if text_at(location, offset, expectation.length) == expectation
             location[1] += offset
             true
