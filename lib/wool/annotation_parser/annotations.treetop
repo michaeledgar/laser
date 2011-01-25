@@ -7,9 +7,6 @@ module Wool
 
       rule root
         space* type space* {
-          def type
-            Type.new(constraints)
-          end
           def constraints
             elements[1].constraints
           end
@@ -31,7 +28,7 @@ module Wool
       rule self_type
         "self" {
           def constraints
-            [Constraints::SelfTypeConstraint.new]
+            [Types::SelfTypeConstraint.new]
           end
         }
       end

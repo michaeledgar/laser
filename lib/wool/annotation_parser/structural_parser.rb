@@ -29,7 +29,7 @@ module Wool
 
       module StructuralConstraint1
         def constraints
-          result = [Constraints::StructuralConstraint.new(
+          result = [Types::StructuralConstraint.new(
               method_name.text_value, parenthesized_type_list.constraints,
               return_type.constraints)]
         end
@@ -51,7 +51,7 @@ module Wool
 
       module StructuralConstraint3
         def constraints
-          result = [Constraints::StructuralConstraint.new(
+          result = [Types::StructuralConstraint.new(
               method_name.text_value, parenthesized_type_list.constraints,
               return_type.constraints)]
         end
@@ -69,7 +69,7 @@ module Wool
 
       module StructuralConstraint5
         def constraints
-          result = [Constraints::StructuralConstraint.new(
+          result = [Types::StructuralConstraint.new(
               method_name.text_value, parenthesized_type_list.constraints, [])]
         end
       end
@@ -86,7 +86,7 @@ module Wool
 
       module StructuralConstraint7
         def constraints
-          result = [Constraints::StructuralConstraint.new(
+          result = [Types::StructuralConstraint.new(
               method_name.text_value, [], return_type.constraints)]
         end
       end
@@ -99,7 +99,7 @@ module Wool
 
       module StructuralConstraint9
         def constraints
-          result = [Constraints::StructuralConstraint.new(method_name.text_value, [], [])]
+          result = [Types::StructuralConstraint.new(method_name.text_value, [], [])]
         end
       end
 

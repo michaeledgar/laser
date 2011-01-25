@@ -1,14 +1,6 @@
 require 'set'
 module Wool
-  class Type
-    extend ModuleExtensions
-    attr_accessor_with_default :constraints, Set.new
-    def initialize(constraints)
-      self.constraints |= Set.new(constraints)
-    end
-  end
-  
-  module Constraints
+  module Types
     class Base
       extend ActsAsStruct
       

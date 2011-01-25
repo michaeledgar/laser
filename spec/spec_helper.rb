@@ -81,7 +81,7 @@ module Wool
         def matches?(actual)
           @input = actual
           @result = Parsers::AnnotationParser.new.parse(actual)
-          @result && @result.constraints == @output && @result.type.constraints == Set.new(@output)
+          @result && @result.constraints == @output
         end
 
         def failure_message

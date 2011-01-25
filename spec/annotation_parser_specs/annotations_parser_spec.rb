@@ -7,7 +7,7 @@ describe Parsers::AnnotationParser do
   
   describe 'a self type' do
     it 'should parse as a single self type constraint' do
-      'self'.should parse_to([Constraints::SelfTypeConstraint.new])
+      'self'.should parse_to([Types::SelfTypeConstraint.new])
     end
   end
   

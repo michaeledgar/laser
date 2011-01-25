@@ -159,7 +159,7 @@ module Wool
 
       module SelfType0
         def constraints
-          [Constraints::SelfTypeConstraint.new]
+          [Types::SelfTypeConstraint.new]
         end
       end
 
