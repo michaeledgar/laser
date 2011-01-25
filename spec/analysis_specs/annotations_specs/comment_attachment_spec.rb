@@ -31,9 +31,9 @@ describe CommentAttachmentAnnotation do
     list = tree[1]
     
     defn = list[0]
-    defn.comment.body.should == " abc\n  def\n"
+    defn.comment.body.should == " abc\n  def"
     klass_defn = list[1]
-    klass_defn.comment.body.should == " a class\n"
+    klass_defn.comment.body.should == " a class"
   end
   
   # [:program,
@@ -64,8 +64,8 @@ EOF
     CommentAttachmentAnnotation::Annotator.new.annotate_with_text(tree, input)
     list = tree[1]
     defn = list[0]
-    defn.comment.body.should == " some method\n abc: String\n"
+    defn.comment.body.should == " some method\n abc: String"
     assignment = defn[3][1][0]
-    assignment.comment.body.should == " y: String\n"
+    assignment.comment.body.should == " y: String"
   end
 end

@@ -52,12 +52,13 @@ module Wool
           end
         end
         
+        # Extracts the comments from the text with some straightforward lexical analysis.
         def extract_comments(text)
           tokens = Ripper.lex(text).map { |tok| LexicalAnalysis::Token.new(tok) }
           comments = ObjectRegex.new('comment (sp? comment)*').all_matches(tokens).map do |token_list|
             token_list.select { |token| token.type == :on_comment }
           end.map do |token_list|
-            body = token_list.map { |comment_token| comment_token.body[1..-1] }.join
+            body = token_list.map { |comment_token| comment_token.body[1..-1] }.join.rstrip
             Comment.new(body, token_list.first.line, token_list.first.col)
           end
         end
