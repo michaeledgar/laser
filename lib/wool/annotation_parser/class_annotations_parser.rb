@@ -70,7 +70,7 @@ module Wool
 
       module HashConstraint1
         def constraints
-          [Types::GenericClassConstraint.new(
+          [Types::GenericClassType.new(
               'Hash', :covariant, [variance_constraint1.constraints,
               variance_constraint2.constraints])]
         end
@@ -146,7 +146,7 @@ module Wool
 
       module DontCareConstraint0
         def constraints
-          [Types::ClassConstraint.new('Object', :covariant)]
+          [Types::ClassType.new('Object', :covariant)]
         end
       end
 
@@ -184,7 +184,7 @@ module Wool
 
       module ArrayConstraint1
         def constraints
-          [Types::GenericClassConstraint.new(
+          [Types::GenericClassType.new(
               'Array', :covariant, [elements[2].constraints])]
         end
       end
@@ -263,9 +263,9 @@ module Wool
         r0
       end
 
-      module TupleConstraint0
+      module TupleType0
         def constraints
-          [Types::TupleConstraint.new(super)]
+          [Types::TupleType.new(super)]
         end
       end
 
@@ -281,7 +281,7 @@ module Wool
         end
 
         r0 = _nt_parenthesized_type_list
-        r0.extend(TupleConstraint0)
+        r0.extend(TupleType0)
 
         node_cache[:tuple_constraint][start_index] = r0
 
@@ -302,7 +302,7 @@ module Wool
       module GenericConstraint1
         def constraints
           class_constraint = variance_constraint.constraints.first
-          [Types::GenericClassConstraint.new(
+          [Types::GenericClassType.new(
               class_constraint.class_name, class_constraint.variance,
               type_list.constraints)]
         end
@@ -534,7 +534,7 @@ module Wool
 
       module Constant1
         def constraints
-          [Types::ClassConstraint.new(text_value, :covariant)]
+          [Types::ClassType.new(text_value, :covariant)]
         end
       end
 

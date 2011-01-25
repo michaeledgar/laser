@@ -19,7 +19,7 @@ I'll be using a pseudo-flex/bison syntax.
 
     Productions:
     top : "Top" { return [] } ; # empty set
-    self : "self" { return [SelfTypeConstraint.new] } ;
+    self : "self" { return [SelfType.new] } ;
     unknown : "_" { return [UnknownTypeConstraint.new] }
             | "_" : type_expression { [UnknownTypeConstraint.new(type_expression)] }
             ;
@@ -30,7 +30,7 @@ I'll be using a pseudo-flex/bison syntax.
                                       ;
 
     class_constraint : CONSTANT {
-                          return [ClassConstraint.new(LookupConstant(constant.text), :covariant)] }
+                          return [ClassType.new(LookupConstant(constant.text), :covariant)] }
                      ;
 
     variance_constraint : class_constraint
@@ -42,7 +42,7 @@ I'll be using a pseudo-flex/bison syntax.
 
     generic_class_constraint : possibly_mutable_class_constraint
                              | possibly_mutable_class_constraint "<" generic_type_list ">" {
-                                 class_constraint[0] = GenericClassConstraint.new(
+                                 class_constraint[0] = GenericClassType.new(
                                      class_constraint[0].specified_class, *generic_type_list) }
                              ;
 
@@ -54,7 +54,7 @@ I'll be using a pseudo-flex/bison syntax.
 
     hash_constraint : class_constraint
                     | class_constraint "=>" class_constraint {
-                        return [GenericClassConstraint.new(LookupConstant("Hash"), $1[0].specified_class, $3[0].specified_class)] }
+                        return [GenericClassType.new(LookupConstant("Hash"), $1[0].specified_class, $3[0].specified_class)] }
                     ;
 
     union_constraint : hash_constraint { return UnionConstraint.new(hash_constraint) }

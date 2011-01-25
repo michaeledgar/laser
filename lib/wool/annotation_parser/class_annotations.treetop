@@ -10,7 +10,7 @@ module Wool
       rule hash_constraint
         variance_constraint space* '=>' space* variance_constraint {
           def constraints
-            [Types::GenericClassConstraint.new(
+            [Types::GenericClassType.new(
                 'Hash', :covariant, [variance_constraint1.constraints,
                 variance_constraint2.constraints])]
           end
@@ -20,7 +20,7 @@ module Wool
       rule dont_care_constraint
         '_' {
           def constraints
-            [Types::ClassConstraint.new('Object', :covariant)]
+            [Types::ClassType.new('Object', :covariant)]
           end
         }
       end
@@ -28,7 +28,7 @@ module Wool
       rule array_constraint
         '[' space* type space* ']' {
           def constraints
-            [Types::GenericClassConstraint.new(
+            [Types::GenericClassType.new(
                 'Array', :covariant, [elements[2].constraints])]
           end
         }
@@ -37,7 +37,7 @@ module Wool
       rule tuple_constraint
         parenthesized_type_list {
           def constraints
-            [Types::TupleConstraint.new(super)]
+            [Types::TupleType.new(super)]
           end
         }
       end
@@ -46,7 +46,7 @@ module Wool
         variance_constraint space* '<' space* type_list space* '>' {
           def constraints
             class_constraint = variance_constraint.constraints.first
-            [Types::GenericClassConstraint.new(
+            [Types::GenericClassType.new(
                 class_constraint.class_name, class_constraint.variance,
                 type_list.constraints)]
           end
@@ -68,7 +68,7 @@ module Wool
       rule constant
         ( '::'? [A-Z] [A-Za-z_]* )+ {
           def constraints
-            [Types::ClassConstraint.new(text_value, :covariant)]
+            [Types::ClassType.new(text_value, :covariant)]
           end
         }
       end

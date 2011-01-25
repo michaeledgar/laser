@@ -13,7 +13,7 @@ module Wool
 
       include GeneralPurpose
 
-      module StructuralConstraint0
+      module StructuralType0
         def method_name
           elements[1]
         end
@@ -27,15 +27,15 @@ module Wool
         end
       end
 
-      module StructuralConstraint1
+      module StructuralType1
         def constraints
-          result = [Types::StructuralConstraint.new(
+          result = [Types::StructuralType.new(
               method_name.text_value, parenthesized_type_list.constraints,
               return_type.constraints)]
         end
       end
 
-      module StructuralConstraint2
+      module StructuralType2
         def method_name
           elements[1]
         end
@@ -49,15 +49,15 @@ module Wool
         end
       end
 
-      module StructuralConstraint3
+      module StructuralType3
         def constraints
-          result = [Types::StructuralConstraint.new(
+          result = [Types::StructuralType.new(
               method_name.text_value, parenthesized_type_list.constraints,
               return_type.constraints)]
         end
       end
 
-      module StructuralConstraint4
+      module StructuralType4
         def method_name
           elements[1]
         end
@@ -67,14 +67,14 @@ module Wool
         end
       end
 
-      module StructuralConstraint5
+      module StructuralType5
         def constraints
-          result = [Types::StructuralConstraint.new(
+          result = [Types::StructuralType.new(
               method_name.text_value, parenthesized_type_list.constraints, [])]
         end
       end
 
-      module StructuralConstraint6
+      module StructuralType6
         def method_name
           elements[1]
         end
@@ -84,22 +84,22 @@ module Wool
         end
       end
 
-      module StructuralConstraint7
+      module StructuralType7
         def constraints
-          result = [Types::StructuralConstraint.new(
+          result = [Types::StructuralType.new(
               method_name.text_value, [], return_type.constraints)]
         end
       end
 
-      module StructuralConstraint8
+      module StructuralType8
         def method_name
           elements[1]
         end
       end
 
-      module StructuralConstraint9
+      module StructuralType9
         def constraints
-          result = [Types::StructuralConstraint.new(method_name.text_value, [], [])]
+          result = [Types::StructuralType.new(method_name.text_value, [], [])]
         end
       end
 
@@ -187,8 +187,8 @@ module Wool
         end
         if s1.last
           r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
-          r1.extend(StructuralConstraint0)
-          r1.extend(StructuralConstraint1)
+          r1.extend(StructuralType0)
+          r1.extend(StructuralType1)
         else
           @index = i1
           r1 = nil
@@ -245,8 +245,8 @@ module Wool
           end
           if s13.last
             r13 = instantiate_node(SyntaxNode,input, i13...index, s13)
-            r13.extend(StructuralConstraint2)
-            r13.extend(StructuralConstraint3)
+            r13.extend(StructuralType2)
+            r13.extend(StructuralType3)
           else
             @index = i13
             r13 = nil
@@ -286,8 +286,8 @@ module Wool
             end
             if s22.last
               r22 = instantiate_node(SyntaxNode,input, i22...index, s22)
-              r22.extend(StructuralConstraint4)
-              r22.extend(StructuralConstraint5)
+              r22.extend(StructuralType4)
+              r22.extend(StructuralType5)
             else
               @index = i22
               r22 = nil
@@ -350,8 +350,8 @@ module Wool
               end
               if s28.last
                 r28 = instantiate_node(SyntaxNode,input, i28...index, s28)
-                r28.extend(StructuralConstraint6)
-                r28.extend(StructuralConstraint7)
+                r28.extend(StructuralType6)
+                r28.extend(StructuralType7)
               else
                 @index = i28
                 r28 = nil
@@ -374,8 +374,8 @@ module Wool
                 end
                 if s37.last
                   r37 = instantiate_node(SyntaxNode,input, i37...index, s37)
-                  r37.extend(StructuralConstraint8)
-                  r37.extend(StructuralConstraint9)
+                  r37.extend(StructuralType8)
+                  r37.extend(StructuralType9)
                 else
                   @index = i37
                   r37 = nil

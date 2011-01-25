@@ -28,7 +28,7 @@ module Wool
       rule self_type
         "self" {
           def constraints
-            [Types::SelfTypeConstraint.new]
+            [Types::SelfType.new]
           end
         }
       end

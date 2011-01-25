@@ -20,7 +20,7 @@ module Wool
     class TypeConstraint < Base
     end
 
-    class SelfTypeConstraint < TypeConstraint
+    class SelfType < TypeConstraint
       acts_as_struct :scope
       
       def signature
@@ -28,7 +28,7 @@ module Wool
       end
     end
     
-    class StructuralConstraint < TypeConstraint
+    class StructuralType < TypeConstraint
       attr_reader :method_name, :arg_constraint_list, :return_constraints
       
       def initialize(method_name, arg_constraint_list, return_constraints)
@@ -43,7 +43,7 @@ module Wool
       end
     end
     
-    class ClassConstraint < Base
+    class ClassType < Base
       acts_as_struct :class_name, :variance
       
       def signature
@@ -51,7 +51,7 @@ module Wool
       end
     end
 
-    class GenericClassConstraint < ClassConstraint
+    class GenericClassType < ClassType
       acts_as_struct :subtype_constraints
       def initialize(*args)
         if args.size <= 2
@@ -69,7 +69,7 @@ module Wool
     
     # Represents a Tuple: an array of a given, fixed size, with each position
     # in the array possessing a set of constraints.
-    class TupleConstraint < TypeConstraint
+    class TupleType < TypeConstraint
       attr_reader :element_constraints
       def initialize(element_constraints)
         @element_constraints = element_constraints
