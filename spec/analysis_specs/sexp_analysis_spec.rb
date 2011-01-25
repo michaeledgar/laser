@@ -25,6 +25,74 @@ describe SexpAnalysis do
         Sexp.new([[:abc], 2, 3, [:def, 3, 4]]).children.should == [[:abc], 2, 3, [:def, 3, 4]]
       end
     end
+    
+    describe 'performing DFS operations' do
+      before do
+        @hard_sexp = Sexp.new([:program,
+                     [[:class,
+                       [:const_ref, [:@const, "A", [1, 6]]],
+                       [:var_ref, [:@const, "String", [1, 10]]],
+                       [:bodystmt,
+                        [[:defs,
+                          [:var_ref, [:@kw, "self", [1, 22]]],
+                          [:@period, ".", [1, 26]],
+                          [:@ident, "silly", [1, 27]],
+                          [:paren,
+                           [:params,
+                            [[:@ident, "x", [1, 33]]], nil,
+                            [:rest_param, [:@ident, "y", [1, 37]]], nil, nil]],
+                          [:bodystmt,
+                           [[:void_stmt],
+                            [:massign,
+                             [:mlhs_paren, [[:@ident, "x", [1, 42]], [:@ident, "y", [1, 45]]]],
+                             [:mrhs_add_star, [], [:var_ref, [:@ident, "y", [1, 51]]]]]],
+                           nil, nil, nil]]],
+                        nil, nil, nil]]]])
+        # While I had to manually figure this out, a simple look at the indices used
+        # shows that it is a proper DFS order.
+        @correct_order = [@hard_sexp,
+                          @hard_sexp[1][0],
+                          @hard_sexp[1][0][1],
+                          @hard_sexp[1][0][1][1],
+                          @hard_sexp[1][0][2],
+                          @hard_sexp[1][0][2][1],
+                          @hard_sexp[1][0][3],
+                          @hard_sexp[1][0][3][1][0],
+                          @hard_sexp[1][0][3][1][0][1],
+                          @hard_sexp[1][0][3][1][0][1][1],
+                          @hard_sexp[1][0][3][1][0][2],
+                          @hard_sexp[1][0][3][1][0][3],
+                          @hard_sexp[1][0][3][1][0][4],
+                          @hard_sexp[1][0][3][1][0][4][1],
+                          @hard_sexp[1][0][3][1][0][4][1][1][0],
+                          @hard_sexp[1][0][3][1][0][4][1][3],
+                          @hard_sexp[1][0][3][1][0][4][1][3][1],
+                          @hard_sexp[1][0][3][1][0][5],
+                          @hard_sexp[1][0][3][1][0][5][1][0],
+                          @hard_sexp[1][0][3][1][0][5][1][1],
+                          @hard_sexp[1][0][3][1][0][5][1][1][1],
+                          @hard_sexp[1][0][3][1][0][5][1][1][1][1][0],
+                          @hard_sexp[1][0][3][1][0][5][1][1][1][1][1],
+                          @hard_sexp[1][0][3][1][0][5][1][1][2],
+                          @hard_sexp[1][0][3][1][0][5][1][1][2][2],
+                          @hard_sexp[1][0][3][1][0][5][1][1][2][2][1]]
+      end
+      describe '#dfs' do
+        # this test sucked to write.
+        it 'yields the nodes of the tree in DFS order' do
+          result = []
+          @hard_sexp.dfs { |node| result << node }
+          result.should == @correct_order
+        end
+      end
+    
+      describe '#dfs_enumerator' do
+        it 'should enumerate every element in DFS order' do
+          enumerator = @hard_sexp.dfs_enumerator
+          enumerator.entries.should == @correct_order
+        end
+      end
+    end
   end
   
   before do

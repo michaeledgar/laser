@@ -7,20 +7,23 @@ module Wool
       extend BasicAnnotation
       add_property :docstring
       
-      Comment = Struct.new(:body, :location) do
-        
-      end
-      
       # This is the annotator for the parent annotation.
       class Annotator
         def annotate_with_text(root, text)
           comments = extract_comments(text)
-          # do something with comments.
+          comments.each do |comment|
+            
+          end
         end
         
         def extract_comments(text)
           tokens = Ripper.lex(text).map { |tok| LexicalAnalysis::Token.new(tok) }
-          ObjectRegex.new('comment (sp? comment)*').all_matches(tokens)
+          comments = ObjectRegex.new('comment (sp? comment)*').all_matches(tokens).map do |token_list|
+            token_list.select { |token| token.type == :on_comment }
+          end.map do |token_list|
+            body = token_list.map { |comment_token| comment_token.body[1..-1] }.join
+            Comment.new(body, token_list.first.line, token_list.first.col)
+          end
         end
       end
       add_global_annotator Annotator

@@ -32,8 +32,8 @@ describe CommentAttachmentAnnotation do
   #         [:@label, "a:", [1, 74]],
   #         [:symbol_literal, [:symbol, [:@ident, "b", [1, 78]]]]]]]]]]]]
   
-  it 'discovers the comments before a method declaration', :focus => true do
-    input = "  # abc\n  # def\ndef silly(a, b)\n end"
+  it 'discovers the comments before a method declaration' do
+    input = "  # abc\n  #  def\ndef silly(a, b)\n end"
     tree = Sexp.new(Ripper.sexp(input))
     CommentAttachmentAnnotation::Annotator.new.annotate_with_text(tree, input)
     list = tree[1]

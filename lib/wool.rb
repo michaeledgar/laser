@@ -23,6 +23,7 @@ require 'wool/analysis/signature'
 require 'wool/analysis/wool_class'
 require 'wool/analysis/protocol_registry'
 require 'wool/analysis/scope'
+require 'wool/analysis/comments'
 require 'wool/analysis/bootstrap'
 # Liftoff Instructions:
 # 1. Tuck in your shirt

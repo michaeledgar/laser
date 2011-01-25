@@ -59,6 +59,31 @@ module Wool
         visited
       end
       
+      # Returns an enumerator that iterates over each subnode of this node
+      # in DFS order.
+      def dfs_enumerator
+        Enumerator.new do |g|
+          dfs do |node|
+            g.yield node
+          end
+        end
+      end
+      
+      # Performs a DFS on the node, yielding each subnode (including the given node)
+      # in DFS order.
+      def dfs
+        yield self
+        self.children.each do |child|
+          next unless is_sexp?(child)
+          case child[0]
+          when Array
+            child.each { |x| x.dfs { |y| yield y}}
+          when ::Symbol
+            child.dfs { |y| yield y }
+          end
+        end
+      end
+      
       # Replaces the children with Sexp versions of them
       def replace_children!
         replace(map do |x|
