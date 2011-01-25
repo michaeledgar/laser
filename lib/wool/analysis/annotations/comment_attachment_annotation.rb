@@ -11,15 +11,14 @@ module Wool
       class Annotator
         def annotate_with_text(root, text)
           comments = extract_comments(text)
+          # root[1] here to ignore the spurious :program node
+          dfs_enumerator = root[1].dfs_enumerator
           # For each comment:
           #   find the first node, by DFS, that has a location *greater* than the
           #   comment's. However, not all nodes will have locations due to Ripper
           #   being kinda crappy.
           # When the enumerator finishes (raises StopIteration): we can no longer
           #   annotate. So return.
-
-          # root[1] here to ignore the spurious :program node
-          dfs_enumerator = root[1].dfs_enumerator
           comments.each do |comment|
             begin
               cur = dfs_for_useful_node(dfs_enumerator)
@@ -39,7 +38,7 @@ module Wool
         def dfs_for_useful_node(generator)
           begin
             cur = generator.next
-          end while cur.source_begin.nil? || !(::Symbol === cur[0])
+          end until cur.source_begin && (::Symbol === cur[0])
           cur
         end
         
