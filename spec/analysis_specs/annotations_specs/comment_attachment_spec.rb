@@ -22,9 +22,7 @@ describe CommentAttachmentAnnotation do
   #   [:const_ref, [:@const, "A", [6, 7]]],
   #   nil,
   #   [:bodystmt, [[:void_stmt]], nil, nil, nil]]]]
-  
-  
-  it 'discovers the comments before a method declaration' do
+  it 'discovers the comments before a method and class declaration' do
     input = "  # abc\n  #  def\ndef silly(a, b)\n end\n # a class\n class A; end"
     tree = Sexp.new(Ripper.sexp(input))
     # source location is *required* for CommentAttachment to work.
@@ -36,5 +34,38 @@ describe CommentAttachmentAnnotation do
     defn.comment.body.should == " abc\n  def\n"
     klass_defn = list[1]
     klass_defn.comment.body.should == " a class\n"
+  end
+  
+  # [:program,
+  #  [[:def,
+  #    [:@ident, "some_method", [3, 6]],
+  #    [:paren, [:params, [[:@ident, "abc", [3, 18]]], nil, nil, nil, nil]],
+  #    [:bodystmt,
+  #     [[:assign,
+  #       [:var_field, [:@ident, "y", [5, 4]]],
+  #       [:binary,
+  #        [:var_ref, [:@ident, "abc", [5, 8]]],
+  #        :*,
+  #        [:@int, "2", [5, 14]]]]],
+  #     nil, nil, nil]]]]
+  
+  it 'discovers comments before introduction of a new local variable' do
+    input = <<-EOF
+  # some method
+  # abc: String
+  def some_method(abc)
+    # y: String
+    y = abc * 2
+  end
+EOF
+    tree = Sexp.new(Ripper.sexp(input))
+    # source location is *required* for CommentAttachment to work.
+    SourceLocationAnnotation::Annotator.new.annotate_with_text(tree, input)
+    CommentAttachmentAnnotation::Annotator.new.annotate_with_text(tree, input)
+    list = tree[1]
+    defn = list[0]
+    defn.comment.body.should == " some method\n abc: String\n"
+    assignment = defn[3][1][0]
+    assignment.comment.body.should == " y: String\n"
   end
 end

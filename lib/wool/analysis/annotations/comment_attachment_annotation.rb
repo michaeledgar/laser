@@ -12,7 +12,7 @@ module Wool
         def annotate_with_text(root, text)
           comments = extract_comments(text)
           # root[1] here to ignore the spurious :program node
-          dfs_enumerator = root[1].dfs_enumerator
+          dfs_enumerator = root.dfs_enumerator
           # For each comment:
           #   find the first node, by DFS, that has a location *greater* than the
           #   comment's. However, not all nodes will have locations due to Ripper
@@ -25,6 +25,7 @@ module Wool
             end while (cur.source_begin <=> comment.location) == -1
             # if we're here, we found the first node after the comment.
             cur.comment = comment
+            extend_annotation_to_equal_nodes(cur, dfs_enumerator)
           end
         rescue StopIteration
           # do nothing – this signals the end of the algorithm. If has_next made sense
@@ -40,6 +41,15 @@ module Wool
             cur = generator.next
           end until cur.source_begin && (::Symbol === cur[0])
           cur
+        end
+        
+        # Many nodes in the tree will have the same source_begin value, and they
+        # must all share the comment. Otherwise, we'll have a lot of trouble making
+        # sure that the interesting nodes, often nested deeply, will be annotated.
+        def extend_annotation_to_equal_nodes(first, generator)
+          while generator.peek.source_begin == first.source_begin
+            generator.next.comment = first.comment
+          end
         end
         
         def extract_comments(text)
