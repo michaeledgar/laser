@@ -62,19 +62,11 @@ module Wool
       end
     end
 
-    class GenericClassType < ClassType
-      acts_as_struct :subtypes
-      def initialize(*args)
-        if args.size <= 2
-          super(*args)
-        else
-          super(*args[0..1])
-          @subtypes = args[2]
-        end
-      end
+    class GenericType < Base
+      acts_as_struct :base_type, :subtypes
 
       def signature
-        super.merge(subtypes: subtypes)
+        super.merge(base_type: base_type, subtypes: subtypes)
       end
     end
     

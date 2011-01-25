@@ -42,7 +42,7 @@ I'll be using a pseudo-flex/bison syntax.
 
     generic_class_constraint : possibly_mutable_class_constraint
                              | possibly_mutable_class_constraint "<" generic_type_list ">" {
-                                 class_constraint[0] = GenericClassType.new(
+                                 class_constraint[0] = GenericType.new(
                                      class_constraint[0].specified_class, *generic_type_list) }
                              ;
 
@@ -54,7 +54,7 @@ I'll be using a pseudo-flex/bison syntax.
 
     hash_constraint : class_constraint
                     | class_constraint "=>" class_constraint {
-                        return [GenericClassType.new(LookupConstant("Hash"), $1[0].specified_class, $3[0].specified_class)] }
+                        return [GenericType.new(LookupConstant("Hash"), $1[0].specified_class, $3[0].specified_class)] }
                     ;
 
     union_constraint : hash_constraint { return UnionConstraint.new(hash_constraint) }

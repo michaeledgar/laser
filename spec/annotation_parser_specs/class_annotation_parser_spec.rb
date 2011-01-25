@@ -37,7 +37,7 @@ describe Parsers::ClassParser do
     it 'is parsed as a Hash<C1, C2>' do
       ['Symbol => String', 'Symbol=>String', 'Symbol  =>   String'].each do |input|
         input.should parse_to(
-            Types::GenericClassType.new('Hash', :covariant,
+            Types::GenericType.new(Types::ClassType.new('Hash', :covariant),
                 [Types::ClassType.new('Symbol', :covariant),
                  Types::ClassType.new('String', :covariant)]))
       end
@@ -45,34 +45,34 @@ describe Parsers::ClassParser do
     
     it 'allows variance constraints on the key and value types' do
       '::Hello::World==>Some::Constant-'.should parse_to(
-          Types::GenericClassType.new('Hash', :covariant,
+          Types::GenericType.new(Types::ClassType.new('Hash', :covariant),
               [Types::ClassType.new('::Hello::World', :invariant),
                Types::ClassType.new('Some::Constant', :contravariant)]))
     end
   end
   
   describe 'a generic Array definition' do
-    it 'is parsed as a GenericClassType' do
+    it 'is parsed as a GenericType' do
       'Array<String>'.should parse_to(
-          Types::GenericClassType.new('Array', :covariant,
+          Types::GenericType.new(Types::ClassType.new('Array', :covariant),
               [Types::ClassType.new('String', :covariant)]))
     end
   end
   
   describe 'a generic Hash definition' do
-    it 'is parsed as a GenericClassType' do
+    it 'is parsed as a GenericType' do
       'Hash- < Symbol=,   String  >'.should parse_to(
-          Types::GenericClassType.new('Hash', :contravariant,
+          Types::GenericType.new(Types::ClassType.new('Hash', :contravariant),
               [Types::ClassType.new('Symbol', :invariant),
                Types::ClassType.new('String', :covariant)]))
     end
   end
   
   describe 'a nested generic definition' do
-    it 'should parse correctly as nested GenericClassType' do
+    it 'should parse correctly as nested GenericType' do
       'Array<Hash<Symbol, String>>'.should parse_to(
-          Types::GenericClassType.new('Array', :covariant,
-              [Types::GenericClassType.new('Hash', :covariant,
+          Types::GenericType.new(Types::ClassType.new('Array', :covariant),
+              [Types::GenericType.new(Types::ClassType.new('Hash', :covariant),
                   [Types::ClassType.new('Symbol', :covariant),
                    Types::ClassType.new('String', :covariant)])]))
     end
@@ -81,7 +81,7 @@ describe Parsers::ClassParser do
   describe 'an array generic shorthand' do
     it 'should parse as a covariant generic array constraint' do
       '[   String= ]'.should parse_to(
-          Types::GenericClassType.new('Array', :covariant,
+          Types::GenericType.new(Types::ClassType.new('Array', :covariant),
               [Types::ClassType.new('String', :invariant)]))
     end
   end
@@ -99,7 +99,7 @@ describe Parsers::ClassParser do
             Types::TupleType.new(
               [Types::ClassType.new('String', :contravariant),
                Types::ClassType.new('Object', :covariant),
-               Types::GenericClassType.new('Hash', :covariant,
+               Types::GenericType.new(Types::ClassType.new('Hash', :covariant),
                    [Types::ClassType.new('Symbol', :invariant),
                     Types::ClassType.new('Fixnum', :covariant)])]))
       end

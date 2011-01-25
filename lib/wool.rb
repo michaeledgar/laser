@@ -31,8 +31,8 @@ require 'wool/analysis/bootstrap'
 # 3. Bend at the waist
 # 4. PULL UP ON THEM BOOTSTRAPS!
 Wool::SexpAnalysis::Bootstrap.bootstrap
-# Load the constraint engine
-require 'wool/constraints/constraints'
+# Load the type engine
+require 'wool/types/types'
 require 'wool/annotation_parser/parsers'
 
 require 'wool/analysis/class_estimate'

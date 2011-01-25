@@ -70,8 +70,8 @@ module Wool
 
       module HashConstraint1
         def type
-          Types::GenericClassType.new(
-              'Hash', :covariant, [variance_constraint1.type, variance_constraint2.type])
+          Types::GenericType.new(Types::ClassType.new('Hash', :covariant),
+              [variance_constraint1.type, variance_constraint2.type])
         end
       end
 
@@ -183,7 +183,8 @@ module Wool
 
       module ArrayConstraint1
         def type
-          Types::GenericClassType.new('Array', :covariant, [elements[2].type])
+          Types::GenericType.new(Types::ClassType.new('Array', :covariant),
+              [elements[2].type])
         end
       end
 
@@ -300,9 +301,7 @@ module Wool
       module GenericConstraint1
         def type
           type_to_generify = variance_constraint.type
-          Types::GenericClassType.new(
-              type_to_generify.class_name, type_to_generify.variance,
-              type_list.all_types)
+          Types::GenericType.new(type_to_generify, type_list.all_types)
         end
       end
 

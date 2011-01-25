@@ -10,8 +10,8 @@ module Wool
       rule hash_constraint
         variance_constraint space* '=>' space* variance_constraint {
           def type
-            Types::GenericClassType.new(
-                'Hash', :covariant, [variance_constraint1.type, variance_constraint2.type])
+            Types::GenericType.new(Types::ClassType.new('Hash', :covariant),
+                [variance_constraint1.type, variance_constraint2.type])
           end
         }
       end
@@ -27,7 +27,8 @@ module Wool
       rule array_constraint
         '[' space* type space* ']' {
           def type
-            Types::GenericClassType.new('Array', :covariant, [elements[2].type])
+            Types::GenericType.new(Types::ClassType.new('Array', :covariant),
+                [elements[2].type])
           end
         }
       end
@@ -44,9 +45,7 @@ module Wool
         variance_constraint space* '<' space* type_list space* '>' {
           def type
             type_to_generify = variance_constraint.type
-            Types::GenericClassType.new(
-                type_to_generify.class_name, type_to_generify.variance,
-                type_list.all_types)
+            Types::GenericType.new(type_to_generify, type_list.all_types)
           end
         } / variance_constraint
       end
