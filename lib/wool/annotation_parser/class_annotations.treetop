@@ -9,66 +9,68 @@ module Wool
       
       rule hash_constraint
         variance_constraint space* '=>' space* variance_constraint {
-          def constraints
-            [Types::GenericClassType.new(
-                'Hash', :covariant, [variance_constraint1.constraints,
-                variance_constraint2.constraints])]
+          def type
+            Types::GenericClassType.new(
+                'Hash', :covariant, [variance_constraint1.type, variance_constraint2.type])
           end
         }
       end
       
       rule dont_care_constraint
         '_' {
-          def constraints
-            [Types::ClassType.new('Object', :covariant)]
+          def type
+            Types::ClassType.new('Object', :covariant)
           end
         }
       end
       
       rule array_constraint
         '[' space* type space* ']' {
-          def constraints
-            [Types::GenericClassType.new(
-                'Array', :covariant, [elements[2].constraints])]
+          def type
+            Types::GenericClassType.new('Array', :covariant, [elements[2].type])
           end
         }
       end
       
       rule tuple_constraint
         parenthesized_type_list {
-          def constraints
-            [Types::TupleType.new(super)]
+          def type
+            Types::TupleType.new(all_types)
           end
         }
       end
       
       rule generic_constraint
         variance_constraint space* '<' space* type_list space* '>' {
-          def constraints
-            class_constraint = variance_constraint.constraints.first
-            [Types::GenericClassType.new(
-                class_constraint.class_name, class_constraint.variance,
-                type_list.constraints)]
+          def type
+            type_to_generify = variance_constraint.type
+            Types::GenericClassType.new(
+                type_to_generify.class_name, type_to_generify.variance,
+                type_list.all_types)
           end
         } / variance_constraint
       end
 
       rule variance_constraint
         constant "=" !'>' {
-          def constraints
-            constant.constraints.map { |x| x.variance = :invariant; x }
+          def type
+            result = constant.type
+            result.variance = :invariant
+            result
           end
         } / constant "-" {
-          def constraints
-            constant.constraints.map { |x| x.variance = :contravariant; x }
+          def type
+            result = constant.type
+            result.variance = :contravariant
+            result
           end
         } / constant
       end
 
       rule constant
         ( '::'? [A-Z] [A-Za-z_]* )+ {
-          def constraints
-            [Types::ClassType.new(text_value, :covariant)]
+          def type
+            Types::ClassType.new(text_value, :covariant)
           end
         }
       end

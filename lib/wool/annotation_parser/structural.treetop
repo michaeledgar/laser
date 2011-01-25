@@ -5,30 +5,30 @@ module Wool
       include GeneralPurpose
       rule structural_constraint
         '#' method_name space* parenthesized_type_list space* '->' space* return_type:type {
-          def constraints
-            result = [Types::StructuralType.new(
-                method_name.text_value, parenthesized_type_list.constraints,
-                return_type.constraints)]
+          def type
+            result = Types::StructuralType.new(
+                method_name.text_value, parenthesized_type_list.all_types,
+                return_type.type)
           end
         } / '#' method_name space* parenthesized_type_list space* return_type:type {
-          def constraints
-            result = [Types::StructuralType.new(
-                method_name.text_value, parenthesized_type_list.constraints,
-                return_type.constraints)]
+          def type
+            result = Types::StructuralType.new(
+                method_name.text_value, parenthesized_type_list.all_types,
+                return_type.type)
           end
         } / '#' method_name space* parenthesized_type_list {
-          def constraints
-            result = [Types::StructuralType.new(
-                method_name.text_value, parenthesized_type_list.constraints, [])]
+          def type
+            result = Types::StructuralType.new(
+                method_name.text_value, parenthesized_type_list.all_types, [])
           end
         } / '#' method_name space* '->' space* return_type:type {
-          def constraints
-            result = [Types::StructuralType.new(
-                method_name.text_value, [], return_type.constraints)]
+          def type
+            result = Types::StructuralType.new(
+                method_name.text_value, [], return_type.type)
           end
         } / '#' method_name {
-          def constraints
-            result = [Types::StructuralType.new(method_name.text_value, [], [])]
+          def type
+            result = Types::StructuralType.new(method_name.text_value, [], [])
           end
         }
       end

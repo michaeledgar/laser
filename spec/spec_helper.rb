@@ -81,11 +81,11 @@ module Wool
         def matches?(actual)
           @input = actual
           @result = Parsers::AnnotationParser.new.parse(actual)
-          @result && @result.constraints == @output
+          @result && @result.type == @output
         end
 
         def failure_message
-          "expected '#{@input}' to parse to #{@output.inspect}, not #{@result.constraints.inspect}"
+          "expected '#{@input}' to parse to #{@output.inspect}, not #{@result.type.inspect}"
         end
 
         def negative_failure_message

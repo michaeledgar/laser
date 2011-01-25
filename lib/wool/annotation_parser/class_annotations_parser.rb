@@ -69,10 +69,9 @@ module Wool
       end
 
       module HashConstraint1
-        def constraints
-          [Types::GenericClassType.new(
-              'Hash', :covariant, [variance_constraint1.constraints,
-              variance_constraint2.constraints])]
+        def type
+          Types::GenericClassType.new(
+              'Hash', :covariant, [variance_constraint1.type, variance_constraint2.type])
         end
       end
 
@@ -145,8 +144,8 @@ module Wool
       end
 
       module DontCareConstraint0
-        def constraints
-          [Types::ClassType.new('Object', :covariant)]
+        def type
+          Types::ClassType.new('Object', :covariant)
         end
       end
 
@@ -183,9 +182,8 @@ module Wool
       end
 
       module ArrayConstraint1
-        def constraints
-          [Types::GenericClassType.new(
-              'Array', :covariant, [elements[2].constraints])]
+        def type
+          Types::GenericClassType.new('Array', :covariant, [elements[2].type])
         end
       end
 
@@ -263,9 +261,9 @@ module Wool
         r0
       end
 
-      module TupleType0
-        def constraints
-          [Types::TupleType.new(super)]
+      module TupleConstraint0
+        def type
+          Types::TupleType.new(all_types)
         end
       end
 
@@ -281,7 +279,7 @@ module Wool
         end
 
         r0 = _nt_parenthesized_type_list
-        r0.extend(TupleType0)
+        r0.extend(TupleConstraint0)
 
         node_cache[:tuple_constraint][start_index] = r0
 
@@ -300,11 +298,11 @@ module Wool
       end
 
       module GenericConstraint1
-        def constraints
-          class_constraint = variance_constraint.constraints.first
-          [Types::GenericClassType.new(
-              class_constraint.class_name, class_constraint.variance,
-              type_list.constraints)]
+        def type
+          type_to_generify = variance_constraint.type
+          Types::GenericClassType.new(
+              type_to_generify.class_name, type_to_generify.variance,
+              type_list.all_types)
         end
       end
 
@@ -419,8 +417,10 @@ module Wool
       end
 
       module VarianceConstraint1
-        def constraints
-          constant.constraints.map { |x| x.variance = :invariant; x }
+        def type
+          result = constant.type
+          result.variance = :invariant
+          result
         end
       end
 
@@ -432,8 +432,10 @@ module Wool
       end
 
       module VarianceConstraint3
-        def constraints
-          constant.constraints.map { |x| x.variance = :contravariant; x }
+        def type
+          result = constant.type
+          result.variance = :contravariant
+          result
         end
       end
 
@@ -533,8 +535,8 @@ module Wool
       end
 
       module Constant1
-        def constraints
-          [Types::ClassType.new(text_value, :covariant)]
+        def type
+          Types::ClassType.new(text_value, :covariant)
         end
       end
 

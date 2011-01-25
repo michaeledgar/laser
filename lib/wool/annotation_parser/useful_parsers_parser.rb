@@ -407,7 +407,7 @@ module Wool
       end
 
       module ParenthesizedTypeList1
-        def constraints
+        def all_types
           []
         end
       end
@@ -420,8 +420,8 @@ module Wool
       end
 
       module ParenthesizedTypeList3
-        def constraints
-          type_list.constraints
+        def all_types
+          type_list.all_types
         end
       end
 
@@ -535,14 +535,14 @@ module Wool
       end
 
       module TypeList1
-        def constraints
-          [type.constraints] + type_list.constraints
+        def all_types
+          [type.type] + type_list.all_types
         end
       end
 
       module TypeList2
-        def constraints
-          [super]
+        def all_types
+          [type]
         end
       end
 

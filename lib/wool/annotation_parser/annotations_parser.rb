@@ -25,10 +25,7 @@ module Wool
 
       module Root1
         def type
-          Type.new(constraints)
-        end
-        def constraints
-          elements[1].constraints
+          elements[1].type
         end
       end
 
@@ -127,7 +124,7 @@ module Wool
       end
 
       module Top0
-        def constraints
+        def type
           []
         end
       end
@@ -158,8 +155,8 @@ module Wool
       end
 
       module SelfType0
-        def constraints
-          [Types::SelfType.new]
+        def type
+          Types::SelfType.new
         end
       end
 

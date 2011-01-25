@@ -17,24 +17,24 @@ module Wool
       
       rule parenthesized_type_list
         '(' space* ')' {
-          def constraints
+          def all_types
             []
           end
         } / '(' type_list ')' {
-          def constraints
-            type_list.constraints
+          def all_types
+            type_list.all_types
           end
         }
       end
       
       rule type_list
         type space* ',' space* type_list {
-          def constraints
-            [type.constraints] + type_list.constraints
+          def all_types
+            [type.type] + type_list.all_types
           end
         } / type {
-          def constraints
-            [super]
+          def all_types
+            [type]
           end
         }
       end

@@ -20,6 +20,17 @@ module Wool
     class TypeConstraint < Base
     end
 
+    class UnionType < TypeConstraint
+      acts_as_struct :member_types
+      def initialize(*member_types)
+        @member_types = member_types
+      end
+      
+      def signature
+        {member_types: member_types}
+      end
+    end
+
     class SelfType < TypeConstraint
       acts_as_struct :scope
       
@@ -29,17 +40,17 @@ module Wool
     end
     
     class StructuralType < TypeConstraint
-      attr_reader :method_name, :arg_constraint_list, :return_constraints
+      attr_reader :method_name, :argument_types, :return_type
       
-      def initialize(method_name, arg_constraint_list, return_constraints)
+      def initialize(method_name, argument_types, return_type)
         @method_name = method_name
-        @arg_constraint_list = arg_constraint_list
-        @return_constraints = return_constraints
+        @argument_types = argument_types
+        @return_type = return_type
       end
       
       def signature
-        {method_name: method_name, arg_constraint_list: arg_constraint_list,
-         return_constraints: return_constraints}
+        {method_name: method_name, argument_types: argument_types,
+         return_type: return_type}
       end
     end
     
@@ -52,39 +63,39 @@ module Wool
     end
 
     class GenericClassType < ClassType
-      acts_as_struct :subtype_constraints
+      acts_as_struct :subtypes
       def initialize(*args)
         if args.size <= 2
           super(*args)
         else
           super(*args[0..1])
-          @subtype_constraints = args[2]
+          @subtypes = args[2]
         end
       end
 
       def signature
-        super.merge(subtype_constraints: subtype_constraints)
+        super.merge(subtypes: subtypes)
       end
     end
     
     # Represents a Tuple: an array of a given, fixed size, with each position
     # in the array possessing a set of constraints.
     class TupleType < TypeConstraint
-      attr_reader :element_constraints
-      def initialize(element_constraints)
-        @element_constraints = element_constraints
+      attr_reader :element_types
+      def initialize(element_types)
+        @element_types = element_types
       end
       
       def size
-        element_constraints.size
+        element_types.size
       end
       
       def [](idx)
-        element_constraints[idx]
+        element_types[idx]
       end
       
       def signature
-        {element_constraints: element_constraints}
+        {element_types: element_types}
       end
     end
   end
