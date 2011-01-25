@@ -12,8 +12,11 @@ module Wool
       # @param [Array<Array<Integer, Integer>, Symbol, String>] token the token
       #     from Ripper that we're wrapping
       def initialize(token)
-        pos, self.type, self.body = token
-        self.line, self.col = pos
+        (self.line, self.col), self.type, self.body = token
+      end
+      
+      def reg_desc
+        type.to_s.gsub(/^on_/, '')
       end
     end
     

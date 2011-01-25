@@ -37,7 +37,7 @@ module Wool
       attr_reader :text
       # Annotates the given node +root+, assuming the tree represents the source contained in
       # +text+. This is useful for text-based discovery that has to happen, often to capture
-      # lexing information lost by the Ripper parser.s
+      # lexing information lost by the Ripper parser.
       #
       # root: Sexp
       # text: String
