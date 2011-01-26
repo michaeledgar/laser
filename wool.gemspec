@@ -4,16 +4,16 @@
 # -*- encoding: utf-8 -*-
 
 Gem::Specification.new do |s|
-  s.name = %q{wool}
+  s.name = %q{laser}
   s.version = "0.5.1"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Michael Edgar"]
   s.date = %q{2010-12-16}
-  s.default_executable = %q{wool}
+  s.default_executable = %q{laser}
   s.description = %q{Laser is an advanced static analysis tool for Ruby.}
   s.email = %q{michael.j.edgar@dartmouth.edu}
-  s.executables = ["wool"]
+  s.executables = ["laser"]
   s.extra_rdoc_files = [
     "LICENSE",
      "README.rdoc"
@@ -26,8 +26,8 @@ Gem::Specification.new do |s|
      "Rakefile",
      "TODO.md",
      "VERSION",
-     "bin/wool",
-     "features/step_definitions/wool_steps.rb",
+     "bin/laser",
+     "features/step_definitions/laser_steps.rb",
      "features/support/env.rb",
      "features/support/testdata/1_input",
      "features/support/testdata/1_output",
@@ -37,38 +37,38 @@ Gem::Specification.new do |s|
      "features/support/testdata/3_output",
      "features/support/testdata/4_input",
      "features/support/testdata/4_output",
-     "features/wool.feature",
-     "lib/wool.rb",
-     "lib/wool/advice/advice.rb",
-     "lib/wool/advice/comment_advice.rb",
-     "lib/wool/analysis/annotations.rb",
-     "lib/wool/analysis/annotations/next_annotation.rb",
-     "lib/wool/analysis/annotations/parent_annotation.rb",
-     "lib/wool/analysis/annotations/scope_annotation.rb",
-     "lib/wool/analysis/lexical_analysis.rb",
-     "lib/wool/analysis/protocol_registry.rb",
-     "lib/wool/analysis/protocols.rb",
-     "lib/wool/analysis/scope.rb",
-     "lib/wool/analysis/sexp_analysis.rb",
-     "lib/wool/analysis/signature.rb",
-     "lib/wool/analysis/symbol.rb",
-     "lib/wool/analysis/visitor.rb",
-     "lib/wool/analysis/wool_class.rb",
-     "lib/wool/rake/task.rb",
-     "lib/wool/runner.rb",
-     "lib/wool/scanner.rb",
-     "lib/wool/support/module_extensions.rb",
-     "lib/wool/third_party/trollop.rb",
-     "lib/wool/warning.rb",
-     "lib/wool/warnings/comment_spacing.rb",
-     "lib/wool/warnings/extra_blank_lines.rb",
-     "lib/wool/warnings/extra_whitespace.rb",
-     "lib/wool/warnings/line_length.rb",
-     "lib/wool/warnings/misaligned_unindentation.rb",
-     "lib/wool/warnings/operator_spacing.rb",
-     "lib/wool/warnings/rescue_exception.rb",
-     "lib/wool/warnings/semicolon.rb",
-     "lib/wool/warnings/useless_double_quotes.rb",
+     "features/laser.feature",
+     "lib/laser.rb",
+     "lib/laser/advice/advice.rb",
+     "lib/laser/advice/comment_advice.rb",
+     "lib/laser/analysis/annotations.rb",
+     "lib/laser/analysis/annotations/next_annotation.rb",
+     "lib/laser/analysis/annotations/parent_annotation.rb",
+     "lib/laser/analysis/annotations/scope_annotation.rb",
+     "lib/laser/analysis/lexical_analysis.rb",
+     "lib/laser/analysis/protocol_registry.rb",
+     "lib/laser/analysis/protocols.rb",
+     "lib/laser/analysis/scope.rb",
+     "lib/laser/analysis/sexp_analysis.rb",
+     "lib/laser/analysis/signature.rb",
+     "lib/laser/analysis/symbol.rb",
+     "lib/laser/analysis/visitor.rb",
+     "lib/laser/analysis/laser_class.rb",
+     "lib/laser/rake/task.rb",
+     "lib/laser/runner.rb",
+     "lib/laser/scanner.rb",
+     "lib/laser/support/module_extensions.rb",
+     "lib/laser/third_party/trollop.rb",
+     "lib/laser/warning.rb",
+     "lib/laser/warnings/comment_spacing.rb",
+     "lib/laser/warnings/extra_blank_lines.rb",
+     "lib/laser/warnings/extra_whitespace.rb",
+     "lib/laser/warnings/line_length.rb",
+     "lib/laser/warnings/misaligned_unindentation.rb",
+     "lib/laser/warnings/operator_spacing.rb",
+     "lib/laser/warnings/rescue_exception.rb",
+     "lib/laser/warnings/semicolon.rb",
+     "lib/laser/warnings/useless_double_quotes.rb",
      "spec/advice_specs/advice_spec.rb",
      "spec/advice_specs/comment_advice_spec.rb",
      "spec/advice_specs/spec_helper.rb",
@@ -82,7 +82,7 @@ Gem::Specification.new do |s|
      "spec/analysis_specs/sexp_analysis_spec.rb",
      "spec/analysis_specs/spec_helper.rb",
      "spec/analysis_specs/visitor_spec.rb",
-     "spec/analysis_specs/wool_class_spec.rb",
+     "spec/analysis_specs/laser_class_spec.rb",
      "spec/rake_specs/spec_helper.rb",
      "spec/rake_specs/task_spec.rb",
      "spec/runner_spec.rb",
@@ -102,12 +102,12 @@ Gem::Specification.new do |s|
      "spec/warning_specs/semicolon_spec.rb",
      "spec/warning_specs/spec_helper.rb",
      "spec/warning_specs/useless_double_quotes_spec.rb",
-     "spec/wool_spec.rb",
+     "spec/laser_spec.rb",
      "status_reports/2010/12/2010-12-14.md",
      "test/third_party_tests/test_trollop.rb",
-     "wool.gemspec"
+     "laser.gemspec"
   ]
-  s.homepage = %q{http://github.com/michaeledgar/wool}
+  s.homepage = %q{http://github.com/michaeledgar/laser}
   s.rdoc_options = ["--charset=UTF-8"]
   s.require_paths = ["lib"]
   s.rubygems_version = %q{1.3.6}
@@ -126,7 +126,7 @@ Gem::Specification.new do |s|
      "spec/analysis_specs/sexp_analysis_spec.rb",
      "spec/analysis_specs/spec_helper.rb",
      "spec/analysis_specs/visitor_spec.rb",
-     "spec/analysis_specs/wool_class_spec.rb",
+     "spec/analysis_specs/laser_class_spec.rb",
      "spec/rake_specs/spec_helper.rb",
      "spec/rake_specs/task_spec.rb",
      "spec/runner_spec.rb",
@@ -145,7 +145,7 @@ Gem::Specification.new do |s|
      "spec/warning_specs/semicolon_spec.rb",
      "spec/warning_specs/spec_helper.rb",
      "spec/warning_specs/useless_double_quotes_spec.rb",
-     "spec/wool_spec.rb",
+     "spec/laser_spec.rb",
      "test/third_party_tests/test_trollop.rb"
   ]
 

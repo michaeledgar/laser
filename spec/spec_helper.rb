@@ -5,7 +5,7 @@ $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 require 'simplecov'
 require 'simplecov-gem-adapter'
 SimpleCov.start 'gem'
-require 'wool'
+require 'laser'
 require 'rspec'
 require 'rspec/autorun'
 require 'stringio'

@@ -1,5 +1,5 @@
 $LOAD_PATH.unshift(File.dirname(__FILE__) + '/../../lib')
-require 'wool'
+require 'laser'
 
 require 'rspec/expectations'
 require 'stringio'

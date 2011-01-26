@@ -1,5 +1,5 @@
 class SomeBigClass
   attr_accessor :silly, :monkey
 
-  def xyz; 'xyz'; end  # wool: ignore SemicolonWarning
- end  # wool: ignore MisalignedUnindentationWarning
+  def xyz; 'xyz'; end  # laser: ignore SemicolonWarning
+ end  # laser: ignore MisalignedUnindentationWarning

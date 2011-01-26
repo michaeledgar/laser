@@ -4,7 +4,7 @@ I present a small Ruby class which provides full Ruby Regexp matching on sequenc
 
 ## Motivation
 
-So I'm hammering away at [Laser (soon to be renamed Laser)](http://github.com/michaeledgar/wool/), and I come across a situation: I need to parse out comments using Ripper's output.
+So I'm hammering away at [Laser (soon to be renamed Laser)](http://github.com/michaeledgar/laser/), and I come across a situation: I need to parse out comments using Ripper's output.
 
 I decided a while ago I wouldn't use [YARD](http://yardoc.org/)'s Ripper-based parser as it returns [its own AST format](https://github.com/lsegal/yard/blob/master/lib/yard/parser/ruby/ruby_parser.rb). YARD has its own goals, so it's not surprising the standard output from Ripper was insufficient. However, I don't want to define a new AST format - we already have Ripper's, YARD's, and of course, the venerable [RubyParser/ParseTree format](http://parsetree.rubyforge.org/). I'm rambling: the point is, I'm using exact Ripper output, and there's no existing code to annotate a Ripper node with the comments immediately preceding it.
 

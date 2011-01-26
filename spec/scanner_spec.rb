@@ -17,24 +17,24 @@ describe Scanner do
     end
 
     it "ignores warnings specified in the line's comments by class name" do
-      warnings = @scanner.scan('a +b  # wool: ignore OperatorSpacing')
+      warnings = @scanner.scan('a +b  # laser: ignore OperatorSpacing')
       warnings.size.should == 0
     end
 
     it "ignores warnings specified in the line's comments by short name" do
-      warnings = @scanner.scan("a +b  # wool: ignore #{OperatorSpacing.short_name}")
+      warnings = @scanner.scan("a +b  # laser: ignore #{OperatorSpacing.short_name}")
       warnings.size.should == 0
     end
 
     it "ignores multiple warnings that are marked in the line's comments" do
       warnings = @scanner.scan(
-          'a +b; c + d  # wool: ignore OperatorSpacing SemicolonWarning')
+          'a +b; c + d  # laser: ignore OperatorSpacing SemicolonWarning')
       warnings.size.should == 0
     end
 
     it "ignores multiple warnings in the line's comments as short name" do
       warnings = @scanner.scan(
-          "a +b; c + d  # wool: ignore #{OperatorSpacing.short_name} #{SemicolonWarning.short_name}")
+          "a +b; c + d  # laser: ignore #{OperatorSpacing.short_name} #{SemicolonWarning.short_name}")
       warnings.size.should == 0
     end
 

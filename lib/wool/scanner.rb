@@ -139,10 +139,10 @@ module Laser
     private
 
     # Filters the list of warnings by checking the line for warnings to
-    # ignore. The line should contain "wool: ignore ClassToIgnore" in a comment,
-    # though you can omit the space between "wool:" and "ignore".
+    # ignore. The line should contain "laser: ignore ClassToIgnore" in a comment,
+    # though you can omit the space between "laser:" and "ignore".
     def filtered_warnings_from_line(line, warnings)
-      match = line.match(/#.*wool:\s*ignore\s+(.*)$/)
+      match = line.match(/#.*laser:\s*ignore\s+(.*)$/)
       return warnings unless match && ignore_label = match[1]
       class_names = ignore_label.split
       result = warnings.reject do |warning|

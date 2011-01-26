@@ -10,7 +10,7 @@ describe InlineCommentSpaceWarning do
     InlineCommentSpaceWarning.should warn('a + b#comment', SETTINGS)
     InlineCommentSpaceWarning.should warn('a + b # comment', SETTINGS)
     InlineCommentSpaceWarning.should_not warn('a + b  # comment', SETTINGS)
-    InlineCommentSpaceWarning.should_not warn('a +b  # wool: ignore OperatorSpacing', SETTINGS)
+    InlineCommentSpaceWarning.should_not warn('a +b  # laser: ignore OperatorSpacing', SETTINGS)
   end
 
   it 'has an option to specify the necessary spacing' do

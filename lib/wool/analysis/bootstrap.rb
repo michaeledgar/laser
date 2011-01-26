@@ -37,7 +37,7 @@ module Laser
       end
     
       def self.load_prepackaged_annotations(file)
-        parse(File.read(File.join(Laser::ROOT, 'wool', 'standard_library', file)))
+        parse(File.read(File.join(Laser::ROOT, 'laser', 'standard_library', file)))
       end
     end
   end

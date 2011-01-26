@@ -119,7 +119,7 @@ module Laser
 
         # Initializes the class protocol with the given class.
         #
-        # @param [LaserClass] klass the wool class whose protocol we are representing
+        # @param [LaserClass] klass the laser class whose protocol we are representing
         def initialize(instance)
           @value = instance
         end

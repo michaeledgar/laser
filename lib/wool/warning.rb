@@ -46,7 +46,7 @@ module Laser
 
     # Override in subclasses to provide a list of options to send to Trollop
     def self.options
-      @options ||= [:debug, "Shows debug output from wool's scanner", {short: '-d'}]
+      @options ||= [:debug, "Shows debug output from laser's scanner", {short: '-d'}]
     end
 
     # Adds an option in Trollop format.

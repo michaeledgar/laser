@@ -5,7 +5,7 @@
 
 require 'test/unit'
 require 'stringio'
-require 'wool/third_party/trollop'
+require 'laser/third_party/trollop'
 
 module Trollop
 module Test

@@ -4,11 +4,11 @@ require 'rake'
 begin
   require 'jeweler'
   Jeweler::Tasks.new do |gem|
-    gem.name = 'wool'
+    gem.name = 'laser'
     gem.summary = %Q{Analysis and linting tool for Ruby.}
     gem.description = %Q{Laser is an advanced static analysis tool for Ruby.}
     gem.email = 'michael.j.edgar@dartmouth.edu'
-    gem.homepage = 'http://github.com/michaeledgar/wool'
+    gem.homepage = 'http://github.com/michaeledgar/laser'
     gem.authors = ['Michael Edgar']
     gem.add_development_dependency 'rspec', '~> 2.3'
     gem.add_development_dependency 'yard', '>= 0'
@@ -44,25 +44,25 @@ require 'metric_fu'
 
 if true
   begin
-    require 'wool'
-    Laser::Rake::LaserTask.new(:wool) do |wool|
-      wool.libs << 'lib' << 'spec'
-      wool.using << :all << Laser::LineLengthMaximum(100) << Laser::LineLengthWarning(80)
-      wool.options = '--debug --fix'
-      wool.fix << Laser::ExtraBlankLinesWarning << Laser::ExtraWhitespaceWarning << Laser::LineLengthWarning(80)
+    require 'laser'
+    Laser::Rake::LaserTask.new(:laser) do |laser|
+      laser.libs << 'lib' << 'spec'
+      laser.using << :all << Laser::LineLengthMaximum(100) << Laser::LineLengthWarning(80)
+      laser.options = '--debug --fix'
+      laser.fix << Laser::ExtraBlankLinesWarning << Laser::ExtraWhitespaceWarning << Laser::LineLengthWarning(80)
     end
   rescue LoadError => err
-    task :wool do
-      abort 'Laser is not available. In order to run wool, you must: sudo gem install wool'
+    task :laser do
+      abort 'Laser is not available. In order to run laser, you must: sudo gem install laser'
     end
   end
 end
 
 task rebuild: [:gemspec, :build, :install] do
-  %x(rake wool)
+  %x(rake laser)
 end
 
-SRC = FileList['lib/wool/annotation_parser/*.treetop']
+SRC = FileList['lib/laser/annotation_parser/*.treetop']
 OBJ = SRC.sub(/.treetop$/, '_parser.rb')
 
 SRC.each do |source|
@@ -76,7 +76,7 @@ task build_parsers: OBJ
 
 # Alias for script/console from rails world lawlz
 task sc: :build_parsers do
-  system("irb -r./lib/wool")
+  system("irb -r./lib/laser")
 end
 
 task spec: :check_dependencies

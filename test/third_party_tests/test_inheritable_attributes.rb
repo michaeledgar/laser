@@ -1,5 +1,5 @@
 require 'test/unit'
-require 'wool/support/inheritable_attributes'
+require 'laser/support/inheritable_attributes'
 
 class ClassInheritableAttributesTest < Test::Unit::TestCase
   def setup

@@ -76,7 +76,7 @@ describe GenericLineLengthWarning do
     end
     
     it 'fails to fix when if/unless are in a symbol' do
-      # This came from an actual bug from running wool on wool's source.
+      # This came from an actual bug from running laser on laser's source.
       @input = "    left, right = @class.new('').split_on_keyword('x = 5 unless y == 2', :unless)"
       @output = @input
     end
