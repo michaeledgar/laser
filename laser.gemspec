@@ -9,24 +9,28 @@ Gem::Specification.new do |s|
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Michael Edgar"]
-  s.date = %q{2010-12-16}
+  s.date = %q{2011-01-26}
   s.default_executable = %q{laser}
   s.description = %q{Laser is an advanced static analysis tool for Ruby.}
   s.email = %q{michael.j.edgar@dartmouth.edu}
   s.executables = ["laser"]
   s.extra_rdoc_files = [
     "LICENSE",
-     "README.rdoc"
+     "README.md"
   ]
   s.files = [
     ".document",
      ".gitignore",
+     ".rspec",
      "LICENSE",
-     "README.rdoc",
+     "README.md",
      "Rakefile",
      "TODO.md",
      "VERSION",
      "bin/laser",
+     "design_docs/object_regex.md",
+     "design_docs/type_annotations.md",
+     "features/laser.feature",
      "features/step_definitions/laser_steps.rb",
      "features/support/env.rb",
      "features/support/testdata/1_input",
@@ -37,115 +41,177 @@ Gem::Specification.new do |s|
      "features/support/testdata/3_output",
      "features/support/testdata/4_input",
      "features/support/testdata/4_output",
-     "features/laser.feature",
+     "features/support/testdata/5_input",
+     "laser.gemspec",
      "lib/laser.rb",
      "lib/laser/advice/advice.rb",
      "lib/laser/advice/comment_advice.rb",
      "lib/laser/analysis/annotations.rb",
+     "lib/laser/analysis/annotations/annotation_config.yaml",
+     "lib/laser/analysis/annotations/comment_attachment_annotation.rb",
+     "lib/laser/analysis/annotations/literal_type_annotation.rb",
      "lib/laser/analysis/annotations/next_annotation.rb",
      "lib/laser/analysis/annotations/parent_annotation.rb",
      "lib/laser/analysis/annotations/scope_annotation.rb",
+     "lib/laser/analysis/annotations/source_location_annotation.rb",
+     "lib/laser/analysis/bindings.rb",
+     "lib/laser/analysis/bootstrap.rb",
+     "lib/laser/analysis/class_estimate.rb",
+     "lib/laser/analysis/comments.rb",
+     "lib/laser/analysis/laser_class.rb",
      "lib/laser/analysis/lexical_analysis.rb",
      "lib/laser/analysis/protocol_registry.rb",
      "lib/laser/analysis/protocols.rb",
      "lib/laser/analysis/scope.rb",
      "lib/laser/analysis/sexp_analysis.rb",
      "lib/laser/analysis/signature.rb",
-     "lib/laser/analysis/symbol.rb",
      "lib/laser/analysis/visitor.rb",
-     "lib/laser/analysis/laser_class.rb",
+     "lib/laser/annotation_parser/annotations.treetop",
+     "lib/laser/annotation_parser/annotations_parser.rb",
+     "lib/laser/annotation_parser/class_annotations.treetop",
+     "lib/laser/annotation_parser/class_annotations_parser.rb",
+     "lib/laser/annotation_parser/parsers.rb",
+     "lib/laser/annotation_parser/structural.treetop",
+     "lib/laser/annotation_parser/structural_parser.rb",
+     "lib/laser/annotation_parser/useful_parsers.treetop",
+     "lib/laser/annotation_parser/useful_parsers_parser.rb",
      "lib/laser/rake/task.rb",
      "lib/laser/runner.rb",
      "lib/laser/scanner.rb",
+     "lib/laser/standard_library/class_definitions.rb",
+     "lib/laser/support/acts_as_struct.rb",
+     "lib/laser/support/inheritable_attributes.rb",
      "lib/laser/support/module_extensions.rb",
+     "lib/laser/support/object_regex.rb",
      "lib/laser/third_party/trollop.rb",
+     "lib/laser/types/types.rb",
      "lib/laser/warning.rb",
+     "lib/laser/warnings/assignment_in_condition.rb",
      "lib/laser/warnings/comment_spacing.rb",
      "lib/laser/warnings/extra_blank_lines.rb",
      "lib/laser/warnings/extra_whitespace.rb",
      "lib/laser/warnings/line_length.rb",
      "lib/laser/warnings/misaligned_unindentation.rb",
      "lib/laser/warnings/operator_spacing.rb",
+     "lib/laser/warnings/parens_on_declaration.rb",
      "lib/laser/warnings/rescue_exception.rb",
      "lib/laser/warnings/semicolon.rb",
      "lib/laser/warnings/useless_double_quotes.rb",
      "spec/advice_specs/advice_spec.rb",
      "spec/advice_specs/comment_advice_spec.rb",
      "spec/advice_specs/spec_helper.rb",
+     "spec/analysis_specs/annotations_spec.rb",
+     "spec/analysis_specs/annotations_specs/comment_attachment_spec.rb",
+     "spec/analysis_specs/annotations_specs/literal_type_annotation_spec.rb",
      "spec/analysis_specs/annotations_specs/next_prev_annotation_spec.rb",
      "spec/analysis_specs/annotations_specs/parent_annotation_spec.rb",
+     "spec/analysis_specs/annotations_specs/scope_annotation_spec.rb",
+     "spec/analysis_specs/annotations_specs/source_location_spec.rb",
      "spec/analysis_specs/annotations_specs/spec_helper.rb",
+     "spec/analysis_specs/bindings_spec.rb",
+     "spec/analysis_specs/class_estimate_spec.rb",
+     "spec/analysis_specs/laser_class_spec.rb",
      "spec/analysis_specs/lexical_analysis_spec.rb",
      "spec/analysis_specs/protocol_registry_spec.rb",
      "spec/analysis_specs/protocols_spec.rb",
      "spec/analysis_specs/scope_spec.rb",
      "spec/analysis_specs/sexp_analysis_spec.rb",
+     "spec/analysis_specs/signature_spec.rb",
      "spec/analysis_specs/spec_helper.rb",
      "spec/analysis_specs/visitor_spec.rb",
-     "spec/analysis_specs/laser_class_spec.rb",
+     "spec/annotation_parser_specs/annotations_parser_spec.rb",
+     "spec/annotation_parser_specs/class_annotation_parser_spec.rb",
+     "spec/annotation_parser_specs/parsers_spec.rb",
+     "spec/annotation_parser_specs/spec_helper.rb",
+     "spec/annotation_parser_specs/structural_parser_spec.rb",
+     "spec/laser_spec.rb",
      "spec/rake_specs/spec_helper.rb",
      "spec/rake_specs/task_spec.rb",
      "spec/runner_spec.rb",
      "spec/scanner_spec.rb",
-     "spec/spec.opts",
      "spec/spec_helper.rb",
+     "spec/standard_library/spec_helper.rb",
+     "spec/standard_library/standard_library_spec.rb",
+     "spec/support_specs/acts_as_struct_spec.rb",
      "spec/support_specs/module_extensions_spec.rb",
      "spec/support_specs/spec_helper.rb",
      "spec/warning_spec.rb",
+     "spec/warning_specs/assignment_in_condition_spec.rb",
      "spec/warning_specs/comment_spacing_spec.rb",
      "spec/warning_specs/extra_blank_lines_spec.rb",
      "spec/warning_specs/extra_whitespace_spec.rb",
      "spec/warning_specs/line_length_spec.rb",
      "spec/warning_specs/misaligned_unindentation_spec.rb",
      "spec/warning_specs/operator_spacing_spec.rb",
+     "spec/warning_specs/parens_on_declaration_spec.rb",
      "spec/warning_specs/rescue_exception_spec.rb",
      "spec/warning_specs/semicolon_spec.rb",
      "spec/warning_specs/spec_helper.rb",
      "spec/warning_specs/useless_double_quotes_spec.rb",
-     "spec/laser_spec.rb",
      "status_reports/2010/12/2010-12-14.md",
-     "test/third_party_tests/test_trollop.rb",
-     "laser.gemspec"
+     "status_reports/2010/12/2010-12-23.md",
+     "status_reports/2010/12/2010-12-24.md",
+     "test/third_party_tests/test_inheritable_attributes.rb",
+     "test/third_party_tests/test_trollop.rb"
   ]
   s.homepage = %q{http://github.com/michaeledgar/laser}
   s.rdoc_options = ["--charset=UTF-8"]
   s.require_paths = ["lib"]
-  s.rubygems_version = %q{1.3.6}
-  s.summary = %q{Analysis and Linting tool for Ruby.}
+  s.rubygems_version = %q{1.3.7}
+  s.summary = %q{Analysis and linting tool for Ruby.}
   s.test_files = [
     "spec/advice_specs/advice_spec.rb",
      "spec/advice_specs/comment_advice_spec.rb",
      "spec/advice_specs/spec_helper.rb",
+     "spec/analysis_specs/annotations_spec.rb",
+     "spec/analysis_specs/annotations_specs/comment_attachment_spec.rb",
+     "spec/analysis_specs/annotations_specs/literal_type_annotation_spec.rb",
      "spec/analysis_specs/annotations_specs/next_prev_annotation_spec.rb",
      "spec/analysis_specs/annotations_specs/parent_annotation_spec.rb",
+     "spec/analysis_specs/annotations_specs/scope_annotation_spec.rb",
+     "spec/analysis_specs/annotations_specs/source_location_spec.rb",
      "spec/analysis_specs/annotations_specs/spec_helper.rb",
+     "spec/analysis_specs/bindings_spec.rb",
+     "spec/analysis_specs/class_estimate_spec.rb",
+     "spec/analysis_specs/laser_class_spec.rb",
      "spec/analysis_specs/lexical_analysis_spec.rb",
      "spec/analysis_specs/protocol_registry_spec.rb",
      "spec/analysis_specs/protocols_spec.rb",
      "spec/analysis_specs/scope_spec.rb",
      "spec/analysis_specs/sexp_analysis_spec.rb",
+     "spec/analysis_specs/signature_spec.rb",
      "spec/analysis_specs/spec_helper.rb",
      "spec/analysis_specs/visitor_spec.rb",
-     "spec/analysis_specs/laser_class_spec.rb",
+     "spec/annotation_parser_specs/annotations_parser_spec.rb",
+     "spec/annotation_parser_specs/class_annotation_parser_spec.rb",
+     "spec/annotation_parser_specs/parsers_spec.rb",
+     "spec/annotation_parser_specs/spec_helper.rb",
+     "spec/annotation_parser_specs/structural_parser_spec.rb",
+     "spec/laser_spec.rb",
      "spec/rake_specs/spec_helper.rb",
      "spec/rake_specs/task_spec.rb",
      "spec/runner_spec.rb",
      "spec/scanner_spec.rb",
      "spec/spec_helper.rb",
+     "spec/standard_library/spec_helper.rb",
+     "spec/standard_library/standard_library_spec.rb",
+     "spec/support_specs/acts_as_struct_spec.rb",
      "spec/support_specs/module_extensions_spec.rb",
      "spec/support_specs/spec_helper.rb",
      "spec/warning_spec.rb",
+     "spec/warning_specs/assignment_in_condition_spec.rb",
      "spec/warning_specs/comment_spacing_spec.rb",
      "spec/warning_specs/extra_blank_lines_spec.rb",
      "spec/warning_specs/extra_whitespace_spec.rb",
      "spec/warning_specs/line_length_spec.rb",
      "spec/warning_specs/misaligned_unindentation_spec.rb",
      "spec/warning_specs/operator_spacing_spec.rb",
+     "spec/warning_specs/parens_on_declaration_spec.rb",
      "spec/warning_specs/rescue_exception_spec.rb",
      "spec/warning_specs/semicolon_spec.rb",
      "spec/warning_specs/spec_helper.rb",
      "spec/warning_specs/useless_double_quotes_spec.rb",
-     "spec/laser_spec.rb",
+     "test/third_party_tests/test_inheritable_attributes.rb",
      "test/third_party_tests/test_trollop.rb"
   ]
 
@@ -153,21 +219,30 @@ Gem::Specification.new do |s|
     current_version = Gem::Specification::CURRENT_SPECIFICATION_VERSION
     s.specification_version = 3
 
-    if Gem::Version.new(Gem::RubyGemsVersion) >= Gem::Version.new('1.2.0') then
-      s.add_runtime_dependency(%q<ruby_parser>, [">= 2.0.5"])
-      s.add_runtime_dependency(%q<ruby2ruby>, [">= 1.2.4"])
-      s.add_development_dependency(%q<rspec>, [">= 1.2.9"])
+    if Gem::Version.new(Gem::VERSION) >= Gem::Version.new('1.2.0') then
+      s.add_runtime_dependency(%q<treetop>, ["~> 1.4"])
+      s.add_development_dependency(%q<rspec>, ["~> 2.3"])
       s.add_development_dependency(%q<yard>, [">= 0"])
+      s.add_development_dependency(%q<cucumber>, [">= 0.10.0"])
+      s.add_development_dependency(%q<metric_fu>, [">= 2.0.1"])
+      s.add_development_dependency(%q<simplecov>, [">= 0.3.9"])
+      s.add_development_dependency(%q<simplecov-gem-adapter>, [">= 1.0.0"])
     else
-      s.add_dependency(%q<ruby_parser>, [">= 2.0.5"])
-      s.add_dependency(%q<ruby2ruby>, [">= 1.2.4"])
-      s.add_dependency(%q<rspec>, [">= 1.2.9"])
+      s.add_dependency(%q<treetop>, ["~> 1.4"])
+      s.add_dependency(%q<rspec>, ["~> 2.3"])
       s.add_dependency(%q<yard>, [">= 0"])
+      s.add_dependency(%q<cucumber>, [">= 0.10.0"])
+      s.add_dependency(%q<metric_fu>, [">= 2.0.1"])
+      s.add_dependency(%q<simplecov>, [">= 0.3.9"])
+      s.add_dependency(%q<simplecov-gem-adapter>, [">= 1.0.0"])
     end
   else
-    s.add_dependency(%q<ruby_parser>, [">= 2.0.5"])
-    s.add_dependency(%q<ruby2ruby>, [">= 1.2.4"])
-    s.add_dependency(%q<rspec>, [">= 1.2.9"])
+    s.add_dependency(%q<treetop>, ["~> 1.4"])
+    s.add_dependency(%q<rspec>, ["~> 2.3"])
     s.add_dependency(%q<yard>, [">= 0"])
+    s.add_dependency(%q<cucumber>, [">= 0.10.0"])
+    s.add_dependency(%q<metric_fu>, [">= 2.0.1"])
+    s.add_dependency(%q<simplecov>, [">= 0.3.9"])
+    s.add_dependency(%q<simplecov-gem-adapter>, [">= 1.0.0"])
   end
 end
