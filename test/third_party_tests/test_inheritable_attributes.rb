@@ -3,7 +3,7 @@ require 'wool/support/inheritable_attributes'
 
 class ClassInheritableAttributesTest < Test::Unit::TestCase
   def setup
-    @klass = Class.new { extend Wool::InheritedAttributes }
+    @klass = Class.new { extend Laser::InheritedAttributes }
   end
 
   def test_reader_declaration

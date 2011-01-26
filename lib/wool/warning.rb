@@ -1,4 +1,4 @@
-module Wool
+module Laser
   class Warning < Struct.new(:name, :file, :body, :line_number, :severity)
     extend Advice
     extend ModuleExtensions
@@ -13,8 +13,8 @@ module Wool
     desc { "#{self.class.name} #{file}:#{line_number} (#{severity})" }
 
     # This tracks all subclasses (and subclasses of subclasses, etc). Plus, this
-    # method is inherited, so Wool::LineWarning.all_subclasses will have all
-    # subclasses of Wool::LineWarning!
+    # method is inherited, so Laser::LineWarning.all_subclasses will have all
+    # subclasses of Laser::LineWarning!
     def self.all_warnings
       @all_warnings ||= [self]
     end
@@ -28,7 +28,7 @@ module Wool
     end
 
     # All types should be shared and modified by *all* subclasses. This makes
-    # Wool::Warning.all_types a global registry.
+    # Laser::Warning.all_types a global registry.
     def self.all_types
       @@all_types ||= Hash.new {|h,k| h[k] = []}
     end
@@ -38,7 +38,7 @@ module Wool
     def self.inherited(klass)
       self.all_warnings << klass
       next_klass = self.superclass
-      while next_klass != Wool::Warning.superclass
+      while next_klass != Laser::Warning.superclass
         next_klass.send(:inherited, klass)
         next_klass = next_klass.superclass
       end

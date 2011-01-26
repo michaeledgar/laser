@@ -17,8 +17,8 @@ class Object
   end
 end
 
-include Wool
-module Wool
+include Laser
+module Laser
   remove_const(:TESTS_ACTIVATED)
   const_set(:TESTS_ACTIVATED, true)
   module RSpec
@@ -125,7 +125,7 @@ module Wool
 end
 
 RSpec.configure do |config|
-  config.include(Wool::RSpec::Matchers)
+  config.include(Laser::RSpec::Matchers)
   config.filter_run focus: true
   config.run_all_when_everything_filtered = true
 end

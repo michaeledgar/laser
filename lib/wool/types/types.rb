@@ -1,5 +1,5 @@
 require 'set'
-module Wool
+module Laser
   module Types
     class Base
       extend ActsAsStruct

@@ -1,5 +1,5 @@
 # Warning for having extra space at the end of a line.
-class Wool::ExtraWhitespaceWarning < Wool::LineWarning
+class Laser::ExtraWhitespaceWarning < Laser::LineWarning
   type :style
   severity 2
   short_desc 'Extra Whitespace'

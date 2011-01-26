@@ -1,4 +1,4 @@
-module Wool
+module Laser
   # Provides general-purpose regex searching on any object implementing #reg_desc.
   # See design_docs/object_regex for the mini-paper explaining it. With any luck,
   # this will make it into Ripper so I won't have to do this here.

@@ -1,4 +1,4 @@
-module Wool
+module Laser
   class Runner
     attr_accessor :using, :fix
 
@@ -41,7 +41,7 @@ module Wool
     #   generate a warning for. A common choice is 80/83.
     def handle_global_options(settings)
       if settings[:"line-length"]
-        @using << Wool.LineLengthWarning(settings[:"line-length"])
+        @using << Laser.LineLengthWarning(settings[:"line-length"])
       end
       if (only_name = settings[:only])
         @fix = @using = Warning.concrete_warnings.select do |w|
@@ -85,8 +85,8 @@ module Wool
     end
 
     def print_modules
-      SexpAnalysis::WoolModule.all_modules.map do |mod|
-        if SexpAnalysis::WoolClass === mod && mod.superclass
+      SexpAnalysis::LaserModule.all_modules.map do |mod|
+        if SexpAnalysis::LaserClass === mod && mod.superclass
         then "#{mod.name} < #{mod.superclass.name}"
         else mod.name
         end

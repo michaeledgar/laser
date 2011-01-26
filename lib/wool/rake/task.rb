@@ -1,6 +1,6 @@
-module Wool
+module Laser
   module Rake
-    class WoolTask
+    class LaserTask
       class Settings < Struct.new(:libs, :extras, :options, :using, :fix)
         def initialize(*args)
           super
@@ -32,7 +32,7 @@ module Wool
             end
           end
         end
-        runner = Wool::Runner.new(self.settings.options.split(/\s/) + files)
+        runner = Laser::Runner.new(self.settings.options.split(/\s/) + files)
         runner.using = self.settings.using
         runner.fix = self.settings.fix
         runner.run

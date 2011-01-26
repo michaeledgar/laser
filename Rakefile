@@ -6,7 +6,7 @@ begin
   Jeweler::Tasks.new do |gem|
     gem.name = 'wool'
     gem.summary = %Q{Analysis and linting tool for Ruby.}
-    gem.description = %Q{Wool is an advanced static analysis tool for Ruby.}
+    gem.description = %Q{Laser is an advanced static analysis tool for Ruby.}
     gem.email = 'michael.j.edgar@dartmouth.edu'
     gem.homepage = 'http://github.com/michaeledgar/wool'
     gem.authors = ['Michael Edgar']
@@ -45,15 +45,15 @@ require 'metric_fu'
 if true
   begin
     require 'wool'
-    Wool::Rake::WoolTask.new(:wool) do |wool|
+    Laser::Rake::LaserTask.new(:wool) do |wool|
       wool.libs << 'lib' << 'spec'
-      wool.using << :all << Wool::LineLengthMaximum(100) << Wool::LineLengthWarning(80)
+      wool.using << :all << Laser::LineLengthMaximum(100) << Laser::LineLengthWarning(80)
       wool.options = '--debug --fix'
-      wool.fix << Wool::ExtraBlankLinesWarning << Wool::ExtraWhitespaceWarning << Wool::LineLengthWarning(80)
+      wool.fix << Laser::ExtraBlankLinesWarning << Laser::ExtraWhitespaceWarning << Laser::LineLengthWarning(80)
     end
   rescue LoadError => err
     task :wool do
-      abort 'Wool is not available. In order to run wool, you must: sudo gem install wool'
+      abort 'Laser is not available. In order to run wool, you must: sudo gem install wool'
     end
   end
 end

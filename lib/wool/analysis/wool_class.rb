@@ -1,6 +1,6 @@
-module Wool
+module Laser
   module SexpAnalysis
-    class WoolObject
+    class LaserObject
       extend ModuleExtensions
       attr_reader :protocol, :scope, :klass, :name
       
@@ -23,7 +23,7 @@ module Wool
       def singleton_class
         return @singleton_class if @singleton_class
         new_scope = ClosedScope.new(self.scope, nil)
-        @singleton_class = WoolSingletonClass.new("Class:#{name}", new_scope, self) do |new_singleton_class|
+        @singleton_class = LaserSingletonClass.new("Class:#{name}", new_scope, self) do |new_singleton_class|
           new_singleton_class.superclass = self.klass
         end
         @singleton_class
@@ -34,9 +34,9 @@ module Wool
       end
     end
     
-    # Wool representation of a module. Named WoolModule to avoid naming
+    # Laser representation of a module. Named LaserModule to avoid naming
     # conflicts. It has lists of methods, instance variables, and so on.
-    class WoolModule < WoolObject
+    class LaserModule < LaserObject
       attr_reader :path, :instance_methods, :binding
       cattr_accessor_with_default :all_modules, []
       
@@ -46,14 +46,14 @@ module Wool
         validate_module_path!(full_path)
         
         @path = full_path
-        @instance_methods = Hash.new { |hash, name| hash[name] = WoolMethod.new(name) }
+        @instance_methods = Hash.new { |hash, name| hash[name] = LaserMethod.new(name) }
         @scope = scope
         @methods = {}
         initialize_protocol
         @binding = Bindings::ConstantBinding.new(name, self)
         initialize_scope
         yield self if block_given?
-        WoolModule.all_modules << self
+        LaserModule.all_modules << self
       end
 
       # Returns the canonical path for a (soon-to-be-created) submodule of the given
@@ -92,7 +92,7 @@ module Wool
         end
       end
       
-      # Initializes the protocol for this WoolClass.
+      # Initializes the protocol for this LaserClass.
       def initialize_protocol
         if ProtocolRegistry[path].any? && !TESTS_ACTIVATED
           $stderr.puts "Warning: creating new instance of #{class_name} #{path}"
@@ -125,18 +125,18 @@ module Wool
       end
       
       def get_instance
-        WoolObject.new(self, nil)
+        LaserObject.new(self, nil)
       end
       
       def inspect
-        "#<WoolModule: #{path}>"
+        "#<LaserModule: #{path}>"
       end
     end
 
-    # Wool representation of a class. I named it WoolClass so it wouldn't
+    # Laser representation of a class. I named it LaserClass so it wouldn't
     # clash with regular Class. This links the class to its protocol.
-    # It inherits from WoolModule to pull in everything but superclasses.
-    class WoolClass < WoolModule
+    # It inherits from LaserModule to pull in everything but superclasses.
+    class LaserClass < LaserModule
       attr_reader :superclass, :subclasses
       
       def initialize(*args)
@@ -151,7 +151,7 @@ module Wool
       def singleton_class
         return @singleton_class if @singleton_class
         new_scope = ClosedScope.new(self.scope, nil)
-        @singleton_class = WoolSingletonClass.new("Class:#{name}", new_scope, self) do |new_singleton_class|
+        @singleton_class = LaserSingletonClass.new("Class:#{name}", new_scope, self) do |new_singleton_class|
           if superclass
             new_singleton_class.superclass = superclass.singleton_class
           else
@@ -213,11 +213,11 @@ module Wool
       end
       
       def inspect
-        "#<WoolClass: #{path} superclass=#{superclass.inspect}>"
+        "#<LaserClass: #{path} superclass=#{superclass.inspect}>"
       end
     end
 
-    class WoolSingletonClass < WoolClass
+    class LaserSingletonClass < LaserClass
       attr_reader :singleton_instance
       def initialize(path, scope, instance)
         super(path, scope)
@@ -227,9 +227,9 @@ module Wool
     end
         
 
-    # Wool representation of a method. This name is tweaked so it doesn't
+    # Laser representation of a method. This name is tweaked so it doesn't
     # collide with ::Method.
-    class WoolMethod
+    class LaserMethod
       extend ModuleExtensions
       attr_reader :name, :signatures
       attr_accessor_with_default :pure, false

@@ -1,4 +1,4 @@
-module Wool
+module Laser
   # This is a set of methods that get provided to Warnings so they can perform
   # parse-tree analysis of their bodies.
   module SexpAnalysis

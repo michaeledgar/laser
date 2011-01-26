@@ -54,7 +54,7 @@ describe Warning do
       warning = Warning.new('hello.rb', 'a+b')
       warning.severity = 7
       warning.line_number = 3
-      warning.desc.should == 'Wool::Warning hello.rb:3 (7)'
+      warning.desc.should == 'Laser::Warning hello.rb:3 (7)'
     end
 
     it 'when specified in a subclass as a string, just uses the string' do

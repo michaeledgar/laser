@@ -1,11 +1,11 @@
-class Wool::GenericLineLengthWarning < Wool::LineWarning
+class Laser::GenericLineLengthWarning < Laser::LineWarning
   cattr_accessor_with_default :line_length_limit, 80000
   type :style
   short_desc 'Line too long'
   desc { "Line length: #{line.size} > #{self.class.line_length_limit} (max)" }
 
   def self.inspect
-    "Wool::GenericLineLengthWarning<#{line_length_limit}>"
+    "Laser::GenericLineLengthWarning<#{line_length_limit}>"
   end
 
   def match?(body = self.body)
@@ -87,17 +87,17 @@ class Wool::GenericLineLengthWarning < Wool::LineWarning
   end
 end
 
-module Wool
+module Laser
   def LineLengthCustomSeverity(size, severity)
-    Wool.class_eval do
+    Laser.class_eval do
       if const_defined?("GenericLineLengthWarning_#{size}_#{severity}")
         return const_get("GenericLineLengthWarning_#{size}_#{severity}")
       end
-      new_warning = Class.new(Wool::GenericLineLengthWarning)
+      new_warning = Class.new(Laser::GenericLineLengthWarning)
       const_set("GenericLineLengthWarning_#{size}_#{severity}", new_warning)
       new_warning.line_length_limit = size
       new_warning.severity = severity
-      new_warning.desc = Wool::GenericLineLengthWarning.desc
+      new_warning.desc = Laser::GenericLineLengthWarning.desc
       new_warning
     end
   end

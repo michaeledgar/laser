@@ -1,4 +1,4 @@
-module Wool
+module Laser
   module SexpAnalysis
     # This class is an estimate for a class. It can be either precise or imprecise,
     # and when it is precise, it means (assuming our algorithms are correct!) that

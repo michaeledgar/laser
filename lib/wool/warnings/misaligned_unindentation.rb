@@ -1,5 +1,5 @@
 # This warning is used when
-class Wool::MisalignedUnindentationWarning < Wool::LineWarning
+class Laser::MisalignedUnindentationWarning < Laser::LineWarning
   type :style
   severity 2
   short_desc 'Misaligned Unindentation'

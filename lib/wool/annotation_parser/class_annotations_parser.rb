@@ -2,7 +2,7 @@
 
 
 require 'wool/annotation_parser/useful_parsers_parser'
-module Wool
+module Laser
   module Parsers
     module Class
       include Treetop::Runtime

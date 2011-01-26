@@ -1,4 +1,4 @@
-module Wool
+module Laser
   module SexpAnalysis
     # This is a *global* annotation, namely the one that determines the statically-known
     # scope for each node in the AST, at the time of that node's execution. For
@@ -67,7 +67,7 @@ module Wool
         def lookup_or_create_module(scope, new_mod_name)
           lookup_or_create(scope, new_mod_name) do
             new_scope = ClosedScope.new(scope, nil)
-            new_mod = WoolModule.new(new_mod_name, new_scope)
+            new_mod = LaserModule.new(new_mod_name, new_scope)
             new_scope
           end
         end
@@ -76,7 +76,7 @@ module Wool
         def lookup_or_create_class(scope, new_class_name, superclass)
           lookup_or_create(scope, new_class_name) do
             new_scope = ClosedScope.new(scope, nil)
-            new_class = WoolClass.new(new_class_name, new_scope) do |klass|
+            new_class = LaserClass.new(new_class_name, new_scope) do |klass|
               klass.superclass = superclass
             end
             new_scope
@@ -130,13 +130,13 @@ module Wool
         # Normal method definitions.
         add :def do |node, (_, name), arglist, body|
           receiver = @current_scope.self_ptr
-          # Time to create a brand new WoolMethod!
+          # Time to create a brand new LaserMethod!
           # Which class this is added to depends on the value of +self+.
           # 1. If self is a module or class (as is typical), the method is
           #    added to self's instance method list.
           # 2. If self does not have Module in its class hierarchy, then it
           #    should be added to self's singleton class.
-          if WoolModule === receiver
+          if LaserModule === receiver
           then method_self = receiver.get_instance
           else method_self = receiver
           end
@@ -153,7 +153,7 @@ module Wool
 
         def add_method_to_object(receiver, method_self, name, arglist, body)
           new_signature = Signature.for_definition_sexp(name, arglist, body)
-          receiver.add_instance_method!(WoolMethod.new(name) do |method|
+          receiver.add_instance_method!(LaserMethod.new(name) do |method|
             method.add_signature!(new_signature)
           end)
 
@@ -178,7 +178,7 @@ module Wool
                               when /[A-Z]/ then Bindings::ConstantBinding
                               else Bindings::LocalVariableBinding
                               end
-              value = WoolObject.new(ClassRegistry['Object'], @current_scope)
+              value = LaserObject.new(ClassRegistry['Object'], @current_scope)
               binding = binding_class.new(name, value)
               @current_scope.add_binding!(binding)
             end

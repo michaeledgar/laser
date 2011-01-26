@@ -1,4 +1,4 @@
-module Wool
+module Laser
   module SexpAnalysis
     # This module contains bootstrapping code. This initializes the first classes
     # and modules that build up the meta-model (Class, Module, Object).
@@ -6,15 +6,15 @@ module Wool
       extend SexpAnalysis
       class BootstrappingError < StandardError; end
       def self.bootstrap
-        class_class = WoolClass.new('Class', nil)
-        module_class = WoolClass.new('Module', nil)
-        object_class = WoolClass.new('Object', nil)
+        class_class = LaserClass.new('Class', nil)
+        module_class = LaserClass.new('Module', nil)
+        object_class = LaserClass.new('Object', nil)
         class_scope = ClosedScope.new(nil, class_class)
         module_scope = ClosedScope.new(nil, module_class)
         object_scope = ClosedScope.new(nil, object_class)
         module_class.superclass = object_class
         class_class.superclass = module_class
-        main_object = WoolObject.new(object_class, nil, 'main')
+        main_object = LaserObject.new(object_class, nil, 'main')
         global = ClosedScope.new(nil, main_object,
             {'Object' => object_class, 'Module' => module_class, 'Class' => class_class})
         if Scope.const_defined?("GlobalScope")
@@ -37,7 +37,7 @@ module Wool
       end
     
       def self.load_prepackaged_annotations(file)
-        parse(File.read(File.join(Wool::ROOT, 'wool', 'standard_library', file)))
+        parse(File.read(File.join(Laser::ROOT, 'wool', 'standard_library', file)))
       end
     end
   end

@@ -1,4 +1,4 @@
-module Wool
+module Laser
   module SexpAnalysis
     # The ProtocolRegistry module handles negotiating instantiated protocols at
     # compile-time, such as the automatically-generated protocols created by a

@@ -1,4 +1,4 @@
-module Wool
+module Laser
   module SexpAnalysis
     # This class models a scope in Ruby. It has a constant table,
     # a self pointer, and a parent pointer to the enclosing scope.
@@ -60,7 +60,7 @@ module Wool
           end
         elsif str[0,1] == '$'
           # global, create on demand.
-          Scope::GlobalScope.locals[str] ||= Bindings::GlobalVariableBinding.new(str, WoolObject.new)
+          Scope::GlobalScope.locals[str] ||= Bindings::GlobalVariableBinding.new(str, LaserObject.new)
         else lookup_local str
         end
       end

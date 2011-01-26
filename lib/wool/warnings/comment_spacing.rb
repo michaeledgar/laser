@@ -1,5 +1,5 @@
 # Warning for insufficient space between inline comments and code
-class Wool::InlineCommentSpaceWarning < Wool::LineWarning
+class Laser::InlineCommentSpaceWarning < Laser::LineWarning
   OPTION_KEY = :inline_comment_space
   DEFAULT_SPACE = 2
   type :style

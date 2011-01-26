@@ -9,7 +9,7 @@ When(/I scan for warnings/) do
   swizzling_io do
     @table.hashes.each do |hash|
       full_path = File.join(TESTDATA_DIR, hash[:input])
-      runner = Wool::Scanner.new({})
+      runner = Laser::Scanner.new({})
       warnings = runner.scan(File.read(full_path), hash[:input])
       @result_table << [hash[:input], warnings.size.to_s]
     end
@@ -27,8 +27,8 @@ When(/I scan-and-fix warnings/) do
       full_path = File.join(TESTDATA_DIR, hash[:input])
       expected_output = File.read(File.join(TESTDATA_DIR, hash[:output]))
       captured_output = StringIO.new
-      Wool::LineLengthMaximum(80)
-      runner = Wool::Scanner.new(fix: true, output_file: captured_output)
+      Laser::LineLengthMaximum(80)
+      runner = Laser::Scanner.new(fix: true, output_file: captured_output)
       runner.scan(File.read(full_path), hash[:input])
       reported_output = hash[:output]
       reported_output += '+' if captured_output.string != expected_output

@@ -1,5 +1,5 @@
 # Warning for rescuing "Exception" or "Object".
-class Wool::RescueExceptionWarning < Wool::FileWarning
+class Laser::RescueExceptionWarning < Laser::FileWarning
   severity 5
   type :dangerous
   short_desc 'rescue Exception is dangerous'
@@ -17,7 +17,7 @@ class Wool::RescueExceptionWarning < Wool::FileWarning
       list.map do |type|
         if type[0] == :var_ref &&
            type[1][0] == :@const && type[1][1] == "Exception"
-          warning = Wool::RescueExceptionWarning.new(file, body, position: type[1][2])
+          warning = Laser::RescueExceptionWarning.new(file, body, position: type[1][2])
           warning.position[0] -= 1
           warning.line_number = type[1][2][1]
           warning

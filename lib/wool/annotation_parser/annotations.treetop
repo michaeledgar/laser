@@ -1,4 +1,4 @@
-module Wool
+module Laser
   module Parsers
     grammar Annotation
       include Class

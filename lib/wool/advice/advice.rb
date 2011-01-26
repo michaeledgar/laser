@@ -1,4 +1,4 @@
-module Wool
+module Laser
   # This module provides other modules the ability to add advice
   # to methods. This module makes use of these functions opt-in.
   module Advice

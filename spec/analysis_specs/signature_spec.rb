@@ -5,32 +5,32 @@ describe Signature do
     it 'assigns the basic struct values when successful' do
       result = Signature.new(
           'hello', Protocols::InstanceProtocol.new(ClassRegistry['Array']),
-          [Bindings::ArgumentBinding.new('a1', WoolObject.new, :positional)])
+          [Bindings::ArgumentBinding.new('a1', LaserObject.new, :positional)])
       result.name.should == 'hello'
       result.return_protocol.should == ClassRegistry['Array'].protocol
       result.arguments.size.should == 1
       result.arguments.first.should ==
-          Bindings::ArgumentBinding.new('a1', WoolObject.new, :positional)
+          Bindings::ArgumentBinding.new('a1', LaserObject.new, :positional)
     end
     
     it 'requires a string name' do
       expect {
         Signature.new(:hello, Protocols::InstanceProtocol.new(ClassRegistry['Array']),
-            [Bindings::ArgumentBinding.new('a1', WoolObject.new, :positional)])
+            [Bindings::ArgumentBinding.new('a1', LaserObject.new, :positional)])
       }.to raise_error(ArgumentError)
     end
     
     it 'requires a protocol for a return protocol' do
       expect {
         Signature.new('hello', 'Array',
-            [Bindings::ArgumentBinding.new('a1', WoolObject.new, :positional)])
+            [Bindings::ArgumentBinding.new('a1', LaserObject.new, :positional)])
       }.to raise_error(ArgumentError)
     end
     
     it 'requires an array for its argument list' do
       expect {
         Signature.new('hello', Protocols::InstanceProtocol.new(ClassRegistry['Array']),
-            Bindings::ArgumentBinding.new('a1', WoolObject.new, :positional))
+            Bindings::ArgumentBinding.new('a1', LaserObject.new, :positional))
       }.to raise_error(ArgumentError)
     end
     

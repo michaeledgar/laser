@@ -1,4 +1,4 @@
-module Wool
+module Laser
   module SexpAnalysis
     module Bindings
       # This class represents a GenericBinding in Ruby. It may have a known protocol (type),

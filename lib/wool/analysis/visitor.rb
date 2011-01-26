@@ -1,4 +1,4 @@
-module Wool
+module Laser
   module SexpAnalysis
     # Visitor: a set of methods for visiting an AST. The
     # default implementations visit each child and do no

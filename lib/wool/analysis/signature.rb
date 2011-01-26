@@ -1,4 +1,4 @@
-module Wool
+module Laser
   module SexpAnalysis
     module ArgumentListHandling
       # Returns the hash representing the arguments in a signature, based on an
@@ -25,7 +25,7 @@ module Wool
       # return: Array<Bindings::ArgumentBinding>
       def parse_positionals(positional_list)
         positional_list.map do |tag, name, lex|
-          Bindings::ArgumentBinding.new(name, WoolObject.new, :positional)
+          Bindings::ArgumentBinding.new(name, LaserObject.new, :positional)
         end
       end
       
@@ -36,7 +36,7 @@ module Wool
       # optionals: Array<Sexp>
       def parse_optionals(optionals)
         optionals.map do |id, default_value|
-          Bindings::ArgumentBinding.new(id.children.first, WoolObject.new, :optional, default_value)
+          Bindings::ArgumentBinding.new(id.children.first, LaserObject.new, :optional, default_value)
         end
       end
       
@@ -57,7 +57,7 @@ module Wool
       end
     end
     
-    # A single signature in the Wool protocol system. This is just
+    # A single signature in the Laser protocol system. This is just
     # a simple specification of a method that an object can receive,
     # either explicitly or implicitly defined, and the protocols of the
     # return type and all arguments.

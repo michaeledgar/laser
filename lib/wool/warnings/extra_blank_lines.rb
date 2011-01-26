@@ -1,5 +1,5 @@
   # Warning for using semicolons outside of class declarations.
-class Wool::ExtraBlankLinesWarning < Wool::FileWarning
+class Laser::ExtraBlankLinesWarning < Laser::FileWarning
   EXTRA_LINE = /\n[\t ]*\Z/
   type :style
   severity 1

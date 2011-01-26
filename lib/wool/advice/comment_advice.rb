@@ -1,10 +1,10 @@
-module Wool
+module Laser
   module Advice
     # Using this module, you can make your match? method automatically
     # receive de-commented source text.
     #
-    # class MyWarning < Wool::Warning do
-    #   extend Wool::Advice::CommentAdvice
+    # class MyWarning < Laser::Warning do
+    #   extend Laser::Advice::CommentAdvice
     #
     #   def self.match?(body, describe)
     #     body.include?('#')

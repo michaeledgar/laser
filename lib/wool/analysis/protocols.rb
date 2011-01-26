@@ -1,6 +1,6 @@
 # encoding: UTF-8
 require 'set'
-module Wool
+module Laser
   module SexpAnalysis
     # This module contains a class hierarchy that represents the type
     # hierarchy in the analyzed Ruby code. This is where method responsiveness
@@ -119,7 +119,7 @@ module Wool
 
         # Initializes the class protocol with the given class.
         #
-        # @param [WoolClass] klass the wool class whose protocol we are representing
+        # @param [LaserClass] klass the wool class whose protocol we are representing
         def initialize(instance)
           @value = instance
         end

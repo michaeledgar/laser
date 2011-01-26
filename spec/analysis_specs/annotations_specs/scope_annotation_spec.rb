@@ -68,7 +68,7 @@ describe ScopeAnnotation do
   #   [:bodystmt, [[:void_stmt]], nil, nil, nil]]]]
   it 'creates a new scope when a pathed module declaration is encountered' do
     temp_scope = ClosedScope.new(Scope::GlobalScope, nil)
-    temp_mod = WoolModule.new('ABC', temp_scope)
+    temp_mod = LaserModule.new('ABC', temp_scope)
     tree = Sexp.new(Ripper.sexp('p 5; module ABC::DEF; end'))
     ScopeAnnotation::Annotator.new.annotate!(tree)
     list = tree[1]
@@ -95,7 +95,7 @@ describe ScopeAnnotation do
   #           [:bodystmt, [[:void_stmt]], nil, nil, nil]]]]
   it 'creates a new scope when a simple module declaration is encountered' do
     temp_scope = ClosedScope.new(Scope::GlobalScope, nil)
-    temp_mod = WoolModule.new('A10', temp_scope)
+    temp_mod = LaserModule.new('A10', temp_scope)
     tree = Sexp.new(Ripper.sexp('module A10::B12; end; module A10::B12; end'))
     ScopeAnnotation::Annotator.new.annotate!(tree)
     
@@ -173,10 +173,10 @@ describe ScopeAnnotation do
     body = definition[3]
     [body, *body.all_subtrees].each do |node|
       new_scope = node.scope
-      new_scope.self_ptr.should be_a(WoolObject)
+      new_scope.self_ptr.should be_a(LaserObject)
       new_scope.self_ptr.klass.should == ClassRegistry['M13']
       new_scope.locals.should_not be_empty
-      new_scope.lookup('rest').should == Bindings::ArgumentBinding.new('rest', WoolObject.new(ClassRegistry['Array']), :rest)
+      new_scope.lookup('rest').should == Bindings::ArgumentBinding.new('rest', LaserObject.new(ClassRegistry['Array']), :rest)
     end
     # now make sure the method got created in the M13 module!
     method = ClassRegistry['M13'].instance_methods['silly']
@@ -210,13 +210,13 @@ describe ScopeAnnotation do
     body = definition[5]
     [body, *body.all_subtrees].each do |node|
       new_scope = node.scope
-      new_scope.self_ptr.should be_a(WoolModule)
+      new_scope.self_ptr.should be_a(LaserModule)
       new_scope.self_ptr.should == ClassRegistry['M49']
       new_scope.self_ptr.klass.should == ClassRegistry['Module']
       new_scope.locals.should_not be_empty
-      new_scope.lookup('a').should == Bindings::ArgumentBinding.new('a', WoolObject.new, :positional)
+      new_scope.lookup('a').should == Bindings::ArgumentBinding.new('a', LaserObject.new, :positional)
       new_scope.lookup('b').should == Bindings::ArgumentBinding.new(
-          'b', WoolObject.new, :optional,
+          'b', LaserObject.new, :optional,
           Sexp.new([:var_ref, [:@ident, "a", [1, 32]]]))
     end
     
@@ -254,13 +254,13 @@ describe ScopeAnnotation do
     body = definition[3]
     [body, *body.all_subtrees].each do |node|
       new_scope = node.scope
-      new_scope.self_ptr.should be_a(WoolModule)
+      new_scope.self_ptr.should be_a(LaserModule)
       new_scope.self_ptr.should == ClassRegistry['M50']
       new_scope.self_ptr.klass.should == ClassRegistry['Module']
       new_scope.locals.should_not be_empty
-      new_scope.lookup('a').should == Bindings::ArgumentBinding.new('a', WoolObject.new, :positional)
+      new_scope.lookup('a').should == Bindings::ArgumentBinding.new('a', LaserObject.new, :positional)
       new_scope.lookup('b').should == Bindings::ArgumentBinding.new(
-          'b', WoolObject.new, :optional,
+          'b', LaserObject.new, :optional,
           Sexp.new([:var_ref, [:@ident, "a", [1, 32]]]))
     end
     
@@ -298,13 +298,13 @@ describe ScopeAnnotation do
     body = definition[3]
     [body, *body.all_subtrees].each do |node|
       new_scope = node.scope
-      new_scope.self_ptr.should be_a(WoolClass)
+      new_scope.self_ptr.should be_a(LaserClass)
       new_scope.self_ptr.should == ClassRegistry['C51']
       new_scope.self_ptr.klass.should == ClassRegistry['Class']
       new_scope.locals.should_not be_empty
-      new_scope.lookup('a').should == Bindings::ArgumentBinding.new('a', WoolObject.new, :positional)
+      new_scope.lookup('a').should == Bindings::ArgumentBinding.new('a', LaserObject.new, :positional)
       new_scope.lookup('b').should == Bindings::ArgumentBinding.new(
-          'b', WoolObject.new, :optional,
+          'b', LaserObject.new, :optional,
           Sexp.new([:var_ref, [:@ident, "a", [1, 32]]]))
     end
     
@@ -425,12 +425,12 @@ describe ScopeAnnotation do
     body = definition[3]
     [body, *body.all_subtrees].each do |node|
       new_scope = node.scope
-      new_scope.self_ptr.should be_a(WoolObject)
+      new_scope.self_ptr.should be_a(LaserObject)
       new_scope.self_ptr.klass.should == ClassRegistry['Alpha']
       new_scope.locals.should_not be_empty
-      new_scope.lookup('a').should == Bindings::ArgumentBinding.new('a', WoolObject.new, :positional)
+      new_scope.lookup('a').should == Bindings::ArgumentBinding.new('a', LaserObject.new, :positional)
       new_scope.lookup('b').should == Bindings::ArgumentBinding.new(
-          'b', WoolObject.new, :optional,
+          'b', LaserObject.new, :optional,
           Sexp.new([:var_ref, [:@ident, "a", [1, 29]]]))
     end
     # now make sure the method got created in the M13 module!
@@ -466,10 +466,10 @@ describe ScopeAnnotation do
     [body, *body.all_subtrees].each do |node|
       new_scope = node.scope
       new_scope.self_ptr.name.should == 'main'
-      new_scope.self_ptr.should be_a(WoolObject)
+      new_scope.self_ptr.should be_a(LaserObject)
       new_scope.self_ptr.klass.should == ClassRegistry['Object']
       new_scope.locals.should_not be_empty
-      new_scope.lookup('bar').should == Bindings::ArgumentBinding.new('bar', WoolObject.new, :positional)
+      new_scope.lookup('bar').should == Bindings::ArgumentBinding.new('bar', LaserObject.new, :positional)
       new_scope.lookup('blk').should == Bindings::ArgumentBinding.new('blk', ClassRegistry['Proc'], :block)
     end
     method = Scope::GlobalScope.self_ptr.singleton_class.instance_methods['abc']
@@ -504,10 +504,10 @@ describe ScopeAnnotation do
     [body, *body.all_subtrees].each do |node|
       new_scope = node.scope
       new_scope.self_ptr.name.should == 'main'
-      new_scope.self_ptr.should be_a(WoolObject)
+      new_scope.self_ptr.should be_a(LaserObject)
       new_scope.self_ptr.klass.should == ClassRegistry['Object']
       new_scope.locals.should_not be_empty
-      new_scope.lookup('bar').should == Bindings::ArgumentBinding.new('bar', WoolObject.new, :positional)
+      new_scope.lookup('bar').should == Bindings::ArgumentBinding.new('bar', LaserObject.new, :positional)
       new_scope.lookup('blk').should == Bindings::ArgumentBinding.new('blk', ClassRegistry['Proc'], :block)
     end
     method = Scope::GlobalScope.self_ptr.singleton_class.instance_methods['abcd']

@@ -1,6 +1,6 @@
-module Wool
-  # These are extensions to Wool modules. This module should be
-  # extended by any Wool modules seeking to take advantage of them.
+module Laser
+  # These are extensions to Laser modules. This module should be
+  # extended by any Laser modules seeking to take advantage of them.
   # This prevents conflicts with other libraries defining extensions
   # of the same name.
   module ModuleExtensions

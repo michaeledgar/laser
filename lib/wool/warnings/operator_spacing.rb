@@ -1,6 +1,6 @@
 # Warning for not putting space around operators
-class Wool::OperatorSpacing < Wool::LineWarning
-  include Wool::Advice::CommentAdvice
+class Laser::OperatorSpacing < Laser::LineWarning
+  include Laser::Advice::CommentAdvice
   OPERATORS = %w(+ - / * != !== = == === ~= !~ += -= *= /= ** **= ||= || && &&= &= |= | & ^)
 
   type :style

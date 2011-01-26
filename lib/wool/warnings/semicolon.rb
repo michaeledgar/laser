@@ -1,5 +1,5 @@
 # Warning for using semicolons outside of class declarations.
-class Wool::SemicolonWarning < Wool::LineWarning
+class Laser::SemicolonWarning < Laser::LineWarning
   type :style
   short_desc 'Semicolon for multiple statements'
   desc 'The line uses a semicolon to separate multiple statements outside of a class declaration.'

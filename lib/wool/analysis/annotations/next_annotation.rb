@@ -1,4 +1,4 @@
-module Wool
+module Laser
   module SexpAnalysis
     # This is a simple inherited attribute applied to each node,
     # giving a pointer to that node's next and previous AST node.

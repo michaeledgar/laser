@@ -1,4 +1,4 @@
-module Wool
+module Laser
   VERSION = "0.5.0"
   TESTS_ACTIVATED = false
   ROOT = File.expand_path(File.dirname(__FILE__))
@@ -30,7 +30,7 @@ require 'wool/analysis/bootstrap'
 # 2. Remove spurs
 # 3. Bend at the waist
 # 4. PULL UP ON THEM BOOTSTRAPS!
-Wool::SexpAnalysis::Bootstrap.bootstrap
+Laser::SexpAnalysis::Bootstrap.bootstrap
 # Load the type engine
 require 'wool/types/types'
 require 'wool/annotation_parser/parsers'
@@ -46,5 +46,5 @@ require 'wool/rake/task'
 require 'wool/warning'
 require 'wool/scanner'
 
-Wool::SexpAnalysis.analyze_inputs([[File.join(File.dirname(__FILE__), 'wool', 'standard_library', 'class_definitions.rb'),
+Laser::SexpAnalysis.analyze_inputs([[File.join(File.dirname(__FILE__), 'wool', 'standard_library', 'class_definitions.rb'),
                                     File.read(File.join(File.dirname(__FILE__), 'wool', 'standard_library', 'class_definitions.rb'))]])

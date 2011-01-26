@@ -1,5 +1,5 @@
 # Warning for not having parens in a method declaration with arguments
-class Wool::ParensOnDeclarationWarning < Wool::FileWarning
+class Laser::ParensOnDeclarationWarning < Laser::FileWarning
   type :style
   severity 1
   short_desc 'Missing parentheses in method declaration'
@@ -15,7 +15,7 @@ class Wool::ParensOnDeclarationWarning < Wool::FileWarning
       when :paren then !args[1].children.any?
       end
     end.map do |sym, name, args, body|
-      Wool::ParensOnDeclarationWarning.new(file, body, method_name: name[1])
+      Laser::ParensOnDeclarationWarning.new(file, body, method_name: name[1])
     end
     sdef_list = find_sexps(:defs).select do |sym, target, op, name, args, body|
       case args.type
@@ -23,7 +23,7 @@ class Wool::ParensOnDeclarationWarning < Wool::FileWarning
       when :paren then !args[1].children.any?
       end
     end.map do |sym, target, op, name, args, body|
-      Wool::ParensOnDeclarationWarning.new(file, body, method_name: name[1])
+      Laser::ParensOnDeclarationWarning.new(file, body, method_name: name[1])
     end
     def_list + sdef_list
   end

@@ -57,7 +57,7 @@ describe 'ClassRegistry' do
   clean_registry
 
   describe '#[]' do
-    it 'finds InstanceProtocols and extracts the WoolClass appropriately' do
+    it 'finds InstanceProtocols and extracts the LaserClass appropriately' do
       ClassRegistry['Object'].should == ProtocolRegistry['Object'].first.value
       x = OpenStruct.new
       x.value = temp_class = OpenStruct.new

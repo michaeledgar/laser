@@ -3,24 +3,24 @@ Copyright (c) 2009 Michael Edgar
                        Spirit of the License
 
 This is an academic project, but I don't know where it will lead. I'm
-licensing Wool this way in part to shield myself from liability (especially since
+licensing Laser this way in part to shield myself from liability (especially since
 it rewrites code) and because it very well may have commercial applications
 that I may wish to investigate.
 
-                         Wool's License
+                         Laser's License
 
 Academic use only. No commercial or non-profit use. At least until
 I know what I'm doing for sure. I couldn't find a legalese version of
 an "academic use only" license, so I'll just write it again:
 
-No non-academic use! No using Wool on code that will, at some point
+No non-academic use! No using Laser on code that will, at some point
 in the near or distant future, produce monetary gain for you, your
 relatives, your friends, your bosses, or anyone tangentially connected
 to you. I don't care if you run it on legacy code that is defunct and
 unused, but may have once derived you commercial gain. But don't run
 it at your workplace. That's against the license.
 
-Of course, that clearly means embedding Wool in an commercial product
+Of course, that clearly means embedding Laser in an commercial product
 is no good. And this license is definitely incompatible with any OSI-approved
 license.
 

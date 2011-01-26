@@ -1,5 +1,5 @@
 # Warning for not having parens in a method declaration with arguments
-class Wool::AssignmentInConditionWarning < Wool::FileWarning
+class Laser::AssignmentInConditionWarning < Laser::FileWarning
   type :gotcha
   severity 3
   short_desc 'Assignment in condition not in parentheses'
@@ -14,7 +14,7 @@ class Wool::AssignmentInConditionWarning < Wool::FileWarning
         path_to_node.include?(:paren)
       end
     end.compact.flatten.map do |node|
-      Wool::AssignmentInConditionWarning.new(file, body)
+      Laser::AssignmentInConditionWarning.new(file, body)
     end
   end
 end

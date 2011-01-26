@@ -1,5 +1,5 @@
 # Warning for using semicolons outside of class declarations.
-class Wool::UselessDoubleQuotesWarning < Wool::FileWarning
+class Laser::UselessDoubleQuotesWarning < Laser::FileWarning
   type :style
   severity 1
   short_desc 'Useless double quotes'
@@ -22,7 +22,7 @@ class Wool::UselessDoubleQuotesWarning < Wool::FileWarning
       previous_char = body.lines.to_a[pos[0] - 1][pos[1]-1,1]
       uses_q_braces = (previous_char == '{' && body.lines.to_a[pos[0] - 1][pos[1]-3,2] == '%Q')
       if previous_char == '"' || uses_q_braces
-        warning = Wool::UselessDoubleQuotesWarning.new(
+        warning = Laser::UselessDoubleQuotesWarning.new(
             file, body, quoted_string: text, uses_q_braces: uses_q_braces)
         warning.line_number = pos[0]
         warning

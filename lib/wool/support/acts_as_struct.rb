@@ -1,4 +1,4 @@
-module Wool
+module Laser
   # Lets a class act as a struct by extending the module and using acts_as_struct.
   # This is useful if you need to inherit from another class so you can't subclass
   # Struct.new. However, reads will be slower due to optimizations that the C version

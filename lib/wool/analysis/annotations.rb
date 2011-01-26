@@ -1,5 +1,5 @@
 require 'yaml'
-module Wool
+module Laser
   module SexpAnalysis
     module Annotations
       extend ModuleExtensions

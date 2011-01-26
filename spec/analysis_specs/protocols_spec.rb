@@ -54,15 +54,15 @@ describe Protocols::InstanceProtocol do
   clean_registry
 
   before do
-    @a = WoolClass.new('A')
+    @a = LaserClass.new('A')
     @a_proto = ProtocolRegistry['A'].first
-    @b = WoolClass.new('B') do |b|
-      b.add_instance_method!(WoolMethod.new('foo') do |method|
+    @b = LaserClass.new('B') do |b|
+      b.add_instance_method!(LaserMethod.new('foo') do |method|
         method.add_signature!(Signature.new('foo', @a_proto, []))
         method.add_signature!(Signature.new('foo', ProtocolRegistry['B'].first,
             [Bindings::ArgumentBinding.new('a', @a, :positional)]))
       end)
-      b.add_instance_method!(WoolMethod.new('bar') do |method|
+      b.add_instance_method!(LaserMethod.new('bar') do |method|
         method.add_signature!(Signature.new('bar', ProtocolRegistry['B'].first,
             [Bindings::ArgumentBinding.new('a', @a, :positional),
              Bindings::ArgumentBinding.new('b', b, :positional)]))

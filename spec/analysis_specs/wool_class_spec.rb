@@ -1,8 +1,8 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 
-describe WoolObject do
+describe LaserObject do
   before do
-    @instance = WoolObject.new(ClassRegistry['Array'])
+    @instance = LaserObject.new(ClassRegistry['Array'])
   end
   
   it 'defaults to the global scope' do
@@ -17,7 +17,7 @@ describe WoolObject do
   
   describe '#add_instance_method!' do
     it 'should add the method to its singleton class' do
-      @instance.add_instance_method!(WoolMethod.new('abcdef') do |method|
+      @instance.add_instance_method!(LaserMethod.new('abcdef') do |method|
         method.add_signature!(Signature.new('abcdef', Protocols::UnknownProtocol.new, []))
       end)
       @instance.signatures.should include(
@@ -41,12 +41,12 @@ shared_examples_for 'a Ruby module' do
   before do
     @a = described_class.new('A')
     @b = described_class.new('B') do |b|
-      b.add_instance_method!(WoolMethod.new('foo') do |method|
+      b.add_instance_method!(LaserMethod.new('foo') do |method|
         method.add_signature!(Signature.new('foo', @a.protocol, []))
         method.add_signature!(Signature.new('foo', b.protocol,
             [Bindings::ArgumentBinding.new('a', @a, :positional)]))
       end)
-      b.add_instance_method!(WoolMethod.new('bar') do |method|
+      b.add_instance_method!(LaserMethod.new('bar') do |method|
         method.add_signature!(Signature.new('bar', b.protocol,
             [Bindings::ArgumentBinding.new('a', @a, :positional),
              Bindings::ArgumentBinding.new('b', b, :positional)]))
@@ -122,17 +122,17 @@ shared_examples_for 'a Ruby module' do
   end
 end
 
-describe WoolModule do
+describe LaserModule do
   it_should_behave_like 'a Ruby module'
 
   describe '#singleton_class' do
     it 'should return a class with Module as its superclass' do
-      WoolModule.new('A').singleton_class.superclass.should == ClassRegistry['Module']
+      LaserModule.new('A').singleton_class.superclass.should == ClassRegistry['Module']
     end
   end
 end
 
-describe WoolClass do
+describe LaserClass do
   it_should_behave_like 'a Ruby module'
   
   before do
@@ -150,13 +150,13 @@ describe WoolClass do
   end
   
   describe '#superclass' do
-    it 'returns the superclass specified on the WoolClass' do
+    it 'returns the superclass specified on the LaserClass' do
       @b.superclass.should == @a
     end
   end
   
   describe '#subclasses' do
-    it 'returns the set of direct subclasses of the WoolClass' do
+    it 'returns the set of direct subclasses of the LaserClass' do
       @a.subclasses.should include(@b)
     end
   end
@@ -174,14 +174,14 @@ describe 'hierarchy methods' do
   clean_registry
 
   before do
-    @y = WoolClass.new('Y')
-    @y.superclass = @x = WoolClass.new('X')
+    @y = LaserClass.new('Y')
+    @y.superclass = @x = LaserClass.new('X')
     @x.superclass = ClassRegistry['Object']
-    @y2 = WoolClass.new('Y2')
+    @y2 = LaserClass.new('Y2')
     @y2.superclass = @x
-    @z = WoolClass.new('Z')
+    @z = LaserClass.new('Z')
     @z.superclass = @y
-    @w = WoolClass.new('W')
+    @w = LaserClass.new('W')
     @w.superclass = @y2
   end
   
@@ -236,14 +236,14 @@ describe 'hierarchy methods' do
   end
 end
 
-describe WoolMethod do
+describe LaserMethod do
   extend AnalysisHelpers
   clean_registry
 
   before do
-    @a = WoolClass.new('A')
-    @b = WoolClass.new('B')
-    @method = WoolMethod.new('foobar')
+    @a = LaserClass.new('A')
+    @b = LaserClass.new('B')
+    @method = LaserMethod.new('foobar')
   end
   
   describe '#add_signature!' do
