@@ -2,12 +2,12 @@ LASER: Lexically- and Semantically-Enriched Ruby
 ================================================
 
 **Homepage**:     [http://carboni.ca/projects/p/laser](http://carboni.ca/)   
-**IRC**:          [irc.freenode.net / #laser](irc://irc.freenode.net/laser)    
+**IRC**:          [irc.freenode.net / #laser](irc://irc.freenode.net/laser)     
 **Git**:          [http://github.com/michaeledgar/laser](http://github.com/michaeledgar/laser)   
-**Author**:       Michael Edgar
+**Author**:       Michael Edgar    
 **Copyright**:    2011  
 **License**:      Custom, Academic-use only license. See {file:LICENSE}  
-**Latest Version**: 0.1.0
+**Latest Version**: 0.1.0    
 **Release Date**: None, yet.
 
 Synopsis
