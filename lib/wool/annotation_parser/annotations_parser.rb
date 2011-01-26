@@ -95,6 +95,143 @@ module Wool
         end
 
         i0 = index
+        r1 = _nt_union_type
+        if r1
+          r0 = r1
+        else
+          r2 = _nt_non_union_type
+          if r2
+            r0 = r2
+          else
+            @index = i0
+            r0 = nil
+          end
+        end
+
+        node_cache[:type][start_index] = r0
+
+        r0
+      end
+
+      module UnionType0
+        def non_union_type
+          elements[3]
+        end
+      end
+
+      module UnionType1
+        def non_union_type
+          elements[0]
+        end
+
+      end
+
+      module UnionType2
+      end
+
+      def _nt_union_type
+        start_index = index
+        if node_cache[:union_type].has_key?(index)
+          cached = node_cache[:union_type][index]
+          if cached
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            @index = cached.interval.end
+          end
+          return cached
+        end
+
+        i0, s0 = index, []
+        r1 = _nt_non_union_type
+        s0 << r1
+        if r1
+          s2, i2 = [], index
+          loop do
+            i3, s3 = index, []
+            s4, i4 = [], index
+            loop do
+              r5 = _nt_space
+              if r5
+                s4 << r5
+              else
+                break
+              end
+            end
+            r4 = instantiate_node(SyntaxNode,input, i4...index, s4)
+            s3 << r4
+            if r4
+              if has_terminal?('|', false, index)
+                r6 = instantiate_node(SyntaxNode,input, index...(index + 1))
+                @index += 1
+              else
+                terminal_parse_failure('|')
+                r6 = nil
+              end
+              s3 << r6
+              if r6
+                s7, i7 = [], index
+                loop do
+                  r8 = _nt_space
+                  if r8
+                    s7 << r8
+                  else
+                    break
+                  end
+                end
+                r7 = instantiate_node(SyntaxNode,input, i7...index, s7)
+                s3 << r7
+                if r7
+                  r9 = _nt_non_union_type
+                  s3 << r9
+                end
+              end
+            end
+            if s3.last
+              r3 = instantiate_node(SyntaxNode,input, i3...index, s3)
+              r3.extend(UnionType0)
+            else
+              @index = i3
+              r3 = nil
+            end
+            if r3
+              s2 << r3
+            else
+              break
+            end
+          end
+          if s2.empty?
+            @index = i2
+            r2 = nil
+          else
+            r2 = instantiate_node(SyntaxNode,input, i2...index, s2)
+          end
+          s0 << r2
+        end
+        if s0.last
+          r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
+          r0.extend(UnionType1)
+          r0.extend(UnionType2)
+        else
+          @index = i0
+          r0 = nil
+        end
+
+        node_cache[:union_type][start_index] = r0
+
+        r0
+      end
+
+      def _nt_non_union_type
+        start_index = index
+        if node_cache[:non_union_type].has_key?(index)
+          cached = node_cache[:non_union_type][index]
+          if cached
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            @index = cached.interval.end
+          end
+          return cached
+        end
+
+        i0 = index
         r1 = _nt_top
         if r1
           r0 = r1
@@ -118,7 +255,7 @@ module Wool
           end
         end
 
-        node_cache[:type][start_index] = r0
+        node_cache[:non_union_type][start_index] = r0
 
         r0
       end
