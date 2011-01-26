@@ -10,8 +10,13 @@ begin
     gem.email = 'michael.j.edgar@dartmouth.edu'
     gem.homepage = 'http://github.com/michaeledgar/laser'
     gem.authors = ['Michael Edgar']
+    gem.add_dependency 'treetop', '~> 1.4'
     gem.add_development_dependency 'rspec', '~> 2.3'
     gem.add_development_dependency 'yard', '>= 0'
+    gem.add_development_dependency 'cucumber', '>= 0.10.0'
+    gem.add_development_dependency 'metric_fu', '>= 2.0.1'
+    gem.add_development_dependency 'simplecov', '>= 0.3.9'
+    gem.add_development_dependency 'simplecov-gem-adapter', '>= 1.0.0'
     # gem is a Gem::Specification... see http://www.rubygems.org/read/chapter/20 for additional settings
   end
   Jeweler::GemcutterTasks.new
