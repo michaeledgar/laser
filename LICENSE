@@ -3,7 +3,7 @@ Copyright (c) 2009 Michael Edgar
                        Spirit of the License
 
 This is an academic project, but I don't know where it will lead. I'm
-licensing Wool this way in part to shield myself from liability (since
+licensing Wool this way in part to shield myself from liability (especially since
 it rewrites code) and because it very well may have commercial applications
 that I may wish to investigate.
 
@@ -19,6 +19,10 @@ relatives, your friends, your bosses, or anyone tangentially connected
 to you. I don't care if you run it on legacy code that is defunct and
 unused, but may have once derived you commercial gain. But don't run
 it at your workplace. That's against the license.
+
+Of course, that clearly means embedding Wool in an commercial product
+is no good. And this license is definitely incompatible with any OSI-approved
+license.
 
 Oh, and this important bit from the GPL applies as well:
 
