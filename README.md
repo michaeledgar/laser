@@ -33,20 +33,20 @@ Feature List
                                                                               
 Details are always forthcoming, but:
 
-**1. Optional Type System** - taking some cues from Gilad Bracha's Strongtalk.
+**1. Optional Type System** - taking some cues from Gilad Bracha's Strongtalk.  
 **2. Style Fixing** - There are many style no-nos in Ruby. LASER can find them *and* fix them
-like similar linting tools for other languages.
+like similar linting tools for other languages.  
 **3. Common Semantic Analyses** - dead-code discovery, yield-ability, raise-ability,
-unused variables/arguments, and so on.
-**4. Documentation Generation** - why not?
+unused variables/arguments, and so on.  
+**4. Documentation Generation** - why not?  
 **5. Pluggable Annotation Parsers** - to get the most out of LASER, you may wish to
 annotate your code with types or arbitrary properties (such as method purity/impurity,
 visibility, etc). This requires an annotation syntax, which of course will lead to religious
 wars. So I'll be including the syntax *I* would like, as well as a parser for YARD-style
-annotations.
+annotations.  
 **6. Ruby 1.9+ only** - Yep, LASER will only run on Ruby 1.9, and it'll expect its target
 code is Ruby 1.9. Of course, since any 1.8 code will still parse just fine, the only issues
-that will come up is API differences (looking at you, `String`).
+that will come up is API differences (looking at you, `String`).  
 **7. Reusable Semantic Information** - I don't want a new AST format. I don't like the one
 provided by RubyParser and co. So I'm sticking with Ripper's AST format. It has quirks, but
 I prefer it, and it's part of the standard library. LASER works by creating an Array subclass
