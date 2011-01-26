@@ -1,3 +1,8 @@
+module Kernel
+end
+class Object
+  include Kernel
+end
 class NilClass
 end
 class TrueClass
