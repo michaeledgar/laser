@@ -41,6 +41,7 @@ module Laser
 
         # Visits a class node and either creates or re-enters a corresponding scope, annotating the
         # body with that scope.
+        # TODO(adgar): raise if this occurs within a method definition
         add :class do |node, path_node, superclass_node, body|
           # TODO(adgar): Make this do real lookup.
           if superclass_node
@@ -116,6 +117,16 @@ module Laser
           receiver = method_self.singleton_class
           singleton.scope = @current_scope
           visit_with_scope(body, receiver.scope)
+        end
+
+        ######## Detecting includes - requires method call detection! ########
+        # TODO(adgar): Write a helper that matches method calls in the general case
+        add :command do |node, ident, args|
+          if ident[1] == 'include' && @current_scope.self_ptr.klass.ancestors.include?(ClassRegistry['Module'])
+            p "DID AN INCLUDE #{args.inspect}"
+          else
+            default_visit node
+          end
         end
 
         # Normal method definitions.
