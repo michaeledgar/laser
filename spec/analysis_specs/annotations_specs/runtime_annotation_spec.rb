@@ -63,4 +63,73 @@ describe RuntimeAnnotation do
                  :run => [*defn[2].all_subtrees, *defn[3].all_subtrees]
                })
   end
+  
+  # [:program,
+  #  [[:module,
+  #    [:const_ref, [:@const, "A", [1, 7]]],
+  #    [:bodystmt,
+  #     [[:void_stmt],
+  #      [:method_add_block,
+  #       [:call,
+  #        [[:@tstring_content, "a,", [1, 13]], [:@tstring_content, "b", [1, 16]]],
+  #        :".",
+  #        [:@ident, "each", [1, 19]]],
+  #       [:brace_block,
+  #        [:block_var,
+  #         [:params, [[:@ident, "x", [1, 26]]], nil, nil, nil, nil],
+  #         nil],
+  #        [[:method_add_block,
+  #          [:method_add_arg,
+  #           [:fcall, [:@ident, "define_method", [1, 29]]],
+  #           [:arg_paren,
+  #            [:args_add_block, [[:var_ref, [:@ident, "x", [1, 43]]]], false]]],
+  #          [:do_block,
+  #           nil,
+  #           [[:void_stmt], [:var_ref, [:@ident, "x", [1, 50]]]]]]]]]],
+  #     nil, nil, nil]]]]
+  
+  it 'gives up on blocks that are captured at load-time' do
+    # not unrealistic code! Sometime we need to know this executes at load-time!
+    input = 'module A; %w(a b).each {|x| define_method(x) do; x; end}; end'
+    tree = Sexp.new(Ripper.sexp(input))
+    RuntimeAnnotation.new.annotate_with_text(tree, input)
+    mod_a = tree[1][0]
+    mab_node = mod_a[2][1][1]
+    expectalot(:runtime => {
+                 :load => [tree, tree[1], mod_a, mod_a[1], mod_a[2], mod_a[2][1],
+                           mab_node, mab_node[1]],
+                 :unknown => mab_node[2].all_subtrees
+               })
+  end
+  
+  # [:program,
+  #  [[:def,
+  #    [:@ident, "k", [1, 4]],
+  #    [:params, nil, nil, nil, nil, nil],
+  #    [:bodystmt,
+  #     [[:method_add_block,
+  #       [:call,
+  #        [[:@tstring_content, "a", [1, 10]], [:@tstring_content, "b", [1, 12]]],
+  #        :".",
+  #        [:@ident, "each", [1, 15]]],
+  #       [:brace_block,
+  #        [:block_var,
+  #         [:params, [[:@ident, "x", [1, 22]]], nil, nil, nil, nil],
+  #         nil],
+  #        [[:method_add_block,
+  #          [:method_add_arg,
+  #           [:fcall, [:@ident, "define_method", [1, 25]]],
+  #           [:arg_paren,
+  #            [:args_add_block, [[:var_ref, [:@ident, "x", [1, 39]]]], false]]],
+  #          [:do_block,
+  #           nil,
+  #           [[:void_stmt], [:var_ref, [:@ident, "x", [1, 46]]]]]]]]]],
+  #     nil, nil, nil]]]]
+  it 'knows blocks captured at run-time retain run-time status' do
+    input = 'def k; %w(a b).each {|x| define_method(x) do; x; end}; end'
+    tree = Sexp.new(Ripper.sexp(input))
+    RuntimeAnnotation.new.annotate_with_text(tree, input)
+    defn = tree[1][0]
+    expectalot(:runtime => { :run => defn[3].all_subtrees })
+  end
 end
