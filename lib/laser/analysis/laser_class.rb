@@ -219,9 +219,13 @@ module Laser
       # Sets the superclass, which handles registering/unregistering subclass
       # ownership elsewhere in the inheritance tree
       def superclass=(other)
-        superclass.remove_subclass! self if superclass
-        @superclass = other
-        superclass.add_subclass! self
+        if LaserModuleCopy === other
+          @superclass = other
+        else
+          superclass.remove_subclass! self if superclass
+          @superclass = other
+          superclass.add_subclass! self
+        end
       end
       
       # The set of all superclasses (including the class itself)
@@ -286,7 +290,10 @@ module Laser
       attr_reader :delegated
       def initialize(module_to_copy, with_super)
         super(module_to_copy)
-        @delegated = module_to_copy
+        case module_to_copy
+        when LaserModuleCopy then @delegated = module_to_copy.delegated
+        else @delegated = module_to_copy
+        end
         @superclass = with_super
       end
       

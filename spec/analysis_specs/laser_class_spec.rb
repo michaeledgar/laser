@@ -133,7 +133,6 @@ describe LaserModule do
     end
   end
   
-  
   describe '#include_module' do
     before do
       @a = LaserModule.new('A')
@@ -181,8 +180,8 @@ describe LaserClass do
   clean_registry
   
   before do
-    @a = described_class.new('A')
-    @b = described_class.new('B') do |b|
+    @a = LaserClass.new('A')
+    @b = LaserClass.new('B') do |b|
       b.superclass = @a
     end
   end
@@ -210,6 +209,53 @@ describe LaserClass do
     it 'allows the removal of direct subclasses (just in case we need to)' do
       @a.remove_subclass!(@b)
       @a.subclasses.should_not include(@b)
+    end
+  end
+  
+  describe '#include_module' do
+    before do
+      @a = LaserModule.new('A')
+      @b = LaserModule.new('B')
+      @c = LaserModule.new('C')
+      @d = LaserModule.new('D')
+      @x = LaserClass.new('X')
+      @y = LaserClass.new('Y') { |klass| klass.superclass = @x }
+      @z = LaserClass.new('Z') { |klass| klass.superclass = @y }
+    end
+
+    it "inserts the included module into the receiving module's hierarchy when not already there" do
+      @x.include_module(@a)
+      @x.ancestors.should == [@x, @a, ClassRegistry['Object']]
+      @y.include_module(@b)
+      @y.ancestors.should == [@y, @b, @x, @a, ClassRegistry['Object']]
+      @z.include_module(@c)
+      @z.ancestors.should == [@z, @c, @y, @b, @x, @a, ClassRegistry['Object']]
+    end
+    
+    it "does nothing when the included module is already in the receiving module's hierarchy" do
+      # setup
+      @b.include_module(@a)
+      @x.include_module(@b)
+      @x.ancestors.should == [@x, @b, @a, ClassRegistry['Object']]
+      # verification
+      @y.ancestors.should == [@y, @x, @b, @a, ClassRegistry['Object']]
+      @y.include_module(@b)
+      @y.ancestors.should == [@y, @x, @b, @a, ClassRegistry['Object']]
+    end
+    
+    it 'only inserts the necessary modules, handling diamond inheritance' do
+      # Odd order of operations is intentional here
+      @b.include_module(@a)
+      @d.include_module(@c)
+      @c.include_module(@b)
+      
+      @x.include_module(@a)
+      @y.include_module(@c)
+      @z.include_module(@d)
+      
+      @x.ancestors.should == [@x, @a, ClassRegistry['Object']]
+      @y.ancestors.should == [@y, @c, @b, @x, @a, ClassRegistry['Object']]
+      @z.ancestors.should == [@z, @d, @y, @c, @b, @x, @a, ClassRegistry['Object']]
     end
   end
 end
