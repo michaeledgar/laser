@@ -19,12 +19,12 @@ module Laser
         node.expanded_identifier = string
       end
       
-      add :var_ref, :var_field, :top_const_ref, :const_ref do |node, ref|
+      add :var_ref, :var_field, :top_const_ref, :const_ref, :top_const_field do |node, ref|
         visit ref
         node.expanded_identifier = ref.expanded_identifier
       end
       
-      add :const_path_ref do |node, lhs, rhs|
+      add :const_path_ref, :const_path_field do |node, lhs, rhs|
         visit lhs
         visit rhs
         node.expanded_identifier = "#{lhs.expanded_identifier}::#{rhs.expanded_identifier}"
