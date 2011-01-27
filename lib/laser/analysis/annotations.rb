@@ -39,8 +39,18 @@ module Laser
     # the Sexp class. Since that's what an annotation is, I don't consider
     # this bad form!
     class BasicAnnotation
+      extend ModuleExtensions
+      cattr_accessor_with_default :dependencies, []
       def self.inherited(klass)
         add_global_annotator klass
+      end
+      # other must be a symbol due to indeterminate load order
+      # @example
+      #    class AnnotatorA
+      #      depends_on :AnnotatorB
+      #    end
+      def self.depends_on(other)
+        dependencies << other
       end
       def self.add_global_annotator(*args)
         Annotations.global_annotations.concat args.map(&:new)
