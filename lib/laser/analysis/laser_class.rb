@@ -144,9 +144,10 @@ module Laser
       
       # Directly translated from MRI's C implementation in class.c:650
       def include_module(mod)
-        if mod.class != LaserModule
-          raise ArugmentError.new("Tried to include #{mod.name}, which should "+
-                                  " be a Module, not a #{mod.class}.")
+        if mod.klass == ClassRegistry['Class']
+          raise ArgumentError.new("Tried to include #{mod.name}, which should "+
+                                  " be a Module or Module subclass, not a " +
+                                  "#{mod.klass.name}.")
         end
         current = self
         while mod

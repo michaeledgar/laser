@@ -182,6 +182,20 @@ describe LaserModule do
       @d.include_module(@c)
       expect { @a.include_module(@d) }.to raise_error(ArgumentError)
     end
+    
+    it 'raises when including a class' do
+      klass = LaserClass.new('X')
+      expect { @a.include_module(klass) }.to raise_error(ArgumentError)
+    end
+    
+    it 'does not raise when including an instance of a Module subclass' do
+      silly_mod_subclass = LaserClass.new('SillyModSubclass') do |klass|
+        klass.superclass = ClassRegistry['Module']
+      end
+      instance = silly_mod_subclass.get_instance
+      @a.include_module(instance)
+      @a.ancestors.should == [@a, instance]
+    end
   end
 end
 
