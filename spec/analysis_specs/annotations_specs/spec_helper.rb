@@ -31,3 +31,13 @@ def expectalot(expectation)
     end
   end 
 end
+
+shared_examples_for 'an annotator' do
+  it 'should be in the global annotation list' do
+    expect do
+      Annotations.global_annotations.any? do |annotation|
+        annotation.is_a?(described_class)
+      end
+    end.to be_true
+  end
+end

@@ -3,6 +3,8 @@ describe CommentAttachmentAnnotation do
   extend AnalysisHelpers
   clean_registry
   
+  it_should_behave_like 'an annotator'
+  
   it 'adds the #docstring method to Sexp' do
     Sexp.instance_methods.should include(:comment)
   end
@@ -26,8 +28,8 @@ describe CommentAttachmentAnnotation do
     input = "  # abc\n  #  def\ndef silly(a, b)\n end\n # a class\n class A; end"
     tree = Sexp.new(Ripper.sexp(input))
     # source location is *required* for CommentAttachment to work.
-    SourceLocationAnnotation::Annotator.new.annotate_with_text(tree, input)
-    CommentAttachmentAnnotation::Annotator.new.annotate_with_text(tree, input)
+    SourceLocationAnnotation.new.annotate_with_text(tree, input)
+    CommentAttachmentAnnotation.new.annotate_with_text(tree, input)
     list = tree[1]
     
     defn = list[0]
@@ -60,8 +62,8 @@ describe CommentAttachmentAnnotation do
 EOF
     tree = Sexp.new(Ripper.sexp(input))
     # source location is *required* for CommentAttachment to work.
-    SourceLocationAnnotation::Annotator.new.annotate_with_text(tree, input)
-    CommentAttachmentAnnotation::Annotator.new.annotate_with_text(tree, input)
+    SourceLocationAnnotation.new.annotate_with_text(tree, input)
+    CommentAttachmentAnnotation.new.annotate_with_text(tree, input)
     list = tree[1]
     defn = list[0]
     defn.comment.body.should == " some method\n abc: String"

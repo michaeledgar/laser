@@ -3,6 +3,8 @@ describe SourceLocationAnnotation do
   extend AnalysisHelpers
   clean_registry
   
+  it_should_behave_like 'an annotator'
+  
   it 'adds the #source_begin method to Sexp' do
     Sexp.instance_methods.should include(:source_begin)
   end
@@ -35,7 +37,7 @@ describe SourceLocationAnnotation do
   it 'discovers the source begin location for a variety of literals and their containing nodes' do
     input = 'arr = true, nil, 314, 4.155, ?x, /ac/ix, "Abc#{hi}", :"hello #{there}", { a: :b }'
     tree = Sexp.new(Ripper.sexp(input))
-    SourceLocationAnnotation::Annotator.new.annotate_with_text(tree, input)
+    SourceLocationAnnotation.new.annotate_with_text(tree, input)
     list = tree[1]
     
     list[0][1][1].source_begin.should == [1, 0]
@@ -119,7 +121,7 @@ describe SourceLocationAnnotation do
   it 'discovers the source end location for a variety of literals and their containing nodes' do
     input = 'arr = true, nil, 314, 4.155, ?x, /ac/ix, "Abc#{hi}", :"hello #{there}", { a: :b }'
     tree = Sexp.new(Ripper.sexp(input))
-    SourceLocationAnnotation::Annotator.new.annotate_with_text(tree, input)
+    SourceLocationAnnotation.new.annotate_with_text(tree, input)
     list = tree[1]
     
     list[0][1][1].source_end.should == [1, 3]
@@ -174,7 +176,7 @@ describe SourceLocationAnnotation do
   it 'discovers the locations of array literals' do
     input = "arr = [ 1, \n2 ]"
     tree = Sexp.new(Ripper.sexp(input))
-    SourceLocationAnnotation::Annotator.new.annotate_with_text(tree, input)
+    SourceLocationAnnotation.new.annotate_with_text(tree, input)
     assign = tree[1][0]
     assign.source_begin.should == [1, 0]
     assign[1].source_begin.should == [1, 0]
@@ -193,7 +195,7 @@ describe SourceLocationAnnotation do
   it 'discovers the locations of method definitons' do
     input = " def \nabc\n  x = 10\n end"
     tree = Sexp.new(Ripper.sexp(input))
-    SourceLocationAnnotation::Annotator.new.annotate_with_text(tree, input)
+    SourceLocationAnnotation.new.annotate_with_text(tree, input)
     definition = tree[1][0]
     definition.source_begin.should == [1, 1]
   end
@@ -201,7 +203,7 @@ describe SourceLocationAnnotation do
   it 'discovers the locations of singleton method definitons' do
     input = " def \n self.abc\n  x = 10\n end"
     tree = Sexp.new(Ripper.sexp(input))
-    SourceLocationAnnotation::Annotator.new.annotate_with_text(tree, input)
+    SourceLocationAnnotation.new.annotate_with_text(tree, input)
     definition = tree[1][0]
     definition.source_begin.should == [1, 1]
   end
@@ -218,7 +220,7 @@ describe SourceLocationAnnotation do
   it 'discovers the locations of class and module definitons' do
     input = "   class\nA < B; module\n\nD;end\n   end"
     tree = Sexp.new(Ripper.sexp(input))
-    SourceLocationAnnotation::Annotator.new.annotate_with_text(tree, input)
+    SourceLocationAnnotation.new.annotate_with_text(tree, input)
     klass = tree[1][0]
     klass.source_begin.should == [1, 3]
     klass[3][1][0].source_begin.should == [2, 7]
@@ -227,7 +229,7 @@ describe SourceLocationAnnotation do
   it 'discovers the locations of singleton class definitons' do
     input = "   class\nA < B;   class <<\nB;end\n   end"
     tree = Sexp.new(Ripper.sexp(input))
-    SourceLocationAnnotation::Annotator.new.annotate_with_text(tree, input)
+    SourceLocationAnnotation.new.annotate_with_text(tree, input)
     klass = tree[1][0]
     klass.source_begin.should == [1, 3]
     klass[3][1][0].source_begin.should == [2, 9]

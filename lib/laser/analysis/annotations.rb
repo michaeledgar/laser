@@ -38,16 +38,17 @@ module Laser
     # This module also provides some helper methods to inject functionality into
     # the Sexp class. Since that's what an annotation is, I don't consider
     # this bad form!
-    module BasicAnnotation
-      def add_global_annotator(*args)
+    class BasicAnnotation
+      def self.inherited(klass)
+        add_global_annotator klass
+      end
+      def self.add_global_annotator(*args)
         Annotations.global_annotations.concat args.map(&:new)
       end
-      alias_method :add_global_annotators, :add_global_annotator
-      def add_property(*args)
+      def self.add_property(*args)
         SexpAnalysis::Sexp.__send__(:attr_accessor, *args)
       end
-      alias_method :add_properties, :add_property
-      def add_computed_property(name, &blk)
+      def self.add_computed_property(name, &blk)
         SexpAnalysis::Sexp.__send__(:define_method, name, &blk)
       end
     end

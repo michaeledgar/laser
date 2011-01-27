@@ -4,8 +4,7 @@ describe BasicAnnotation do
   before(:each) do
     @global_annotations = Annotations.global_annotations.dup
     Annotations.global_annotations = []
-    @class = Class.new do
-      extend BasicAnnotation
+    @class = Class.new(BasicAnnotation) do
       def annotate!(node)
         node[0] = (node[0].to_s + 'lolz').intern
       end

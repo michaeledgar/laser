@@ -3,6 +3,8 @@ describe LiteralTypeAnnotation do
   extend AnalysisHelpers
   clean_registry
   
+  it_should_behave_like 'an annotator'
+  
   it 'adds the #class_estimate method to Sexp' do
     Sexp.instance_methods.should include(:class_estimate)
   end
@@ -15,7 +17,7 @@ describe LiteralTypeAnnotation do
   #    [:var_field, [:@ident, "a", [1, 0]]], [:@int, "5", [1, 4]]]]]
   it 'discovers the class for integer literals' do
     tree = Sexp.new(Ripper.sexp('a = 5'))
-    LiteralTypeAnnotation::Annotator.new.annotate!(tree)
+    LiteralTypeAnnotation.new.annotate!(tree)
     list = tree[1]
     estimate = list[0][2].class_estimate
     estimate.should be_exact
@@ -38,7 +40,7 @@ describe LiteralTypeAnnotation do
   #        [:@int, "5", [1, 26]]]]]]]]]]
   it 'discovers the class for nontrivial string literals' do
     tree = Sexp.new(Ripper.sexp('a = "abc = #{run_method - 5}"'))
-    LiteralTypeAnnotation::Annotator.new.annotate!(tree)
+    LiteralTypeAnnotation.new.annotate!(tree)
     list = tree[1]
     [list[0][2], list[0][2][1], list[0][2][1][1], list[0][2][1][2]].each do |entry|
       estimate = entry.class_estimate
@@ -53,7 +55,7 @@ describe LiteralTypeAnnotation do
   #   [:xstring_literal, [[:@tstring_content, "find .", [1, 7]]]]]]]
   it 'discovers the class for executed string literals' do
     tree = Sexp.new(Ripper.sexp('a = %x(find .)'))
-    LiteralTypeAnnotation::Annotator.new.annotate!(tree)
+    LiteralTypeAnnotation.new.annotate!(tree)
     list = tree[1]
     estimate = list[0][2].class_estimate
     estimate.should be_exact
@@ -66,7 +68,7 @@ describe LiteralTypeAnnotation do
   #     [:@CHAR, "?a", [1, 4]]]]]
   it 'discovers the class for character literals' do
     tree = Sexp.new(Ripper.sexp('a = ?a'))
-    LiteralTypeAnnotation::Annotator.new.annotate!(tree)
+    LiteralTypeAnnotation.new.annotate!(tree)
     list = tree[1]
     estimate = list[0][2].class_estimate
     estimate.should be_exact
@@ -79,7 +81,7 @@ describe LiteralTypeAnnotation do
   #    [:@float, "3.14", [1, 4]]]]]
   it 'discovers the class for float literals' do
     tree = Sexp.new(Ripper.sexp('x = 3.14'))
-    LiteralTypeAnnotation::Annotator.new.annotate!(tree)
+    LiteralTypeAnnotation.new.annotate!(tree)
     list = tree[1]
     estimate = list[0][2].class_estimate
     estimate.should be_exact
@@ -94,7 +96,7 @@ describe LiteralTypeAnnotation do
   #    [:@regexp_end, "/im", [1, 8]]]]]]
   it 'discovers the class for regexp literals' do
     tree = Sexp.new(Ripper.sexp('x = /abc/im'))
-    LiteralTypeAnnotation::Annotator.new.annotate!(tree)
+    LiteralTypeAnnotation.new.annotate!(tree)
     list = tree[1]
     estimate = list[0][2].class_estimate
     estimate.should be_exact
@@ -107,7 +109,7 @@ describe LiteralTypeAnnotation do
   #    [:array, [[:@int, "1", [1, 5]], [:@int, "2", [1, 8]]]]]]]
   it 'discovers the class for array literals' do
     tree = Sexp.new(Ripper.sexp('x = [1, 2]'))
-    LiteralTypeAnnotation::Annotator.new.annotate!(tree)
+    LiteralTypeAnnotation.new.annotate!(tree)
     list = tree[1]
     estimate = list[0][2].class_estimate
     estimate.should be_exact
@@ -124,7 +126,7 @@ describe LiteralTypeAnnotation do
   #        [:symbol_literal, [:symbol, [:@ident, "b", [1, 9]]]]]]]]]]]
   it 'discovers the class for hash literals' do
     tree = Sexp.new(Ripper.sexp('x = {a: :b}'))
-    LiteralTypeAnnotation::Annotator.new.annotate!(tree)
+    LiteralTypeAnnotation.new.annotate!(tree)
     list = tree[1]
     estimate = list[0][2].class_estimate
     estimate.should be_exact
@@ -142,7 +144,7 @@ describe LiteralTypeAnnotation do
   #      false]]]]]
   it 'discovers the class for hash literals using the no-brace shorthand' do
     tree = Sexp.new(Ripper.sexp('p(a: 3, b: 3)'))
-    LiteralTypeAnnotation::Annotator.new.annotate!(tree)
+    LiteralTypeAnnotation.new.annotate!(tree)
     list = tree[1]
     estimate = list[0][2][1][1][0].class_estimate
     estimate.should be_exact
@@ -155,7 +157,7 @@ describe LiteralTypeAnnotation do
   #    [:symbol_literal, [:symbol, [:@ident, "abcdef", [1, 5]]]]]]]
   it 'discovers the class for symbol literals' do
     tree = Sexp.new(Ripper.sexp('x = :abcdef'))
-    LiteralTypeAnnotation::Annotator.new.annotate!(tree)
+    LiteralTypeAnnotation.new.annotate!(tree)
     list = tree[1]
     estimate = list[0][2].class_estimate
     estimate.should be_exact
@@ -171,7 +173,7 @@ describe LiteralTypeAnnotation do
   #      [:@tstring_content, "def", [1, 15]]]]]]]
   it 'discovers the class for dynamic symbol literals' do
     tree = Sexp.new(Ripper.sexp('x = :"abc{xyz}def"'))
-    LiteralTypeAnnotation::Annotator.new.annotate!(tree)
+    LiteralTypeAnnotation.new.annotate!(tree)
     list = tree[1]
     estimate = list[0][2].class_estimate
     estimate.should be_exact
@@ -188,7 +190,7 @@ describe LiteralTypeAnnotation do
   #        [:symbol_literal, [:symbol, [:@ident, "b", [1, 9]]]]]]]]]]]
   it 'discovers the class for the label-style symbols in Ruby 1.9' do
     tree = Sexp.new(Ripper.sexp('x = {a: :b}'))
-    LiteralTypeAnnotation::Annotator.new.annotate!(tree)
+    LiteralTypeAnnotation.new.annotate!(tree)
     list = tree[1]
     estimate = list[0][2][1][1][0][1].class_estimate  # aye carumba
     estimate.should be_exact
@@ -201,7 +203,7 @@ describe LiteralTypeAnnotation do
   #    [:var_ref, [:@kw, "true", [1, 4]]]]]]
   it 'discovers the class for true' do
     tree = Sexp.new(Ripper.sexp('x = true'))
-    LiteralTypeAnnotation::Annotator.new.annotate!(tree)
+    LiteralTypeAnnotation.new.annotate!(tree)
     list = tree[1]
     estimate = list[0][2].class_estimate
     estimate.should be_exact
@@ -214,7 +216,7 @@ describe LiteralTypeAnnotation do
   #    [:var_ref, [:@kw, "false", [1, 4]]]]]]
   it 'discovers the class for false' do
     tree = Sexp.new(Ripper.sexp('x = false'))
-    LiteralTypeAnnotation::Annotator.new.annotate!(tree)
+    LiteralTypeAnnotation.new.annotate!(tree)
     list = tree[1]
     estimate = list[0][2].class_estimate
     estimate.should be_exact
@@ -227,7 +229,7 @@ describe LiteralTypeAnnotation do
   #    [:var_ref, [:@kw, "nil", [1, 4]]]]]]
   it 'discovers the class for nil' do
     tree = Sexp.new(Ripper.sexp('x = nil'))
-    LiteralTypeAnnotation::Annotator.new.annotate!(tree)
+    LiteralTypeAnnotation.new.annotate!(tree)
     list = tree[1]
     estimate = list[0][2].class_estimate
     estimate.should be_exact
@@ -240,7 +242,7 @@ describe LiteralTypeAnnotation do
   #    [:var_ref, [:@kw, "__FILE__", [1, 4]]]]]]
   it 'discovers the class for __FILE__' do
     tree = Sexp.new(Ripper.sexp('x = __FILE__'))
-    LiteralTypeAnnotation::Annotator.new.annotate!(tree)
+    LiteralTypeAnnotation.new.annotate!(tree)
     list = tree[1]
     estimate = list[0][2].class_estimate
     estimate.should be_exact
@@ -253,7 +255,7 @@ describe LiteralTypeAnnotation do
   #    [:var_ref, [:@kw, "__LINE__", [1, 4]]]]]]
   it 'discovers the class for __LINE__' do
     tree = Sexp.new(Ripper.sexp('x = __LINE__'))
-    LiteralTypeAnnotation::Annotator.new.annotate!(tree)
+    LiteralTypeAnnotation.new.annotate!(tree)
     list = tree[1]
     estimate = list[0][2].class_estimate
     estimate.should be_exact
@@ -267,7 +269,7 @@ describe LiteralTypeAnnotation do
   #    [:var_ref, [:@kw, "__LINE__", [1, 4]]]]]]
   it 'discovers the class for __ENCODING__' do
     tree = Sexp.new(Ripper.sexp('x = __ENCODING__'))
-    LiteralTypeAnnotation::Annotator.new.annotate!(tree)
+    LiteralTypeAnnotation.new.annotate!(tree)
     list = tree[1]
     estimate = list[0][2].class_estimate
     estimate.should be_exact
@@ -281,7 +283,7 @@ describe LiteralTypeAnnotation do
   #   [:dot2, [:@int, "2", [1, 4]], [:@int, "9", [1, 7]]]]]]
   it 'discovers the class for inclusive ranges' do
     tree = Sexp.new(Ripper.sexp('x = 2..9'))
-    LiteralTypeAnnotation::Annotator.new.annotate!(tree)
+    LiteralTypeAnnotation.new.annotate!(tree)
     list = tree[1]
     estimate = list[0][2].class_estimate
     estimate.should be_exact
@@ -295,7 +297,7 @@ describe LiteralTypeAnnotation do
   #   [:dot3, [:@int, "2", [1, 4]], [:@int, "9", [1, 8]]]]]]
   it 'discovers the class for exclusive ranges' do
     tree = Sexp.new(Ripper.sexp('x = 2...9'))
-    LiteralTypeAnnotation::Annotator.new.annotate!(tree)
+    LiteralTypeAnnotation.new.annotate!(tree)
     list = tree[1]
     estimate = list[0][2].class_estimate
     estimate.should be_exact
@@ -310,7 +312,7 @@ describe LiteralTypeAnnotation do
   #     [[:var_ref, [:@ident, "a", [1, 10]]]]]]]]
   it "discovers the class for 1.9's stabby lambdas" do
     tree = Sexp.new(Ripper.sexp('x = ->(a, b=2){ a + b }'))
-    LiteralTypeAnnotation::Annotator.new.annotate!(tree)
+    LiteralTypeAnnotation.new.annotate!(tree)
     list = tree[1]
     estimate = list[0][2].class_estimate
     estimate.should be_exact

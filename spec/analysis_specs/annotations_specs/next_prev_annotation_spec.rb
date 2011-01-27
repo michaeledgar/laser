@@ -1,6 +1,8 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 require 'set'
 describe NextPrevAnnotation do
+  it_should_behave_like 'an annotator'
+  
   it 'adds the #next and #prev methods to Sexp' do
     Sexp.instance_methods.should include(:next)
     Sexp.instance_methods.should include(:prev)
@@ -9,7 +11,7 @@ describe NextPrevAnnotation do
   it 'adds next and prevs to each node with a toy example' do
     tree = Sexp.new([:abc, Sexp.new([:def, 1, 2]),
                     Sexp.new([:zzz, Sexp.new([:return]), "hi", Sexp.new([:silly, 4])])])
-    NextPrevAnnotation::Annotator.new.annotate!(tree)
+    NextPrevAnnotation.new.annotate!(tree)
     expectalot(prev: { nil => [tree[1], tree[2][1]], tree[1] => [tree[2]], tree[2][2] => [tree[2][3]] },
                next: { nil => [tree[2], tree[2][3]], tree[2] => [tree[1]], tree[2][2] => [tree[2][1]] })
   end

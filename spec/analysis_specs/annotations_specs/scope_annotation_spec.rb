@@ -4,14 +4,16 @@ describe ScopeAnnotation do
   extend AnalysisHelpers
   clean_registry
   
+  it_should_behave_like 'an annotator'
+  
   it 'adds the #scope method to Sexp' do
     Sexp.instance_methods.should include(:scope)
   end
   
   it 'adds scopes to each node with a flat example with no new scopes' do
     tree = Sexp.new(Ripper.sexp('p 5; if b; a; end'))
-    ExpandedIdentifierAnnotation::Annotator.new.annotate!(tree)
-    ScopeAnnotation::Annotator.new.annotate!(tree)
+    ExpandedIdentifierAnnotation.new.annotate!(tree)
+    ScopeAnnotation.new.annotate!(tree)
     tree.all_subtrees.each do |node|
       node.scope.should == Scope::GlobalScope
     end
@@ -27,8 +29,8 @@ describe ScopeAnnotation do
   #           [:@int, "10", [1, 23]]]], nil, nil, nil]]]]
   it 'creates a new scope when a simple module declaration is encountered' do
     tree = Sexp.new(Ripper.sexp('p 5; module A; end'))
-    ExpandedIdentifierAnnotation::Annotator.new.annotate!(tree)
-    ScopeAnnotation::Annotator.new.annotate!(tree)
+    ExpandedIdentifierAnnotation.new.annotate!(tree)
+    ScopeAnnotation.new.annotate!(tree)
     list = tree[1]
     with_new_scope = list[1][2], *list[1][2].all_subtrees
     expectalot(scope: { Scope::GlobalScope => [tree, list[0], list[0][1], list[0][2]],
@@ -49,8 +51,8 @@ describe ScopeAnnotation do
   #           [:@int, "10", [1, 25]]]], nil, nil, nil]]]]
   it 'creates a new scope when a simple top-pathed module declaration is encountered' do
     tree = Sexp.new(Ripper.sexp('p 5; module ::B; end'))
-    ExpandedIdentifierAnnotation::Annotator.new.annotate!(tree)
-    ScopeAnnotation::Annotator.new.annotate!(tree)
+    ExpandedIdentifierAnnotation.new.annotate!(tree)
+    ScopeAnnotation.new.annotate!(tree)
     list = tree[1]
     list[1][2].scope.self_ptr.name.should == 'B'
     list[1][2].scope.should be_a(ClosedScope)
@@ -73,8 +75,8 @@ describe ScopeAnnotation do
     temp_scope = ClosedScope.new(Scope::GlobalScope, nil)
     temp_mod = LaserModule.new('ABC', temp_scope)
     tree = Sexp.new(Ripper.sexp('p 5; module ABC::DEF; end'))
-    ExpandedIdentifierAnnotation::Annotator.new.annotate!(tree)
-    ScopeAnnotation::Annotator.new.annotate!(tree)
+    ExpandedIdentifierAnnotation.new.annotate!(tree)
+    ScopeAnnotation.new.annotate!(tree)
     list = tree[1]
     mod = list[1][2].scope.self_ptr
     #mod.class_used.path.should == 'ABC::DEF'
@@ -101,8 +103,8 @@ describe ScopeAnnotation do
     temp_scope = ClosedScope.new(Scope::GlobalScope, nil)
     temp_mod = LaserModule.new('A10', temp_scope)
     tree = Sexp.new(Ripper.sexp('module A10::B12; end; module A10::B12; end'))
-    ExpandedIdentifierAnnotation::Annotator.new.annotate!(tree)
-    ScopeAnnotation::Annotator.new.annotate!(tree)
+    ExpandedIdentifierAnnotation.new.annotate!(tree)
+    ScopeAnnotation.new.annotate!(tree)
     
     list = tree[1]
     with_new_scope = [list[0][2], *list[0][2].all_subtrees] +
@@ -132,8 +134,8 @@ describe ScopeAnnotation do
   #                  nil, nil, nil]]], nil, nil, nil]]], nil, nil, nil]]]]
   it 'creates several new scopes when a bunch of nested modules are encountered' do
     tree = Sexp.new(Ripper.sexp('module A; module B32; module C444; end; end; end'))
-    ExpandedIdentifierAnnotation::Annotator.new.annotate!(tree)
-    ScopeAnnotation::Annotator.new.annotate!(tree)
+    ExpandedIdentifierAnnotation.new.annotate!(tree)
+    ScopeAnnotation.new.annotate!(tree)
     list = tree[1]
     a_body = list[0][2]
     b_body = a_body[1][1][2]
@@ -174,8 +176,8 @@ describe ScopeAnnotation do
   #     nil, nil, nil]]]]
   it 'defines methods on the current Module, if inside a module lexically' do
     tree = Sexp.new(Ripper.sexp('module M13; def silly(*rest); p rest; end; end'))
-    ExpandedIdentifierAnnotation::Annotator.new.annotate!(tree)
-    ScopeAnnotation::Annotator.new.annotate!(tree)
+    ExpandedIdentifierAnnotation.new.annotate!(tree)
+    ScopeAnnotation.new.annotate!(tree)
     definition = tree[1][0][2][1][1]
     body = definition[3]
     [body, *body.all_subtrees].each do |node|
@@ -212,8 +214,8 @@ describe ScopeAnnotation do
   #     nil, nil, nil]]]]
   it "allows singleton method declarations on a Module's self" do
     tree = Sexp.new(Ripper.sexp('module M49; def self.silly(a, b=a); end; end'))
-    ExpandedIdentifierAnnotation::Annotator.new.annotate!(tree)
-    ScopeAnnotation::Annotator.new.annotate!(tree)
+    ExpandedIdentifierAnnotation.new.annotate!(tree)
+    ScopeAnnotation.new.annotate!(tree)
     definition = tree[1][0][2][1][1]
     body = definition[5]
     [body, *body.all_subtrees].each do |node|
@@ -256,8 +258,8 @@ describe ScopeAnnotation do
   #    nil, nil, nil]]]]
   it "allows singleton method declarations on a Module's self using sclass opening" do
     tree = Sexp.new(Ripper.sexp('module M50; class << self; def silly(a, b=a); end; end; end'))
-    ExpandedIdentifierAnnotation::Annotator.new.annotate!(tree)
-    ScopeAnnotation::Annotator.new.annotate!(tree)
+    ExpandedIdentifierAnnotation.new.annotate!(tree)
+    ScopeAnnotation.new.annotate!(tree)
     sclass_body = tree[1][0][2][1][1][2]
     definition = sclass_body[1][0]
     body = definition[3]
@@ -301,8 +303,8 @@ describe ScopeAnnotation do
   
   it "allows singleton method declarations on a Module's self using sclass opening" do
     tree = Sexp.new(Ripper.sexp('class C51; end; class << C51; def silly(a, b=a); end; end'))
-    ExpandedIdentifierAnnotation::Annotator.new.annotate!(tree)
-    ScopeAnnotation::Annotator.new.annotate!(tree)
+    ExpandedIdentifierAnnotation.new.annotate!(tree)
+    ScopeAnnotation.new.annotate!(tree)
     sclass_body = tree[1][1][2]
     definition = sclass_body[1][0]
     body = definition[3]
@@ -334,8 +336,8 @@ describe ScopeAnnotation do
   #           [:bodystmt, [[:void_stmt]], nil, nil, nil]]]]
   it 'creates a new scope when a class declaration is encountered' do
     tree = Sexp.new(Ripper.sexp('class C99; end'))
-    ExpandedIdentifierAnnotation::Annotator.new.annotate!(tree)
-    ScopeAnnotation::Annotator.new.annotate!(tree)
+    ExpandedIdentifierAnnotation.new.annotate!(tree)
+    ScopeAnnotation.new.annotate!(tree)
     list = tree[1]
     a_header = list[0][1]
     a_body = list[0][3]
@@ -358,8 +360,8 @@ describe ScopeAnnotation do
   #           [:bodystmt, [[:void_stmt]], nil, nil, nil]]]]
   it 'creates a new class with the appropriate superclass when specified' do
     tree = Sexp.new(Ripper.sexp('class C89; end; class CPP < C89; end'))
-    ExpandedIdentifierAnnotation::Annotator.new.annotate!(tree)
-    ScopeAnnotation::Annotator.new.annotate!(tree)
+    ExpandedIdentifierAnnotation.new.annotate!(tree)
+    ScopeAnnotation.new.annotate!(tree)
     list = tree[1]
     a_header = list[0][1]
     a_body = list[0][3]
@@ -390,8 +392,8 @@ describe ScopeAnnotation do
   #           [:bodystmt, [[:void_stmt]], nil, nil, nil]]]]
   it 'declares classes inside modules with path-based definitions' do
     tree = Sexp.new(Ripper.sexp('module WWD; end; class WWD::SuperModule < Module; end'))
-    ExpandedIdentifierAnnotation::Annotator.new.annotate!(tree)
-    ScopeAnnotation::Annotator.new.annotate!(tree)
+    ExpandedIdentifierAnnotation.new.annotate!(tree)
+    ScopeAnnotation.new.annotate!(tree)
     list = tree[1]
     wwd_header = list[0][1]
     wwd_body = list[0][2]
@@ -433,8 +435,8 @@ describe ScopeAnnotation do
   #    [:bodystmt, [[:void_stmt]], nil, nil, nil]]]]
   it 'defines methods on the current Class, which are inherited' do
     tree = Sexp.new(Ripper.sexp('class Alpha; def do_xyz(a, b=a); p b; end; end; class B22 < Alpha; end'))
-    ExpandedIdentifierAnnotation::Annotator.new.annotate!(tree)
-    ScopeAnnotation::Annotator.new.annotate!(tree)
+    ExpandedIdentifierAnnotation.new.annotate!(tree)
+    ScopeAnnotation.new.annotate!(tree)
     definition = tree[1][0][3][1][0]
     body = definition[3]
     [body, *body.all_subtrees].each do |node|
@@ -474,8 +476,8 @@ describe ScopeAnnotation do
   #     nil, nil, nil]]]]
   it 'defines method on the main object, if no scope is otherwise enclosing a method definition' do
     tree = Sexp.new(Ripper.sexp('def abc(bar, &blk); p blk; end'))
-    ExpandedIdentifierAnnotation::Annotator.new.annotate!(tree)
-    ScopeAnnotation::Annotator.new.annotate!(tree)
+    ExpandedIdentifierAnnotation.new.annotate!(tree)
+    ScopeAnnotation.new.annotate!(tree)
     definition = tree[1][0]
     body = definition[3]
     [body, *body.all_subtrees].each do |node|
@@ -513,8 +515,8 @@ describe ScopeAnnotation do
   #    nil, nil, nil]]]]
   it 'defines singleton methods on the main object, if no scope is otherwise enclosing a method definition' do
     tree = Sexp.new(Ripper.sexp('def self.abcd(bar, &blk); p blk; end'))
-    ExpandedIdentifierAnnotation::Annotator.new.annotate!(tree)
-    ScopeAnnotation::Annotator.new.annotate!(tree)
+    ExpandedIdentifierAnnotation.new.annotate!(tree)
+    ScopeAnnotation.new.annotate!(tree)
     definition = tree[1][0]
     body = definition[5]
     [body, *body.all_subtrees].each do |node|
@@ -555,8 +557,8 @@ describe ScopeAnnotation do
   #     nil, nil, nil]]]]
   it 'creates new scopes on single assignments' do
     tree = Sexp.new(Ripper.sexp('def abc(bar, &blk); p blk; a = bar; z = a; end'))
-    ExpandedIdentifierAnnotation::Annotator.new.annotate!(tree)
-    ScopeAnnotation::Annotator.new.annotate!(tree)
+    ExpandedIdentifierAnnotation.new.annotate!(tree)
+    ScopeAnnotation.new.annotate!(tree)
     definition = tree[1][0]
     body = definition[3]
     body_def = body[1][1..-1]
@@ -591,8 +593,8 @@ describe ScopeAnnotation do
   #     nil, nil, nil]]]]
   it 'does not create new scopes when re-using a binding' do
     tree = Sexp.new(Ripper.sexp('def abc(bar, &blk); p blk; a = bar; a = blk; end'))
-    ExpandedIdentifierAnnotation::Annotator.new.annotate!(tree)
-    ScopeAnnotation::Annotator.new.annotate!(tree)
+    ExpandedIdentifierAnnotation.new.annotate!(tree)
+    ScopeAnnotation.new.annotate!(tree)
     definition = tree[1][0]
     body = definition[3]
     body_def = body[1][1..-1]
@@ -624,8 +626,8 @@ describe ScopeAnnotation do
   #     nil, nil, nil]]]]
   it 'creates new scopes as new constants are assigned to' do
     tree = Sexp.new(Ripper.sexp('module TestA; PI = 3.14; TAU = PI * 2; end'))
-    ExpandedIdentifierAnnotation::Annotator.new.annotate!(tree)
-    ScopeAnnotation::Annotator.new.annotate!(tree)
+    ExpandedIdentifierAnnotation.new.annotate!(tree)
+    ScopeAnnotation.new.annotate!(tree)
     body = tree[1][0][2][1]
     
     body[0].should_not see_var('PI')
@@ -658,8 +660,8 @@ describe ScopeAnnotation do
   #     nil, nil, nil]]]]
   it 'creates global variable bindings when discovered' do
     tree = Sexp.new(Ripper.sexp('module TestA; PI = 3.14; $TEST_TAU = PI * 2; end'))
-    ExpandedIdentifierAnnotation::Annotator.new.annotate!(tree)
-    ScopeAnnotation::Annotator.new.annotate!(tree)
+    ExpandedIdentifierAnnotation.new.annotate!(tree)
+    ScopeAnnotation.new.annotate!(tree)
     
     # just by annotating this, the new gvar should've been discovered.
     Scope::GlobalScope.lookup('$TEST_TAU').should be_a(Bindings::GlobalVariableBinding)
@@ -693,8 +695,8 @@ describe ScopeAnnotation do
   
   it 'creates multiple bindings all at once during multiple assignments' do
     tree = Sexp.new(Ripper.sexp('p nil; a, (Z, ((b, $f, j), (i, p)), *d), c = 1, 2; p c'))
-    ExpandedIdentifierAnnotation::Annotator.new.annotate!(tree)
-    ScopeAnnotation::Annotator.new.annotate!(tree)
+    ExpandedIdentifierAnnotation.new.annotate!(tree)
+    ScopeAnnotation.new.annotate!(tree)
     
     list = tree[1]
     %w(a Z b j i p d c).each do |var|
@@ -718,8 +720,8 @@ describe ScopeAnnotation do
   #      [:args_add_block, [[:var_ref, [:@ident, "x", [1, 22]]]], false]]]]]]
   it 'creates a single binding with a simple for loop' do
     tree = Sexp.new(Ripper.sexp('p nil; for x in []; p x; end'))
-    ExpandedIdentifierAnnotation::Annotator.new.annotate!(tree)
-    ScopeAnnotation::Annotator.new.annotate!(tree)
+    ExpandedIdentifierAnnotation.new.annotate!(tree)
+    ScopeAnnotation.new.annotate!(tree)
     list = tree[1]
     list[0].should_not see_var('x')
 
@@ -744,8 +746,8 @@ describe ScopeAnnotation do
   #      [:args_add_block, [[:var_ref, [:@ident, "x", [1, 41]]]], false]]]]]]
   it 'creates many bindings with a complex for loop initializer' do
     tree = Sexp.new(Ripper.sexp('p nil; for A92, x, (y, (z, $f)) in []; p x; end'))
-    ExpandedIdentifierAnnotation::Annotator.new.annotate!(tree)
-    ScopeAnnotation::Annotator.new.annotate!(tree)
+    ExpandedIdentifierAnnotation.new.annotate!(tree)
+    ScopeAnnotation.new.annotate!(tree)
     list = tree[1]
     list[0].should_not see_var('A92')
     list[0].should_not see_var('x')
@@ -790,8 +792,8 @@ describe ScopeAnnotation do
   #      [:args_add_block, [[:var_ref, [:@ident, "x", [1, 60]]]], false]]]]]]]
   it 'creates a new open scope when a block is used' do
     tree = Sexp.new(Ripper.sexp('p nil; [1,2].crazy_blocker(2,5) do |x, y=x, *rest, &blk|; p x; end'))
-    ExpandedIdentifierAnnotation::Annotator.new.annotate!(tree)
-    ScopeAnnotation::Annotator.new.annotate!(tree)
+    ExpandedIdentifierAnnotation.new.annotate!(tree)
+    ScopeAnnotation.new.annotate!(tree)
     list = tree[1]
     list[0].should_not see_var('x')
     list[0].should_not see_var('y')
@@ -832,8 +834,8 @@ describe ScopeAnnotation do
   #      [:args_add_block, [[:var_ref, [:@ident, "x", [1, 48]]]], false]]]]]]]
   it 'creates a scope that can reference parent scope variables when a block is found' do
     tree = Sexp.new(Ripper.sexp('z = 10; [1,2].crazy_blocker(2,5) do |x, y=x|; p x; end'))
-    ExpandedIdentifierAnnotation::Annotator.new.annotate!(tree)
-    ScopeAnnotation::Annotator.new.annotate!(tree)
+    ExpandedIdentifierAnnotation.new.annotate!(tree)
+    ScopeAnnotation.new.annotate!(tree)
     list = tree[1]
     list[0].should see_var('z')
     list[0].should_not see_var('x')
@@ -879,8 +881,8 @@ describe ScopeAnnotation do
   #           [[:var_ref, [:@ident, "oo", [1, 63]]]]]]]]]]]]]]
   it 'handles deep block nesting' do
     tree = Sexp.new(Ripper.sexp('z = 10; [].each { |x, y=x| x.each { |abc, jkl| abc.each { |oo| oo }}}'))
-    ExpandedIdentifierAnnotation::Annotator.new.annotate!(tree)
-    ScopeAnnotation::Annotator.new.annotate!(tree)
+    ExpandedIdentifierAnnotation.new.annotate!(tree)
+    ScopeAnnotation.new.annotate!(tree)
     list = tree[1]
     list[0].should see_var('z')
     list[0].should_not see_var('x')
@@ -929,8 +931,8 @@ describe ScopeAnnotation do
   #     [[:var_ref, [:@ident, "y", [1, 27]]]]]]]]
   it 'handles block variables shadowing outside variables' do
     tree = Sexp.new(Ripper.sexp('x = 10; [].each { |x, y=x| y }'))
-    ExpandedIdentifierAnnotation::Annotator.new.annotate!(tree)
-    ScopeAnnotation::Annotator.new.annotate!(tree)
+    ExpandedIdentifierAnnotation.new.annotate!(tree)
+    ScopeAnnotation.new.annotate!(tree)
     list = tree[1]
     list[0].should see_var('x')
     list[0].should_not see_var('y')
@@ -1037,8 +1039,8 @@ module And
 end
 EOF
 ))
-    ExpandedIdentifierAnnotation::Annotator.new.annotate!(tree)
-    ScopeAnnotation::Annotator.new.annotate!(tree)
+    ExpandedIdentifierAnnotation.new.annotate!(tree)
+    ScopeAnnotation.new.annotate!(tree)
     list = tree[1]
     and_header, and_body = list[0][1..2]
     or_body = and_body[1][1][2]

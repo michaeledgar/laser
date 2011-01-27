@@ -1,6 +1,8 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 require 'set'
 describe ParentAnnotation do
+  it_should_behave_like 'an annotator'
+  
   it 'adds the #parent method to Sexp' do
     Sexp.instance_methods.should include(:parent)
   end
@@ -8,7 +10,7 @@ describe ParentAnnotation do
   it 'adds parents to each node with a toy example' do
     tree = Sexp.new([:abc, Sexp.new([:def, 1, 2]),
                     Sexp.new([:zzz, Sexp.new([:return]),  "hi", Sexp.new([:silly, 4])])])
-    ParentAnnotation::Annotator.new.annotate!(tree)
+    ParentAnnotation.new.annotate!(tree)
     expectalot(parent: { nil => [tree], tree => [tree[1], tree[2]],
                             tree[2] => [tree[2][1], tree[2][3]] } )
   end
@@ -17,7 +19,7 @@ describe ParentAnnotation do
   # proper parent set. It's a complex, but thorough test.
   it 'adds parents to each node with a real-world parse result' do
     tree = Sexp.new(Ripper.sexp('x = proc {|x, *rst, &blk| p x ** rst[0]; blk.call(rst[1..-1])}'))
-    ParentAnnotation::Annotator.new.annotate!(tree)
+    ParentAnnotation.new.annotate!(tree)
     expectalot(parent: { nil => [tree], tree => [tree.children.first] })
     tree.all_subtrees.each do |node|
       node.parent.children.should include(node)
@@ -31,7 +33,7 @@ describe ParentAnnotation do
   it 'adds ancestors to each node with a toy example' do
     tree = Sexp.new([:abc, Sexp.new([:def, 1, 2]),
                     Sexp.new([:zzz, Sexp.new([:return]), 'hi', Sexp.new([:silly, 4])])])
-    ParentAnnotation::Annotator.new.annotate!(tree)
+    ParentAnnotation.new.annotate!(tree)
     expectalot(ancestors: { [] => [tree], [tree] => [tree[1], tree[2]],
                             [tree, tree[2]] => [tree[2][1], tree[2][3]] } )
   end
@@ -40,7 +42,7 @@ describe ParentAnnotation do
   # proper parent set. It's a complex, but thorough test.
   it 'adds parents to each node with a real-world parse result' do
     tree = Sexp.new(Ripper.sexp('x = proc {|x, *rst, &blk| p x ** rst[0]; blk.call(rst[1..-1])}'))
-    ParentAnnotation::Annotator.new.annotate!(tree)
+    ParentAnnotation.new.annotate!(tree)
     expectalot(parent: { nil => [tree], tree => [tree.children.first] })
     tree.all_subtrees.each do |node|
       if node.parent
