@@ -10,13 +10,11 @@ module Laser
     class ScopeAnnotation < BasicAnnotation
       add_property :scope
       depends_on :ExpandedIdentifierAnnotation
-      attr_reader :scope_stack
       include Visitor
       
       def annotate!(root)
-        @scope_stack = [Scope::GlobalScope]
         @current_scope = Scope::GlobalScope
-        visit(root)
+        super
       end
       
       # Replaces the general node visit method with one that assigns

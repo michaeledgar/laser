@@ -1,5 +1,6 @@
 - ParentAnnotation
 - NextPrevAnnotation
+- RuntimeAnnotation
 - ExpandedIdentifierAnnotation
 - SourceLocationAnnotation
 - CommentAttachmentAnnotation
