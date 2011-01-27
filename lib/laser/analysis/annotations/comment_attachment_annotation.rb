@@ -1,8 +1,11 @@
 module Laser
   module SexpAnalysis
-    # This is a simple inherited attribute applied to each node,
-    # giving a pointer to that node's parent. That way AST traversal
-    # is easier.
+    # This annotation attempts to attach each comment in the program to the
+    # first node in the AST that follows the comment, as well as all subnodes with
+    # the same source location.
+    #
+    # This annotation will NOT always succeed, as it relies on the SourceLocationAnnotator,
+    # which due to limitations in Ripper's output, cannot always succeed.
     module CommentAttachmentAnnotation
       extend BasicAnnotation
       add_property :comment

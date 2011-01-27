@@ -4,6 +4,8 @@ module Laser
     # scope for each node in the AST, at the time of that node's execution. For
     # example, every node should be able to say "hey scope, what's 'this' for this
     # statement?", and be able to return its type (*NOT* its class, they're different).
+    #
+    # Depends on: ExpandedIdentifierAnnotation
     module ScopeAnnotation
       extend BasicAnnotation
       add_property :scope
@@ -40,8 +42,9 @@ module Laser
         # Visits a class node and either creates or re-enters a corresponding scope, annotating the
         # body with that scope.
         add :class do |node, path_node, superclass_node, body|
+          # TODO(adgar): Make this do real lookup.
           if superclass_node
-          then superclass = @current_scope.lookup_path(const_sexp_name(superclass_node)).self_ptr
+          then superclass = @current_scope.lookup_path(superclass_node.expanded_identifier).self_ptr
           else superclass = ClassRegistry['Object']
           end
           default_visit(path_node)
@@ -96,27 +99,15 @@ module Laser
           case path_node.type
           when :const_path_ref
             left, right = path_node.children
-            new_class_name = const_sexp_name(right)
-            current_scope = current_scope.lookup_path(const_sexp_name(left))
+            new_class_name = right.expanded_identifier
+            current_scope = current_scope.lookup_path(left.expanded_identifier)
           when :top_const_ref
             current_scope = Scope::GlobalScope
-            new_class_name = const_sexp_name(path_node)
+            new_class_name = path_node.expanded_identifier
           else
-            new_class_name = const_sexp_name(path_node)
+            new_class_name = path_node.expanded_identifier
           end
           [current_scope, new_class_name]
-        end
-
-        # Evaluates the constant reference/path with the given scope
-        # as describe.
-        def const_sexp_name(sexp)
-          case sexp.type
-          when :var_ref, :const_ref, :top_const_ref then sexp[1][1]
-          when :@const then sexp[1]
-          when :const_path_ref 
-            left, right = sexp.children
-            const_sexp_name(left) + '::' + const_sexp_name(right)
-          end
         end
 
         # Enter the singleton class.

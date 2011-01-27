@@ -124,16 +124,61 @@ end
 
 describe LaserModule do
   it_should_behave_like 'a Ruby module'
+  extend AnalysisHelpers
+  clean_registry
 
   describe '#singleton_class' do
     it 'should return a class with Module as its superclass' do
       LaserModule.new('A').singleton_class.superclass.should == ClassRegistry['Module']
     end
   end
+  
+  
+  describe '#include_module' do
+    before do
+      @a = LaserModule.new('A')
+      @b = LaserModule.new('B')
+      @c = LaserModule.new('C')
+      @d = LaserModule.new('D')
+    end
+
+    it "inserts the included module into the receiving module's hierarchy when not already there" do
+      @b.superclass.should be nil
+      @b.include_module(@a)
+      @b.ancestors.should == [@b, @a]
+    end
+    
+    it "does nothing when the included module is already in the receiving module's hierarchy" do
+      # setup
+      @b.include_module(@a)
+      @c.include_module(@b)
+      @b.ancestors.should == [@b, @a]
+      @c.ancestors.should == [@c, @b, @a]
+      # verification
+      @b.include_module(@a)
+      @b.ancestors.should == [@b, @a]
+      @c.include_module(@a)
+      @c.ancestors.should == [@c, @b, @a]
+    end
+    
+    it "only inserts the necessary modules, handling diamond inheritance" do
+      # A has two inherited modules, B and C
+      @b.include_module(@a)
+      @c.include_module(@a)
+      @b.ancestors.should == [@b, @a]
+      @c.ancestors.should == [@c, @a]
+      # D includes B, then, C, in that order.
+      @d.include_module(@b)
+      @d.include_module(@c)
+      @d.ancestors.should == [@d, @c, @b, @a]
+    end
+  end
 end
 
 describe LaserClass do
   it_should_behave_like 'a Ruby module'
+  extend AnalysisHelpers
+  clean_registry
   
   before do
     @a = described_class.new('A')

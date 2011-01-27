@@ -1,3 +1,4 @@
+require 'delegate'
 module Laser
   module SexpAnalysis
     class LaserObject
@@ -37,7 +38,7 @@ module Laser
     # Laser representation of a module. Named LaserModule to avoid naming
     # conflicts. It has lists of methods, instance variables, and so on.
     class LaserModule < LaserObject
-      attr_reader :path, :instance_methods, :binding, :included_modules
+      attr_reader :path, :instance_methods, :binding, :superclass
       cattr_accessor_with_default :all_modules, []
       
       def initialize(full_path, scope = Scope::GlobalScope)
@@ -47,9 +48,9 @@ module Laser
         
         @path = full_path
         @instance_methods = Hash.new { |hash, name| hash[name] = LaserMethod.new(name) }
-        @included_modules = []
         @scope = scope
         @methods = {}
+        @superclass ||= nil
         initialize_protocol
         @binding = Bindings::ConstantBinding.new(name, self)
         initialize_scope
@@ -129,6 +130,50 @@ module Laser
         LaserObject.new(self, nil)
       end
       
+      def superclass=(new_superclass)
+        @superclass = new_superclass
+      end
+      
+      # The set of all superclasses (including the class itself)
+      def ancestors
+        if superclass.nil?
+        then [self]
+        else [self] + superclass.ancestors
+        end
+      end
+      
+      # Directly translated from MRI's C implementation in class.c:650
+      def include_module(mod)
+        if mod.class != LaserModule
+          raise ArugmentError.new("Tried to include #{mod.name}, which should "+
+                                  " be a Module, not a #{mod.class}.")
+        end
+        current = self
+        while mod
+          superclass_seen = false
+          should_change = true
+          if mod == self
+            raise ArgumentError.new("Cyclic module inclusion: #{mod} mixed into #{self}")
+          end
+          ancestors.each do |parent|
+            case parent
+            when LaserModuleCopy
+              if parent == mod
+                current = parent unless superclass_seen
+                should_change = false
+                break
+              end
+            when LaserClass
+              superclass_seen = true
+            end
+          end
+          if should_change
+            current = (current.superclass = LaserModuleCopy.new(mod, current.superclass))
+          end
+          mod = mod.superclass
+        end
+      end
+      
       def inspect
         "#<LaserModule: #{path}>"
       end
@@ -138,7 +183,7 @@ module Laser
     # clash with regular Class. This links the class to its protocol.
     # It inherits from LaserModule to pull in everything but superclasses.
     class LaserClass < LaserModule
-      attr_reader :superclass, :subclasses
+      attr_reader :subclasses
       
       def initialize(*args)
         @subclasses ||= []
@@ -180,12 +225,7 @@ module Laser
       end
       
       # The set of all superclasses (including the class itself)
-      def superset
-        if superclass.nil?
-        then [self]
-        else [self] + superclass.superset
-        end
-      end
+      alias_method :superset, :ancestors
       
       # The set of all superclasses (excluding the class itself)
       def proper_superset
@@ -218,6 +258,10 @@ module Laser
       end
     end
 
+    # Singleton classes are important to model separately: they only have one
+    # instance! Plus, the built-in classes have some oddities: TrueClass is
+    # actually a singleton class, not a normal class. true is its singleton
+    # object.
     class LaserSingletonClass < LaserClass
       attr_reader :singleton_instance
       def initialize(path, scope, instance)
@@ -226,7 +270,50 @@ module Laser
       end
       alias_method :get_instance, :singleton_instance
     end
-        
+
+    # When you include a module in Ruby, it uses inheritance to model the
+    # relationship with the included module. This is how Ruby achieves
+    # multiple inheritance. However, to avoid destroying the tree shape of
+    # the inheritance hierarchy, when you include a module, it is *copied*
+    # and inserted between the current module/class and its superclass.
+    # It is marked as a T_ICLASS instead of a T_CLASS because it is an
+    # "internal", invisible class: it shouldn't show up when you use #superclass.
+    #
+    # Yes, that means even modules have superclasses. There's just no method
+    # to expose them because a module only ever has a null superclass or a
+    # copied-module superclass.
+    class LaserModuleCopy < DelegateClass(LaserClass)
+      attr_reader :delegated
+      def initialize(module_to_copy, with_super)
+        super(module_to_copy)
+        @delegated = module_to_copy
+        @superclass = with_super
+      end
+      
+      def superclass
+        @superclass
+      end
+      
+      def superclass=(other)
+        @superclass = other
+      end
+      
+      def ==(other)
+        case other
+        when LaserModuleCopy then @delegated == other.delegated
+        else @delegated == other
+        end
+      end
+      
+      # Redefined because otherwise it'll get delegated. Meh.
+      # TODO(adgar): Find a better solution than just copy-pasting this method.
+      def ancestors
+        if superclass.nil?
+        then [self]
+        else [self] + superclass.ancestors
+        end
+      end
+    end
 
     # Laser representation of a method. This name is tweaked so it doesn't
     # collide with ::Method.

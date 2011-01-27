@@ -1,8 +1,7 @@
 module Laser
   module SexpAnalysis
-    # This is a simple inherited attribute applied to each node,
-    # giving a pointer to that node's next and previous AST node.
-    # That way AST traversal is easier.
+    # This is a simple synthesized attribute applied to the common literals
+    # and/or keywords to specify what classes those expressions will be.
     module LiteralTypeAnnotation
       extend BasicAnnotation
       add_properties :class_estimate

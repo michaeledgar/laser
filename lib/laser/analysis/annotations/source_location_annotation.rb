@@ -1,6 +1,6 @@
 module Laser
   module SexpAnalysis
-    # This is a simple inherited attribute applied to each node,
+    # This is a simple synthesized attribute applied to each node,
     # giving a pointer to that node's next and previous AST node.
     # That way AST traversal is easier.
     module SourceLocationAnnotation

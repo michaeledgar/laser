@@ -1,5 +1,6 @@
 - ParentAnnotation
 - NextPrevAnnotation
+- ExpandedIdentifierAnnotation
 - SourceLocationAnnotation
 - CommentAttachmentAnnotation
 - LiteralTypeAnnotation
