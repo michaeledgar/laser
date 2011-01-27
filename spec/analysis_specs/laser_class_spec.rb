@@ -171,6 +171,17 @@ describe LaserModule do
       @d.include_module(@c)
       @d.ancestors.should == [@d, @c, @b, @a]
     end
+    
+    it 'raises on an obvious cyclic include' do
+      expect { @a.include_module(@a) }.to raise_error(ArgumentError)
+    end
+    
+    it 'raises on a less-obvious cyclic include' do
+      @b.include_module(@a)
+      @c.include_module(@b)
+      @d.include_module(@c)
+      expect { @a.include_module(@d) }.to raise_error(ArgumentError)
+    end
   end
 end
 
