@@ -12,7 +12,12 @@ module Laser
       def self.included(klass)
         klass.__send__(:extend, ClassMethods)
         klass.__send__(:extend, ModuleExtensions)
-        klass.cattr_accessor_with_default :filters, []
+        class << klass
+          attr_writer :filters
+          def filters
+            @filters ||= []
+          end
+        end
       end
       module ClassMethods
         extend ModuleExtensions

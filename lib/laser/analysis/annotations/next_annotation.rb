@@ -6,7 +6,7 @@ module Laser
     # This is the annotator for the next and prev annotation.
     class NextPrevAnnotation < BasicAnnotation
       add_property :next, :prev
-      include Visitor
+
       def default_visit(node)
         children = node.children
         children.each_with_index do |elt, idx|

@@ -12,7 +12,7 @@ module Laser
         else parent.ancestors + [parent]
         end
       end
-      include Visitor
+
       # Replaces the general node visit method with one that assigns
       # the current scope to the visited node.
       def default_visit(node)

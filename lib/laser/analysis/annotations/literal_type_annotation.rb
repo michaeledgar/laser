@@ -5,7 +5,6 @@ module Laser
     # This is the annotator for the next and prev annotation.
     class LiteralTypeAnnotation < BasicAnnotation
       add_property :class_estimate
-      include Visitor
       
       def default_visit(node)
         node.class_estimate = ClassEstimate.new

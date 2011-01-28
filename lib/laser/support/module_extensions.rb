@@ -51,8 +51,9 @@ module Laser
           if instance_variable_defined?(varname)
             instance_variable_get(varname)
           else
+            default = default.dup unless Fixnum === default || default.singleton_class == default.class
             instance_variable_set(varname, default)
-            default
+            instance_variable_get(varname)
           end
         end
       end

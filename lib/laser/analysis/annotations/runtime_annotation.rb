@@ -7,7 +7,6 @@ module Laser
     # The possible values of #runtime are :load, :run, or :unknown.
     class RuntimeAnnotation < BasicAnnotation
       add_property :runtime
-      include Visitor
       
       def annotate!(root)
         @current_runtime = :load

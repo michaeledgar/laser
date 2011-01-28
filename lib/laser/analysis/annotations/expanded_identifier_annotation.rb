@@ -8,7 +8,6 @@ module Laser
     # resolution will be really easy when we get there.
     class ExpandedIdentifierAnnotation < BasicAnnotation
       add_property :expanded_identifier
-      include Visitor
       
       def default_visit(node)
         node.expanded_identifier = nil

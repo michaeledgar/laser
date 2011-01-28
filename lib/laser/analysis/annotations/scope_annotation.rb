@@ -10,7 +10,6 @@ module Laser
     class ScopeAnnotation < BasicAnnotation
       add_property :scope
       depends_on :ExpandedIdentifierAnnotation
-      include Visitor
       
       def annotate!(root)
         @current_scope = Scope::GlobalScope

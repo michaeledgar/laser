@@ -40,6 +40,7 @@ module Laser
     # this bad form!
     class BasicAnnotation
       extend ModuleExtensions
+      include Visitor
       cattr_accessor_with_default :dependencies, []
       def self.inherited(klass)
         add_global_annotator klass

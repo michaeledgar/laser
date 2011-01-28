@@ -7,7 +7,6 @@ module Laser
     # This is the annotator for the next and prev annotation.
     class SourceLocationAnnotation < BasicAnnotation
       add_property :source_begin, :source_end
-      include Visitor
       
       def default_visit(node)
         visit_children(node)
