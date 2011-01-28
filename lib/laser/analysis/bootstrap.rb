@@ -16,7 +16,9 @@ module Laser
         class_class.superclass = module_class
         main_object = LaserObject.new(object_class, nil, 'main')
         global = ClosedScope.new(nil, main_object,
-            {'Object' => object_class, 'Module' => module_class, 'Class' => class_class})
+            {'Object' => Bindings::ConstantBinding.new('Object', object_class),
+             'Module' => Bindings::ConstantBinding.new('Module', module_class),
+             'Class' => Bindings::ConstantBinding.new('Class', class_class) })
         if Scope.const_defined?("GlobalScope")
           raise BootstrappingError.new('GlobalScope has already been initialized')
         else

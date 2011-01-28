@@ -38,8 +38,8 @@ describe ExpandedIdentifierAnnotation do
     tree = Sexp.new(Ripper.sexp(input))
     ExpandedIdentifierAnnotation.new.annotate_with_text(tree, input)
     assign = tree[1][0]
-    assign[1].expanded_identifier.should == 'ABC'
-    assign[2].expanded_identifier.should == 'DEF'
+    assign[1].expanded_identifier.should == '::ABC'
+    assign[2].expanded_identifier.should == '::DEF'
   end
   
   # [:program,
@@ -64,7 +64,7 @@ describe ExpandedIdentifierAnnotation do
     tree = Sexp.new(Ripper.sexp(input))
     ExpandedIdentifierAnnotation.new.annotate_with_text(tree, input)
     assign = tree[1][0]
-    assign[1].expanded_identifier.should == 'ABC::DEF'
-    assign[2].expanded_identifier.should == 'DEF::XYZ'
+    assign[1].expanded_identifier.should == '::ABC::DEF'
+    assign[2].expanded_identifier.should == '::DEF::XYZ'
   end
 end

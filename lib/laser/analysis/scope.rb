@@ -58,16 +58,47 @@ module Laser
             err.scope = self
             raise err
           end
-        elsif str[0,1] == '$'
-          # global, create on demand.
-          Scope::GlobalScope.locals[str] ||= Bindings::GlobalVariableBinding.new(str, LaserObject.new)
+        elsif str[0,1] == '$' then lookup_global str
         else lookup_local str
         end
       end
 
-      def lookup_path(path)
-        parts = path.split('::')
-        parts.inject(self) { |scope, part| scope.lookup(part).scope }
+      # Proper variable lookup. The old ones were hacks.
+      def proper_variable_lookup(str)
+        if str[0,2] == '::'
+          Scope::GlobalScope.proper_variable_lookup(str[2..-1])
+        elsif str.include?('::')
+          parts = str.split('::')
+          final_scope = parts[0..-2].inject(self) { |scope, part| scope.proper_variable_lookup(part).scope }
+          final_scope.proper_variable_lookup(parts.last)
+        elsif str =~ /^[A-Z]/ then lookup_constant(str)
+        elsif str =~ /^\$/ then lookup_global(str)
+        elsif str =~ /^@/ then lookup_ivar(str)
+        elsif str =~ /^@@/ then lookup_cvar(str)
+        else lookup_local(str)
+        end
+      end
+
+      # Looks up a constant. This resolution algorithm is... complicated. Only part
+      # of it is implemented so far.
+      def lookup_constant(str)
+        if constants[str]
+          constants[str].value
+        elsif parent
+          begin
+            parent.lookup_constant(str)
+          rescue ScopeLookupFailure => err
+            err.scope = self
+            raise err
+          end
+        else
+          raise ScopeLookupFailure.new(self, str)
+        end
+      end
+
+      # Looks up a global binding. Defers to the global scope and creates on-demand.
+      def lookup_global(str)
+        Scope::GlobalScope.locals[str] ||= Bindings::GlobalVariableBinding.new(str, LaserObject.new)
       end
       
       # Does this scope see the given variable name?

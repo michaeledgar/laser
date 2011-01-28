@@ -41,7 +41,7 @@ module Laser
       add :class do |node, path_node, superclass_node, body|
         # TODO(adgar): Make this do real lookup.
         if superclass_node
-        then superclass = @current_scope.lookup_path(superclass_node.expanded_identifier).self_ptr
+        then superclass = @current_scope.proper_variable_lookup(superclass_node.expanded_identifier)
         else superclass = ClassRegistry['Object']
         end
         default_visit(path_node)
@@ -97,7 +97,7 @@ module Laser
         when :const_path_ref
           left, right = path_node.children
           new_class_name = right.expanded_identifier
-          current_scope = current_scope.lookup_path(left.expanded_identifier)
+          current_scope = current_scope.proper_variable_lookup(left.expanded_identifier).scope
         when :top_const_ref
           current_scope = Scope::GlobalScope
           new_class_name = path_node.expanded_identifier
@@ -118,8 +118,9 @@ module Laser
       ######## Detecting includes - requires method call detection! ########
       # TODO(adgar): Write a helper that matches method calls in the general case
       add :command do |node, ident, args|
-        if ident[1] == 'include' && @current_scope.self_ptr.klass.ancestors.include?(ClassRegistry['Module'])
-          p "DID AN INCLUDE #{args.inspect}"
+        if node.runtime == :load && ident[1] == 'include' && args &&
+           @current_scope.self_ptr.klass.ancestors.include?(ClassRegistry['Module'])
+          args[1].each { |x| p @current_scope.proper_variable_lookup(x.expanded_identifier) }
         else
           default_visit node
         end
