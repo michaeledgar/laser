@@ -956,6 +956,25 @@ describe ScopeAnnotation do
     c113.ancestors.should == [ClassRegistry['C113'], ClassRegistry['A113'], ClassRegistry['B113'],
                               ClassRegistry['Object'], ClassRegistry['Kernel']]
   end
+  
+  it 'handles complex module/class hierarchies' do
+    input = "module A114; end; module B114; include A114; end; module C114; include B114; end\n" +
+            "class X114; include A114; end; class Y114 < X114; include C114; end"
+    tree = Sexp.new(Ripper.sexp(input))
+    RuntimeAnnotation.new.annotate!(tree)
+    ExpandedIdentifierAnnotation.new.annotate!(tree)
+    ScopeAnnotation.new.annotate!(tree)
+    
+    ClassRegistry['A114'].ancestors.should == [ClassRegistry['A114']]
+    ClassRegistry['B114'].ancestors.should == [ClassRegistry['B114'], ClassRegistry['A114']]
+    ClassRegistry['C114'].ancestors.should == [ClassRegistry['C114'], ClassRegistry['B114'], ClassRegistry['A114']]
+    
+    ClassRegistry['X114'].ancestors.should == [ClassRegistry['X114'], ClassRegistry['A114'], ClassRegistry['Object'],
+                                               ClassRegistry['Kernel']]
+    ClassRegistry['Y114'].ancestors.should == [ClassRegistry['Y114'], ClassRegistry['C114'], ClassRegistry['B114'],
+                                               ClassRegistry['X114'], ClassRegistry['A114'], ClassRegistry['Object'],
+                                               ClassRegistry['Kernel']]
+  end
 end
   
 describe 'complete tests' do
