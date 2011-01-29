@@ -975,6 +975,28 @@ describe ScopeAnnotation do
                                                ClassRegistry['X114'], ClassRegistry['A114'], ClassRegistry['Object'],
                                                ClassRegistry['Kernel']]
   end
+  
+  it 'generates an error when a class is re-opened as a module' do
+    input = "class A115; end; module A115; end"
+    tree = Sexp.new(Ripper.sexp(input))
+    RuntimeAnnotation.new.annotate!(tree)
+    ExpandedIdentifierAnnotation.new.annotate!(tree)
+    ScopeAnnotation.new.annotate!(tree)
+    
+    tree[1][1].errors.should_not be_empty
+    tree[1][1].errors.first.should be_a(ScopeAnnotation::ReopenedClassAsModuleError)
+  end
+  
+  it 'generates an error when a module is re-opened as a class' do
+    input = "module A116; end; class A116; end"
+    tree = Sexp.new(Ripper.sexp(input))
+    RuntimeAnnotation.new.annotate!(tree)
+    ExpandedIdentifierAnnotation.new.annotate!(tree)
+    ScopeAnnotation.new.annotate!(tree)
+    
+    tree[1][1].errors.should_not be_empty
+    tree[1][1].errors.first.should be_a(ScopeAnnotation::ReopenedModuleAsClassError)
+  end
 end
   
 describe 'complete tests' do

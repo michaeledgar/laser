@@ -24,6 +24,7 @@ require 'laser/analysis/laser_class'
 require 'laser/analysis/protocol_registry'
 require 'laser/analysis/scope'
 require 'laser/analysis/comments'
+require 'laser/analysis/errors'
 require 'laser/analysis/bootstrap'
 # Liftoff Instructions:
 # 1. Tuck in your shirt

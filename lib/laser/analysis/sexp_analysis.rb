@@ -13,6 +13,7 @@ module Laser
       #
       # @param [Array<Object>] other the other 
       def initialize(other)
+        @errors = []
         replace other
         replace_children!
       end

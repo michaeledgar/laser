@@ -8,6 +8,13 @@ module Laser
     # Depends on: ExpandedIdentifierAnnotation
     # This is the annotator for the parent annotation.
     class ScopeAnnotation < BasicAnnotation
+      class ReopenedClassAsModuleError < Laser::Error
+        severity MAJOR_ERROR
+      end
+      class ReopenedModuleAsClassError < Laser::Error
+        severity MAJOR_ERROR
+      end
+
       add_property :scope
       depends_on :RuntimeAnnotation
       depends_on :ExpandedIdentifierAnnotation
@@ -33,6 +40,9 @@ module Laser
 
         temp_cur_scope, new_mod_name = unpack_path(@current_scope, path_node)
         new_scope = lookup_or_create_module(temp_cur_scope, new_mod_name)
+        if new_scope.self_ptr.klass == ClassRegistry['Class']
+          node.errors << ReopenedClassAsModuleError.new("Opened class #{new_scope.self_ptr.name} as a module.", node)
+        end
         visit_with_scope(body, new_scope)
       end
 
@@ -51,6 +61,9 @@ module Laser
 
         temp_cur_scope, new_class_name = unpack_path(@current_scope, path_node)
         new_scope = lookup_or_create_class(temp_cur_scope, new_class_name, superclass)
+        if new_scope.self_ptr.klass != ClassRegistry['Class']
+          node.errors << ReopenedModuleAsClassError.new("Opened module #{new_scope.self_ptr.name} as a class.", node)
+        end
         visit_with_scope(body, new_scope)
       end
       
