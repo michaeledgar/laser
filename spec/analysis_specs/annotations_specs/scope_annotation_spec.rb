@@ -943,6 +943,19 @@ describe ScopeAnnotation do
     
     first_block_body.scope.lookup('x').should_not be list[0].scope.lookup('x')
   end
+  
+  it 'handles module inclusions done in the typical method-call fashion' do
+    input = 'module A113; end; module B113; end; class C113; include A113, B113; end'
+    tree = Sexp.new(Ripper.sexp(input))
+    RuntimeAnnotation.new.annotate!(tree)
+    ExpandedIdentifierAnnotation.new.annotate!(tree)
+    ScopeAnnotation.new.annotate!(tree)
+    
+    c113 = ClassRegistry['C113']
+    c113.should_not be nil
+    c113.ancestors.should == [ClassRegistry['C113'], ClassRegistry['A113'], ClassRegistry['B113'],
+                              ClassRegistry['Object'], ClassRegistry['Kernel']]
+  end
 end
   
 describe 'complete tests' do

@@ -136,10 +136,14 @@ module Laser
       
       # The set of all superclasses (including the class itself)
       def ancestors
-        if superclass.nil?
+        if @superclass.nil?
         then [self]
-        else [self] + superclass.ancestors
+        else [self] + @superclass.ancestors
         end
+      end
+      
+      def included_modules
+        ancestors.select { |mod| LaserModuleCopy === mod }
       end
       
       # Directly translated from MRI's C implementation in class.c:650
@@ -169,7 +173,7 @@ module Laser
             end
           end
           if should_change
-            current = (current.superclass = LaserModuleCopy.new(mod, current.superclass))
+            current = (current.superclass = LaserModuleCopy.new(mod, current.ancestors[1]))
           end
           mod = mod.superclass
         end
@@ -217,6 +221,17 @@ module Laser
         subclasses.delete other
       end
       
+      def superclass
+        current = @superclass
+        while current
+          if LaserModuleCopy === current
+            current = current.superclass
+          else
+            return current
+          end
+        end
+      end
+      
       # Sets the superclass, which handles registering/unregistering subclass
       # ownership elsewhere in the inheritance tree
       def superclass=(other)
@@ -229,8 +244,13 @@ module Laser
         end
       end
       
-      # The set of all superclasses (including the class itself)
-      alias_method :superset, :ancestors
+      # The set of all superclasses (including the class itself). Excludes modules.
+      def superset
+        if superclass.nil?
+        then [self]
+        else [self] + superclass.superset
+        end
+      end
       
       # The set of all superclasses (excluding the class itself)
       def proper_superset
@@ -316,9 +336,9 @@ module Laser
       # Redefined because otherwise it'll get delegated. Meh.
       # TODO(adgar): Find a better solution than just copy-pasting this method.
       def ancestors
-        if superclass.nil?
+        if @superclass.nil?
         then [self]
-        else [self] + superclass.ancestors
+        else [self] + @superclass.ancestors
         end
       end
     end

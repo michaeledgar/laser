@@ -9,6 +9,7 @@ module Laser
     # This is the annotator for the parent annotation.
     class ScopeAnnotation < BasicAnnotation
       add_property :scope
+      depends_on :RuntimeAnnotation
       depends_on :ExpandedIdentifierAnnotation
       
       def annotate!(root)
@@ -120,7 +121,12 @@ module Laser
       add :command do |node, ident, args|
         if node.runtime == :load && ident[1] == 'include' && args &&
            @current_scope.self_ptr.klass.ancestors.include?(ClassRegistry['Module'])
-          args[1].each { |x| p @current_scope.proper_variable_lookup(x.expanded_identifier) }
+          args[1].reverse.each do |arg|
+            if arg.expanded_identifier
+              @current_scope.self_ptr.include_module(
+                  @current_scope.proper_variable_lookup(arg.expanded_identifier))
+            end
+          end
         else
           default_visit node
         end

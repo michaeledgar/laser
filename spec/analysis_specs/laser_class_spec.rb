@@ -250,22 +250,29 @@ describe LaserClass do
 
     it "inserts the included module into the receiving module's hierarchy when not already there" do
       @x.include_module(@a)
-      @x.ancestors.should == [@x, @a, ClassRegistry['Object']]
+      @x.ancestors.should == [@x, @a, ClassRegistry['Object'], ClassRegistry['Kernel']]
       @y.include_module(@b)
-      @y.ancestors.should == [@y, @b, @x, @a, ClassRegistry['Object']]
+      @y.ancestors.should == [@y, @b, @x, @a, ClassRegistry['Object'], ClassRegistry['Kernel']]
       @z.include_module(@c)
-      @z.ancestors.should == [@z, @c, @y, @b, @x, @a, ClassRegistry['Object']]
+      @z.ancestors.should == [@z, @c, @y, @b, @x, @a, ClassRegistry['Object'], ClassRegistry['Kernel']]
+    end
+    
+    it 'mixes multiple modules into one class' do
+      @x.include_module(@a)
+      @x.include_module(@b)
+      @x.include_module(@c)
+      @x.ancestors.should == [@x, @c, @b, @a, ClassRegistry['Object'], ClassRegistry['Kernel']]
     end
     
     it "does nothing when the included module is already in the receiving module's hierarchy" do
       # setup
       @b.include_module(@a)
       @x.include_module(@b)
-      @x.ancestors.should == [@x, @b, @a, ClassRegistry['Object']]
+      @x.ancestors.should == [@x, @b, @a, ClassRegistry['Object'], ClassRegistry['Kernel']]
       # verification
-      @y.ancestors.should == [@y, @x, @b, @a, ClassRegistry['Object']]
+      @y.ancestors.should == [@y, @x, @b, @a, ClassRegistry['Object'], ClassRegistry['Kernel']]
       @y.include_module(@b)
-      @y.ancestors.should == [@y, @x, @b, @a, ClassRegistry['Object']]
+      @y.ancestors.should == [@y, @x, @b, @a, ClassRegistry['Object'], ClassRegistry['Kernel']]
     end
     
     it 'only inserts the necessary modules, handling diamond inheritance' do
@@ -278,9 +285,9 @@ describe LaserClass do
       @y.include_module(@c)
       @z.include_module(@d)
       
-      @x.ancestors.should == [@x, @a, ClassRegistry['Object']]
-      @y.ancestors.should == [@y, @c, @b, @x, @a, ClassRegistry['Object']]
-      @z.ancestors.should == [@z, @d, @y, @c, @b, @x, @a, ClassRegistry['Object']]
+      @x.ancestors.should == [@x, @a, ClassRegistry['Object'], ClassRegistry['Kernel']]
+      @y.ancestors.should == [@y, @c, @b, @x, @a, ClassRegistry['Object'], ClassRegistry['Kernel']]
+      @z.ancestors.should == [@z, @d, @y, @c, @b, @x, @a, ClassRegistry['Object'], ClassRegistry['Kernel']]
     end
   end
 end
