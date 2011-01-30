@@ -14,6 +14,7 @@ require 'laser/support/acts_as_struct'
 require 'laser/support/module_extensions'
 require 'laser/support/object_regex'
 require 'laser/advice/advice'
+require 'laser/analysis/errors'
 require 'laser/analysis/lexical_analysis'
 require 'laser/analysis/sexp_analysis'
 
@@ -24,7 +25,6 @@ require 'laser/analysis/laser_class'
 require 'laser/analysis/protocol_registry'
 require 'laser/analysis/scope'
 require 'laser/analysis/comments'
-require 'laser/analysis/errors'
 require 'laser/analysis/bootstrap'
 # Liftoff Instructions:
 # 1. Tuck in your shirt

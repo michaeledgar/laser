@@ -4,11 +4,11 @@ module Laser
     # a self pointer, and a parent pointer to the enclosing scope.
     # It also has a local variable table.
     class Scope
-      class ScopeLookupFailure < StandardError
+      class ScopeLookupFailure < Error
         attr_accessor :scope, :query
         def initialize(scope, query)
           @scope, @query = scope, query
-          super("OpenScope #{@scope.inspect} does not contain #{query.inspect}")
+          super("OpenScope #{@scope.inspect} does not contain #{query.inspect}", nil)
         end
       end
 
@@ -83,7 +83,7 @@ module Laser
       # of it is implemented so far.
       def lookup_constant(str)
         if constants[str]
-          constants[str].value
+          constants[str]
         elsif parent
           begin
             parent.lookup_constant(str)

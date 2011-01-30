@@ -21,6 +21,10 @@ module Laser
       end
       module ClassMethods
         extend ModuleExtensions
+        # A filter is a general-purpose functor run on a subset of the nodes in
+        # an AST. It includes a set of possible ways to match a node, including
+        # node types and general procs, and it includes a block to run in order
+        # to do some interesting manipulation of the matching node.
         class Filter < Struct.new(:args, :blk)
           def matches?(node)
             args.any? do |filter|
@@ -30,14 +34,36 @@ module Laser
               end
             end
           end
+          # Runs the filter on the given node, with the visitor object as the
+          # 'self'. That way we create the illusion of methods using the #add
+          # syntax.
+          #
+          # If any analysis-specific errors are raised and not caught, they are
+          # simply attached to the node's errors list. If the filter would like
+          # to continue operating after an error is raised, it must catch it
+          # and attach the error itself.
           def run(node, visitor)
-            visitor.instance_exec(node, *node.children, &blk)
+            begin
+              visitor.instance_exec(node, *node.children, &blk)
+            rescue Error => err
+              err.ast_node = node
+              node.errors << err
+            end
           end
         end
+        # Adds a new filter with the given matching strategies and a block to run
+        # upon matching a node.
         def add(*args, &blk)
           (self.filters ||= []) << Filter.new(args, blk)
         end
         
+        # Creates a special kind of filter: one which matches the calling of a method
+        # of a certain name. Since there are several AST trees matching different calling
+        # syntaxes, this alleviates a lot of pain.
+        #
+        # The filter, when matched, will run the block provided to #match_method_call with
+        # the node as the first argument to the block and the array of argument nodes to
+        # the method call as the second argument to the block.
         def match_method_call(named, &blk)
           add(proc { |node| node.type == :command && node[1].type == :@ident && node[1][1] == named }) do |node|
             instance_exec(node, node[2][1], &blk)

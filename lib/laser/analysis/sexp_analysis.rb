@@ -7,7 +7,7 @@ module Laser
     # Replaces the ParseTree Sexps by adding a few handy-dandy methods.
     class Sexp < Array
       extend ModuleExtensions
-      attr_accessor :errors
+      attr_accessor :errors, :binding
 
       # Initializes the Sexp with the contents of the array returned by Ripper.
       #

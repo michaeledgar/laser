@@ -52,7 +52,7 @@ module Laser
       add :class do |node, path_node, superclass_node, body|
         # TODO(adgar): Make this do real lookup.
         if superclass_node
-        then superclass = @current_scope.proper_variable_lookup(superclass_node.expanded_identifier)
+        then superclass = @current_scope.proper_variable_lookup(superclass_node.expanded_identifier).value
         else superclass = ClassRegistry['Object']
         end
         default_visit(path_node)
@@ -111,7 +111,7 @@ module Laser
         when :const_path_ref
           left, right = path_node.children
           new_class_name = right.expanded_identifier
-          current_scope = current_scope.proper_variable_lookup(left.expanded_identifier).scope
+          current_scope = current_scope.proper_variable_lookup(left.expanded_identifier).value.scope
         when :top_const_ref
           current_scope = Scope::GlobalScope
           new_class_name = path_node.expanded_identifier
@@ -135,7 +135,7 @@ module Laser
           args.reverse.each do |arg|
             if arg.expanded_identifier
               @current_scope.self_ptr.include_module(
-                  @current_scope.proper_variable_lookup(arg.expanded_identifier))
+                  @current_scope.proper_variable_lookup(arg.expanded_identifier).value)
             end
           end
         else
@@ -148,7 +148,7 @@ module Laser
           args.reverse.each do |arg|
             if arg.expanded_identifier
               @current_scope.self_ptr.singleton_class.include_module(
-                  @current_scope.proper_variable_lookup(arg.expanded_identifier))
+                  @current_scope.proper_variable_lookup(arg.expanded_identifier).value)
             end
           end
         else
@@ -244,6 +244,13 @@ module Laser
         method_locals = Hash[arglist.map { |arg| [arg.name, arg] }]
         new_scope = OpenScope.new(@current_scope, @current_scope.self_ptr, {}, method_locals)
         visit_with_scope(body, new_scope)
+      end
+      
+      # Load-time binding resolution
+      add :var_ref, :const_ref do |node, ref|
+        default_visit node
+        next if ref.type == :@kw
+        node.binding = @current_scope.proper_variable_lookup(ref.expanded_identifier)
       end
     end
   end
