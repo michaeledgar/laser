@@ -997,6 +997,19 @@ describe ScopeAnnotation do
     tree[1][1].errors.should_not be_empty
     tree[1][1].errors.first.should be_a(ScopeAnnotation::ReopenedModuleAsClassError)
   end
+  
+  it 'handles module inclusions done in the parenthesized method-call fashion' do
+    input = 'module A117; end; module B117; end; class C117; include(A117, B117); end'
+    tree = Sexp.new(Ripper.sexp(input))
+    RuntimeAnnotation.new.annotate!(tree)
+    ExpandedIdentifierAnnotation.new.annotate!(tree)
+    ScopeAnnotation.new.annotate!(tree)
+    
+    c117 = ClassRegistry['C117']
+    c117.should_not be nil
+    c117.ancestors.should == [ClassRegistry['C117'], ClassRegistry['A117'], ClassRegistry['B117'],
+                              ClassRegistry['Object'], ClassRegistry['Kernel']]
+  end
 end
   
 describe 'complete tests' do

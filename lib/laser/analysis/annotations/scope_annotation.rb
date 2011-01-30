@@ -131,10 +131,22 @@ module Laser
 
       ######## Detecting includes - requires method call detection! ########
       # TODO(adgar): Write a helper that matches method calls in the general case
-      add :command do |node, ident, args|
-        if node.runtime == :load && ident[1] == 'include' && args &&
-           @current_scope.self_ptr.klass.ancestors.include?(ClassRegistry['Module'])
-          args[1].reverse.each do |arg|
+      # add :command do |node, ident, args|
+      #   if node.runtime == :load && ident[1] == 'include' && args &&
+      #      @current_scope.self_ptr.klass.ancestors.include?(ClassRegistry['Module'])
+      #     args[1].reverse.each do |arg|
+      #       if arg.expanded_identifier
+      #         @current_scope.self_ptr.include_module(
+      #             @current_scope.proper_variable_lookup(arg.expanded_identifier))
+      #       end
+      #     end
+      #   else
+      #     default_visit node
+      #   end
+      # end
+      match_method_call 'include' do |node, args|
+        if node.runtime == :load && @current_scope.self_ptr.klass.ancestors.include?(ClassRegistry['Module'])
+          args.reverse.each do |arg|
             if arg.expanded_identifier
               @current_scope.self_ptr.include_module(
                   @current_scope.proper_variable_lookup(arg.expanded_identifier))
@@ -180,6 +192,7 @@ module Laser
         visit_with_scope(body, new_scope)
       end
       
+      # On assignment: ensure bindings exist for all vars on the LHS
       add :assign, :massign do |node, names, vals|
         bind_variable_names(extract_names(names))
         node.scope = @current_scope
@@ -187,6 +200,7 @@ module Laser
         visit vals
       end
       
+      # Ensures bindings exist for the given variable names.
       def bind_variable_names(names)
         unless names.all? { |name| @current_scope.sees_var?(name) }
           @current_scope = @current_scope.dup
@@ -203,6 +217,7 @@ module Laser
         end
       end
       
+      # Extracts the names from an LHS.
       def extract_names(node)
         case node[0]
         when Array then node.map { |x| extract_names(x) }.flatten
@@ -214,6 +229,7 @@ module Laser
         end
       end
       
+      # For loop: just ensure bindings exist for the given variables.
       add :for do |node, vars, iterable, body|
         bind_variable_names(extract_names(vars))
         node.scope = @current_scope
@@ -221,6 +237,7 @@ module Laser
         visit body
       end
       
+      # any block *at all*: check for arguments, create a new scope with those arguments.
       add :method_add_block do |node, callnode, blocknode|
         argnode, body = blocknode.children
         arglist = Signature.arg_list_for_arglist(argnode[1])

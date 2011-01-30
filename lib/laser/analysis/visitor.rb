@@ -37,6 +37,17 @@ module Laser
         def add(*args, &blk)
           (self.filters ||= []) << Filter.new(args, blk)
         end
+        
+        def match_method_call(named, &blk)
+          add(proc { |node| node.type == :command && node[1].type == :@ident && node[1][1] == named }) do |node|
+            instance_exec(node, node[2][1], &blk)
+          end
+          add(proc { |node| node.type == :method_add_arg && node[1].type == :fcall &&
+                            node[1][1].type == :@ident && node[1][1][1] == named}) do |node|
+            args = node[2][1] ? node[2][1][1] : []
+            instance_exec(node, args, &blk)
+          end
+        end
       end
       
       attr_reader :text
