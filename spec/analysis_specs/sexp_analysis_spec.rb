@@ -26,6 +26,20 @@ describe SexpAnalysis do
       end
     end
     
+    describe '#all_errors' do
+      it 'should return all errors in the tree, in DFS order' do
+        sexp = Sexp.new([[:abc], [:d, 2, [:e, 1]], [:def, [:a], [:b]]])
+        sexp.errors = ['hi']
+        sexp[0].errors = []
+        sexp[1].errors = ['world']
+        sexp[1][2].errors = ['another']
+        sexp[2].errors = [2]
+        sexp[2][1].errors = [3, 4]
+        sexp[2][2].errors = [5, 6, 7]
+        sexp.all_errors.should == ['hi', 'world', 'another', 2, 3, 4, 5, 6, 7]
+      end
+    end
+    
     describe 'performing DFS operations' do
       before do
         @hard_sexp = Sexp.new([:program,

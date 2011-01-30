@@ -71,6 +71,12 @@ module Laser
         end
       end
       
+      # Returns all errors in this subtree, in DFS order.
+      # returns: [Error]
+      def all_errors
+        dfs_enumerator.map(&:errors).flatten
+      end
+      
       # Performs a DFS on the node, yielding each subnode (including the given node)
       # in DFS order.
       def dfs
