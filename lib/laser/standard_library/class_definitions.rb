@@ -3,12 +3,6 @@ end
 class Object
   include Kernel
 end
-class NilClass
-end
-class TrueClass
-end
-class FalseClass
-end
 class Hash
 end
 class Array

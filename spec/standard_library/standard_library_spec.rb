@@ -12,6 +12,12 @@ describe 'the automatically analyzed Ruby Standard Library' do
       @class.class.should == LaserClass
     end
   end
+  
+  shared_examples_for 'a singleton class' do
+    it 'should be a singleton class' do
+      @class.class.should == LaserSingletonClass
+    end
+  end
 
   describe 'Kernel' do
     before do
@@ -45,8 +51,9 @@ describe 'the automatically analyzed Ruby Standard Library' do
       @class.superclass.should == ClassRegistry['Object']
     end
     
-    it_should_behave_like 'a class'
+    it_should_behave_like 'a singleton class'
   end
+
   describe 'TrueClass' do
     before do
       @class = ClassRegistry['TrueClass']
@@ -56,8 +63,9 @@ describe 'the automatically analyzed Ruby Standard Library' do
       @class.superclass.should == ClassRegistry['Object']
     end
     
-    it_should_behave_like 'a class'
+    it_should_behave_like 'a singleton class'
   end
+
   describe 'FalseClass' do
     before do
       @class = ClassRegistry['FalseClass']
@@ -67,7 +75,7 @@ describe 'the automatically analyzed Ruby Standard Library' do
       @class.superclass.should == ClassRegistry['Object']
     end
     
-    it_should_behave_like 'a class'
+    it_should_behave_like 'a singleton class'
   end
 
   describe 'Hash' do

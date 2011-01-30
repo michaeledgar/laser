@@ -14,7 +14,7 @@ module Laser
         visit_children(node)
       end
       
-      add :@ident, :@const, :@gvar, :@cvar, :@ivar do |node, string, _|
+      add :@ident, :@const, :@gvar, :@cvar, :@ivar, :@kw do |node, string, _|
         node.expanded_identifier = string
       end
       

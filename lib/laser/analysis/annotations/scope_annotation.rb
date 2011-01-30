@@ -31,6 +31,14 @@ module Laser
         visit_children(node)
       end
 
+      
+      # Load-time binding resolution. This should run *before* any method-matching, since
+      # it directly affects method-matching!
+      add :var_ref, :const_ref do |node, ref|
+        default_visit node
+        node.binding = @current_scope.proper_variable_lookup(ref.expanded_identifier)
+      end
+
       # Visits a module node and either creates or re-enters the corresponding scope, annotating the
       # body with that scope.
       add :module do |node, path_node, body|
@@ -244,13 +252,6 @@ module Laser
         method_locals = Hash[arglist.map { |arg| [arg.name, arg] }]
         new_scope = OpenScope.new(@current_scope, @current_scope.self_ptr, {}, method_locals)
         visit_with_scope(body, new_scope)
-      end
-      
-      # Load-time binding resolution
-      add :var_ref, :const_ref do |node, ref|
-        default_visit node
-        next if ref.type == :@kw
-        node.binding = @current_scope.proper_variable_lookup(ref.expanded_identifier)
       end
     end
   end

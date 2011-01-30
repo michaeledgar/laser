@@ -45,7 +45,11 @@ module Laser
           "#<#{self.class.name.split('::').last}: #{name}>"
         end
       end
-    
+
+      class KeywordBinding < GenericBinding
+        private :bind!
+      end
+
       # Constants have slightly different properties in their bindings: They shouldn't
       # be rebound. However.... Ruby allows it. It prints a warning when the rebinding
       # happens, but we should be able to detect this statically. Oh, and they can't be
@@ -60,13 +64,13 @@ module Laser
           super(val)
         end
       end
-    
+
       # We may want to track # of assignments/reads from local vars, so we should subclass
       # GenericBinding for it.
       class LocalVariableBinding < GenericBinding
       
       end
-      
+
       # Possible extension ideas:
       # - Initial definition point?
       class GlobalVariableBinding < GenericBinding

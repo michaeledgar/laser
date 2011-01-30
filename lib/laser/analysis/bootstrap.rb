@@ -30,8 +30,10 @@ module Laser
         object_class.instance_variable_set("@scope", object_scope)
         module_class.instance_variable_set("@scope", module_scope)
         class_class.instance_variable_set("@scope", class_scope)
-        # move these to a real ruby file that gets run through the scanner at
-        # boot time
+        
+        true_class = LaserSingletonClass.new('TrueClass', Scope::GlobalScope, true)
+        false_class = LaserSingletonClass.new('FalseClass', Scope::GlobalScope, false)
+        nil_class = LaserSingletonClass.new('NilClass', Scope::GlobalScope, nil)
       rescue StandardError => err
         new_exception = BootstrappingError.new("Bootstrapping failed: #{err.message}")
         new_exception.set_backtrace(err.backtrace)
