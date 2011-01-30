@@ -39,6 +39,7 @@ describe ScopeAnnotation do
     list[1][2].scope.should be_a(ClosedScope)
     list[1][2].scope.self_ptr.klass.path.should == 'Module'
     list[1][2].scope.self_ptr.path.should == 'A'
+    tree.all_errors.should be_empty
   end
   
   # This is the AST that Ripper generates for the parsed code. It is
@@ -60,6 +61,7 @@ describe ScopeAnnotation do
     with_new_scope = list[1][2], *list[1][2].all_subtrees
     expectalot(scope: { Scope::GlobalScope => [tree, list[0], list[0][1], list[0][2]],
                            Scope::GlobalScope.lookup('B').scope => with_new_scope })
+    tree.all_errors.should be_empty
   end
   
   # This is the AST that Ripper generates for the parsed code. It is
@@ -89,6 +91,7 @@ describe ScopeAnnotation do
     with_new_scope = list[1][2], *list[1][2].all_subtrees
     expectalot(scope: { Scope::GlobalScope => [tree, list[0], list[0][1], list[0][2]],
                            temp_scope.lookup('DEF').scope => with_new_scope })
+    tree.all_errors.should be_empty
   end
   
   # This is the AST that Ripper generates for the parsed code. It is
@@ -119,6 +122,7 @@ describe ScopeAnnotation do
     # *MUST* Be same objects because this is how we implement re-opening - the
     # second has to modify the same scope as before!
     list[0][2].scope.object_id.should == list[1][2].scope.object_id
+    tree.all_errors.should be_empty
   end
 
   # This is the AST that Ripper generates for the parsed code. It is
@@ -153,6 +157,7 @@ describe ScopeAnnotation do
     a.name.should == 'A'
     b.name.should == 'B32'
     c.name.should == 'C444'
+    tree.all_errors.should be_empty
   end
   
   # This is the AST that Ripper generates for the parsed code. It is
@@ -194,6 +199,7 @@ describe ScopeAnnotation do
     signature = method.signatures.first
     signature.arguments.should == [body.scope.lookup('rest')]
     signature.name.should == 'silly'
+    tree.all_errors.should be_empty
   end
   
   # [:program,
@@ -236,6 +242,7 @@ describe ScopeAnnotation do
     signature = method.signatures.first
     signature.arguments.should == [body.scope.lookup('a'), body.scope.lookup('b')]
     signature.name.should == 'silly'
+    tree.all_errors.should be_empty
   end
   
   # [:program,
@@ -273,6 +280,7 @@ describe ScopeAnnotation do
       new_scope.lookup('b').should == Bindings::ArgumentBinding.new(
           'b', LaserObject.new, :optional,
           Sexp.new([:var_ref, [:@ident, "a", [1, 32]]]))
+      
     end
     
     method = ClassRegistry['M50'].singleton_class.instance_methods['silly']
@@ -281,6 +289,7 @@ describe ScopeAnnotation do
     signature = method.signatures.first
     signature.arguments.should == [body.scope.lookup('a'), body.scope.lookup('b')]
     signature.name.should == 'silly'
+    tree.all_errors.should be_empty
   end
   
   # [:program,
@@ -326,6 +335,7 @@ describe ScopeAnnotation do
     signature = method.signatures.first
     signature.arguments.should == [body.scope.lookup('a'), body.scope.lookup('b')]
     signature.name.should == 'silly'
+    tree.all_errors.should be_empty
   end
   
   # This is the AST that Ripper generates for the parsed code. It is
@@ -348,6 +358,7 @@ describe ScopeAnnotation do
     a.klass.path.should == 'Class'
     a.path.should == 'C99'
     a.superclass.should == ClassRegistry['Object']
+    tree.all_errors.should be_empty
   end
   
   # This is the AST that Ripper generates for the parsed code. It is
@@ -377,6 +388,7 @@ describe ScopeAnnotation do
     b.klass.path.should == 'Class'
     b.path.should == 'CPP'
     b.superclass.should == a
+    tree.all_errors.should be_empty
   end
 
   # This is the AST that Ripper generates for the parsed code. It is
@@ -408,6 +420,7 @@ describe ScopeAnnotation do
     supermod.klass.path.should == 'Class'
     supermod.path.should == 'WWD::SuperModule'
     supermod.superclass.should == ClassRegistry['Module']
+    tree.all_errors.should be_empty
   end
   
   # [:program,
@@ -458,6 +471,7 @@ describe ScopeAnnotation do
       signature.arguments.should == [body.scope.lookup('a'), body.scope.lookup('b')]
       signature.name.should == 'do_xyz'
     end
+      tree.all_errors.should be_empty
   end
 
   # [:program,
@@ -495,6 +509,7 @@ describe ScopeAnnotation do
     signature = method.signatures.first
     signature.arguments.should == [body.scope.lookup('bar'), body.scope.lookup('blk')]
     signature.name.should == 'abc'
+    tree.all_errors.should be_empty
   end
   
   # [:program,
@@ -534,6 +549,7 @@ describe ScopeAnnotation do
     signature = method.signatures.first
     signature.arguments.should == [body.scope.lookup('bar'), body.scope.lookup('blk')]
     signature.name.should == 'abcd'
+    tree.all_errors.should be_empty
   end
   
   # [:program,
@@ -570,6 +586,7 @@ describe ScopeAnnotation do
     body_def[2].scope.lookup('a').should be_a(Bindings::LocalVariableBinding)
     
     body_def[2].scope.should_not == body_def[1].scope
+    tree.all_errors.should be_empty
   end
   
   # [:program,
@@ -607,6 +624,7 @@ describe ScopeAnnotation do
     
     body_def[2].scope.object_id.should == body_def[1].scope.object_id
     body_def[1].scope.lookup('a').object_id.should == body_def[2].scope.lookup('a').object_id
+    tree.all_errors.should be_empty
   end
   
   # [:program,
@@ -641,6 +659,7 @@ describe ScopeAnnotation do
     body[2].scope.lookup('TAU').should be_a(Bindings::ConstantBinding)
 
     body[1].scope.object_id.should_not == body[2].scope.object_id
+    tree.all_errors.should be_empty
   end
   
   # [:program,
@@ -669,6 +688,7 @@ describe ScopeAnnotation do
     body[1].should see_var('PI')
     # and this is why dynamic scoping is bad:
     body[1].should see_var('$TEST_TAU')
+    tree.all_errors.should be_empty
   end
   
   # [:program,
@@ -706,6 +726,7 @@ describe ScopeAnnotation do
     end
     list[0].should see_var('$f')
     list[1].should see_var('$f')
+    tree.all_errors.should be_empty
   end
   
   # [:program,
@@ -728,6 +749,7 @@ describe ScopeAnnotation do
     forloop = list[1]
     forloop.should see_var('x')
     forloop[3].should see_var('x')
+    tree.all_errors.should be_empty
   end
   
   # [:program,
@@ -761,6 +783,7 @@ describe ScopeAnnotation do
     forloop.should see_var('y')
     forloop.should see_var('z')
     forloop.should see_var('$f')
+    tree.all_errors.should be_empty
   end
   
   # [:program,
@@ -806,6 +829,7 @@ describe ScopeAnnotation do
     block_body.should see_var('y')
     block_body.should see_var('rest')
     block_body.should see_var('blk')
+    tree.all_errors.should be_empty
   end
   
   
@@ -845,6 +869,7 @@ describe ScopeAnnotation do
     block_body.should see_var('z')
     block_body.should see_var('x')
     block_body.should see_var('y')
+    tree.all_errors.should be_empty
   end
   
   # [:program,
@@ -913,6 +938,7 @@ describe ScopeAnnotation do
     third_block_body.should see_var('oo')
     
     third_block_body.scope.lookup('z').should be list[0].scope.lookup('z')
+    tree.all_errors.should be_empty
   end
   
   # [:program,
@@ -942,6 +968,7 @@ describe ScopeAnnotation do
     first_block_body.should see_var('y')
     
     first_block_body.scope.lookup('x').should_not be list[0].scope.lookup('x')
+    tree.all_errors.should be_empty
   end
   
   it 'handles module inclusions done in the typical method-call fashion' do
@@ -955,6 +982,8 @@ describe ScopeAnnotation do
     c113.should_not be nil
     c113.ancestors.should == [ClassRegistry['C113'], ClassRegistry['A113'], ClassRegistry['B113'],
                               ClassRegistry['Object'], ClassRegistry['Kernel']]
+                              
+    tree.all_errors.should be_empty
   end
   
   it 'handles complex module/class hierarchies' do
@@ -974,6 +1003,7 @@ describe ScopeAnnotation do
     ClassRegistry['Y114'].ancestors.should == [ClassRegistry['Y114'], ClassRegistry['C114'], ClassRegistry['B114'],
                                                ClassRegistry['X114'], ClassRegistry['A114'], ClassRegistry['Object'],
                                                ClassRegistry['Kernel']]
+    tree.all_errors.should be_empty
   end
   
   it 'generates an error when a class is re-opened as a module' do
@@ -1009,6 +1039,7 @@ describe ScopeAnnotation do
     c117.should_not be nil
     c117.ancestors.should == [ClassRegistry['C117'], ClassRegistry['A117'], ClassRegistry['B117'],
                               ClassRegistry['Object'], ClassRegistry['Kernel']]
+    tree.all_errors.should be_empty
   end
   
   it 'handles module extensions done in the typical method-call fashion' do
@@ -1025,6 +1056,7 @@ describe ScopeAnnotation do
                                               ClassRegistry['Object'].singleton_class,
                                               ClassRegistry['Class'], ClassRegistry['Module'],
                                               ClassRegistry['Object'], ClassRegistry['Kernel']]
+    tree.all_errors.should be_empty
   end
 
   it 'handles complex module/class extension hierarchies' do
@@ -1056,6 +1088,8 @@ describe ScopeAnnotation do
          ClassRegistry['Object'].singleton_class,
          ClassRegistry['Class'], ClassRegistry['Module'],
          ClassRegistry['Object'], ClassRegistry['Kernel']]
+         
+    tree.all_errors.should be_empty
   end
   
   it 'handles module extensions done in the parenthesized method-call fashion' do
@@ -1072,6 +1106,33 @@ describe ScopeAnnotation do
                                               ClassRegistry['Object'].singleton_class,
                                               ClassRegistry['Class'], ClassRegistry['Module'],
                                               ClassRegistry['Object'], ClassRegistry['Kernel']]
+                                              
+    tree.all_errors.should be_empty
+  end
+  
+  # [:program,
+  #  [[:class,
+  #    [:const_ref, [:@const, "A121", [1, 6]]],
+  #    nil,
+  #    [:bodystmt,
+  #     [[:assign, [:var_field, [:@ident, "x", [1, 12]]], [:@int, "10", [1, 16]]],
+  #      [:assign,
+  #       [:var_field, [:@ident, "y", [1, 20]]],
+  #       [:var_ref, [:@ident, "z", [1, 24]]]]],
+  #     nil, nil, nil]]]]
+  it 'should generate an error if a local variable cannot be found' do
+    input = 'class A121; x = 10; y = z; end'
+    tree = Sexp.new(Ripper.sexp(input))
+    RuntimeAnnotation.new.annotate!(tree)
+    ExpandedIdentifierAnnotation.new.annotate!(tree)
+    ScopeAnnotation.new.annotate!(tree)
+    
+    errors = tree.all_errors
+    errors.should_not be_empty
+    errors[0].should be_a(Scope::ScopeLookupFailure)
+    errors[0].query.should == 'z'
+    errors[0].scope.self_ptr.should == ClassRegistry['A121'].scope.self_ptr
+    errors[0].ast_node.should == tree[1][0][3][1][1][2]
   end
 end
   
@@ -1194,5 +1255,6 @@ EOF
     kind_class.path.should == 'And::Or::Is::Ten::Kind'
     kind_class.superclass.path.should == 'And::Or::Type'
     silly_mod.path.should == 'And::Or::Is::Ten::Kind::Silly'
+    tree.all_errors.should be_empty
   end
 end
