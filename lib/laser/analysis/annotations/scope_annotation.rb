@@ -130,25 +130,24 @@ module Laser
       end
 
       ######## Detecting includes - requires method call detection! ########
-      # TODO(adgar): Write a helper that matches method calls in the general case
-      # add :command do |node, ident, args|
-      #   if node.runtime == :load && ident[1] == 'include' && args &&
-      #      @current_scope.self_ptr.klass.ancestors.include?(ClassRegistry['Module'])
-      #     args[1].reverse.each do |arg|
-      #       if arg.expanded_identifier
-      #         @current_scope.self_ptr.include_module(
-      #             @current_scope.proper_variable_lookup(arg.expanded_identifier))
-      #       end
-      #     end
-      #   else
-      #     default_visit node
-      #   end
-      # end
       match_method_call 'include' do |node, args|
         if node.runtime == :load && @current_scope.self_ptr.klass.ancestors.include?(ClassRegistry['Module'])
           args.reverse.each do |arg|
             if arg.expanded_identifier
               @current_scope.self_ptr.include_module(
+                  @current_scope.proper_variable_lookup(arg.expanded_identifier))
+            end
+          end
+        else
+          default_visit node
+        end
+      end
+      
+      match_method_call 'extend' do |node, args|
+        if node.runtime == :load && @current_scope.self_ptr.klass.ancestors.include?(ClassRegistry['Module'])
+          args.reverse.each do |arg|
+            if arg.expanded_identifier
+              @current_scope.self_ptr.singleton_class.include_module(
                   @current_scope.proper_variable_lookup(arg.expanded_identifier))
             end
           end

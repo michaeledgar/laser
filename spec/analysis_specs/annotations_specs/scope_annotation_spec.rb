@@ -1010,6 +1010,69 @@ describe ScopeAnnotation do
     c117.ancestors.should == [ClassRegistry['C117'], ClassRegistry['A117'], ClassRegistry['B117'],
                               ClassRegistry['Object'], ClassRegistry['Kernel']]
   end
+  
+  it 'handles module extensions done in the typical method-call fashion' do
+    input = 'module A118; end; module B118; end; class C118; extend A118, B118; end'
+    tree = Sexp.new(Ripper.sexp(input))
+    RuntimeAnnotation.new.annotate!(tree)
+    ExpandedIdentifierAnnotation.new.annotate!(tree)
+    ScopeAnnotation.new.annotate!(tree)
+    
+    c118 = ClassRegistry['C118']
+    c118.should_not be nil
+    c118.singleton_class.ancestors.should == [ClassRegistry['C118'].singleton_class,
+                                              ClassRegistry['A118'], ClassRegistry['B118'],
+                                              ClassRegistry['Object'].singleton_class,
+                                              ClassRegistry['Class'], ClassRegistry['Module'],
+                                              ClassRegistry['Object'], ClassRegistry['Kernel']]
+  end
+
+  it 'handles complex module/class extension hierarchies' do
+    input = "module A119; end; module B119; extend A119; end; module C119; extend B119; end\n" +
+            "class X119; extend A119; end; class Y119 < X119; extend C119; end"
+    tree = Sexp.new(Ripper.sexp(input))
+    RuntimeAnnotation.new.annotate!(tree)
+    ExpandedIdentifierAnnotation.new.annotate!(tree)
+    ScopeAnnotation.new.annotate!(tree)
+    
+    ClassRegistry['A119'].singleton_class.ancestors.should ==
+        [ClassRegistry['A119'].singleton_class, ClassRegistry['Module'],
+         ClassRegistry['Object'], ClassRegistry['Kernel']]
+    ClassRegistry['B119'].singleton_class.ancestors.should ==
+        [ClassRegistry['B119'].singleton_class, ClassRegistry['A119'],
+         ClassRegistry['Module'], ClassRegistry['Object'], ClassRegistry['Kernel']]
+    ClassRegistry['C119'].singleton_class.ancestors.should ==
+        [ClassRegistry['C119'].singleton_class, ClassRegistry['B119'],
+         ClassRegistry['Module'], ClassRegistry['Object'], ClassRegistry['Kernel']]
+
+    ClassRegistry['X119'].singleton_class.ancestors.should ==
+        [ClassRegistry['X119'].singleton_class, ClassRegistry['A119'],
+         ClassRegistry['Object'].singleton_class,
+         ClassRegistry['Class'], ClassRegistry['Module'],
+         ClassRegistry['Object'], ClassRegistry['Kernel']]
+    ClassRegistry['Y119'].singleton_class.ancestors.should ==
+        [ClassRegistry['Y119'].singleton_class, ClassRegistry['C119'],
+         ClassRegistry['X119'].singleton_class, ClassRegistry['A119'],
+         ClassRegistry['Object'].singleton_class,
+         ClassRegistry['Class'], ClassRegistry['Module'],
+         ClassRegistry['Object'], ClassRegistry['Kernel']]
+  end
+  
+  it 'handles module extensions done in the parenthesized method-call fashion' do
+    input = 'module A120; end; module B120; end; class C120; extend(A120, B120); end'
+    tree = Sexp.new(Ripper.sexp(input))
+    RuntimeAnnotation.new.annotate!(tree)
+    ExpandedIdentifierAnnotation.new.annotate!(tree)
+    ScopeAnnotation.new.annotate!(tree)
+    
+    c120 = ClassRegistry['C120']
+    c120.should_not be nil
+    c120.singleton_class.ancestors.should == [ClassRegistry['C120'].singleton_class,
+                                              ClassRegistry['A120'], ClassRegistry['B120'],
+                                              ClassRegistry['Object'].singleton_class,
+                                              ClassRegistry['Class'], ClassRegistry['Module'],
+                                              ClassRegistry['Object'], ClassRegistry['Kernel']]
+  end
 end
   
 describe 'complete tests' do
