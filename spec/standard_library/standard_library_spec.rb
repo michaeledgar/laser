@@ -17,6 +17,14 @@ describe 'the automatically analyzed Ruby Standard Library' do
     it 'should be a singleton class' do
       @class.class.should == LaserSingletonClass
     end
+    
+    it 'should have a single object with an equal singleton class' do
+      @class.get_instance.singleton_class.should be @class
+    end
+    
+    it 'should have a single object whose class equals the singleton class' do
+      @class.get_instance.klass.should be @class
+    end
   end
 
   describe 'Kernel' do
@@ -51,6 +59,10 @@ describe 'the automatically analyzed Ruby Standard Library' do
       @class.superclass.should == ClassRegistry['Object']
     end
     
+    it 'should have an instance named nil' do
+      @class.get_instance.name.should == 'nil'
+    end
+    
     it_should_behave_like 'a singleton class'
   end
 
@@ -63,6 +75,10 @@ describe 'the automatically analyzed Ruby Standard Library' do
       @class.superclass.should == ClassRegistry['Object']
     end
     
+    it 'should have an instance named true' do
+      @class.get_instance.name.should == 'true'
+    end
+    
     it_should_behave_like 'a singleton class'
   end
 
@@ -73,6 +89,10 @@ describe 'the automatically analyzed Ruby Standard Library' do
   
     it 'should be a subclass of Object' do
       @class.superclass.should == ClassRegistry['Object']
+    end
+    
+    it 'should have an instance named false' do
+      @class.get_instance.name.should == 'false'
     end
     
     it_should_behave_like 'a singleton class'

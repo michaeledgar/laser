@@ -4,6 +4,7 @@ module Laser
     class LaserObject
       extend ModuleExtensions
       attr_reader :protocol, :scope, :klass, :name
+      attr_writer :singleton_class
       
       def initialize(klass = ClassRegistry['Object'], scope = Scope::GlobalScope,
                      name = "#<#{klass.path}:#{object_id.to_s(16)}>")
@@ -291,11 +292,14 @@ module Laser
       attr_reader :singleton_instance
       def initialize(path, scope, instance_or_name)
         super(path, scope)
-        @singleton_instance = 
-            case instance_or_name
-            when String then LaserObject.new(self, scope, instance_or_name)
-            else instance_or_name
-            end
+        # Dirty hook for the magic singletons: nil, true, false.
+        if String === instance_or_name
+          result = LaserObject.new(self, scope, instance_or_name)
+          result.singleton_class = self
+          @singleton_instance = result
+        else
+          @singleton_instance = instance_or_name
+        end
       end
       alias_method :get_instance, :singleton_instance
     end
