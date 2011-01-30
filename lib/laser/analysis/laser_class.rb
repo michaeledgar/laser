@@ -289,9 +289,13 @@ module Laser
     # object.
     class LaserSingletonClass < LaserClass
       attr_reader :singleton_instance
-      def initialize(path, scope, instance)
+      def initialize(path, scope, instance_or_name)
         super(path, scope)
-        @singleton_instance = instance
+        @singleton_instance = 
+            case instance_or_name
+            when String then LaserObject.new(self, scope, instance_or_name)
+            else instance_or_name
+            end
       end
       alias_method :get_instance, :singleton_instance
     end

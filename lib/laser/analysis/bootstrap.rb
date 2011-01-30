@@ -31,9 +31,17 @@ module Laser
         module_class.instance_variable_set("@scope", module_scope)
         class_class.instance_variable_set("@scope", class_scope)
         
-        true_class = LaserSingletonClass.new('TrueClass', Scope::GlobalScope, true)
-        false_class = LaserSingletonClass.new('FalseClass', Scope::GlobalScope, false)
-        nil_class = LaserSingletonClass.new('NilClass', Scope::GlobalScope, nil)
+        true_class = LaserSingletonClass.new('TrueClass', Scope::GlobalScope, 'true')
+        false_class = LaserSingletonClass.new('FalseClass', Scope::GlobalScope, 'false')
+        nil_class = LaserSingletonClass.new('NilClass', Scope::GlobalScope, 'nil')
+
+        Scope::GlobalScope.add_binding!(
+            Bindings::KeywordBinding.new('true', true_class.get_instance))
+        Scope::GlobalScope.add_binding!(
+            Bindings::KeywordBinding.new('false', false_class.get_instance))
+        Scope::GlobalScope.add_binding!(
+            Bindings::KeywordBinding.new('nil', nil_class.get_instance))
+
       rescue StandardError => err
         new_exception = BootstrappingError.new("Bootstrapping failed: #{err.message}")
         new_exception.set_backtrace(err.backtrace)
