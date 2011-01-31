@@ -68,7 +68,6 @@ module Laser
       # We may want to track # of assignments/reads from local vars, so we should subclass
       # GenericBinding for it.
       class LocalVariableBinding < GenericBinding
-      
       end
 
       # Possible extension ideas:

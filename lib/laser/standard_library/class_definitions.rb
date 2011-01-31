@@ -1,5 +1,7 @@
 module Kernel
 end
+module Comparable
+end
 class Object
   include Kernel
 end

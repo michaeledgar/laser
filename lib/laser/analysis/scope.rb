@@ -13,13 +13,12 @@ module Laser
       end
 
       attr_accessor :constants, :parent, :locals
-      attr_reader :self_ptr
       def initialize(parent, self_ptr, constants={}, locals={})
         unless respond_to?(:lookup_local)
           raise NotImplementedError.new(
               'must create OpenScope or ClosedScope. Not just Scope.')
         end
-        @parent, @self_ptr, @constants, @locals = parent, self_ptr, constants, locals
+        @parent, @constants, @locals = parent, constants, locals
         @locals['self'] = Bindings::GenericBinding.new('self', self_ptr)
       end
       
@@ -28,8 +27,11 @@ module Laser
         @constants = other.constants.dup
       end
       
+      def self_ptr
+        @locals['self'].value
+      end
+      
       def self_ptr=(other)
-        @self_ptr = other
         @locals['self'] = Bindings::GenericBinding.new('self', other)
       end
       
@@ -100,6 +102,10 @@ module Laser
       def lookup_global(str)
         Scope::GlobalScope.locals[str] ||= Bindings::GlobalVariableBinding.new(str, LaserObject.new)
       end
+      
+      # def lookup_ivar(str)
+      #   
+      # end
       
       # Does this scope see the given variable name?
       def sees_var?(var)
