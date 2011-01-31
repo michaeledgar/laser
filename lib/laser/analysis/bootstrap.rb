@@ -6,9 +6,9 @@ module Laser
       extend SexpAnalysis
       class BootstrappingError < StandardError; end
       def self.bootstrap
-        class_class = LaserClass.new('Class', nil)
-        module_class = LaserClass.new('Module', nil)
-        object_class = LaserClass.new('Object', nil)
+        class_class = LaserClass.new(nil, nil, 'Class')
+        module_class = LaserClass.new(nil, nil, 'Module')
+        object_class = LaserClass.new(nil, nil, 'Object')
         class_scope = ClosedScope.new(nil, class_class)
         module_scope = ClosedScope.new(nil, module_class)
         object_scope = ClosedScope.new(nil, object_class)
@@ -30,10 +30,13 @@ module Laser
         object_class.instance_variable_set("@scope", object_scope)
         module_class.instance_variable_set("@scope", module_scope)
         class_class.instance_variable_set("@scope", class_scope)
+        object_class.instance_variable_set("@klass", class_class)
+        module_class.instance_variable_set("@klass", class_class)
+        class_class.instance_variable_set("@klass", class_class)
         
-        true_class = LaserSingletonClass.new('TrueClass', Scope::GlobalScope, 'true')
-        false_class = LaserSingletonClass.new('FalseClass', Scope::GlobalScope, 'false')
-        nil_class = LaserSingletonClass.new('NilClass', Scope::GlobalScope, 'nil')
+        true_class = LaserSingletonClass.new(class_class, Scope::GlobalScope, 'TrueClass', 'true')
+        false_class = LaserSingletonClass.new(class_class, Scope::GlobalScope, 'FalseClass', 'false')
+        nil_class = LaserSingletonClass.new(class_class, Scope::GlobalScope, 'NilClass', 'nil')
 
         Scope::GlobalScope.add_binding!(
             Bindings::KeywordBinding.new('true', true_class.get_instance))

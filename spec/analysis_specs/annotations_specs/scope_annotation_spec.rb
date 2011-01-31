@@ -75,7 +75,7 @@ describe ScopeAnnotation do
   #   [:bodystmt, [[:void_stmt]], nil, nil, nil]]]]
   it 'creates a new scope when a pathed module declaration is encountered' do
     temp_scope = ClosedScope.new(Scope::GlobalScope, nil)
-    temp_mod = LaserModule.new('ABC', temp_scope)
+    temp_mod = LaserModule.new(ClassRegistry['Module'], temp_scope, 'ABC')
     tree = Sexp.new(Ripper.sexp('p 5; module ABC::DEF; end'))
     ExpandedIdentifierAnnotation.new.annotate!(tree)
     ScopeAnnotation.new.annotate!(tree)
@@ -104,7 +104,7 @@ describe ScopeAnnotation do
   #           [:bodystmt, [[:void_stmt]], nil, nil, nil]]]]
   it 'creates a new scope when a simple module declaration is encountered' do
     temp_scope = ClosedScope.new(Scope::GlobalScope, nil)
-    temp_mod = LaserModule.new('A10', temp_scope)
+    temp_mod = LaserModule.new(ClassRegistry['Module'], temp_scope, 'A10')
     tree = Sexp.new(Ripper.sexp('module A10::B12; end; module A10::B12; end'))
     ExpandedIdentifierAnnotation.new.annotate!(tree)
     ScopeAnnotation.new.annotate!(tree)

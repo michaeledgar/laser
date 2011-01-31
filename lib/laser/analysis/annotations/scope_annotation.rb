@@ -93,7 +93,7 @@ module Laser
       def lookup_or_create_module(scope, new_mod_name)
         lookup_or_create(scope, new_mod_name) do
           new_scope = ClosedScope.new(scope, nil)
-          new_mod = LaserModule.new(new_mod_name, new_scope)
+          new_mod = LaserModule.new(ClassRegistry['Module'], new_scope, new_mod_name)
           new_scope
         end
       end
@@ -102,7 +102,7 @@ module Laser
       def lookup_or_create_class(scope, new_class_name, superclass)
         lookup_or_create(scope, new_class_name) do
           new_scope = ClosedScope.new(scope, nil)
-          new_class = LaserClass.new(new_class_name, new_scope) do |klass|
+          new_class = LaserClass.new(ClassRegistry['Class'], new_scope, new_class_name) do |klass|
             klass.superclass = superclass
           end
           new_scope

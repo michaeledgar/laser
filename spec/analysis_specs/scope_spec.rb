@@ -4,9 +4,9 @@ module ScopeSpecHelpers
   def add_scope_instance_variables(klass)
     before do
       @base_scope = klass.new(Scope::GlobalScope, nil)
-      LaserModule.new('ABD', @base_scope)  # ignore: unused return
+      LaserModule.new(ClassRegistry['Module'], @base_scope, 'ABD')  # ignore: unused return
       @nested_scope = klass.new(@base_scope, nil)
-      LaserModule.new('OOP', @nested_scope)  # ignore: unused return
+      LaserModule.new(ClassRegistry['Module'], @nested_scope, 'OOP')  # ignore: unused return
     end
   end
 end
@@ -45,9 +45,9 @@ shared_examples_for Scope do
 
   before do
     @base_scope = described_class.new(Scope::GlobalScope, nil)
-    LaserModule.new('ABD', @base_scope)  # ignore: unused return
+    LaserModule.new(ClassRegistry['Module'], @base_scope, 'ABD')  # ignore: unused return
     @nested_scope = described_class.new(@base_scope, nil)
-    LaserModule.new('OOP', @nested_scope)  # ignore: unused return
+    LaserModule.new(ClassRegistry['Module'], @nested_scope, 'OOP')  # ignore: unused return
   end
 
   describe '#lookup' do

@@ -1,6 +1,17 @@
 require 'delegate'
 module Laser
   module SexpAnalysis
+    # This is the path through which objects should be instantiated. It uses
+    # case-by-case logic to handle the instantiation of LaserModule/LaserClass
+    # when necessary.
+    module LiveObjectRepresentation
+      def self.new(klass, scope, name, &blk)
+        if klass == ClassRegistry['Class']
+        then LaserClass.new()
+      end
+    end
+    
+    # Catch all representation of an object. Should never have klass <: Module.
     class LaserObject
       extend ModuleExtensions
       attr_reader :protocol, :scope, :klass, :name
@@ -9,7 +20,7 @@ module Laser
       def initialize(klass = ClassRegistry['Object'], scope = Scope::GlobalScope,
                      name = "#<#{klass.path}:#{object_id.to_s(16)}>")
         @klass = klass
-        @protocol = klass.protocol
+        @protocol = klass.protocol unless %w(Class Module Object).include?(name)
         @scope = scope
         @name = name
       end
@@ -25,7 +36,7 @@ module Laser
       def singleton_class
         return @singleton_class if @singleton_class
         new_scope = ClosedScope.new(self.scope, nil)
-        @singleton_class = LaserSingletonClass.new("Class:#{name}", new_scope, self) do |new_singleton_class|
+        @singleton_class = LaserSingletonClass.new(ClassRegistry['Class'], new_scope, "Class:#{name}", self) do |new_singleton_class|
           new_singleton_class.superclass = self.klass
         end
         @singleton_class
@@ -42,8 +53,8 @@ module Laser
       attr_reader :path, :instance_methods, :binding, :superclass
       cattr_accessor_with_default :all_modules, []
       
-      def initialize(full_path, scope = Scope::GlobalScope)
-        super(self, scope)
+      def initialize(klass = ClassRegistry['Module'], scope = Scope::GlobalScope, full_path)
+        super(klass, scope, full_path.split('::').last)
         full_path = submodule_path(full_path) if scope && scope.parent
         validate_module_path!(full_path)
         
@@ -77,10 +88,6 @@ module Laser
           end
         end
       end
-
-      def klass
-        ClassRegistry[class_name]
-      end
       
       def class_name
         'Module'
@@ -90,7 +97,7 @@ module Laser
       # table and perform module initialization.
       def initialize_scope
         if @scope && @scope != Scope::GlobalScope
-          @scope.self_ptr = self.binding.value
+          @scope.self_ptr = self
           @scope.parent.constants[name] = self.binding if @scope.parent
           @scope.locals['self'] = self.binding
         end
@@ -161,6 +168,7 @@ module Laser
       
       # Directly translated from MRI's C implementation in class.c:650
       def include_module(mod)
+        p mod.klass
         if mod.klass == ClassRegistry['Class']
           raise ArgumentError.new("Tried to include #{mod.name}, which should "+
                                   " be a Module or Module subclass, not a " +
@@ -203,10 +211,10 @@ module Laser
     class LaserClass < LaserModule
       attr_reader :subclasses
       
-      def initialize(*args)
+      def initialize(klass = ClassRegistry['Class'], scope = Scope::GlobalScope, full_path)
         @subclasses ||= []
         # bootstrapping exception
-        unless ['Class', 'Module', 'Object'].include?(args.first)
+        unless ['Class', 'Module', 'Object'].include?(full_path)
           @superclass = ClassRegistry['Object']
         end
         super # can yield, so must come last
@@ -215,7 +223,7 @@ module Laser
       def singleton_class
         return @singleton_class if @singleton_class
         new_scope = ClosedScope.new(self.scope, nil)
-        @singleton_class = LaserSingletonClass.new("Class:#{name}", new_scope, self) do |new_singleton_class|
+        @singleton_class = LaserSingletonClass.new(ClassRegistry['Class'], new_scope, "Class:#{name}", self) do |new_singleton_class|
           if superclass
             new_singleton_class.superclass = superclass.singleton_class
           else
@@ -302,8 +310,8 @@ module Laser
     # object.
     class LaserSingletonClass < LaserClass
       attr_reader :singleton_instance
-      def initialize(path, scope, instance_or_name)
-        super(path, scope)
+      def initialize(klass, scope, path, instance_or_name)
+        super(klass, scope, path)
         # Dirty hook for the magic singletons: nil, true, false.
         if String === instance_or_name
           result = LaserObject.new(self, scope, instance_or_name)
