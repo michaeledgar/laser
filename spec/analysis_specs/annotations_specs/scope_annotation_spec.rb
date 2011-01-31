@@ -1380,6 +1380,20 @@ end
        ClassRegistry["#{bindings_mod}::ArgumentBinding"]].each do |subclass|
         subclass.superclass.should be ClassRegistry["#{bindings_mod}::GenericBinding"]
       end
+      
+      generic = ClassRegistry["#{bindings_mod}::GenericBinding"]
+      generic.instance_variables['@name'].should be_a(Bindings::InstanceVariableBinding)
+      generic.instance_variables['@value'].should be_a(Bindings::InstanceVariableBinding)
+      arg_binding = ClassRegistry["#{bindings_mod}::ArgumentBinding"]
+      arg_binding.instance_variables['@kind'].should be_a(Bindings::InstanceVariableBinding)
+      arg_binding.instance_variables['@default_value_sexp'].should be_a(Bindings::InstanceVariableBinding)
+      
+      arg_binding.ancestors.should == [arg_binding, generic, ClassRegistry['Comparable'],
+                                       ClassRegistry['Object'], ClassRegistry['Kernel']]
+      
+      %w(initialize bind! <=> scope protocol class_used to_s inspect).each do |method|
+        generic.instance_methods[method].should_not be_empty
+      end
     end
   end
 end

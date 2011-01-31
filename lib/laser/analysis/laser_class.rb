@@ -39,7 +39,7 @@ module Laser
     # Laser representation of a module. Named LaserModule to avoid naming
     # conflicts. It has lists of methods, instance variables, and so on.
     class LaserModule < LaserObject
-      attr_reader :path, :instance_methods, :binding, :superclass, :instance_variables
+      attr_reader :path, :instance_methods, :binding, :superclass
       cattr_accessor_with_default :all_modules, []
       
       def initialize(full_path, scope = Scope::GlobalScope)
@@ -126,6 +126,17 @@ module Laser
       
       def add_signature!(signature)
         @instance_methods[signature.name].add_signature!(signature)
+      end
+      
+      def instance_variables
+        if @superclass.nil?
+        then @instance_variables
+        else @instance_variables.merge(@superclass.instance_variables)
+        end
+      end
+      
+      def add_instance_variable!(binding)
+        @instance_variables[binding.name] = binding
       end
       
       def get_instance
@@ -350,6 +361,10 @@ module Laser
         else [self] + @superclass.ancestors
         end
       end
+      
+      def instance_variables
+        @delegated.instance_variables
+      end
     end
 
     # Laser representation of a method. This name is tweaked so it doesn't
@@ -367,6 +382,10 @@ module Laser
 
       def add_signature!(signature)
         @signatures << signature
+      end
+      
+      def empty?
+        signatures.empty?
       end
     end
   end

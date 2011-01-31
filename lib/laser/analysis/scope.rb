@@ -104,14 +104,19 @@ module Laser
             Bindings::GlobalVariableBinding.new(str, LaserObject.new)
       end
       
+      # Looks up an instance variable binding. Defers to the current value of self's
+      # class, 
       def lookup_ivar(str)
-        self_ptr.klass.instance_variables[str] ||=
-            Bindings::LocalVariableBinding.new(str, LaserObject.new)
+        unless (result = self_ptr.klass.instance_variables[str])
+          result = Bindings::InstanceVariableBinding.new(str, LaserObject.new)
+          self_ptr.klass.add_instance_variable!(result)
+        end
+        result
       end
       
       # Does this scope see the given variable name?
       def sees_var?(var)
-        lookup(var) rescue false
+        proper_variable_lookup(var) rescue false
       end
     end
     

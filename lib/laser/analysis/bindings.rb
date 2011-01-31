@@ -69,6 +69,9 @@ module Laser
       # GenericBinding for it.
       class LocalVariableBinding < GenericBinding
       end
+      
+      class InstanceVariableBinding < GenericBinding
+      end
 
       # Possible extension ideas:
       # - Initial definition point?
