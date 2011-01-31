@@ -39,7 +39,7 @@ module Laser
     # Laser representation of a module. Named LaserModule to avoid naming
     # conflicts. It has lists of methods, instance variables, and so on.
     class LaserModule < LaserObject
-      attr_reader :path, :instance_methods, :binding, :superclass
+      attr_reader :path, :instance_methods, :binding, :superclass, :instance_variables
       cattr_accessor_with_default :all_modules, []
       
       def initialize(full_path, scope = Scope::GlobalScope)
@@ -49,6 +49,7 @@ module Laser
         
         @path = full_path
         @instance_methods = Hash.new { |hash, name| hash[name] = LaserMethod.new(name) }
+        @instance_variables = {}
         @scope = scope
         @methods = {}
         @superclass ||= nil

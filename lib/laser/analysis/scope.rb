@@ -100,12 +100,14 @@ module Laser
 
       # Looks up a global binding. Defers to the global scope and creates on-demand.
       def lookup_global(str)
-        Scope::GlobalScope.locals[str] ||= Bindings::GlobalVariableBinding.new(str, LaserObject.new)
+        Scope::GlobalScope.locals[str] ||=
+            Bindings::GlobalVariableBinding.new(str, LaserObject.new)
       end
       
-      # def lookup_ivar(str)
-      #   
-      # end
+      def lookup_ivar(str)
+        self_ptr.klass.instance_variables[str] ||=
+            Bindings::LocalVariableBinding.new(str, LaserObject.new)
+      end
       
       # Does this scope see the given variable name?
       def sees_var?(var)
