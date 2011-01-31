@@ -505,6 +505,7 @@ describe ScopeAnnotation do
     end
     method = Scope::GlobalScope.self_ptr.singleton_class.instance_methods['abc']
     method.should_not be_nil
+    method.visibility.should == :private
     method.signatures.size.should == 1
     signature = method.signatures.first
     signature.arguments.should == [body.scope.lookup('bar'), body.scope.lookup('blk')]
@@ -1133,6 +1134,40 @@ describe ScopeAnnotation do
     errors[0].query.should == 'z'
     errors[0].scope.self_ptr.should == ClassRegistry['A121'].scope.self_ptr
     errors[0].ast_node.should == tree[1][0][3][1][1][2]
+    errors[0].ast_node.binding.should == nil
+  end
+  
+  it 'switches to private visibility upon reaching a call to #private in a class/module' do
+    input = 'class A122; private; def foobar; end; end'
+    tree = Sexp.new(Ripper.sexp(input))
+    RuntimeAnnotation.new.annotate!(tree)
+    ExpandedIdentifierAnnotation.new.annotate!(tree)
+    ScopeAnnotation.new.annotate!(tree)
+
+    ClassRegistry['A122'].instance_methods['foobar'].visibility.should == :private
+  end
+  
+  it 'does not switch to private visibility if a local variable is called private' do
+    input = 'class A123; private = 5; private; def foobar; end; end'
+    tree = Sexp.new(Ripper.sexp(input))
+    RuntimeAnnotation.new.annotate!(tree)
+    ExpandedIdentifierAnnotation.new.annotate!(tree)
+    ScopeAnnotation.new.annotate!(tree)
+
+    ClassRegistry['A123'].instance_methods['foobar'].visibility.should == :public
+  end
+  
+  it 'switches back and forth from public, private, and protected visibility in a class/module' do
+    input = 'module A124; def abc; end; private; def foobar; end; protected; def silly; end; private; def priv; end; end'
+    tree = Sexp.new(Ripper.sexp(input))
+    RuntimeAnnotation.new.annotate!(tree)
+    ExpandedIdentifierAnnotation.new.annotate!(tree)
+    ScopeAnnotation.new.annotate!(tree)
+
+    ClassRegistry['A124'].instance_methods['abc'].visibility.should == :public
+    ClassRegistry['A124'].instance_methods['foobar'].visibility.should == :private
+    ClassRegistry['A124'].instance_methods['silly'].visibility.should == :protected
+    ClassRegistry['A124'].instance_methods['priv'].visibility.should == :private
   end
 end
   
@@ -1395,6 +1430,7 @@ end
       
       %w(initialize bind! <=> scope protocol class_used to_s inspect).each do |method|
         generic.instance_methods[method].should_not be_empty
+        generic.instance_methods[method].visibility.should == :public
       end
       init_sig = generic.instance_methods['initialize'].signatures.first
       init_sig.arguments.size.should == 2

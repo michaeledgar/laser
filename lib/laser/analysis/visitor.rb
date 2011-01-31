@@ -65,13 +65,16 @@ module Laser
         # the node as the first argument to the block and the array of argument nodes to
         # the method call as the second argument to the block.
         def match_method_call(named, &blk)
-          add(proc { |node| node.type == :command && node[1].type == :@ident && node[1][1] == named }) do |node|
+          add(proc { |node| node.type == :command && node[1][1] == named }) do |node|
             instance_exec(node, node[2][1], &blk)
           end
           add(proc { |node| node.type == :method_add_arg && node[1].type == :fcall &&
-                            node[1][1].type == :@ident && node[1][1][1] == named}) do |node|
+                            node[1][1][1] == named}) do |node|
             args = node[2][1] ? node[2][1][1] : []
             instance_exec(node, args, &blk)
+          end
+          add(proc { |node| node.type == :var_ref && node.binding.nil? && node[1][1] == named}) do |node|
+            instance_exec(node, [], &blk)
           end
         end
       end
@@ -129,11 +132,14 @@ module Laser
       # node: Sexp
       # return: Boolean
       def try_filters(node)
-        filters = self.class.filters.select { |filter| filter.matches?(node) }
-        if filters.any?
-          filters.each { |filter| filter.run(node, self) }
-          true
+        any_ran = false
+        self.class.filters.each do |filter|
+          if filter.matches?(node)
+            filter.run(node, self)
+            any_ran = true
+          end
         end
+        any_ran
       end
       
       # The visitor handles dispatch on a node of type :type by calling visit_type.
@@ -153,19 +159,6 @@ module Laser
         @lines ||= text.lines.to_a
       end
       
-      ################## Scope management methods #######################
-
-      # Yields with the current scope preserved.
-      def with_scope(scope)
-        old_scope, @current_scope = @current_scope, scope
-        yield
-      ensure
-        @current_scope = old_scope
-      end
-      
-      def visit_with_scope(node, scope)
-        with_scope(scope) { visit(node) }
-      end
     end
   end
 end

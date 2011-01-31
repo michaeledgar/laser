@@ -51,7 +51,9 @@ module Laser
         if new_scope.self_ptr.klass == ClassRegistry['Class']
           node.errors << ReopenedClassAsModuleError.new("Opened class #{new_scope.self_ptr.name} as a module.", node)
         end
-        visit_with_scope(body, new_scope)
+        with_visibility(:public) do
+          visit_with_scope(body, new_scope)
+        end
       end
 
       # Visits a class node and either creates or re-enters a corresponding scope, annotating the
@@ -72,7 +74,9 @@ module Laser
         if new_scope.self_ptr.klass != ClassRegistry['Class']
           node.errors << ReopenedModuleAsClassError.new("Opened module #{new_scope.self_ptr.name} as a class.", node)
         end
-        visit_with_scope(body, new_scope)
+        with_visibility(:public) do
+          visit_with_scope(body, new_scope)
+        end
       end
       
       # Provides a general-purpose method for looking up a binding,
@@ -163,6 +167,39 @@ module Laser
           default_visit node
         end
       end
+      
+      match_method_call 'private' do |node, args|
+        if node.runtime == :load && (@current_scope == Scope::GlobalScope ||
+           @current_scope.self_ptr.klass.ancestors.include?(ClassRegistry['Module']))
+          if args.empty?
+            @visibility = :private
+          end
+        else
+          default_visit node
+        end
+      end
+      
+      match_method_call 'public' do |node, args|
+        if node.runtime == :load && (@current_scope == Scope::GlobalScope ||
+           @current_scope.self_ptr.klass.ancestors.include?(ClassRegistry['Module']))
+          if args.empty?
+            @visibility = :public
+          end
+        else
+          default_visit node
+        end
+      end
+      
+      match_method_call 'protected' do |node, args|
+        if node.runtime == :load &&
+           @current_scope.self_ptr.klass.ancestors.include?(ClassRegistry['Module'])
+          if args.empty?
+            @visibility = :protected
+          end
+        else
+          default_visit node
+        end
+      end
 
       # Normal method definitions.
       add :def do |node, (_, name), arglist, body|
@@ -190,7 +227,7 @@ module Laser
 
       def add_method_to_object(receiver, method_self, name, arglist, body)
         new_signature = Signature.for_definition_sexp(name, arglist, body)
-        receiver.add_instance_method!(LaserMethod.new(name) do |method|
+        receiver.add_instance_method!(LaserMethod.new(name, @visibility) do |method|
           method.body_ast = body
           method.add_signature!(new_signature)
         end)
@@ -253,6 +290,32 @@ module Laser
         method_locals = Hash[arglist.map { |arg| [arg.name, arg] }]
         new_scope = OpenScope.new(@current_scope, @current_scope.self_ptr, {}, method_locals)
         visit_with_scope(body, new_scope)
+      end
+      
+      ################## Scope management methods #######################
+
+      # Yields with the current visibility preserved.
+      def with_visibility(visibility)
+        old_visibility, @visibility = @visibility, visibility
+        yield
+      ensure
+        @visibility = old_visibility
+      end
+      
+      def visit_with_visibility(node, visibility)
+        with_visibility(visibility) { visit(node) }
+      end
+
+      # Yields with the current scope preserved.
+      def with_scope(scope)
+        old_scope, @current_scope = @current_scope, scope
+        yield
+      ensure
+        @current_scope = old_scope
+      end
+      
+      def visit_with_scope(node, scope)
+        with_scope(scope) { visit(node) }
       end
     end
   end
