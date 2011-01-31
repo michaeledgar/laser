@@ -1137,6 +1137,8 @@ describe ScopeAnnotation do
 end
   
 describe 'complete tests' do
+  extend AnalysisHelpers
+  clean_registry
   # This is the AST that Ripper generates for the parsed code. It is
   # provided here because otherwise the test is inscrutable.
   #
@@ -1357,6 +1359,27 @@ end
       RuntimeAnnotation.new.annotate!(tree)
       ExpandedIdentifierAnnotation.new.annotate!(tree)
       ScopeAnnotation.new.annotate!(tree)
+      
+      
+      bindings_mod = 'Laser::SexpAnalysis::Bindings'
+      ClassRegistry['Laser'].should be_a(LaserModule)
+      ClassRegistry['Laser::SexpAnalysis'].should be_a(LaserModule)
+      ClassRegistry[bindings_mod].should be_a(LaserModule)
+      ClassRegistry["#{bindings_mod}::GenericBinding"].should be_a(LaserClass)
+      ClassRegistry["#{bindings_mod}::KeywordBinding"].should be_a(LaserClass)
+      ClassRegistry["#{bindings_mod}::ConstantBinding"].should be_a(LaserClass)
+      ClassRegistry["#{bindings_mod}::LocalVariableBinding"].should be_a(LaserClass)
+      ClassRegistry["#{bindings_mod}::GlobalVariableBinding"].should be_a(LaserClass)
+      ClassRegistry["#{bindings_mod}::ArgumentBinding"].should be_a(LaserClass)
+      
+      ClassRegistry["#{bindings_mod}::GenericBinding"].superclass.should be ClassRegistry['Object']
+      [ClassRegistry["#{bindings_mod}::KeywordBinding"],
+       ClassRegistry["#{bindings_mod}::ConstantBinding"],
+       ClassRegistry["#{bindings_mod}::LocalVariableBinding"],
+       ClassRegistry["#{bindings_mod}::GlobalVariableBinding"],
+       ClassRegistry["#{bindings_mod}::ArgumentBinding"]].each do |subclass|
+        subclass.superclass.should be ClassRegistry["#{bindings_mod}::GenericBinding"]
+      end
     end
   end
 end
