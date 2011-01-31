@@ -1385,6 +1385,8 @@ end
       generic.instance_variables['@name'].should be_a(Bindings::InstanceVariableBinding)
       generic.instance_variables['@value'].should be_a(Bindings::InstanceVariableBinding)
       arg_binding = ClassRegistry["#{bindings_mod}::ArgumentBinding"]
+      arg_binding.instance_variables['@name'].should be generic.instance_variables['@name']
+      arg_binding.instance_variables['@value'].should be generic.instance_variables['@value']
       arg_binding.instance_variables['@kind'].should be_a(Bindings::InstanceVariableBinding)
       arg_binding.instance_variables['@default_value_sexp'].should be_a(Bindings::InstanceVariableBinding)
       
@@ -1394,6 +1396,47 @@ end
       %w(initialize bind! <=> scope protocol class_used to_s inspect).each do |method|
         generic.instance_methods[method].should_not be_empty
       end
+      init_sig = generic.instance_methods['initialize'].signatures.first
+      init_sig.arguments.size.should == 2
+      init_sig.arguments.map(&:name).should == ['name', 'value']
+      
+      arg_binding_sig = arg_binding.instance_methods['initialize'].signatures.first
+      arg_binding_sig.arguments.size.should == 4
+      arg_binding_sig.arguments.map(&:name).should == ['name', 'value', 'kind', 'default_value']
+      
+      # [:bodystmt,
+      #  [[:super,
+      #    [:arg_paren,
+      #     [:args_add_block,
+      #      [[:var_ref, [:@ident, "name", [82, 16]]],
+      #       [:var_ref, [:@ident, "value", [82, 22]]]],
+      #      false]]],
+      #   [:assign,
+      #    [:var_field, [:@ivar, "@kind", [83, 10]]],
+      #    [:var_ref, [:@ident, "kind", [83, 18]]]],
+      #   [:assign,
+      #    [:var_field, [:@ivar, "@default_value_sexp", [84, 10]]],
+      #    [:var_ref, [:@ident, "default_value", [84, 32]]]]],
+      #  nil,
+      #  nil,
+      #  nil]
+      
+      arg_init_body = arg_binding.instance_methods['initialize'].body_ast
+      # arguments to super
+      arg_init_body[1][0][1][1][1][0].binding.should be_a(Bindings::ArgumentBinding)
+      arg_init_body[1][0][1][1][1][0].binding.name.should == 'name'
+      arg_init_body[1][0][1][1][1][1].binding.should be_a(Bindings::ArgumentBinding)
+      arg_init_body[1][0][1][1][1][1].binding.name.should == 'value'
+      # first assign
+      arg_init_body[1][1][1].binding.should be_a(Bindings::InstanceVariableBinding)
+      arg_init_body[1][1][1].binding.name.should == '@kind'
+      arg_init_body[1][1][2].binding.should be_a(Bindings::ArgumentBinding)
+      arg_init_body[1][1][2].binding.name.should == 'kind'
+      # second assign
+      arg_init_body[1][2][1].binding.should be_a(Bindings::InstanceVariableBinding)
+      arg_init_body[1][2][1].binding.name.should == '@default_value_sexp'
+      arg_init_body[1][2][2].binding.should be_a(Bindings::ArgumentBinding)
+      arg_init_body[1][2][2].binding.name.should == 'default_value'
     end
   end
 end

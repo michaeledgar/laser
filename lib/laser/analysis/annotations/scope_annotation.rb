@@ -21,6 +21,7 @@ module Laser
       
       def annotate!(root)
         @current_scope = Scope::GlobalScope
+        @visibility = :private
         super
       end
       
@@ -30,11 +31,10 @@ module Laser
         node.scope = @current_scope
         visit_children(node)
       end
-
       
       # Load-time binding resolution. This should run *before* any method-matching, since
       # it directly affects method-matching!
-      add :var_ref, :const_ref do |node, ref|
+      add :var_ref, :const_ref, :var_field do |node, ref|
         default_visit node
         node.binding = @current_scope.proper_variable_lookup(ref.expanded_identifier)
       end
@@ -191,6 +191,7 @@ module Laser
       def add_method_to_object(receiver, method_self, name, arglist, body)
         new_signature = Signature.for_definition_sexp(name, arglist, body)
         receiver.add_instance_method!(LaserMethod.new(name) do |method|
+          method.body_ast = body
           method.add_signature!(new_signature)
         end)
 

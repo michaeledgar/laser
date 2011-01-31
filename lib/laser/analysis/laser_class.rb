@@ -371,12 +371,14 @@ module Laser
     # collide with ::Method.
     class LaserMethod
       extend ModuleExtensions
-      attr_reader :name, :signatures
+      attr_reader :name, :signatures, :visibility
+      attr_accessor :body_ast
       attr_accessor_with_default :pure, false
 
-      def initialize(name)
+      def initialize(name, visibility = :public)
         @name = name
         @signatures = []
+        @visibility = visibility
         yield self if block_given?
       end
 
