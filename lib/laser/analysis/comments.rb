@@ -5,5 +5,9 @@ module Laser
     def location
       [line, col]
     end
+    
+    def features
+      body.gsub(/^#+\s?/, '').scan(/^\s*.*(?:\n\s{3,}.*)*/).map(&:strip)
+    end
   end
 end
