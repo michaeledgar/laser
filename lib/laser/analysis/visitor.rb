@@ -88,6 +88,7 @@ module Laser
       # text: String
       def annotate_with_text(root, text)
         @text = text
+        @lines = nil
         annotate! root
       end
       

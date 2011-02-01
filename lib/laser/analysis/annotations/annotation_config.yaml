@@ -5,4 +5,5 @@
 - SourceLocationAnnotation
 - CommentAttachmentAnnotation
 - LiteralTypeAnnotation
+- LiteralConstantAnnotation
 - ScopeAnnotation

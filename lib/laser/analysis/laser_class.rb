@@ -52,6 +52,17 @@ module Laser
       end
     end
     
+    class RealObjectProxy < LaserObject
+      def initialize(klass, scope, name, raw_object)
+        super(klass, scope, name)
+        @raw_object = raw_object
+      end
+      
+      def method_missing?(meth, *args, &blk)
+        @raw_object.send(meth, *args, &blk)
+      end
+    end
+    
     # Laser representation of a module. Named LaserModule to avoid naming
     # conflicts. It has lists of methods, instance variables, and so on.
     class LaserModule < LaserObject

@@ -13,6 +13,10 @@ module Laser
           @value = :uninitialized
           bind!(value)
         end
+        
+        def class_estimate
+          @class_estimate ||= ClassEstimate.new
+        end
       
         def bind!(value)
           if respond_to?(:validate_value)

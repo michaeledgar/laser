@@ -46,6 +46,7 @@ check them off when I'm done.
 8. Shadowing of really important methods (private = :xyz)
 9. Type conflicts
 10. Constants in for loops (P0)
+11. Useless lhs or rhs in mlhs/mrhs
 
 ## Optimization
 1. Dead Code Detection
