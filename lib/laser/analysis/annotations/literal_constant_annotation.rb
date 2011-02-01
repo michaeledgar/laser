@@ -58,10 +58,10 @@ module Laser
         # visit_children(node)
       end
       
-      add :hash, :bare_assoc_hash do |node|
-        # node.class_estimate = ExactClassEstimate.new(ClassRegistry['Hash'])
-        # visit_children(node)
-      end
+      # add :hash, :bare_assoc_hash do |node|
+      #   node.class_estimate = ExactClassEstimate.new(ClassRegistry['Hash'])
+      #   visit_children(node)
+      # end
       
       add :symbol do |node, ident|
         node.is_constant = true
@@ -69,14 +69,15 @@ module Laser
       end
       
       add :symbol_literal do |node, sym|
+        visit sym
         node.is_constant = sym.is_constant
         node.constant_value = sym.constant_value
       end
       
-      add :dyna_symbol do |node, *parts|
+      add :dyna_symbol do |node, parts|
         parts.each { |part| visit part }
         if (node.is_constant = parts.all? { |part| part.is_constant })
-          node.constant_value = parts.map(&:constant_value).join
+          node.constant_value = parts.map(&:constant_value).join.to_sym
         end
       end
       

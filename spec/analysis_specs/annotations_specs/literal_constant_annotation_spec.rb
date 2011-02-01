@@ -133,6 +133,36 @@ describe LiteralConstantAnnotation do
     end
   end
   
+  describe 'symbol literals' do
+    [:abc_def, :ABC_DEF, :@abc_def, :$abc_def, :@@abc_def, :"hello-world"].each do |sym|
+      it "should convert simple symbols of the form #{sym.inspect}" do
+        input = "a = #{sym.inspect}"
+        tree = Sexp.new(Ripper.sexp(input))
+        ParentAnnotation.new.annotate_with_text(tree, input)
+        SourceLocationAnnotation.new.annotate_with_text(tree, input)
+        LiteralConstantAnnotation.new.annotate_with_text(tree, input)
+        list = tree[1]
+        list[0][2].is_constant.should be true
+        list[0][2].constant_value.should == sym
+      end
+    end
+
+    # [:program,
+    #  [[:hash,
+    #    [:assoclist_from_args,
+    #     [[:assoc_new,
+    #       [:@label, "abc:", [1, 1]],
+    #       [:symbol_literal, [:symbol, [:@kw, "def", [1, 7]]]]]]]]]]
+    it 'can discover the value of labels in 1.9 hash syntax' do
+      input = '{abc: :def}'
+      tree = Sexp.new(Ripper.sexp(input))
+      LiteralConstantAnnotation.new.annotate_with_text(tree, input)
+      label = tree[1][0][1][1][0][1]
+      label.is_constant.should be true
+      label.constant_value.should == :abc
+    end
+  end
+  
   describe 'inclusive range literals' do
     it 'calculates a constant if both ends of the range are constants' do
       tree = Sexp.new(Ripper.sexp('a = 2..0x33'))
