@@ -54,9 +54,9 @@ describe Protocols::InstanceProtocol do
   clean_registry
 
   before do
-    @a = LaserClass.new('A')
+    @a = LaserClass.new(ClassRegistry['Class'], Scope::GlobalScope, 'A')
     @a_proto = ProtocolRegistry['A'].first
-    @b = LaserClass.new('B') do |b|
+    @b = LaserClass.new(ClassRegistry['Class'], Scope::GlobalScope, 'B') do |b|
       b.add_instance_method!(LaserMethod.new('foo') do |method|
         method.add_signature!(Signature.new('foo', @a_proto, []))
         method.add_signature!(Signature.new('foo', ProtocolRegistry['B'].first,

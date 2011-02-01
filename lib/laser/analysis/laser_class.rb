@@ -5,9 +5,14 @@ module Laser
     # case-by-case logic to handle the instantiation of LaserModule/LaserClass
     # when necessary.
     module LiveObjectRepresentation
-      def self.new(klass, scope, name, &blk)
+      def self.new(klass, *args, &blk)
         if klass == ClassRegistry['Class']
-        then LaserClass.new()
+          LaserClass.new(klass, *args, &blk)
+        elsif klass.ancestors.include?(ClassRegistry['Module'])
+          LaserModule.new(klass, *args, &blk)
+        else
+          LaserObject.new(klass, *args, &blk)
+        end
       end
     end
     
@@ -53,7 +58,8 @@ module Laser
       attr_reader :path, :instance_methods, :binding, :superclass
       cattr_accessor_with_default :all_modules, []
       
-      def initialize(klass = ClassRegistry['Module'], scope = Scope::GlobalScope, full_path)
+      def initialize(klass = ClassRegistry['Module'], scope = Scope::GlobalScope,
+                     full_path="#{klass.path}:Anonymous:#{object_id.to_s(16)}")
         super(klass, scope, full_path.split('::').last)
         full_path = submodule_path(full_path) if scope && scope.parent
         validate_module_path!(full_path)
@@ -146,8 +152,8 @@ module Laser
         @instance_variables[binding.name] = binding
       end
       
-      def get_instance
-        LaserObject.new(self, nil)
+      def get_instance(scope = self.scope)
+        LiveObjectRepresentation.new(self, scope)
       end
       
       def superclass=(new_superclass)
@@ -168,7 +174,6 @@ module Laser
       
       # Directly translated from MRI's C implementation in class.c:650
       def include_module(mod)
-        p mod.klass
         if mod.klass == ClassRegistry['Class']
           raise ArgumentError.new("Tried to include #{mod.name}, which should "+
                                   " be a Module or Module subclass, not a " +
@@ -211,7 +216,8 @@ module Laser
     class LaserClass < LaserModule
       attr_reader :subclasses
       
-      def initialize(klass = ClassRegistry['Class'], scope = Scope::GlobalScope, full_path)
+      def initialize(klass = ClassRegistry['Class'], scope = Scope::GlobalScope,
+                     full_path="#{klass.path}:Anonymous:#{object_id.to_s(16)}")
         @subclasses ||= []
         # bootstrapping exception
         unless ['Class', 'Module', 'Object'].include?(full_path)
@@ -223,7 +229,8 @@ module Laser
       def singleton_class
         return @singleton_class if @singleton_class
         new_scope = ClosedScope.new(self.scope, nil)
-        @singleton_class = LaserSingletonClass.new(ClassRegistry['Class'], new_scope, "Class:#{name}", self) do |new_singleton_class|
+        @singleton_class = LaserSingletonClass.new(
+            ClassRegistry['Class'], new_scope, "Class:#{name}", self) do |new_singleton_class|
           if superclass
             new_singleton_class.superclass = superclass.singleton_class
           else

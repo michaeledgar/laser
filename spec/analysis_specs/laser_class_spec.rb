@@ -39,8 +39,11 @@ shared_examples_for 'a Ruby module' do
   clean_registry
 
   before do
-    @a = described_class.new('A')
-    @b = described_class.new('B') do |b|
+    @name = if described_class == LaserModule then 'Module'
+           elsif described_class == LaserClass then 'Class'
+           end
+    @a = described_class.new(ClassRegistry[@name], Scope::GlobalScope, 'A')
+    @b = described_class.new(ClassRegistry[@name], Scope::GlobalScope, 'B') do |b|
       b.add_instance_method!(LaserMethod.new('foo') do |method|
         method.add_signature!(Signature.new('foo', @a.protocol, []))
         method.add_signature!(Signature.new('foo', b.protocol,
@@ -56,17 +59,17 @@ shared_examples_for 'a Ruby module' do
   
   describe '#initialize' do
     it 'should raise if the path contains a component that does not start with a capital' do
-      expect { described_class.new('::A::b::C') }.to raise_error(ArgumentError)
+      expect { described_class.new(ClassRegistry[@name], Scope::GlobalScope, '::A::b::C') }.to raise_error(ArgumentError)
     end
     
     it 'should raise if the path has one component that does not start with a capital' do
-      expect { described_class.new('acd') }.to raise_error(ArgumentError)
+      expect { described_class.new(ClassRegistry[@name], Scope::GlobalScope, 'acd') }.to raise_error(ArgumentError)
     end
   end
   
   describe '#name' do
     it 'extracts the name from the full path' do
-      x = described_class.new('::A::B::C::D::EverybodysFavoriteClass')
+      x = described_class.new(ClassRegistry[@name], Scope::GlobalScope, '::A::B::C::D::EverybodysFavoriteClass')
       x.name.should == 'EverybodysFavoriteClass'
     end
   end
@@ -129,16 +132,16 @@ describe LaserModule do
 
   describe '#singleton_class' do
     it 'should return a class with Module as its superclass' do
-      LaserModule.new('A').singleton_class.superclass.should == ClassRegistry['Module']
-    end
-  end
-  
+      LaserModule.new(ClassRegistry['Module'], Scope::GlobalScope, 'A').singleton_class.superclass.should == ClassRegistry['Module']
+    end              
+  end                
+                     
   describe '#include_module' do
     before do
-      @a = LaserModule.new('A')
-      @b = LaserModule.new('B')
-      @c = LaserModule.new('C')
-      @d = LaserModule.new('D')
+      @a = LaserModule.new(ClassRegistry['Module'], Scope::GlobalScope, 'A')
+      @b = LaserModule.new(ClassRegistry['Module'], Scope::GlobalScope, 'B')
+      @c = LaserModule.new(ClassRegistry['Module'], Scope::GlobalScope, 'C')
+      @d = LaserModule.new(ClassRegistry['Module'], Scope::GlobalScope, 'D')
     end
 
     it "inserts the included module into the receiving module's hierarchy when not already there" do
@@ -184,12 +187,12 @@ describe LaserModule do
     end
     
     it 'raises when including a class' do
-      klass = LaserClass.new('X')
+      klass = LaserClass.new(ClassRegistry['Class'], Scope::GlobalScope, 'X')
       expect { @a.include_module(klass) }.to raise_error(ArgumentError)
     end
     
     it 'does not raise when including an instance of a Module subclass' do
-      silly_mod_subclass = LaserClass.new('SillyModSubclass') do |klass|
+      silly_mod_subclass = LaserClass.new(ClassRegistry['Class'], Scope::GlobalScope, 'SillyModSubclass') do |klass|
         klass.superclass = ClassRegistry['Module']
       end
       instance = silly_mod_subclass.get_instance
@@ -205,8 +208,8 @@ describe LaserClass do
   clean_registry
   
   before do
-    @a = LaserClass.new('A')
-    @b = LaserClass.new('B') do |b|
+    @a = LaserClass.new(ClassRegistry['Class'], Scope::GlobalScope, 'A')
+    @b = LaserClass.new(ClassRegistry['Class'], Scope::GlobalScope, 'B') do |b|
       b.superclass = @a
     end
   end
@@ -239,14 +242,14 @@ describe LaserClass do
   
   describe '#include_module' do
     before do
-      @a = LaserModule.new('A')
-      @b = LaserModule.new('B')
-      @c = LaserModule.new('C')
-      @d = LaserModule.new('D')
-      @x = LaserClass.new('X')
-      @y = LaserClass.new('Y') { |klass| klass.superclass = @x }
-      @z = LaserClass.new('Z') { |klass| klass.superclass = @y }
-    end
+      @a = LaserModule.new(ClassRegistry['Module'], Scope::GlobalScope, 'A')
+      @b = LaserModule.new(ClassRegistry['Module'], Scope::GlobalScope, 'B')
+      @c = LaserModule.new(ClassRegistry['Module'], Scope::GlobalScope, 'C')
+      @d = LaserModule.new(ClassRegistry['Module'], Scope::GlobalScope, 'D')
+      @x = LaserClass.new(ClassRegistry['Class'], Scope::GlobalScope, 'X')
+      @y = LaserClass.new(ClassRegistry['Class'], Scope::GlobalScope, 'Y') { |klass| klass.superclass = @x }
+      @z = LaserClass.new(ClassRegistry['Class'], Scope::GlobalScope, 'Z') { |klass| klass.superclass = @y }
+    end                   
 
     it "inserts the included module into the receiving module's hierarchy when not already there" do
       @x.include_module(@a)
@@ -297,14 +300,14 @@ describe 'hierarchy methods' do
   clean_registry
 
   before do
-    @y = LaserClass.new('Y')
-    @y.superclass = @x = LaserClass.new('X')
+    @y = LaserClass.new(ClassRegistry['Class'], Scope::GlobalScope, 'Y')
+    @y.superclass = @x = LaserClass.new(ClassRegistry['Class'], Scope::GlobalScope, 'X')
     @x.superclass = ClassRegistry['Object']
-    @y2 = LaserClass.new('Y2')
+    @y2 = LaserClass.new(ClassRegistry['Class'], Scope::GlobalScope, 'Y2')
     @y2.superclass = @x
-    @z = LaserClass.new('Z')
+    @z = LaserClass.new(ClassRegistry['Class'], Scope::GlobalScope, 'Z')
     @z.superclass = @y
-    @w = LaserClass.new('W')
+    @w = LaserClass.new(ClassRegistry['Class'], Scope::GlobalScope, 'W')
     @w.superclass = @y2
   end
   
@@ -364,8 +367,8 @@ describe LaserMethod do
   clean_registry
 
   before do
-    @a = LaserClass.new('A')
-    @b = LaserClass.new('B')
+    @a = LaserClass.new(ClassRegistry['Class'], Scope::GlobalScope, 'A')
+    @b = LaserClass.new(ClassRegistry['Class'], Scope::GlobalScope, 'B')
     @method = LaserMethod.new('foobar')
   end
   
