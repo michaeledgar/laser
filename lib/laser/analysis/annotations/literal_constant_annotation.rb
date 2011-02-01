@@ -31,7 +31,7 @@ module Laser
       
       add :string_content do |node, *parts|
         parts.each { |part| visit part }
-        if (node.is_constant = parts.all? { |part| part.is_constant })
+        if (node.is_constant = parts.all?(&:is_constant))
           node.constant_value = parts.map(&:constant_value).join
         end
       end
@@ -53,9 +53,22 @@ module Laser
         node.constant_value = Float(repr)
       end
       
-      add :regexp_literal do |node|
-        # node.class_estimate = ExactClassEstimate.new(ClassRegistry['Regexp'])
-        # visit_children(node)
+      add :@regexp_end do |node, str, location|
+        result = 0
+        result |= Regexp::IGNORECASE if str.include?('i')
+        result |= Regexp::MULTILINE  if str.include?('m')
+        result |= Regexp::EXTENDED   if str.include?('x')
+        node.is_constant = true
+        node.constant_value = result
+      end
+      
+      add :regexp_literal do |node, parts, options|
+        visit parts
+        visit options
+        options = options.constant_value
+        if (node.is_constant = parts.all?(&:is_constant))
+          node.constant_value = Regexp.new(parts.map(&:constant_value).join, options)
+        end
       end
       
       # add :hash, :bare_assoc_hash do |node|
@@ -76,7 +89,7 @@ module Laser
       
       add :dyna_symbol do |node, parts|
         parts.each { |part| visit part }
-        if (node.is_constant = parts.all? { |part| part.is_constant })
+        if (node.is_constant = parts.all?(&:is_constant))
           node.constant_value = parts.map(&:constant_value).join.to_sym
         end
       end

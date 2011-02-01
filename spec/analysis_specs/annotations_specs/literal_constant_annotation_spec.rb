@@ -196,4 +196,49 @@ describe LiteralConstantAnnotation do
       list[0][2].is_constant.should be false
     end
   end
+  
+  describe 'regex literals' do
+    it 'interprets a simple constant regex with standard syntax' do
+      input = 'a = /abcdef/'
+      tree = Sexp.new(Ripper.sexp(input))
+      ParentAnnotation.new.annotate_with_text(tree, input)
+      SourceLocationAnnotation.new.annotate_with_text(tree, input)
+      LiteralConstantAnnotation.new.annotate_with_text(tree, input)
+      list = tree[1]
+      list[0][2].is_constant.should be true
+      list[0][2].constant_value.should == /abcdef/
+    end
+    
+    it 'does not try to fold complex interpolated regexps' do
+      input = 'a = /abc#{abc()}def/'
+      tree = Sexp.new(Ripper.sexp(input))
+      ParentAnnotation.new.annotate_with_text(tree, input)
+      SourceLocationAnnotation.new.annotate_with_text(tree, input)
+      LiteralConstantAnnotation.new.annotate_with_text(tree, input)
+      list = tree[1]
+      list[0][2].is_constant.should be false
+    end
+
+    it 'interprets a simple regex with nonstandard syntax and options' do
+      input = 'a = %r|abcdef|im'
+      tree = Sexp.new(Ripper.sexp(input))
+      ParentAnnotation.new.annotate_with_text(tree, input)
+      SourceLocationAnnotation.new.annotate_with_text(tree, input)
+      LiteralConstantAnnotation.new.annotate_with_text(tree, input)
+      list = tree[1]
+      list[0][2].is_constant.should be true
+      list[0][2].constant_value.should == /abcdef/im
+    end
+    
+    it 'interprets a simple regex with extended mode' do
+      input = 'a = %r|abcdef|x'
+      tree = Sexp.new(Ripper.sexp(input))
+      ParentAnnotation.new.annotate_with_text(tree, input)
+      SourceLocationAnnotation.new.annotate_with_text(tree, input)
+      LiteralConstantAnnotation.new.annotate_with_text(tree, input)
+      list = tree[1]
+      list[0][2].is_constant.should be true
+      list[0][2].constant_value.should == /abcdef/x
+    end
+  end
 end
