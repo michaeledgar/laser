@@ -241,4 +241,50 @@ describe LiteralConstantAnnotation do
       list[0][2].constant_value.should == /abcdef/x
     end
   end
+  
+  describe 'array literals' do
+    it 'should find the constant value if all members are constant' do
+      input = 'a = [:a, 3.14, "hello", /abc/x]'
+      tree = Sexp.new(Ripper.sexp(input))
+      ParentAnnotation.new.annotate_with_text(tree, input)
+      SourceLocationAnnotation.new.annotate_with_text(tree, input)
+      LiteralConstantAnnotation.new.annotate_with_text(tree, input)
+      list = tree[1]
+      list[0][2].is_constant.should be true
+      list[0][2].constant_value.should == [:a, 3.14, "hello", /abc/x]
+    end
+    
+    it 'should not calculate a constant if a member is not a constant' do
+      input = 'a = [:a, :"hi-there", 3.14, foobar()]'
+      tree = Sexp.new(Ripper.sexp(input))
+      ParentAnnotation.new.annotate_with_text(tree, input)
+      SourceLocationAnnotation.new.annotate_with_text(tree, input)
+      LiteralConstantAnnotation.new.annotate_with_text(tree, input)
+      list = tree[1]
+      list[0][2].is_constant.should be false
+    end
+  end
+  
+  describe 'hash literals' do
+    it 'can evaluate simple constant arrays' do
+      input = 'a = {:a => :b, 3 => 2, "hi" => "world", :a => :c}'
+      tree = Sexp.new(Ripper.sexp(input))
+      ParentAnnotation.new.annotate_with_text(tree, input)
+      SourceLocationAnnotation.new.annotate_with_text(tree, input)
+      LiteralConstantAnnotation.new.annotate_with_text(tree, input)
+      list = tree[1]
+      list[0][2].is_constant.should be true
+      list[0][2].constant_value.should == {3 => 2, "hi" => "world", :a => :c}
+    end
+    
+    it 'gives up on obviously non-constant hashes' do
+      input = 'a = {foobar() => baz()}'
+      tree = Sexp.new(Ripper.sexp(input))
+      ParentAnnotation.new.annotate_with_text(tree, input)
+      SourceLocationAnnotation.new.annotate_with_text(tree, input)
+      LiteralConstantAnnotation.new.annotate_with_text(tree, input)
+      list = tree[1]
+      list[0][2].is_constant.should be false
+    end
+  end
 end

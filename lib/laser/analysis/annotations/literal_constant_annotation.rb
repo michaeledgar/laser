@@ -15,7 +15,13 @@ module Laser
       # TODO(adgar): Find a way to avoid eval?
       add :@CHAR do |node, char, location|
         node.is_constant = true
-        node.constant_value = eval(%Q{"#{char[1..-1]}"})
+        # Microoptimization because i can
+        char_part = char[1..-1]
+        if char_part.size == 1
+          node.constant_value = char_part
+        else
+          node.constant_value = eval(%Q{"#{char_part}"})
+        end
       end
       
       add :@tstring_content do |node, str, location|
@@ -71,10 +77,27 @@ module Laser
         end
       end
       
-      # add :hash, :bare_assoc_hash do |node|
-      #   node.class_estimate = ExactClassEstimate.new(ClassRegistry['Hash'])
-      #   visit_children(node)
-      # end
+      add :assoc_new do |node, lhs, rhs|
+        visit lhs
+        visit rhs
+        if (node.is_constant = lhs.is_constant && rhs.is_constant)
+          node.constant_value = [lhs.constant_value, rhs.constant_value]
+        end
+      end
+      
+      add :assoclist_from_args, :bare_assoc_hash do |node, parts|
+        visit parts
+        if (node.is_constant = parts.all?(&:is_constant))
+          node.constant_value = Hash[*parts.map(&:constant_value).flatten]
+          
+        end
+      end
+      
+      add :hash do |node, part|
+        visit part
+        node.is_constant = part.is_constant
+        node.constant_value = part.constant_value
+      end
       
       add :symbol do |node, ident|
         node.is_constant = true
@@ -99,9 +122,11 @@ module Laser
         node.constant_value = text[0..-2].to_sym
       end
       
-      add :array do |node|
-        # node.class_estimate = ExactClassEstimate.new(ClassRegistry['Array'])
-        #         visit_children(node)
+      add :array do |node, parts|
+        visit parts
+        if (node.is_constant = parts.all?(&:is_constant))
+          node.constant_value = parts.map(&:constant_value)
+        end
       end
       
       add :var_ref do |node, ref|
