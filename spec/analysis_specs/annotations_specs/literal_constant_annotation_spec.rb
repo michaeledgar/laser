@@ -286,5 +286,16 @@ describe LiteralConstantAnnotation do
       list = tree[1]
       list[0][2].is_constant.should be false
     end
+    
+    it 'can evaluate constant, bare hashes' do
+      input = 'a = foo(:a => :b, 3 => 2, "hi" => "world", :a => :c)'
+      tree = Sexp.new(Ripper.sexp(input))
+      ParentAnnotation.new.annotate_with_text(tree, input)
+      SourceLocationAnnotation.new.annotate_with_text(tree, input)
+      LiteralConstantAnnotation.new.annotate_with_text(tree, input)
+      list = tree[1]
+      list[0][2][2][1][1][0].is_constant.should be true
+      list[0][2][2][1][1][0].constant_value.should == {3 => 2, "hi" => "world", :a => :c}
+    end
   end
 end
