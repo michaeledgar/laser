@@ -784,7 +784,22 @@ describe ScopeAnnotation do
     forloop.should see_var('y')
     forloop.should see_var('z')
     forloop.should see_var('$f')
-    tree.all_errors.should be_empty
+    tree.all_errors.should_not be_empty
+    tree.all_errors.first.should be_a(ScopeAnnotation::ConstantInForLoopError)
+    tree.all_errors.first.message.should include('A92')
+  end
+  
+  it 'creates an error for each constant named as a for loop variable' do
+    consts = %w(A99 B99 C99 D99)
+    tree = Sexp.new(Ripper.sexp("for #{consts.join(', ')} in []; p A99; end"))
+    ExpandedIdentifierAnnotation.new.annotate!(tree)
+    ScopeAnnotation.new.annotate!(tree)
+    
+    tree.all_errors.size.should == 4
+    consts.each_with_index do |const, idx|
+      tree.all_errors[idx].should be_a(ScopeAnnotation::ConstantInForLoopError)
+      tree.all_errors[idx].message.should include(const)
+    end
   end
   
   # [:program,

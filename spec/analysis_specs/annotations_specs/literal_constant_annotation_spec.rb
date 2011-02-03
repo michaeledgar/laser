@@ -24,7 +24,7 @@ describe LiteralConstantAnnotation do
       LiteralConstantAnnotation.new.annotate!(tree)
       list = tree[1]
       list[0][2].is_constant.should be true
-      list[0][2].constant_value.should == 'X'
+      (list[0][2].constant_value == 'X').should be true
     end
     
     it 'works with oddball char literals' do
@@ -266,7 +266,7 @@ describe LiteralConstantAnnotation do
   end
   
   describe 'hash literals' do
-    it 'can evaluate simple constant arrays' do
+    it 'can evaluate simple constant hashes' do
       input = 'a = {:a => :b, 3 => 2, "hi" => "world", :a => :c}'
       tree = Sexp.new(Ripper.sexp(input))
       ParentAnnotation.new.annotate_with_text(tree, input)
@@ -274,7 +274,7 @@ describe LiteralConstantAnnotation do
       LiteralConstantAnnotation.new.annotate_with_text(tree, input)
       list = tree[1]
       list[0][2].is_constant.should be true
-      list[0][2].constant_value.should == {3 => 2, "hi" => "world", :a => :c}
+      list[0][2].constant_value.should == {:a => :c, 3 => 2, "hi" => "world"}
     end
     
     it 'gives up on obviously non-constant hashes' do
@@ -295,7 +295,31 @@ describe LiteralConstantAnnotation do
       LiteralConstantAnnotation.new.annotate_with_text(tree, input)
       list = tree[1]
       list[0][2][2][1][1][0].is_constant.should be true
-      list[0][2][2][1][1][0].constant_value.should == {3 => 2, "hi" => "world", :a => :c}
+      list[0][2][2][1][1][0].constant_value.should == {:a => :c, 3 => 2, "hi" => "world"}
+    end
+  end
+  
+  describe 'stuff in parentheses' do
+    it 'can handle a range in parens' do
+      input = 'a = ("a".."z")'
+      tree = Sexp.new(Ripper.sexp(input))
+      ParentAnnotation.new.annotate_with_text(tree, input)
+      SourceLocationAnnotation.new.annotate_with_text(tree, input)
+      LiteralConstantAnnotation.new.annotate_with_text(tree, input)
+      list = tree[1]
+      list[0][2].is_constant.should be true
+      list[0][2].constant_value.should == ("a".."z")
+    end
+    
+    it 'can handle compound expressions in parens, taking the value of the last constant' do
+      input = 'a = (3; 2; "a".."z")'
+      tree = Sexp.new(Ripper.sexp(input))
+      ParentAnnotation.new.annotate_with_text(tree, input)
+      SourceLocationAnnotation.new.annotate_with_text(tree, input)
+      LiteralConstantAnnotation.new.annotate_with_text(tree, input)
+      list = tree[1]
+      list[0][2].is_constant.should be true
+      list[0][2].constant_value.should == ("a".."z")
     end
   end
 end

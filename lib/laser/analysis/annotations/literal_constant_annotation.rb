@@ -12,15 +12,19 @@ module Laser
         visit_children(node)
       end
       
+      def wrap(node, klass, name="#<#{klass.path}:#{object_id.to_s(16)}>", val)
+        node.constant_value = RealObjectProxy.new(klass, nil, name, val)
+      end
+      
       # TODO(adgar): Find a way to avoid eval?
       add :@CHAR do |node, char, location|
         node.is_constant = true
         # Microoptimization because i can
         char_part = char[1..-1]
         if char_part.size == 1
-          node.constant_value = char_part
+          wrap(node, ClassRegistry['String'], char_part)
         else
-          node.constant_value = eval(%Q{"#{char_part}"})
+          wrap(node, ClassRegistry['String'], eval(%Q{"#{char_part}"}))
         end
       end
       
@@ -29,16 +33,16 @@ module Laser
         pos = node.parent.parent.source_begin
         first_two = lines[pos[0]-1][pos[1],2]
         if first_two[0,1] == '"' || first_two == '%Q'
-          node.constant_value = eval(%Q{"#{str}"})
+          wrap(node, ClassRegistry['String'], eval(%Q{"#{str}"}))
         else
-          node.constant_value = str
+          wrap(node, ClassRegistry['String'], str)
         end
       end
       
       add :string_content do |node, *parts|
         parts.each { |part| visit part }
         if (node.is_constant = parts.all?(&:is_constant))
-          node.constant_value = parts.map(&:constant_value).join
+          wrap(node, ClassRegistry['String'], parts.map(&:constant_value).map(&:raw_object).join)
         end
       end
       
@@ -51,12 +55,12 @@ module Laser
       
       add :@int do |node, repr, location|
         node.is_constant = true
-        node.constant_value = Integer(repr)
+        wrap(node, ClassRegistry['Integer'], Integer(repr))
       end
       
       add :@float do |node, repr, location|
         node.is_constant = true
-        node.constant_value = Float(repr)
+        wrap(node, ClassRegistry['Float'], Float(repr))
       end
       
       add :@regexp_end do |node, str, location|
@@ -73,7 +77,7 @@ module Laser
         visit options
         options = options.constant_value
         if (node.is_constant = parts.all?(&:is_constant))
-          node.constant_value = Regexp.new(parts.map(&:constant_value).join, options)
+          wrap(node, ClassRegistry['Regexp'], Regexp.new(parts.map(&:constant_value).map(&:raw_object).join, options))
         end
       end
       
@@ -88,8 +92,7 @@ module Laser
       add :assoclist_from_args, :bare_assoc_hash do |node, parts|
         visit parts
         if (node.is_constant = parts.all?(&:is_constant))
-          node.constant_value = Hash[*parts.map(&:constant_value).flatten]
-          
+          wrap(node, ClassRegistry['Hash'], Hash[*parts.map(&:constant_value).flatten.map(&:raw_object)])
         end
       end
       
@@ -101,7 +104,7 @@ module Laser
       
       add :symbol do |node, ident|
         node.is_constant = true
-        node.constant_value = ident[1].to_sym
+        wrap(node, ClassRegistry['Symbol'], ident[1].to_sym)
       end
       
       add :symbol_literal do |node, sym|
@@ -113,19 +116,19 @@ module Laser
       add :dyna_symbol do |node, parts|
         parts.each { |part| visit part }
         if (node.is_constant = parts.all?(&:is_constant))
-          node.constant_value = parts.map(&:constant_value).join.to_sym
+          wrap(node, ClassRegistry['Symbol'], parts.map(&:constant_value).map(&:raw_object).join.to_sym)
         end
       end
       
       add :@label do |node, text, location|
         node.is_constant = true
-        node.constant_value = text[0..-2].to_sym
+        wrap(node, ClassRegistry['Symbol'], text[0..-2].to_sym)
       end
       
       add :array do |node, parts|
         visit parts
         if (node.is_constant = parts.all?(&:is_constant))
-          node.constant_value = parts.map(&:constant_value)
+          wrap(node, ClassRegistry['Array'], parts.map(&:constant_value).map(&:raw_object))
         end
       end
       
@@ -134,27 +137,17 @@ module Laser
           case ref[1]
           when 'nil'
             node.is_constant = true
-            node.constant_value = nil
+            wrap(node, ClassRegistry['NilClass'], nil)
           when 'true'
             node.is_constant = true
-            node.constant_value = true
+            wrap(node, ClassRegistry['TrueClass'], true)
           when 'false'
             node.is_constant = true
-            node.constant_value = false
+            wrap(node, ClassRegistry['FalseClass'], false)
           when '__LINE__'
             node.is_constant = true
-            node.constant_value = ref[2][0]
+            wrap(node, ClassRegistry['Fixnum'], ref[2][0])
           end
-          #   
-          # node.class_estimate =
-          #     case ref[1]
-          #     when 'nil' then ExactClassEstimate.new(ClassRegistry['NilClass'])
-          #     when 'true' then ExactClassEstimate.new(ClassRegistry['TrueClass'])
-          #     when 'false' then ExactClassEstimate.new(ClassRegistry['FalseClass'])
-          #     when '__FILE__' then ExactClassEstimate.new(ClassRegistry['String'])
-          #     when '__LINE__' then ExactClassEstimate.new(ClassRegistry['Fixnum'])
-          #     when '__ENCODING__' then ExactClassEstimate.new(ClassRegistry['Encoding'])
-          #     end
         end
         visit_children(node)
       end
@@ -165,16 +158,18 @@ module Laser
         if (node.is_constant = lhs.is_constant && rhs.is_constant)
           node.is_constant = true
           if node.type == :dot2
-          then node.constant_value = (lhs.constant_value)..(rhs.constant_value)
-          else node.constant_value = (lhs.constant_value)...(rhs.constant_value)
+            wrap(node, ClassRegistry['Range'], (lhs.constant_value.raw_object)..(rhs.constant_value.raw_object))
+          else
+            wrap(node, ClassRegistry['Range'], (lhs.constant_value.raw_object)...(rhs.constant_value.raw_object))
           end
         end
       end
       
       add :paren do |node, contents|
         visit contents
-        node.is_constant = contents.is_constant
-        node.constant_value = contents.constant_value
+        if contents[0] != :params && (node.is_constant = contents.all?(&:is_constant))
+          node.constant_value = contents.last.constant_value
+        end
       end
     end
   end

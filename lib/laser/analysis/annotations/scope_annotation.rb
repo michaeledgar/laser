@@ -11,8 +11,16 @@ module Laser
       class ReopenedClassAsModuleError < Laser::Error
         severity MAJOR_ERROR
       end
+
       class ReopenedModuleAsClassError < Laser::Error
         severity MAJOR_ERROR
+      end
+
+      class ConstantInForLoopError < Laser::Error
+        def initialize(const_name, ast)
+          super("The constant #{const_name} is a loop variable in a for loop.",
+                ast, MAJOR_ERROR)
+        end
       end
 
       add_property :scope
@@ -239,7 +247,8 @@ module Laser
       
       # On assignment: ensure bindings exist for all vars on the LHS
       add :assign, :massign do |node, names, vals|
-        bind_variable_names(extract_names(names))
+        assgn_expression = AssignmentExpression.new(node)
+        bind_variable_names(assgn_expression.lhs.names)
         node.scope = @current_scope
         visit names
         visit vals
@@ -262,21 +271,14 @@ module Laser
         end
       end
       
-      # Extracts the names from an LHS.
-      def extract_names(node)
-        case node[0]
-        when Array then node.map { |x| extract_names(x) }.flatten
-        when :field, :aref_field then []  # useless for discovering names and new scopes
-        when :var_field then [extract_names(node[1])]
-        when :mlhs_paren then extract_names(node[1])
-        when :mlhs_add_star then node.children.map { |x| extract_names(x) }.flatten
-        when :@ident, :@const, :@gvar, :@ivar, :@cvar then node[1]
-        end
-      end
-      
       # For loop: just ensure bindings exist for the given variables.
       add :for do |node, vars, iterable, body|
-        bind_variable_names(extract_names(vars))
+        lhs = LHSExpression.new(vars)
+        all_var_names = lhs.names
+        bind_variable_names(all_var_names)
+        all_var_names.select { |name| name =~ /^[A-Z]/ }.each do |const|
+          node.errors << ConstantInForLoopError.new(const, node)
+        end
         node.scope = @current_scope
         visit vars
         visit body

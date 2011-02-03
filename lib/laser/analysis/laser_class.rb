@@ -1,3 +1,4 @@
+        require 'pp'
 require 'delegate'
 module Laser
   module SexpAnalysis
@@ -15,13 +16,10 @@ module Laser
         end
       end
     end
-    
-    # Catch all representation of an object. Should never have klass <: Module.
-    class LaserObject
-      extend ModuleExtensions
+
+    module BasicLaserObjectBehavior
       attr_reader :protocol, :scope, :klass, :name
       attr_writer :singleton_class
-      
       def initialize(klass = ClassRegistry['Object'], scope = Scope::GlobalScope,
                      name = "#<#{klass.path}:#{object_id.to_s(16)}>")
         @klass = klass
@@ -52,13 +50,37 @@ module Laser
       end
     end
     
-    class RealObjectProxy < LaserObject
+    # Catch all representation of an object. Should never have klass <: Module.
+    class LaserObject
+      extend ModuleExtensions
+      include BasicLaserObjectBehavior
+    end
+    
+    class RealObjectProxy < BasicObject
+      # Allow updating of scope after the creation of the object, since these
+      # constants are discovered very early in the annotation process.
+      attr_reader :raw_object
+      attr_writer :scope
+      include BasicLaserObjectBehavior
+      
+      def self.careful_forward(*args)
+        args.each do |arg|
+          define_method arg do |other|
+            if RealObjectProxy === other
+            then @raw_object.send(arg, other.raw_object)
+            else @raw_object.send(arg, other)
+            end
+          end
+        end
+      end
+      
       def initialize(klass, scope, name, raw_object)
         super(klass, scope, name)
         @raw_object = raw_object
       end
-      
-      def method_missing?(meth, *args, &blk)
+      careful_forward :==, :eql?, :equal?
+
+      def method_missing(meth, *args, &blk)
         @raw_object.send(meth, *args, &blk)
       end
     end
