@@ -68,13 +68,35 @@ describe SexpAnalysis::MultipleLHSExpression do
            [lvals[3], 6]]
     end
     
-    it 'works with splats and no subassignments' do
+    it 'works with unmet splats and no subassignments' do
       outputs = Annotations.annotate_inputs(
           [['(stdin)', 'a, *b, c, d = 1, 2, [3, 4]']])
       lhs = MultipleLHSExpression.new(outputs[0][1][1][0][1])
       rhs = MultipleRHSExpression.new(outputs[0][1][1][0][2])
       lvals = outputs[0][1][1][0][1]
-      lhs.assignment_pairs(rhs.constant_values).should == [[lvals[1][0], 1], [lvals[2], []], [lvals[3][0], 2], [lvals[3][1], [3, 4]]]
+      lhs.assignment_pairs(rhs.constant_values).should ==
+          [[lvals[1][0], 1], [lvals[2], []], [lvals[3][0], 2], [lvals[3][1], [3, 4]]]
+    end
+    
+    it 'works with met splats and no subassignments' do
+      outputs = Annotations.annotate_inputs(
+          [['(stdin)', 'a, *b, c, d = 1, 2, 3, 4, 5, 6, [3, 4]']])
+      lhs = MultipleLHSExpression.new(outputs[0][1][1][0][1])
+      rhs = MultipleRHSExpression.new(outputs[0][1][1][0][2])
+      lvals = outputs[0][1][1][0][1]
+      lhs.assignment_pairs(rhs.constant_values).should ==
+          [[lvals[1][0], 1], [lvals[2], [2, 3, 4, 5]], [lvals[3][0], 6], [lvals[3][1], [3, 4]]]
+    end
+    
+    it 'works with nested splats and subassignments' do
+      outputs = Annotations.annotate_inputs(
+          [['(stdin)', 'a, *b, (c, *d, e) = 1, 2, 3, [4, 5, 6, 3, 4]']])
+      lhs = MultipleLHSExpression.new(outputs[0][1][1][0][1])
+      rhs = MultipleRHSExpression.new(outputs[0][1][1][0][2])
+      lvals = outputs[0][1][1][0][1]
+      lhs.assignment_pairs(rhs.constant_values).should ==
+          [[lvals[1][0], 1], [lvals[2], [2, 3]], [lvals[3][0][1][1][0], 4],
+           [lvals[3][0][1][2], [5, 6, 3]], [lvals[3][0][1][3][0], 4]]
     end
   end
 end
