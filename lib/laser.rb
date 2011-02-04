@@ -48,7 +48,7 @@ require 'laser/rake/task'
 require 'laser/warning'
 require 'laser/scanner'
 
-%w(class_definitions.rb constants.rb).map do |file|
+%w(class_definitions.rb).map do |file|
   path = File.join(File.dirname(__FILE__), 'laser', 'standard_library', file)
   [path, File.read(path)]
 end.tap do |tuples|

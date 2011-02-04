@@ -255,6 +255,11 @@ module Laser
         
         if assgn_expression.is_constant
           binding_pairs = assgn_expression.assignment_pairs
+          binding_pairs.each do |name, val|
+            if name.expanded_identifier =~ /^[A-Z]/
+              @current_scope.proper_variable_lookup(name.expanded_identifier).bind!(val, true)
+            end
+          end
         end
       end
       
