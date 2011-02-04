@@ -18,7 +18,7 @@ module Laser
     def self.all_warnings
       @all_warnings ||= [self]
     end
-    
+
     # Returns all "concrete" warnings, that is, those that have an actual
     # implementation. No meta-warnings like FileWarning/LineWarning.
     #
@@ -74,7 +74,7 @@ module Laser
     end
 
     # Default initializer.
-    def initialize(file, body, settings={})
+    def initialize(file, body, settings = {})
       super(self.class.short_desc, file, body, 0, self.class.severity)
       @settings = settings
     end
@@ -106,7 +106,7 @@ module Laser
       end
     end
 
-    def indent(string, amt=nil)
+    def indent(string, amt = nil)
       amt ||= self.body.match(/^(\s*)/)[1].size
       ' ' * amt + string.lstrip
     end

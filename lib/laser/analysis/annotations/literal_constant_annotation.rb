@@ -39,7 +39,8 @@ module Laser
         end
       end
       
-      add :string_content do |node, *parts|
+      add :string_content do |node|
+        parts = node.children
         parts.each { |part| visit part }
         if (node.is_constant = parts.all?(&:is_constant))
           wrap(node, ClassRegistry['String'], parts.map(&:constant_value).map(&:raw_object).join)
