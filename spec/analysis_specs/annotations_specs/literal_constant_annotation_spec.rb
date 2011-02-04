@@ -243,6 +243,17 @@ describe LiteralConstantAnnotation do
   end
   
   describe 'array literals' do
+    it 'can evaluate empty hashes' do
+      input = 'a =  [ ]'
+      tree = Sexp.new(Ripper.sexp(input))
+      ParentAnnotation.new.annotate_with_text(tree, input)
+      SourceLocationAnnotation.new.annotate_with_text(tree, input)
+      LiteralConstantAnnotation.new.annotate_with_text(tree, input)
+      list = tree[1]
+      list[0][2].is_constant.should be true
+      list[0][2].constant_value.should == []
+    end
+
     it 'should find the constant value if all members are constant' do
       input = 'a = [:a, 3.14, "hello", /abc/x]'
       tree = Sexp.new(Ripper.sexp(input))
@@ -266,6 +277,17 @@ describe LiteralConstantAnnotation do
   end
   
   describe 'hash literals' do
+    it 'can evaluate empty hashes' do
+      input = 'a = {}'
+      tree = Sexp.new(Ripper.sexp(input))
+      ParentAnnotation.new.annotate_with_text(tree, input)
+      SourceLocationAnnotation.new.annotate_with_text(tree, input)
+      LiteralConstantAnnotation.new.annotate_with_text(tree, input)
+      list = tree[1]
+      list[0][2].is_constant.should be true
+      list[0][2].constant_value.should == {}
+    end
+
     it 'can evaluate simple constant hashes' do
       input = 'a = {:a => :b, 3 => 2, "hi" => "world", :a => :c}'
       tree = Sexp.new(Ripper.sexp(input))

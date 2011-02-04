@@ -34,6 +34,11 @@ module Laser
               end
             end
           end
+          
+          def inspect
+            args.inspect
+          end
+          
           # Runs the filter on the given node, with the visitor object as the
           # 'self'. That way we create the illusion of methods using the #add
           # syntax.
@@ -48,6 +53,9 @@ module Laser
             rescue Error => err
               err.ast_node = node
               node.errors << err
+            rescue StandardError => err
+              err.message.replace(err.message + " (Visitor #{self.inspect} Occurred at node #{node.inspect})")
+              raise err
             end
           end
         end

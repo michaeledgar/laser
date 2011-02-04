@@ -98,8 +98,13 @@ module Laser
       
       add :hash do |node, part|
         visit part
-        node.is_constant = part.is_constant
-        node.constant_value = part.constant_value
+        if part.nil?
+          node.is_constant = true
+          wrap(node, ClassRegistry['Hash'], {})
+        else
+          node.is_constant = part.is_constant
+          node.constant_value = part.constant_value
+        end
       end
       
       add :symbol do |node, ident|
@@ -127,8 +132,9 @@ module Laser
       
       add :array do |node, parts|
         visit parts
-        if (node.is_constant = parts.all?(&:is_constant))
-          wrap(node, ClassRegistry['Array'], parts.map(&:constant_value).map(&:raw_object))
+        if (node.is_constant = parts.nil? || parts.all?(&:is_constant))
+          value = parts.nil? ? [] : parts.map(&:constant_value).map(&:raw_object)
+          wrap(node, ClassRegistry['Array'], value)
         end
       end
       
