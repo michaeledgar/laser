@@ -1,3 +1,4 @@
+RUBY_VERSION = '1.9.2'
 module Kernel
 end
 module Comparable
@@ -5,6 +6,7 @@ end
 class Object
   include Kernel
 end
+
 class Hash
 end
 class Array

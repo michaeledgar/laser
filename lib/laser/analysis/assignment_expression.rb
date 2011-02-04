@@ -27,7 +27,11 @@ module Laser
       end
       
       def assignment_pairs(values)
-        [[@node, values]]
+        if Array === values && values.size == 1
+          [[@node, values.first]]
+        else
+          [[@node, values]]
+        end
       end
     end
 
@@ -83,6 +87,7 @@ module Laser
           splat_count = [0, values.size - @pre_star.size - @post_star.size].max
           splat_values = values[@pre_star.size, splat_count]
           post_values = values[@pre_star.size + splat_count..-1]
+
           pre_pairs = @pre_star.zip(pre_values).map do |elt, val|
             elt.assignment_pairs(val)
           end.inject(&:concat)
@@ -90,6 +95,7 @@ module Laser
           post_pairs = @post_star.zip(post_values).map do |elt, val|
             elt.assignment_pairs(val)
           end.inject(&:concat)
+
           pre_pairs.concat(star_pair).concat(post_pairs)
         end
       end
@@ -244,6 +250,10 @@ module Laser
       # pre-contract: @rhs.is_constant.should be true
       def assignment_pairs
         @lhs.assignment_pairs(@rhs.constant_values)
+      end
+      
+      def is_constant
+        @rhs.is_constant
       end
     end
   end

@@ -44,6 +44,10 @@ module Laser
             Bindings::KeywordBinding.new('false', false_class.get_instance))
         Scope::GlobalScope.add_binding!(
             Bindings::KeywordBinding.new('nil', nil_class.get_instance))
+          
+        # Need literal classes or we can't analyze anything
+        string_class = LaserClass.new(class_class, Scope::GlobalScope, 'String')
+        regexp_class = LaserClass.new(class_class, Scope::GlobalScope, 'Regexp')
 
       rescue StandardError => err
         new_exception = BootstrappingError.new("Bootstrapping failed: #{err.message}")

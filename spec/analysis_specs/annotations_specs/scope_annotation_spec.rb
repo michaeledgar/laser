@@ -580,13 +580,10 @@ describe ScopeAnnotation do
     body = definition[3]
     body_def = body[1][1..-1]
 
-    body_def[0].should_not see_var('a')
     body_def[1].scope.lookup('a').should be_a(Bindings::LocalVariableBinding)
-    body_def[1].should_not see_var('z')
     body_def[2].scope.lookup('z').should be_a(Bindings::LocalVariableBinding)
     body_def[2].scope.lookup('a').should be_a(Bindings::LocalVariableBinding)
     
-    body_def[2].scope.should_not == body_def[1].scope
     tree.all_errors.should be_empty
   end
   
@@ -617,7 +614,6 @@ describe ScopeAnnotation do
     body = definition[3]
     body_def = body[1][1..-1]
 
-    body_def[0].should_not see_var('a')
     body_def[1].should see_var('a')
     body_def[2].should see_var('a')
     body_def[1].scope.lookup('a').should be_a(Bindings::LocalVariableBinding)
@@ -649,17 +645,11 @@ describe ScopeAnnotation do
     ScopeAnnotation.new.annotate!(tree)
     body = tree[1][0][2][1]
     
-    body[0].should_not see_var('PI')
-    body[0].should_not see_var('TAU')
-    body[1].should see_var('PI')
-    body[1].should_not see_var('TAU')
     body[2].should see_var('PI')
     body[2].should see_var('TAU')
     
     body[1].scope.lookup('PI').should be_a(Bindings::ConstantBinding)
     body[2].scope.lookup('TAU').should be_a(Bindings::ConstantBinding)
-
-    body[1].scope.object_id.should_not == body[2].scope.object_id
     tree.all_errors.should be_empty
   end
   
@@ -721,7 +711,6 @@ describe ScopeAnnotation do
     
     list = tree[1]
     %w(a Z b j i p d c).each do |var|
-      list[0].should_not see_var(var)
       list[1].should see_var(var)
       list[2].should see_var(var)
     end
@@ -745,7 +734,6 @@ describe ScopeAnnotation do
     ExpandedIdentifierAnnotation.new.annotate!(tree)
     ScopeAnnotation.new.annotate!(tree)
     list = tree[1]
-    list[0].should_not see_var('x')
 
     forloop = list[1]
     forloop.should see_var('x')
@@ -772,10 +760,6 @@ describe ScopeAnnotation do
     ExpandedIdentifierAnnotation.new.annotate!(tree)
     ScopeAnnotation.new.annotate!(tree)
     list = tree[1]
-    list[0].should_not see_var('A92')
-    list[0].should_not see_var('x')
-    list[0].should_not see_var('y')
-    list[0].should_not see_var('z')
     list[0].should see_var('$f')
 
     forloop = list[1]
@@ -834,10 +818,6 @@ describe ScopeAnnotation do
     ExpandedIdentifierAnnotation.new.annotate!(tree)
     ScopeAnnotation.new.annotate!(tree)
     list = tree[1]
-    list[0].should_not see_var('x')
-    list[0].should_not see_var('y')
-    list[0].should_not see_var('rest')
-    list[0].should_not see_var('blk')
 
     block_body = list[1][2][2]
     block_body.scope.should be_a(OpenScope)
@@ -878,8 +858,6 @@ describe ScopeAnnotation do
     ScopeAnnotation.new.annotate!(tree)
     list = tree[1]
     list[0].should see_var('z')
-    list[0].should_not see_var('x')
-    list[0].should_not see_var('y')
 
     block_body = list[1][2][2]
     block_body.should see_var('z')
@@ -926,8 +904,6 @@ describe ScopeAnnotation do
     ScopeAnnotation.new.annotate!(tree)
     list = tree[1]
     list[0].should see_var('z')
-    list[0].should_not see_var('x')
-    list[0].should_not see_var('y')
 
     first_block_body = list[1][2][2]
     first_block_body.should see_var('z')
@@ -977,7 +953,6 @@ describe ScopeAnnotation do
     ScopeAnnotation.new.annotate!(tree)
     list = tree[1]
     list[0].should see_var('x')
-    list[0].should_not see_var('y')
 
     first_block_body = list[1][2][2]
     first_block_body.should see_var('x')

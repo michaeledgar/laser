@@ -177,7 +177,7 @@ module Laser
       end
       
       match_method_call 'private' do |node, args|
-        if node.runtime == :load && (@current_scope == Scope::GlobalScope ||
+        if node.runtime == :load && (@current_scope.parent.nil? ||
            @current_scope.self_ptr.klass.ancestors.include?(ClassRegistry['Module']))
           if args.empty?
             @visibility = :private
@@ -188,7 +188,7 @@ module Laser
       end
       
       match_method_call 'public' do |node, args|
-        if node.runtime == :load && (@current_scope == Scope::GlobalScope ||
+        if node.runtime == :load && (@current_scope.parent.nil? ||
            @current_scope.self_ptr.klass.ancestors.include?(ClassRegistry['Module']))
           if args.empty?
             @visibility = :public
@@ -252,12 +252,15 @@ module Laser
         node.scope = @current_scope
         visit names
         visit vals
+        
+        if assgn_expression.is_constant
+          binding_pairs = assgn_expression.assignment_pairs
+        end
       end
       
       # Ensures bindings exist for the given variable names.
       def bind_variable_names(names)
         unless names.all? { |name| @current_scope.sees_var?(name) }
-          @current_scope = @current_scope.dup
           names.each do |name|
             next if @current_scope.sees_var?(name)
             binding_class = case name[0,1]

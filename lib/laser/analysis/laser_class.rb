@@ -114,7 +114,7 @@ module Laser
       # scope. This is computed before creating the module.
       def submodule_path(new_mod_name)
         scope = self.scope.parent
-        new_mod_full_path = scope == Scope::GlobalScope ? '' : scope.path
+        new_mod_full_path = scope.parent.nil? ? '' : scope.path
         new_mod_full_path += '::' unless new_mod_full_path.empty?
         new_mod_full_path += new_mod_name
       end
@@ -135,7 +135,7 @@ module Laser
       # If this is a new, custom module, we can update the constant
       # table and perform module initialization.
       def initialize_scope
-        if @scope && @scope != Scope::GlobalScope
+        if @scope && !(@scope.parent.nil?)
           @scope.self_ptr = self
           @scope.parent.constants[name] = self.binding if @scope.parent
           @scope.locals['self'] = self.binding

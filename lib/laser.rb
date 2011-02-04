@@ -48,5 +48,9 @@ require 'laser/rake/task'
 require 'laser/warning'
 require 'laser/scanner'
 
-Laser::SexpAnalysis.analyze_inputs([[File.join(File.dirname(__FILE__), 'laser', 'standard_library', 'class_definitions.rb'),
-                                    File.read(File.join(File.dirname(__FILE__), 'laser', 'standard_library', 'class_definitions.rb'))]])
+%w(class_definitions.rb constants.rb).map do |file|
+  path = File.join(File.dirname(__FILE__), 'laser', 'standard_library', file)
+  [path, File.read(path)]
+end.tap do |tuples|
+  Laser::SexpAnalysis.analyze_inputs(tuples)
+end
