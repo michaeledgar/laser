@@ -18,6 +18,10 @@ module Laser
         @node = lhs_node
       end
       
+      def contains_messages?
+        @node.type == :aref_field || @node.type == :field
+      end
+      
       def size
         names.size
       end
@@ -64,6 +68,10 @@ module Laser
       
       def wrap_as_lhs(list)
         list.map { |x| LHSExpression.new(x) }
+      end
+      
+      def contains_messages?
+        @elements.all?(&:contains_messages?)
       end
       
       def names
@@ -253,7 +261,7 @@ module Laser
       end
       
       def is_constant
-        @rhs.is_constant
+        !@lhs.contains_messages? && @rhs.is_constant
       end
     end
   end

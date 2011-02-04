@@ -66,10 +66,10 @@ describe Scanner do
     end
 
     it 'fixes class definitions' do
-      warnings = @fix_scanner.scan("class Hello\n  a+b\nend", '(stdin)')
+      warnings = @fix_scanner.scan("class Hello\n  1+2\nend", '(stdin)')
       warnings.size.should == 1
       warnings[0].should be_a(OperatorSpacing)
-      @fix_scanner_stdout.string.should == "class Hello\n  a + b\nend"
+      @fix_scanner_stdout.string.should == "class Hello\n  1 + 2\nend"
     end
   end
 end

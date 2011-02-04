@@ -278,6 +278,7 @@ module Laser
       
       # Ensures bindings exist for the given variable names.
       def bind_variable_names(names)
+        names = names.compact  # nil in 'names' represents a field, i.e. abc.foo = or abc[foo] =
         unless names.all? { |name| @current_scope.sees_var?(name) }
           names.each do |name|
             next if @current_scope.sees_var?(name)
@@ -308,7 +309,7 @@ module Laser
       # any block *at all*: check for arguments, create a new scope with those arguments.
       add :method_add_block do |node, callnode, blocknode|
         argnode, body = blocknode.children
-        arglist = Signature.arg_list_for_arglist(argnode[1])
+        arglist = argnode ? Signature.arg_list_for_arglist(argnode[1]) : []
         
         method_locals = Hash[arglist.map { |arg| [arg.name, arg] }]
         new_scope = OpenScope.new(@current_scope, @current_scope.self_ptr, {}, method_locals)

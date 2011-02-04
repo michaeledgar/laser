@@ -154,7 +154,7 @@ module Laser
 
     def scan_for_warnings(warnings, content, filename)
       warnings.map! { |warning| warning.new(filename, content, @settings)}
-      warnings.map { |warning| warning.generated_warnings(warning.body)}.flatten.uniq
+      warnings.map { |warning| warning.generated_warnings(warning.body)}.flatten
     end
   end
 end

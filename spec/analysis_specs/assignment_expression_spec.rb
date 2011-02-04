@@ -1,5 +1,9 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 
+describe SexpAnalysis::LHSExpression do
+  
+end
+
 describe SexpAnalysis::SingleLHSExpression do
   describe '#name' do
     it 'extracts the name from the identifier wrapped by the SingleLHSExpression' do

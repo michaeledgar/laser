@@ -962,6 +962,19 @@ describe ScopeAnnotation do
     tree.all_errors.should be_empty
   end
   
+  it 'handles blocks with *no* variables' do
+    tree = Sexp.new(Ripper.sexp('x = 10; [].each { x }'))
+    ExpandedIdentifierAnnotation.new.annotate!(tree)
+    ScopeAnnotation.new.annotate!(tree)
+    list = tree[1]
+    list[0].should see_var('x')
+
+    first_block_body = list[1][2][2]
+    first_block_body.should see_var('x')
+    
+    tree.all_errors.should be_empty
+  end
+  
   it 'handles module inclusions done in the typical method-call fashion' do
     input = 'module A113; end; module B113; end; class C113; include A113, B113; end'
     tree = Sexp.new(Ripper.sexp(input))
