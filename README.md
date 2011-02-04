@@ -38,7 +38,10 @@ Details are always forthcoming, but:
 like similar linting tools for other languages.  
 **3. Common Semantic Analyses** - dead-code discovery, yield-ability, raise-ability,
 unused variables/arguments, and so on.  
-**4. Documentation Generation** - why not?  
+**4. Documentation Generation** - By this, I mean inserting comments in your code documenting
+it. I don't want to try to replace YARD, which has already done tons of work in parsing docs
+and generating beautiful output as a result. But LASER can definitely, say, insert a
+`@raise [SystemExitError]` when it detects a call to `Kernel#exit`!
 **5. Pluggable Annotation Parsers** - to get the most out of LASER, you may wish to
 annotate your code with types or arbitrary properties (such as method purity/impurity,
 visibility, etc). This requires an annotation syntax, which of course will lead to religious
