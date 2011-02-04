@@ -5,7 +5,7 @@ describe Visitor do
   before do
     @class = Class.new do
       include Visitor
-      def visit_foo(node)
+      add :foo do |node|
         node.visited = node[1]
       end
       add :bar do |node|
@@ -14,17 +14,6 @@ describe Visitor do
       add(proc {|node| node.children.any? && node[1] == 5 }) do |node|
         node.lotto_winner = true
       end
-    end
-  end
-  
-  describe '#method_missing' do
-    it "calls the default handler if the method looks like 'visit_'" do
-      node = OpenStruct.new
-      node.children = []
-      expect { @class.new.visit_sillybar(node) }.to_not raise_error
-    end
-    it 'raises if no handler method is defined' do
-      expect { @class.new.sillybar }.to raise_error(NoMethodError)
     end
   end
   
@@ -61,7 +50,7 @@ describe Visitor do
           @count += 1
           node.children.select {|x| Sexp === x}.each {|x| visit(x)}
         end
-        def visit_bar(node)
+        add :bar do |node|
         end
       end
       a = Sexp.new([:a, [:b, [:foo, false], 2, 3], [:c, [:bar, 19, 22], [:bar, 23, 2]]])

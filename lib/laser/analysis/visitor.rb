@@ -109,7 +109,7 @@ module Laser
         when Sexp
           case node[0]
           when ::Symbol
-            send("visit_#{node[0]}", node)
+            try_filters node or default_visit node
           when Array
             default_visit(node)
           end
@@ -141,17 +141,6 @@ module Laser
           end
         end
         any_ran
-      end
-      
-      # The visitor handles dispatch on a node of type :type by calling visit_type.
-      #
-      # generates: /visit_([a-z]+)/
-      def method_missing(meth, *args, &blk)
-        if meth.to_s[0,6] == 'visit_' && meth.to_s.size > 6
-          try_filters args.first or default_visit args.first
-        else
-          super
-        end
       end
       
       ################## Source text manipulation methods ###############
