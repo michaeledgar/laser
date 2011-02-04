@@ -8,6 +8,15 @@ describe SexpAnalysis::SingleLHSExpression do
       SingleLHSExpression.new(tree).names.should == ['a']
     end
   end
+  
+  describe '#assignment_pairs' do
+    it 'should simply pair the given values to the LHS node' do
+      tree = Sexp.new([:var_field, [:@ident, "$b", [1, 0]]])
+      ExpandedIdentifierAnnotation.new.annotate!(tree)
+      SingleLHSExpression.new(tree).assignment_pairs(4).should == [[tree, 4]]
+      SingleLHSExpression.new(tree).assignment_pairs([1, 2]).should == [[tree, [1, 2]]]
+    end
+  end
 end
 
 describe SexpAnalysis::MultipleLHSExpression do
@@ -23,6 +32,49 @@ describe SexpAnalysis::MultipleLHSExpression do
       tree = Sexp.new(Ripper.sexp(input))[1][0][1]
       ExpandedIdentifierAnnotation.new.annotate!(tree)
       MultipleLHSExpression.new(tree).names.should == ['a', 'Z', 'b', '$f', 'j', 'i', 'p', 'd', 'e', 'k', '$l']
+    end
+  end
+  
+  describe '#assignment_pairs' do
+    it 'should pair off each constituent element with a value' do
+      outputs = Annotations.annotate_inputs(
+          [['(stdin)', 'a, b, c, d = 1, 2, [3, 4]']])
+      lhs = MultipleLHSExpression.new(outputs[0][1][1][0][1])
+      rhs = MultipleRHSExpression.new(outputs[0][1][1][0][2])
+      lvals = outputs[0][1][1][0][1]
+      lhs.assignment_pairs(rhs.constant_values).should ==
+          [[lvals[0], 1], [lvals[1], 2], [lvals[2], [3, 4]], [lvals[3], nil]]
+    end
+    
+    it 'should pair off each constituent element with a value with subassignment' do
+      outputs = Annotations.annotate_inputs(
+          [['(stdin)', 'a, b, (c, d) = 1, 2, [3, 4]']])
+      lhs = MultipleLHSExpression.new(outputs[0][1][1][0][1])
+      rhs = MultipleRHSExpression.new(outputs[0][1][1][0][2])
+      lvals = outputs[0][1][1][0][1]
+      lhs.assignment_pairs(rhs.constant_values).should ==
+          [[lvals[0], 1], [lvals[1], 2], [lvals[2][1][0], 3], [lvals[2][1][1], 4]]
+    end
+    
+    it 'can pair off with nested subassignment' do
+      outputs = Annotations.annotate_inputs(
+          [['(stdin)', 'a, b, (c, (d, f), g), e = 1, 2, [[9, 8], [3, 4], 5], 6']])
+      lhs = MultipleLHSExpression.new(outputs[0][1][1][0][1])
+      rhs = MultipleRHSExpression.new(outputs[0][1][1][0][2])
+      lvals = outputs[0][1][1][0][1]
+      lhs.assignment_pairs(rhs.constant_values).should ==
+          [[lvals[0], 1], [lvals[1], 2], [lvals[2][1][0], [9, 8]],
+           [lvals[2][1][1][1][0], 3], [lvals[2][1][1][1][1], 4], [lvals[2][1][2], 5],
+           [lvals[3], 6]]
+    end
+    
+    it 'works with splats and no subassignments' do
+      outputs = Annotations.annotate_inputs(
+          [['(stdin)', 'a, *b, c, d = 1, 2, [3, 4]']])
+      lhs = MultipleLHSExpression.new(outputs[0][1][1][0][1])
+      rhs = MultipleRHSExpression.new(outputs[0][1][1][0][2])
+      lvals = outputs[0][1][1][0][1]
+      lhs.assignment_pairs(rhs.constant_values).should == [[lvals[1][0], 1], [lvals[2], []], [lvals[3][0], 2], [lvals[3][1], [3, 4]]]
     end
   end
 end
