@@ -24,6 +24,7 @@ check them off when I'm done.
 9. Indentation (P2)
 10. Require ! for methods that mutate state (P2)
 11. Require ? for methods that always return booleans
+12. MyStruct = Struct.new, not MyStruct < Struct.new
 
 ## General-Use Information
 1. Private Method (P0)

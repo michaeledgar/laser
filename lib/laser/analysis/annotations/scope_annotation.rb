@@ -22,6 +22,10 @@ module Laser
                 ast, MAJOR_ERROR)
         end
       end
+      
+      class DynamicSuperclassError < Laser::Error
+        severity MAJOR_ERROR
+      end
 
       add_property :scope
       depends_on :RuntimeAnnotation
@@ -42,9 +46,13 @@ module Laser
       
       # Load-time binding resolution. This should run *before* any method-matching, since
       # it directly affects method-matching!
-      add :var_ref, :const_ref, :var_field do |node, ref|
+      add :var_ref, :const_ref, :const_path_ref, :var_field do |node, ref|
         default_visit node
-        node.binding = @current_scope.proper_variable_lookup(ref.expanded_identifier)
+        node.binding = @current_scope.proper_variable_lookup(node.expanded_identifier)
+        if Bindings::ConstantBinding === node.binding
+          node.is_constant = true
+          node.constant_value = node.binding.value
+        end
       end
 
       # Visits a module node and either creates or re-enters the corresponding scope, annotating the
@@ -69,8 +77,13 @@ module Laser
       # TODO(adgar): raise if this occurs within a method definition
       add :class do |node, path_node, superclass_node, body|
         # TODO(adgar): Make this do real lookup.
-        if superclass_node
-        then superclass = @current_scope.proper_variable_lookup(superclass_node.expanded_identifier).value
+        visit superclass_node
+        if superclass_node && superclass_node.is_constant
+        then superclass = superclass_node.constant_value
+        elsif superclass_node 
+          raise DynamicSuperclassError.new(
+              "Superclass of #{path_node.expanded_identifier}" +
+              " is not a constant value. bad idea!", superclass_node)
         else superclass = ClassRegistry['Object']
         end
         default_visit(path_node)
