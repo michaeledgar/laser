@@ -48,31 +48,14 @@ module Laser
         self_ptr.path
       end
 
-      # Looks up a binding with the given name.
-      # Raises ScopeLookupFailure if the binding is not found.
-      def lookup(str)
-        if str =~ /^[A-Z]/ && constants[str]
-        then constants[str]
-        elsif str =~ /^[A-Z]/ && parent
-          begin
-            parent.lookup(str)
-          rescue ScopeLookupFailure => err
-            err.scope = self
-            raise err
-          end
-        elsif str[0,1] == '$' then lookup_global str
-        else lookup_local str
-        end
-      end
-
       # Proper variable lookup. The old ones were hacks.
-      def proper_variable_lookup(str)
+      def lookup(str)
         if str[0,2] == '::'
-          Scope::GlobalScope.proper_variable_lookup(str[2..-1])
+          Scope::GlobalScope.lookup(str[2..-1])
         elsif str.include?('::')
           parts = str.split('::')
-          final_scope = parts[0..-2].inject(self) { |scope, part| scope.proper_variable_lookup(part).scope }
-          final_scope.proper_variable_lookup(parts.last)
+          final_scope = parts[0..-2].inject(self) { |scope, part| scope.lookup(part).scope }
+          final_scope.lookup(parts.last)
         elsif str =~ /^[A-Z]/ then lookup_constant(str)
         elsif str =~ /^\$/ then lookup_global(str)
         elsif str =~ /^@/ then lookup_ivar(str)
@@ -116,7 +99,7 @@ module Laser
       
       # Does this scope see the given variable name?
       def sees_var?(var)
-        proper_variable_lookup(var) rescue false
+        lookup(var) rescue false
       end
     end
     

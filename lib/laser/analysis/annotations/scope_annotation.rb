@@ -48,7 +48,7 @@ module Laser
       # it directly affects method-matching!
       add :var_ref, :const_ref, :const_path_ref, :var_field do |node, ref|
         default_visit node
-        node.binding = @current_scope.proper_variable_lookup(node.expanded_identifier)
+        node.binding = @current_scope.lookup(node.expanded_identifier)
         if Bindings::ConstantBinding === node.binding
           node.is_constant = true
           node.constant_value = node.binding.value
@@ -104,7 +104,7 @@ module Laser
       # and yielding on failure.
       def lookup_or_create(scope, name)
         begin
-          scope.lookup(name).scope
+          scope.lookup(name).value.scope
         rescue Scope::ScopeLookupFailure => err
           yield
         end
@@ -144,7 +144,7 @@ module Laser
         when :const_path_ref
           left, right = path_node.children
           new_class_name = right.expanded_identifier
-          current_scope = current_scope.proper_variable_lookup(left.expanded_identifier).value.scope
+          current_scope = current_scope.lookup(left.expanded_identifier).value.scope
         when :top_const_ref
           current_scope = Scope::GlobalScope
           new_class_name = path_node.expanded_identifier
@@ -168,7 +168,7 @@ module Laser
           args.reverse.each do |arg|
             if arg.expanded_identifier
               @current_scope.self_ptr.include_module(
-                  @current_scope.proper_variable_lookup(arg.expanded_identifier).value)
+                  @current_scope.lookup(arg.expanded_identifier).value)
             end
           end
         else
@@ -181,7 +181,7 @@ module Laser
           args.reverse.each do |arg|
             if arg.expanded_identifier
               @current_scope.self_ptr.singleton_class.include_module(
-                  @current_scope.proper_variable_lookup(arg.expanded_identifier).value)
+                  @current_scope.lookup(arg.expanded_identifier).value)
             end
           end
         else
@@ -270,7 +270,7 @@ module Laser
           binding_pairs = assgn_expression.assignment_pairs
           binding_pairs.each do |name, val|
             if name.expanded_identifier =~ /^[A-Z]/
-              @current_scope.proper_variable_lookup(name.expanded_identifier).bind!(val, true)
+              @current_scope.lookup(name.expanded_identifier).bind!(val, true)
             end
           end
         end

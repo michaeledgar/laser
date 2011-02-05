@@ -29,7 +29,7 @@ describe 'the automatically analyzed Ruby Standard Library' do
 
   describe 'RUBY_VERSION' do
     it 'should be 1.9.2' do
-      Scope::GlobalScope.proper_variable_lookup('RUBY_VERSION').value.should == "1.9.2"
+      Scope::GlobalScope.lookup('RUBY_VERSION').value.should == "1.9.2"
     end
   end
 

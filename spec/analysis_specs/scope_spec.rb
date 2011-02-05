@@ -76,7 +76,7 @@ shared_examples_for Scope do
       @duplicate = @nested_scope.dup
     end
     it 'can duplicate itself, shallowly, retaining references to old bindings' do
-      @duplicate.proper_variable_lookup('ABD::OOP').should be @nested_scope.proper_variable_lookup('ABD::OOP')
+      @duplicate.lookup('ABD::OOP').should be @nested_scope.lookup('ABD::OOP')
       @duplicate.lookup('a').should be @a
       @duplicate.lookup('b').should be @b
       @duplicate.lookup('c').should be @c
@@ -101,10 +101,10 @@ shared_examples_for Scope do
       new_a = mock
       @duplicate.constants['ABC999'] = new_a
       expect {
-        @nested_scope.proper_variable_lookup('ABC999')
+        @nested_scope.lookup('ABC999')
       }.to raise_error(Scope::ScopeLookupFailure)
       begin
-        @nested_scope.proper_variable_lookup('ABC999')
+        @nested_scope.lookup('ABC999')
       rescue Scope::ScopeLookupFailure => err
         err.scope.should == @nested_scope
         err.query.should == 'ABC999'
