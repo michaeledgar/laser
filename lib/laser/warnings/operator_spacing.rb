@@ -1,6 +1,5 @@
 # Warning for not putting space around operators
 class Laser::OperatorSpacing < Laser::LineWarning
-  include Laser::Advice::CommentAdvice
   OPERATORS = %w(+ - / * != !== = == === ~= !~ += -= *= /= ** **= ||= || && &&= &= |= | & ^)
 
   type :style

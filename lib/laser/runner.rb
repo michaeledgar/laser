@@ -58,7 +58,7 @@ module Laser
     def get_settings
       warning_opts = get_warning_options
       Trollop::options do
-        banner 'Ask Peeves - the Ruby Linter'
+        banner 'LASER: Lexically- and Semantically-Enriched Ruby'
         opt :fix, 'Should errors be fixed in-line?', short: '-f'
         opt :display, 'Should errors be displayed?', short: '-b', default: true
         opt :"report-fixed", 'Should fixed errors be reported anyway?', short: '-r'

@@ -85,14 +85,15 @@ describe Runner do
     before do
       @runner = Runner.new(['--fix', '--report-fixed', '--line-length', '103', 'hello', 'there'])
       @settings, @arguments = @runner.collect_options_and_arguments
-      @new_warning = Warning.all_warnings.last
     end
 
     after do
-      current = @new_warning
-      while (current = current.superclass) && current != Warning.superclass
-        current.all_warnings.delete @new_warning
+      new_warning = current = Warning.all_warnings.find do |warning|
+        warning.superclass == GenericLineLengthWarning && warning.line_length_limit == 103
       end
+      while (current = current.superclass) && current != Warning.superclass
+        current.all_warnings.delete new_warning
+      end if current
     end
 
     it 'finds both flags' do
