@@ -25,4 +25,27 @@ module Laser
       @ast_node, @severity = ast_node, severity
     end
   end
+  
+  class ReopenedClassAsModuleError < Laser::Error
+    severity MAJOR_ERROR
+  end
+
+  class ReopenedModuleAsClassError < Laser::Error
+    severity MAJOR_ERROR
+  end
+
+  class ConstantInForLoopError < Laser::Error
+    def initialize(const_name, ast)
+      super("The constant #{const_name} is a loop variable in a for loop.",
+            ast, MAJOR_ERROR)
+    end
+  end
+  
+  class DynamicSuperclassError < Laser::Error
+    severity MAJOR_ERROR
+  end
+  
+  class NoSuchMethodError < Laser::Error
+    severity MAJOR_ERROR
+  end
 end

@@ -8,25 +8,6 @@ module Laser
     # Depends on: ExpandedIdentifierAnnotation
     # This is the annotator for the parent annotation.
     class ScopeAnnotation < BasicAnnotation
-      class ReopenedClassAsModuleError < Laser::Error
-        severity MAJOR_ERROR
-      end
-
-      class ReopenedModuleAsClassError < Laser::Error
-        severity MAJOR_ERROR
-      end
-
-      class ConstantInForLoopError < Laser::Error
-        def initialize(const_name, ast)
-          super("The constant #{const_name} is a loop variable in a for loop.",
-                ast, MAJOR_ERROR)
-        end
-      end
-      
-      class DynamicSuperclassError < Laser::Error
-        severity MAJOR_ERROR
-      end
-
       add_property :scope
       depends_on :RuntimeAnnotation
       depends_on :ExpandedIdentifierAnnotation
@@ -46,12 +27,30 @@ module Laser
       
       # Load-time binding resolution. This should run *before* any method-matching, since
       # it directly affects method-matching!
-      add :var_ref, :const_ref, :const_path_ref, :var_field do |node, ref|
+      add :var_field do |node, ref|
         default_visit node
         node.binding = @current_scope.lookup(node.expanded_identifier)
         if Bindings::ConstantBinding === node.binding
           node.is_constant = true
           node.constant_value = node.binding.value
+        end
+      end
+      
+      # Here we handle Ruby's resolution of rvalues: if it looks like a local variable,
+      # then we look it up, and if we fail, we assume it's a no-arg method call. If it
+      # looks like a constant, then it's a constant!
+      add :var_ref, :const_ref, :const_path_ref do |node, ref|
+        default_visit node
+        begin
+          node.binding = @current_scope.lookup(node.expanded_identifier)
+          if Bindings::ConstantBinding === node.binding
+            node.is_constant = true
+            node.constant_value = node.binding.value
+          end
+        rescue Scope::ScopeLookupFailure => err
+          if err.query =~ /^[A-Z]/
+            raise err
+          end
         end
       end
 
@@ -217,6 +216,8 @@ module Laser
           if args.empty?
             @visibility = :protected
           end
+        elsif @current_scope.parent.nil?  # global scope
+          node.errors << NoSuchMethodError.new("No 'protected' method at the top level.", node)
         else
           default_visit node
         end
@@ -282,8 +283,8 @@ module Laser
         unless names.all? { |name| @current_scope.sees_var?(name) }
           names.each do |name|
             next if @current_scope.sees_var?(name)
-            binding_class = case name[0,1]
-                            when /[A-Z]/ then Bindings::ConstantBinding
+            binding_class = case name
+                            when /^[A-Z]/ then Bindings::ConstantBinding
                             else Bindings::LocalVariableBinding
                             end
             value = LaserObject.new(ClassRegistry['Object'], @current_scope)

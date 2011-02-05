@@ -1125,7 +1125,7 @@ describe ScopeAnnotation do
   #       [:var_ref, [:@ident, "z", [1, 24]]]]],
   #     nil, nil, nil]]]]
   it 'should generate an error if a local variable cannot be found' do
-    input = 'class A121; x = 10; y = z; end'
+    input = 'class A121; x = 10; y = Z223; end'
     tree = Sexp.new(Ripper.sexp(input))
     RuntimeAnnotation.new.annotate!(tree)
     ExpandedIdentifierAnnotation.new.annotate!(tree)
@@ -1134,7 +1134,7 @@ describe ScopeAnnotation do
     errors = tree.all_errors
     errors.should_not be_empty
     errors[0].should be_a(Scope::ScopeLookupFailure)
-    errors[0].query.should == 'z'
+    errors[0].query.should == 'Z223'
     errors[0].scope.self_ptr.should == ClassRegistry['A121'].scope.self_ptr
     errors[0].ast_node.should == tree[1][0][3][1][1][2]
     errors[0].ast_node.binding.should == nil
@@ -1171,6 +1171,37 @@ describe ScopeAnnotation do
     ClassRegistry['A124'].instance_methods['foobar'].visibility.should == :private
     ClassRegistry['A124'].instance_methods['silly'].visibility.should == :protected
     ClassRegistry['A124'].instance_methods['priv'].visibility.should == :private
+  end
+  
+  it 'uses a default private scope at the top level but can switch to public and private' do
+    input = 'def t11; end; public; def t12; end; private; def t13; end'
+    tree = Sexp.new(Ripper.sexp(input))
+    RuntimeAnnotation.new.annotate!(tree)
+    ExpandedIdentifierAnnotation.new.annotate!(tree)
+    ScopeAnnotation.new.annotate!(tree)
+
+    singleton = Scope::GlobalScope.self_ptr.singleton_class
+    singleton.instance_methods['t11'].visibility.should == :private
+    singleton.instance_methods['t12'].visibility.should == :public
+    singleton.instance_methods['t13'].visibility.should == :private
+  end
+  
+  it 'raises an error if you try to use protected at the top level' do
+    input = 'def t14; end; protected; def t15; end; public; def t16; end'
+    tree = Sexp.new(Ripper.sexp(input))
+    RuntimeAnnotation.new.annotate!(tree)
+    ExpandedIdentifierAnnotation.new.annotate!(tree)
+    ScopeAnnotation.new.annotate!(tree)
+
+    tree.all_errors.size.should be 1
+    tree.all_errors.first.should be_a(NoSuchMethodError)
+    tree.all_errors.first.message.should include('protected')
+    
+    # recovers by not changing visibility
+    singleton = Scope::GlobalScope.self_ptr.singleton_class
+    singleton.instance_methods['t14'].visibility.should == :private
+    singleton.instance_methods['t15'].visibility.should == :private
+    singleton.instance_methods['t16'].visibility.should == :public
   end
 end
   
