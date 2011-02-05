@@ -48,6 +48,7 @@ module Laser
           (w.name && w.name.index(only_name)) || (w.short_name && only_name.index(w.short_name))
         end
       end
+      require 'profile' if settings[:profile]
       ARGV.replace(['(stdin)']) if settings[:stdin]
     end
 
@@ -65,6 +66,7 @@ module Laser
         opt :only, 'Only consider the given warning (by short or full name)', short: '-O', type: :string
         opt :stdin, 'Read Ruby code from standard input', short: '-s'
         opt :"list-modules", 'Print the discovered, loaded modules'
+        opt :profile, 'Run the profiler during execution'
         warning_opts.each { |warning| opt(*warning) }
       end
     end
@@ -84,6 +86,7 @@ module Laser
       all_options.values
     end
 
+    # Prints the known modules after analysis.
     def print_modules
       SexpAnalysis::LaserModule.all_modules.map do |mod|
         if SexpAnalysis::LaserClass === mod && mod.superclass

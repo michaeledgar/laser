@@ -1,11 +1,18 @@
 # Warning for rescuing "Exception" or "Object".
 class Laser::SexpErrorWarning < Laser::FileWarning
-  severity 5
   type :dangerous
   short_desc "Error"
     
-  desc { "Found error #{error.inspect}" }
+  desc { error.message }
   setting_accessor :error
+
+  def line_number
+    error.ast_node.source_begin && error.ast_node.source_begin[0]
+  end
+  
+  def severity
+    error.severity
+  end
 
   def ==(other)
     super && self.error == other.error

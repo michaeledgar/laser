@@ -111,13 +111,16 @@ module Laser
       Annotations.annotate_inputs(inputs)
     end
     
+    PARSING_CACHE = {}
+    
     # Parses the given text.
     #
     # @param [String] body (self.body) The text to parse
     # @return [Sexp, NilClass] the sexp representing the input text.
     def parse(body = self.body)
+      return PARSING_CACHE[body] if PARSING_CACHE[body]
       pairs = SexpAnalysis.analyze_inputs([['(stdin)', body]])
-      pairs[0][1]
+      PARSING_CACHE[body] = pairs[0][1]
     end
     
     # Finds all sexps of the given type in the given Sexp tree.

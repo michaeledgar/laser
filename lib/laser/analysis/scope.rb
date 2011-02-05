@@ -8,7 +8,7 @@ module Laser
         attr_accessor :scope, :query
         def initialize(scope, query)
           @scope, @query = scope, query
-          super("OpenScope #{@scope.inspect} does not contain #{query.inspect}", nil)
+          super("Scope does not contain #{query.inspect}", nil, MAJOR_ERROR)
         end
       end
 
