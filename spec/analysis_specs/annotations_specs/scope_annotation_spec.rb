@@ -976,6 +976,19 @@ describe ScopeAnnotation do
     tree.all_errors.should be_empty
   end
   
+  it 'reports an error when a module is included unnecessarily' do
+    input = 'module A240; end; class B240; include A240; end; class C240 < B240; include A240; end'
+    tree = annotate_all(input)
+    
+    c240 = ClassRegistry['C240']
+    c240.should_not be nil
+    c240.ancestors.should == [ClassRegistry['C240'], ClassRegistry['B240'], ClassRegistry['A240'],
+                              ClassRegistry['Object'], ClassRegistry['Kernel']]
+    tree.all_errors.should_not be_empty
+    tree.all_errors.size.should == 1
+    tree.all_errors.first.should be_a(UselessIncludeError)
+  end
+  
   it 'handles module extensions done in the typical method-call fashion' do
     input = 'module A118; end; module B118; end; class C118; extend A118, B118; end'
     tree = annotate_all(input)
