@@ -419,7 +419,7 @@ module Laser
     # collide with ::Method.
     class LaserMethod
       extend ModuleExtensions
-      attr_reader :name, :signatures, :visibility
+      attr_reader :name, :signatures, :visibility, :arity
       attr_accessor :body_ast
       attr_accessor_with_default :pure, false
 
@@ -427,11 +427,20 @@ module Laser
         @name = name
         @signatures = []
         @visibility = visibility
+        @arity = nil
         yield self if block_given?
       end
 
       def add_signature!(signature)
         @signatures << signature
+        @arity = refine_arity(signature.arity)
+      end
+      
+      def refine_arity(new_arity)
+        return new_arity if @arity.nil?
+        new_begin = [new_arity.begin, @arity.begin].min
+        new_end = [new_arity.end, @arity.end].max
+        new_begin..new_end
       end
       
       def empty?

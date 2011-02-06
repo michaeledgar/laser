@@ -85,6 +85,23 @@ module Laser
         @argument_hash = Hash[arguments.map {|arg| [arg.name, arg]}]
       end
 
+      # Returns the arity of the signature.
+      def arity
+        min, max = 0, 0
+        arguments.each do |arg|
+          case arg.kind
+          when :positional
+            min += 1
+            max += 1
+          when :optional
+            max += 1
+          when :rest
+            max = Float::INFINITY
+          end
+        end
+        min..max
+      end
+
       # It's trivially clear that equal Signatures have equal mangled forms.
       # It's nice to notice that by using a space as the delimeter, the mangled
       # form is still all visible characters, but also the space will compare less

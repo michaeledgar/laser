@@ -1358,6 +1358,7 @@ end
       generic = ClassRegistry["#{bindings_mod}::GenericBinding"]
       generic.instance_variables['@name'].should be_a(Bindings::InstanceVariableBinding)
       generic.instance_variables['@value'].should be_a(Bindings::InstanceVariableBinding)
+      class_binding = ClassRegistry["#{bindings_mod}::ConstantBinding"]
       arg_binding = ClassRegistry["#{bindings_mod}::ArgumentBinding"]
       arg_binding.instance_variables['@name'].should be generic.instance_variables['@name']
       arg_binding.instance_variables['@value'].should be generic.instance_variables['@value']
@@ -1378,6 +1379,15 @@ end
       arg_binding_sig = arg_binding.instance_methods['initialize'].signatures.first
       arg_binding_sig.arguments.size.should == 4
       arg_binding_sig.arguments.map(&:name).should == ['name', 'value', 'kind', 'default_value']
+      
+      
+      generic.instance_methods['initialize'].arity.should == (2..2)
+      generic.instance_methods['bind!'].arity.should == (1..1)
+      generic.instance_methods['<=>'].arity.should == (1..1)
+      generic.instance_methods['scope'].arity.should == (0..0)
+      generic.instance_methods['class_used'].arity.should == (0..0)
+      class_binding.instance_methods['bind!'].arity.should == (1..2)
+      arg_binding.instance_methods['initialize'].arity.should == (3..4)
       
       # [:bodystmt,
       #  [[:super,

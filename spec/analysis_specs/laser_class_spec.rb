@@ -380,6 +380,23 @@ describe LaserMethod do
     end
   end
   
+  describe '#arity' do
+    it 'should compute the arity from the collection of signatures' do
+      sexp = Sexp.new(Ripper.sexp('def a(x, a=2, y=3, z, d, &blk); end'))
+      signature1 = Signature.for_definition_sexp('a', sexp, Sexp.new([]))
+      sexp = Sexp.new(Ripper.sexp('def a(y=3, z, d, &blk); end'))
+      signature2 = Signature.for_definition_sexp('a', sexp, Sexp.new([]))
+      sexp = Sexp.new(Ripper.sexp('def a(*rest); end'))
+      signature3 = Signature.for_definition_sexp('a', sexp, Sexp.new([]))
+      @method.add_signature!(signature1)
+      @method.arity.should == (3..5)
+      @method.add_signature!(signature2)
+      @method.arity.should == (2..5)
+      @method.add_signature!(signature3)
+      @method.arity.should == (0..Float::INFINITY)
+    end
+  end
+  
   describe '#name' do
     it 'returns the name' do
       @method.name.should == 'foobar'

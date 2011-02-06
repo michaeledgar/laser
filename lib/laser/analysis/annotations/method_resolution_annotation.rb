@@ -20,8 +20,8 @@ module Laser
         if (method = superclass.instance_methods[current_method.name])
           return method
         end
-        raise NoSuchMethodError.new("Called super in method '#{current_method.name}'" +
-                                    ", but no superclass has a method with that name.", node)
+        raise NoSuchMethodError.new("Called super in method '#{current_method.name}', " +
+                                    "but no superclass has a method with that name.", node)
       end
     end
   end

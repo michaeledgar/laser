@@ -42,6 +42,20 @@ describe Signature do
     end
   end
   
+  describe '#arity' do
+    it 'should compute a finite range without a rest param' do
+      sexp = Sexp.new(Ripper.sexp('def a(x, a=2, y=3, z, d, &blk); end'))
+      signature = Signature.for_definition_sexp('a', sexp, Sexp.new([]))
+      signature.arity.should == (3..5)
+    end
+    
+    it 'should compute an infinite range in the presence of a rest parameter' do
+      sexp = Sexp.new(Ripper.sexp('def a(x, a=2, y=3, *rest, z, d, &blk); end'))
+      signature = Signature.for_definition_sexp('a', sexp, Sexp.new([]))
+      signature.arity.should == (3..Float::INFINITY)
+    end
+  end
+  
   describe '::for_definition_sexp' do
     describe 'when given the definition of an empty method' do
       it 'creates a signature with an empty argument list' do
