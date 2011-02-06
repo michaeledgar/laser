@@ -16,17 +16,12 @@ module Laser
         if current_method.nil?
           raise NotInMethodError.new('Cannot call super outside of a method.', node)
         end
-        current_class = node.scope.self_ptr.klass.superclass
-        while current_class
-          if (method = current_class.instance_methods[current_method.name])
-            return method
-          end
-          current_class = current_class.superclass
+        superclass = node.scope.self_ptr.klass.superclass
+        if (method = superclass.instance_methods[current_method.name])
+          return method
         end
-        if current_class.nil?
-          raise NoSuchMethodError.new("Called super in method '#{current_method.name}'" +
-                                      ", but no superclass has a method with that name.", node)
-        end
+        raise NoSuchMethodError.new("Called super in method '#{current_method.name}'" +
+                                    ", but no superclass has a method with that name.", node)
       end
     end
   end
