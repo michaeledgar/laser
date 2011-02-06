@@ -7,12 +7,26 @@ module Laser
     class MethodResolutionAnnotation < BasicAnnotation
       add_property :method_estimate
       
-      add :super do |node|
+      add :super, :zsuper do |node|
+        node.method_estimate = Set.new([resolve_super_call(node)])
+      end
+      
+      def resolve_super_call(node)
         current_method = node.scope.method
         if current_method.nil?
           raise NotInMethodError.new('Cannot call super outside of a method.', node)
         end
-        
+        current_class = node.scope.self_ptr.klass.superclass
+        while current_class
+          if (method = current_class.instance_methods[current_method.name])
+            return method
+          end
+          current_class = current_class.superclass
+        end
+        if current_class.nil?
+          raise NoSuchMethodError.new("Called super in method '#{current_method.name}'" +
+                                      ", but no superclass has a method with that name.", node)
+        end
       end
     end
   end

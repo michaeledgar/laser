@@ -98,7 +98,7 @@ module Laser
         validate_module_path!(full_path)
         
         @path = full_path
-        @instance_methods = Hash.new { |hash, name| hash[name] = LaserMethod.new(name) }
+        @instance_methods = {}
         @instance_variables = {}
         @scope = scope
         @methods = {}

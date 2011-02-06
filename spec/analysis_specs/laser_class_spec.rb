@@ -96,12 +96,6 @@ shared_examples_for 'a Ruby module' do
       @b.instance_methods['foo'].signatures.should include(
           Signature.new('foo', @b.protocol, []))
     end
-    
-    it 'automatically creates the method if it is not already there' do
-      @b.add_signature! Signature.new('foomonkey', @b.protocol, [])
-      @b.instance_methods['foomonkey'].signatures.should include(
-          Signature.new('foomonkey', @b.protocol, []))
-    end
   end
   
   describe '#trivial?' do
