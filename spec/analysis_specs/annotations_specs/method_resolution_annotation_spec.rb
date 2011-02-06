@@ -5,7 +5,7 @@ describe LiteralTypeAnnotation do
   
   it_should_behave_like 'an annotator'
   
-  it 'adds the #class_estimate method to Sexp' do
+  it 'adds the #method_estimate method to Sexp' do
     Sexp.instance_methods.should include(:method_estimate)
   end
   

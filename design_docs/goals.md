@@ -20,7 +20,7 @@ check them off when I'm done.
 5. √ Useless Whitespace (P0)
 6. √ Parens in method declarations (P0)
 7. √ Useless Double Quotes/%Q (P0)
-8. Operator Spacing (P1)
+8. √ Operator Spacing (P1)
 9. Indentation (P2)
 10. Require ! for methods that mutate state (P2)
 11. Require ? for methods that always return booleans
@@ -41,7 +41,7 @@ check them off when I'm done.
 2. Incorrect # of arguments
 3. √ including already-included module
 4. √ extending already-extended module
-5. explicit super with wrong number of args
+5. √ super with wrong number of args
 6. √ super when no super method exists
 7. √ re-open class as module (and vice-versa)
 8. No block provided to method requiring one

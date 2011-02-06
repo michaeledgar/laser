@@ -28,6 +28,20 @@ module Laser
         arity_for_node(node)
       end
       
+      # Returns whether all arguments are constant.
+      def is_constant?
+        return true if node.nil?
+        node_is_constant?(node)
+      end
+      
+      # Returns an array of constant values that are the arguments being passed.
+      #
+      # pre-contract: is_constant?.should be_true
+      def constant_values
+        return [] if node.nil?
+        node_constant_values(node)
+      end
+      
       private
       
       # Finds the arity of a given argument node.
@@ -61,6 +75,34 @@ module Laser
           size..size
         else
           0..Float::INFINITY
+        end
+      end
+      
+      # Determines whether a given arg AST node is constant.
+      def node_is_constant?(node)
+        case node[0]
+        when Array then node.all? { |child| node_is_constant?(child) }
+        when :args_add_block
+          node[2] ? node_is_constant?(node[1..2]) : node_is_constant?(node[1])
+        when :args_add_star then node.children.all? { |child| node_is_constant?(child) }
+        else node.is_constant
+        end
+      end
+      
+      # Determines the constant values of all arguments being passed, expanding
+      # splats.
+      def node_constant_values(node)
+        case node[0]
+        when Array then node.map { |child| node_constant_values(child) }
+        when :args_add_block
+          node_constant_values(node[1])
+        when :args_add_star
+          pre_args = node_constant_values(node[1])
+          splat_arg = node_constant_values(node[2])
+          real_splat_ary = splat_arg.to_a rescue [splat_arg]
+          post_args = node[3] ? node_constant_values(node[3..-1]) : []
+          pre_args + real_splat_ary + post_args
+        else node.constant_value
         end
       end
     end

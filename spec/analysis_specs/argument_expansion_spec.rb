@@ -2,6 +2,11 @@ require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 
 describe SexpAnalysis::ArgumentExpansion do
   describe '#arity' do
+    it 'can figure out the arity of a simple method call with no arguments' do
+      tree = annotate_all('foo(  )')[1][0][2]
+      ArgumentExpansion.new(tree).arity.should == (0..0)
+    end
+
     it 'can figure out the arity of a simple method call' do
       tree = annotate_all('foo(1, 2, 3)')[1][0][2]
       ArgumentExpansion.new(tree).arity.should == (3..3)
@@ -34,6 +39,11 @@ describe SexpAnalysis::ArgumentExpansion do
   end
   
   describe '#has_block?' do
+    it 'returns false with no arguments given' do
+      tree = annotate_all('foo()')[1][0][2]
+      ArgumentExpansion.new(tree).has_block?.should be false
+    end
+
     it 'returns true if there is an explicit block argument' do
       tree = annotate_all('foo(1, 2, 3, &d)')[1][0][2]
       ArgumentExpansion.new(tree).has_block?.should be_true
@@ -42,6 +52,43 @@ describe SexpAnalysis::ArgumentExpansion do
     it 'returns false if there is an explicit block argument' do
       tree = annotate_all('foo(1, 2, 3, *foobar())')[1][0][2]
       ArgumentExpansion.new(tree).has_block?.should be false
+    end
+  end
+  
+  describe '#is_constant?' do
+    it 'returns true for no params' do
+      tree = annotate_all('foo()')[1][0][2]
+      ArgumentExpansion.new(tree).is_constant?.should be_true
+    end
+    it 'returns true if all constituent arguments are constant' do
+      tree = annotate_all('foo(1, 2, 3)')[1][0][2]
+      ArgumentExpansion.new(tree).is_constant?.should be_true
+    end
+    
+    it 'returns true if all constituent arguments are constant in the presenece of splats' do
+      tree = annotate_all('foo(1, 2, *[1, 2], 4, *("a"..."d"))')[1][0][2]
+      ArgumentExpansion.new(tree).is_constant?.should be_true
+    end
+    
+    it 'returns false in the presence of non-constant arguments' do
+      tree = annotate_all('foo(1, foobar(), 3)')[1][0][2]
+      ArgumentExpansion.new(tree).is_constant?.should be_false
+    end
+  end
+
+  describe '#constant_values' do
+    it 'returns true for no params' do
+      tree = annotate_all('foo()')[1][0][2]
+      ArgumentExpansion.new(tree).constant_values.should == []
+    end
+    it 'returns true if all constituent arguments are constant' do
+      tree = annotate_all('foo(1, 2, 3)')[1][0][2]
+      ArgumentExpansion.new(tree).constant_values.should == [1, 2, 3]
+    end
+    
+    it 'returns true if all constituent arguments are constant in the presenece of splats' do
+      tree = annotate_all('foo(1, 2, *[1, 2], 4, *("a"..."d"))')[1][0][2]
+      ArgumentExpansion.new(tree).constant_values.should == [1, 2, 1, 2, 4, 'a', 'b', 'c']
     end
   end
 end
