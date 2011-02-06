@@ -19,7 +19,7 @@ module Laser
       end
       
       add :@ident, :@int, :@kw, :@float, :@tstring_content, :@regexp_end,
-          :@ivar, :@cvar, :@gvar, :@const, :@label, :@CHAR do |node, text, location|
+          :@ivar, :@cvar, :@gvar, :@const, :@label, :@CHAR, :@op do |node, text, location|
         node.source_begin = location
         node.source_end = location.dup
         node.source_end[1] += text.size

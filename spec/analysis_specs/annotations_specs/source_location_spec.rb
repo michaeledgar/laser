@@ -200,6 +200,14 @@ describe SourceLocationAnnotation do
     definition.source_begin.should == [1, 1]
   end
   
+  it 'discovers the locations of operator definitons' do
+    input = " def <=>(other)\n  x = 10\n end"
+    tree = Sexp.new(Ripper.sexp(input))
+    SourceLocationAnnotation.new.annotate_with_text(tree, input)
+    definition = tree[1][0]
+    definition.source_begin.should == [1, 1]
+  end
+  
   it 'discovers the locations of singleton method definitons' do
     input = " def \n self.abc\n  x = 10\n end"
     tree = Sexp.new(Ripper.sexp(input))

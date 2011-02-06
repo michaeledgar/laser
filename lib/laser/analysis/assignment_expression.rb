@@ -61,7 +61,7 @@ module Laser
           @elements = [LHSExpression.new(@node[1]), LHSExpression.new(@node[2])]
           @elements << LHSExpression.new(@node[3]) if @node[3]
           @pre_star = wrap_as_lhs(@node[1])
-          @post_star = @node[3] && wrap_as_lhs(@node[3])
+          @post_star = @node[3] && wrap_as_lhs(@node[3]) || []
           @star = @elements[1]
         end
       end
@@ -91,6 +91,7 @@ module Laser
             end.inject(&:concat)
           end
         else
+          # TODO(adgar): ERROR HANDLING
           pre_values = values[0, @pre_star.size]
           splat_count = [0, values.size - @pre_star.size - @post_star.size].max
           splat_values = values[@pre_star.size, splat_count]
@@ -98,11 +99,11 @@ module Laser
 
           pre_pairs = @pre_star.zip(pre_values).map do |elt, val|
             elt.assignment_pairs(val)
-          end.inject(&:concat)
+          end.inject(&:concat) || []
           star_pair = @star.assignment_pairs(splat_values)
           post_pairs = @post_star.zip(post_values).map do |elt, val|
             elt.assignment_pairs(val)
-          end.inject(&:concat)
+          end.inject(&:concat) || []
 
           pre_pairs.concat(star_pair).concat(post_pairs)
         end

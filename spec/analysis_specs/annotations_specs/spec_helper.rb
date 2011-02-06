@@ -41,3 +41,7 @@ shared_examples_for 'an annotator' do
     end.to be_true
   end
 end
+
+def annotate_all(body)
+  Annotations.annotate_inputs([['(stdin)', body]]).first[1]
+end

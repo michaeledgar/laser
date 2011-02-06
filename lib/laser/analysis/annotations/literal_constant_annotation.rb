@@ -165,9 +165,11 @@ module Laser
         if (node.is_constant = lhs.is_constant && rhs.is_constant)
           node.is_constant = true
           if node.type == :dot2
-            wrap(node, ClassRegistry['Range'], (lhs.constant_value.raw_object)..(rhs.constant_value.raw_object))
+            wrap(node, ClassRegistry['Range'],
+                (lhs.constant_value.raw_object)..(rhs.constant_value.raw_object))
           else
-            wrap(node, ClassRegistry['Range'], (lhs.constant_value.raw_object)...(rhs.constant_value.raw_object))
+            wrap(node, ClassRegistry['Range'],
+                (lhs.constant_value.raw_object)...(rhs.constant_value.raw_object))
           end
         end
       end
