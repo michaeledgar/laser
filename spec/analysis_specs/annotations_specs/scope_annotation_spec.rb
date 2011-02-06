@@ -471,7 +471,7 @@ describe ScopeAnnotation do
       signature.arguments.should == [body.scope.lookup('a'), body.scope.lookup('b')]
       signature.name.should == 'do_xyz'
     end
-      tree.all_errors.should be_empty
+    tree.all_errors.should be_empty
   end
 
   # [:program,
@@ -1202,6 +1202,17 @@ describe ScopeAnnotation do
     singleton.instance_methods['t14'].visibility.should == :private
     singleton.instance_methods['t15'].visibility.should == :private
     singleton.instance_methods['t16'].visibility.should == :public
+  end
+  
+  it 'can resolve constant aliasing with superclasses' do
+    tree = Sexp.new(Ripper.sexp('class Alpha111; end; Beta111 = Alpha111; class B290 < Beta111; end'))
+    RuntimeAnnotation.new.annotate!(tree)
+    ExpandedIdentifierAnnotation.new.annotate!(tree)
+    ScopeAnnotation.new.annotate!(tree)
+    
+    ClassRegistry['B290'].superclass.should == ClassRegistry['Alpha111']
+    
+    tree.all_errors.should be_empty
   end
 end
   

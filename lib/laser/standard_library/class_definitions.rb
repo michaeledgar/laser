@@ -34,7 +34,16 @@ end
 class Encoding
 end
 
+class Struct
+  
+end
+
 class IO
 end
 class File < IO
 end
+
+# ARGV: [String]
+ARGV = []
+# DATA: File | NilClass
+DATA = nil

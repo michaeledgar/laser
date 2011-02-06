@@ -152,7 +152,9 @@ module Laser
           scanner.settings[:output_file] = scanner.settings[:stdin] ? STDOUT : File.open(file, 'w')
         end
         results = scanner.scan(data, file)
-        scanner.settings[:output_file].close if scanner.settings[:fix] && !scanner.settings[:stdin]
+        if scanner.settings[:fix] && !scanner.settings[:stdin]
+          scanner.settings[:output_file].close
+        end
         results
       end
       full_list.flatten
@@ -172,7 +174,8 @@ module Laser
       puts '=' * results.size
 
       warnings.each do |warning|
-        puts "#{warning.file}:#{warning.line_number} #{warning.name} (#{warning.severity}) - #{warning.desc}"
+        puts "#{warning.file}:#{warning.line_number} #{warning.name} " +
+             "(#{warning.severity}) - #{warning.desc}"
       end
     end
   end
