@@ -28,6 +28,11 @@ module Laser
         arity_for_node(node)
       end
       
+      # Are there no arguments being passed?
+      def empty?
+        arity == (0..0)
+      end
+      
       # Returns whether all arguments are constant.
       def is_constant?
         return true if node.nil?

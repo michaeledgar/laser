@@ -38,6 +38,18 @@ describe SexpAnalysis::ArgumentExpansion do
     end
   end
   
+  describe '#empty?' do
+    it 'returns true when no args are being passed' do
+      tree = annotate_all('foo(  )')[1][0][2]
+      ArgumentExpansion.new(tree).should be_empty
+    end
+    
+    it 'returns false when args are being passed' do
+      tree = annotate_all('foo( 2 )')[1][0][2]
+      ArgumentExpansion.new(tree).should_not be_empty
+    end
+  end
+  
   describe '#has_block?' do
     it 'returns false with no arguments given' do
       tree = annotate_all('foo()')[1][0][2]
@@ -86,7 +98,7 @@ describe SexpAnalysis::ArgumentExpansion do
       ArgumentExpansion.new(tree).constant_values.should == [1, 2, 3]
     end
     
-    it 'returns true if all constituent arguments are constant in the presenece of splats' do
+    it 'returns true if all constituent arguments are constant in the presence of splats' do
       tree = annotate_all('foo(1, 2, *[1, 2], 4, *("a"..."d"))')[1][0][2]
       ArgumentExpansion.new(tree).constant_values.should == [1, 2, 1, 2, 4, 'a', 'b', 'c']
     end
