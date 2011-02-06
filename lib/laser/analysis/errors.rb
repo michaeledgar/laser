@@ -41,6 +41,10 @@ module Laser
     end
   end
   
+  class UselessIncludeError < Laser::Error
+    severity TRICKY_ERROR
+  end
+  
   class DynamicSuperclassError < Laser::Error
     severity MAJOR_ERROR
   end

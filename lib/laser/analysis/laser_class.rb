@@ -212,6 +212,8 @@ module Laser
                                   " be a Module or Module subclass, not a " +
                                   "#{mod.klass.name}.")
         end
+        original_mod = mod
+        any_changes = false
         current = self
         while mod
           superclass_seen = false
@@ -233,8 +235,13 @@ module Laser
           end
           if should_change
             current = (current.superclass = LaserModuleCopy.new(mod, current.ancestors[1]))
+            any_changes = true
           end
           mod = mod.superclass
+        end
+        unless any_changes
+          raise UselessIncludeError.new("Included #{original_mod.path} into #{self.path}"+
+                                        " but it was already included.", nil)
         end
       end
       
