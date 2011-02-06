@@ -17,6 +17,7 @@ require 'laser/analysis/errors'
 require 'laser/analysis/lexical_analysis'
 require 'laser/analysis/sexp_analysis'
 
+require 'laser/analysis/argument_expansion'
 require 'laser/analysis/assignment_expression'
 require 'laser/analysis/bindings'
 require 'laser/analysis/protocols'
