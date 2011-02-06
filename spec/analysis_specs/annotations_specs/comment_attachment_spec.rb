@@ -25,11 +25,8 @@ describe CommentAttachmentAnnotation do
   #   nil,
   #   [:bodystmt, [[:void_stmt]], nil, nil, nil]]]]
   it 'discovers the comments before a method and class declaration' do
-    input = "  # abc\n  #  def\ndef silly(a, b)\n end\n # a class\n class A; end"
-    tree = Sexp.new(Ripper.sexp(input))
-    # source location is *required* for CommentAttachment to work.
-    SourceLocationAnnotation.new.annotate_with_text(tree, input)
-    CommentAttachmentAnnotation.new.annotate_with_text(tree, input)
+    input = "  # abc\n  #  def\ndef silly(a, b)\n end\n # a class\n class A990; end"
+    tree = annotate_all(input)
     list = tree[1]
     
     defn = list[0]
@@ -60,10 +57,8 @@ describe CommentAttachmentAnnotation do
     y = abc * 2
   end
 EOF
-    tree = Sexp.new(Ripper.sexp(input))
-    # source location is *required* for CommentAttachment to work.
-    SourceLocationAnnotation.new.annotate_with_text(tree, input)
-    CommentAttachmentAnnotation.new.annotate_with_text(tree, input)
+    tree = annotate_all(input)
+
     list = tree[1]
     defn = list[0]
     defn.comment.body.should == " some method\n abc: String"
