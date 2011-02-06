@@ -48,4 +48,8 @@ module Laser
   class NoSuchMethodError < Laser::Error
     severity MAJOR_ERROR
   end
+  
+  class NotInMethodError < Laser::Error
+    severity FUCKUP
+  end
 end

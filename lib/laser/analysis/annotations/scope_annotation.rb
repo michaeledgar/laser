@@ -249,13 +249,15 @@ module Laser
 
       def add_method_to_object(receiver, method_self, name, arglist, body)
         new_signature = Signature.for_definition_sexp(name, arglist, body)
-        receiver.add_instance_method!(LaserMethod.new(name, @visibility) do |method|
+        new_method = LaserMethod.new(name, @visibility) do |method|
           method.body_ast = body
           method.add_signature!(new_signature)
-        end)
+        end
+        receiver.add_instance_method!(new_method)
 
         method_locals = Hash[new_signature.arguments.map { |arg| [arg.name, arg] }]
         new_scope = ClosedScope.new(@current_scope, method_self, {}, method_locals)
+        new_scope.method = new_method
         visit_with_scope(body, new_scope)
       end
       

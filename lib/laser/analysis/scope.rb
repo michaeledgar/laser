@@ -12,7 +12,7 @@ module Laser
         end
       end
 
-      attr_accessor :constants, :parent, :locals
+      attr_accessor :constants, :parent, :locals, :method
       def initialize(parent, self_ptr, constants={}, locals={})
         unless respond_to?(:lookup_local)
           raise NotImplementedError.new(
@@ -20,6 +20,7 @@ module Laser
         end
         @parent, @constants, @locals = parent, constants, locals
         @locals['self'] = Bindings::GenericBinding.new('self', self_ptr)
+        @method = nil
       end
       
       def initialize_copy(other)
