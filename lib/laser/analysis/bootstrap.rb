@@ -45,20 +45,33 @@ module Laser
         Scope::GlobalScope.add_binding!(
             Bindings::KeywordBinding.new('nil', nil_class.get_instance))
           
-        # Need literal classes or we can't analyze anything
-        global.add_binding!(Bindings::ConstantBinding.new(
-            'String', LaserClass.new(class_class, Scope::GlobalScope, 'String')))
-        global.add_binding!(Bindings::ConstantBinding.new(
-            'Regexp', LaserClass.new(class_class, Scope::GlobalScope, 'Regexp')))
-
+        bootstrap_literals(global, class_class)
       rescue StandardError => err
         new_exception = BootstrappingError.new("Bootstrapping failed: #{err.message}")
         new_exception.set_backtrace(err.backtrace)
         raise new_exception
       end
-    
-      def self.load_prepackaged_annotations(file)
-        parse(File.read(File.join(Laser::ROOT, 'laser', 'standard_library', file)))
+      
+      def self.bootstrap_literals(global, class_class)
+        # Need literal classes or we can't analyze anything
+        global.add_binding!(Bindings::ConstantBinding.new(
+            'String', LaserClass.new(class_class, Scope::GlobalScope, 'String')))
+        global.add_binding!(Bindings::ConstantBinding.new(
+            'Regexp', LaserClass.new(class_class, Scope::GlobalScope, 'Regexp')))
+        global.add_binding!(Bindings::ConstantBinding.new(
+            'Array', LaserClass.new(class_class, Scope::GlobalScope, 'Array')))
+        global.add_binding!(Bindings::ConstantBinding.new(
+            'Hash', LaserClass.new(class_class, Scope::GlobalScope, 'Hash')))
+        numeric = global.add_binding!(Bindings::ConstantBinding.new(
+            'Numeric', LaserClass.new(class_class, Scope::GlobalScope, 'Numeric'))).value
+        global.add_binding!(Bindings::ConstantBinding.new(
+            'Integer', LaserClass.new(class_class, Scope::GlobalScope, 'Integer') do |klass|
+              klass.superclass = numeric
+            end))
+        global.add_binding!(Bindings::ConstantBinding.new(
+            'Float', LaserClass.new(class_class, Scope::GlobalScope, 'Float') do |klass|
+              klass.superclass = numeric
+            end))
       end
     end
   end

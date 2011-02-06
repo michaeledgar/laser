@@ -33,3 +33,8 @@ class Float < Numeric
 end
 class Encoding
 end
+
+class IO
+end
+class File < IO
+end
