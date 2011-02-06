@@ -163,12 +163,9 @@ module Laser
 
       ######## Detecting includes - requires method call detection! ########
       match_method_call 'include' do |node, args|
-        if node.runtime == :load && @current_scope.self_ptr.klass.ancestors.include?(ClassRegistry['Module'])
-          args.reverse.each do |arg|
-            if arg.expanded_identifier
-              @current_scope.self_ptr.include_module(
-                  @current_scope.lookup(arg.expanded_identifier).value)
-            end
+        if node.runtime == :load && @current_scope.self_ptr.klass.ancestors.include?(ClassRegistry['Module']) && args.is_constant?
+          args.constant_values.reverse.each do |arg|
+            @current_scope.self_ptr.include_module(arg)
           end
         else
           default_visit node
@@ -176,12 +173,9 @@ module Laser
       end
       
       match_method_call 'extend' do |node, args|
-        if node.runtime == :load && @current_scope.self_ptr.klass.ancestors.include?(ClassRegistry['Module'])
-          args.reverse.each do |arg|
-            if arg.expanded_identifier
-              @current_scope.self_ptr.singleton_class.include_module(
-                  @current_scope.lookup(arg.expanded_identifier).value)
-            end
+        if node.runtime == :load && @current_scope.self_ptr.klass.ancestors.include?(ClassRegistry['Module']) && args.is_constant?
+          args.constant_values.reverse.each do |arg|
+            @current_scope.self_ptr.singleton_class.include_module(arg)
           end
         else
           default_visit node

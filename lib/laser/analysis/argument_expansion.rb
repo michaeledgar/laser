@@ -7,7 +7,7 @@ module Laser
       # @node can end up either being nil, for no args at all, or an
       # args_add_block node.
       def initialize(node)
-        node = node[1] if node.type == :arg_paren
+        node = node[1] if !node.nil? && node.type == :arg_paren
         @node = node
       end
       

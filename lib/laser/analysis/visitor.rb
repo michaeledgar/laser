@@ -74,15 +74,17 @@ module Laser
         # the method call as the second argument to the block.
         def match_method_call(named, &blk)
           add(proc { |node| node.type == :command && node[1][1] == named }) do |node|
-            instance_exec(node, node[2][1], &blk)
+            visit node[2][1]
+            instance_exec(node, ArgumentExpansion.new(node[2][1]), &blk)
           end
           add(proc { |node| node.type == :method_add_arg && node[1].type == :fcall &&
                             node[1][1][1] == named}) do |node|
             args = node[2][1] ? node[2][1][1] : []
-            instance_exec(node, args, &blk)
+            visit args
+            instance_exec(node, ArgumentExpansion.new(args), &blk)
           end
           add(proc { |node| node.type == :var_ref && node.binding.nil? && node[1][1] == named}) do |node|
-            instance_exec(node, [], &blk)
+            instance_exec(node, ArgumentExpansion.new(nil), &blk)
           end
         end
       end
