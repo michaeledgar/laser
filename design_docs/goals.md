@@ -27,7 +27,7 @@ check them off when I'm done.
 12. MyStruct = Struct.new, not MyStruct < Struct.new
 
 ## General-Use Information
-1. Private Method (P0)
+1. √ Private Method (P0)
 2. Raisability (P0)
 3. Yielding (P0)
 4. Yield-necessity (P1)
@@ -39,15 +39,16 @@ check them off when I'm done.
 ## Error Detection
 1. NoSuchMethod detection
 2. Incorrect # of arguments
-3. including already-included module
-4. extending already-extended module
+3. √ including already-included module
+4. √ extending already-extended module
 5. explicit super with wrong number of args
-6. √ re-open class as module (and vice-versa)
-7. No block provided to method requiring one
-8. Shadowing of really important methods (private = :xyz)
-9. Type conflicts
-10. Constants in for loops (P0)
-11. Useless lhs or rhs in mlhs/mrhs
+6. √ super when no super method exists
+7. √ re-open class as module (and vice-versa)
+8. No block provided to method requiring one
+9. Shadowing of really important methods (private = :xyz)
+10. Type conflicts
+11. Constants in for loops (P0)
+12. Useless lhs or rhs in mlhs/mrhs
 
 ## Optimization
 1. Dead Code Detection

@@ -56,4 +56,8 @@ module Laser
   class NotInMethodError < Laser::Error
     severity FUCKUP
   end
+  
+  class IncompatibleArityError < Laser::Error
+    severity MAJOR_ERROR
+  end
 end

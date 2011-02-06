@@ -34,6 +34,41 @@ describe LiteralTypeAnnotation do
       tree.all_errors.size.should be 1
       tree.all_errors[0].should be_a(NoSuchMethodError)
     end
+    
+    it 'gives an error if the superclass implementation has incompatible arity' do
+      input = "class A987; def silly(x, y); end; end; class B987 < A987; end\n" +
+              'class C987 < B987; def silly(x); super x; end; end'
+      tree = annotate_all(input)
+      tree.all_errors.should_not be_empty
+      tree.all_errors.size.should be 1
+      tree.all_errors[0].should be_a(IncompatibleArityError)
+    end
+
+    it 'does not give an error if the superclass implementation has compatible ' +
+       'arity (more complicated example)' do
+      input = "class A988; def silly(x, y=x); end; end; class B988 < A988; end\n" +
+              'class C988 < B988; def silly(x); super x; end; end'
+      tree = annotate_all(input)
+      tree.all_errors.should be_empty
+    end
+    
+    it 'gives an error if the superclass implementation has incompatible ' +
+       'arity (more complicated example)' do
+      input = "class A989; def silly(x, z, y=x, *rest); end; end; class B989 < A989; end\n" +
+              'class C989 < B989; def silly(x); super(x); end; end'
+      tree = annotate_all(input)
+      tree.all_errors.should_not be_empty
+      tree.all_errors.size.should be 1
+      tree.all_errors[0].should be_a(IncompatibleArityError)
+    end
+
+    it 'does not give an error if the superclass implementation has compatible ' +
+       'arity (even more complicated example)' do
+      input = "class A982; def silly(a, *rest); end; end; class B982 < A982; end\n" +
+              'class C982 < B982; def silly(x, y, z); super(x, y, z); end; end'
+      tree = annotate_all(input)
+      tree.all_errors.should be_empty
+    end
   end
   
   describe 'using implicit super' do
@@ -59,6 +94,41 @@ describe LiteralTypeAnnotation do
       tree.all_errors.should_not be_empty
       tree.all_errors.size.should be 1
       tree.all_errors[0].should be_a(NoSuchMethodError)
+    end
+    
+    it 'gives an error if the superclass implementation has incompatible arity' do
+      input = "class A997; def silly(x, y); end; end; class B997 < A997; end\n" +
+              'class C997 < B997; def silly(x); super; end; end'
+      tree = annotate_all(input)
+      tree.all_errors.should_not be_empty
+      tree.all_errors.size.should be 1
+      tree.all_errors[0].should be_a(IncompatibleArityError)
+    end
+
+    it 'does not give an error if the superclass implementation has compatible ' +
+       'arity (more complicated example)' do
+      input = "class A998; def silly(x, y=x); end; end; class B998 < A998; end\n" +
+              'class C998 < B998; def silly(x); super; end; end'
+      tree = annotate_all(input)
+      tree.all_errors.should be_empty
+    end
+    
+    it 'gives an error if the superclass implementation has incompatible ' +
+       'arity (more complicated example)' do
+      input = "class A999; def silly(x, z, y=x, *rest); end; end; class B999 < A999; end\n" +
+              'class C999 < B999; def silly(x); super; end; end'
+      tree = annotate_all(input)
+      tree.all_errors.should_not be_empty
+      tree.all_errors.size.should be 1
+      tree.all_errors[0].should be_a(IncompatibleArityError)
+    end
+
+    it 'does not give an error if the superclass implementation has compatible ' +
+       'arity (even more complicated example)' do
+      input = "class A978; def silly(a, *rest); end; end; class B978 < A978; end\n" +
+              'class C978 < B978; def silly(x, y, z); super; end; end'
+      tree = annotate_all(input)
+      tree.all_errors.should be_empty
     end
   end
 end

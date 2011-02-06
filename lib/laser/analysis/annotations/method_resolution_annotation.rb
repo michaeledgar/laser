@@ -7,8 +7,32 @@ module Laser
     class MethodResolutionAnnotation < BasicAnnotation
       add_property :method_estimate
       
-      add :super, :zsuper do |node|
-        node.method_estimate = Set.new([resolve_super_call(node)])
+      add :super do |node|
+        matched_method = resolve_super_call(node)
+        node.method_estimate = Set.new([matched_method])
+        call_arity = ArgumentExpansion.new(node[1]).arity
+        unless arity_compatible?(matched_method.arity, call_arity)
+          raise IncompatibleArityError.new(
+              "Called super with #{call_arity} implicit arguments, but " +
+              "the superclass implementation takes #{matched_method.arity} arguments.",
+              node)
+        end
+      end
+      
+      add :zsuper do |node|
+        matched_method = resolve_super_call(node)
+        node.method_estimate = Set.new([matched_method])
+        call_arity = node.scope.method.arity
+        unless arity_compatible?(matched_method.arity, call_arity)
+          raise IncompatibleArityError.new(
+              "Called super with #{call_arity} implicit arguments, but " +
+              "the superclass implementation takes #{matched_method.arity} arguments.",
+              node)
+        end
+      end
+      
+      def arity_compatible?(r1, r2)
+        r1.first <= r2.last && r2.first <= r1.last
       end
       
       def resolve_super_call(node)
