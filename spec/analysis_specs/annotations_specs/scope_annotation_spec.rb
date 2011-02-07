@@ -1120,6 +1120,15 @@ describe ScopeAnnotation do
     singleton.instance_methods['t16'].visibility.should == :public
   end
   
+  it 'allows specifying private/public/protected for individual methods' do
+    input = 'class A125; def t17; end; def t18; end; def t19; end; private *[:t17, :t19]; end'
+    tree = annotate_all(input)
+
+    ClassRegistry['A125'].instance_methods['t17'].visibility.should == :private
+    ClassRegistry['A125'].instance_methods['t18'].visibility.should == :public
+    ClassRegistry['A125'].instance_methods['t19'].visibility.should == :private
+  end
+  
   it 'can resolve constant aliasing with superclasses' do
     tree = annotate_all('class Alpha111; end; Beta111 = Alpha111; class B290 < Beta111; end')
     

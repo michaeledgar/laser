@@ -86,6 +86,7 @@ module Laser
       # Determines whether a given arg AST node is constant.
       def node_is_constant?(node)
         case node[0]
+        when nil then true
         when Array then node.all? { |child| node_is_constant?(child) }
         when :args_add_block
           node[2] ? node_is_constant?(node[1..2]) : node_is_constant?(node[1])
@@ -98,6 +99,7 @@ module Laser
       # splats.
       def node_constant_values(node)
         case node[0]
+        when nil then []
         when Array then node.map { |child| node_constant_values(child) }
         when :args_add_block
           node_constant_values(node[1])
@@ -105,7 +107,7 @@ module Laser
           pre_args = node_constant_values(node[1])
           splat_arg = node_constant_values(node[2])
           real_splat_ary = splat_arg.to_a rescue [splat_arg]
-          post_args = node[3] ? node_constant_values(node[3..-1]) : []
+          post_args = node_constant_values(node[3..-1])
           pre_args + real_splat_ary + post_args
         else node.constant_value
         end

@@ -182,11 +182,13 @@ module Laser
         end
       end
       
-      match_method_call 'private' do |node, args|
-        if node.runtime == :load && (@current_scope.parent.nil? ||
+      def apply_visibility(node, args, visibility)
+        if @current_scope.parent.nil? && visibility == :protected
+          node.errors << NoSuchMethodError.new("No 'protected' method at the top level.", node)
+        elsif node.runtime == :load && (@current_scope.parent.nil? ||
            @current_scope.self_ptr.klass.ancestors.include?(ClassRegistry['Module']))
           if args.empty?
-            @visibility = :private
+            @visibility = visibility
           elsif args.is_constant?
             args.constant_values.map(&:to_s).each do |method_name|
               found_method = @current_scope.self_ptr.instance_methods[method_name]
@@ -194,54 +196,24 @@ module Laser
                 found_method = found_method.dup
                 @current_scope.self_ptr.add_instance_method!(found_method)
               end
-              found_method.visibility = :private
+              found_method.visibility = visibility
             end
           end
         else
           default_visit node
         end
+      end
+      
+      match_method_call 'private' do |node, args|
+        apply_visibility node, args, :private
       end
       
       match_method_call 'public' do |node, args|
-        if node.runtime == :load && (@current_scope.parent.nil? ||
-           @current_scope.self_ptr.klass.ancestors.include?(ClassRegistry['Module']))
-          if args.empty?
-            @visibility = :public
-          elsif args.is_constant?
-            args.constant_values.map(&:to_s).each do |method_name|
-              found_method = @current_scope.self_ptr.instance_methods[method_name]
-              if found_method.owner != @current_scope.self_ptr
-                found_method = found_method.dup
-                @current_scope.self_ptr.add_instance_method!(found_method)
-              end
-              found_method.visibility = :public
-            end
-          end
-        else
-          default_visit node
-        end
+        apply_visibility node, args, :public
       end
       
       match_method_call 'protected' do |node, args|
-        if node.runtime == :load &&
-           @current_scope.self_ptr.klass.ancestors.include?(ClassRegistry['Module'])
-          if args.empty?
-            @visibility = :protected
-          elsif args.is_constant?
-            args.constant_values.map(&:to_s).each do |method_name|
-              found_method = @current_scope.self_ptr.instance_methods[method_name]
-              if found_method.owner != @current_scope.self_ptr
-                found_method = found_method.dup
-                @current_scope.self_ptr.add_instance_method!(found_method)
-              end
-              found_method.visibility = :protected
-            end
-          end
-        elsif @current_scope.parent.nil?  # global scope
-          node.errors << NoSuchMethodError.new("No 'protected' method at the top level.", node)
-        else
-          default_visit node
-        end
+        apply_visibility node, args, :protected
       end
 
       # Normal method definitions.

@@ -102,5 +102,12 @@ describe SexpAnalysis::ArgumentExpansion do
       tree = annotate_all('foo(1, 2, *[1, 2], 4, *("a"..."d"))')[1][0][2]
       ArgumentExpansion.new(tree).constant_values.should == [1, 2, 1, 2, 4, 'a', 'b', 'c']
     end
+    
+    it 'expands a splatted literal array' do
+      tree = annotate_all('foobar *[:a, :b]')[1][0][2]
+      expansion = ArgumentExpansion.new(tree)
+      expansion.is_constant?.should be_true
+      expansion.constant_values.should == [:a, :b]
+    end
   end
 end
