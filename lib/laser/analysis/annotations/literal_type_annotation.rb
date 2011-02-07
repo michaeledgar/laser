@@ -10,18 +10,18 @@ module Laser
         node.class_estimate = ClassEstimate.new
         visit_children(node)
       end
-      
+
       add :string_literal, :@CHAR, :@tstring_content, :string_embexpr, :string_content,
           :xstring_literal do |node|
         node.class_estimate = ExactClassEstimate.new(ClassRegistry['String'])
         visit_children(node)
       end
-      
+
       add :@int do |node|
         node.class_estimate = ExactClassEstimate.new(ClassRegistry['Fixnum'])
         visit_children(node)
       end
-      
+
       add :@float do |node|
         node.class_estimate = ExactClassEstimate.new(ClassRegistry['Float'])
         visit_children(node)

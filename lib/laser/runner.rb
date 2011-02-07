@@ -90,7 +90,7 @@ module Laser
     def print_modules
       SexpAnalysis::LaserModule.all_modules.map do |mod|
         if SexpAnalysis::LaserClass === mod && mod.superclass
-        then "#{mod.name} < #{mod.superclass.name}"
+        then "#{mod.path} < #{mod.superclass.path}"
         else mod.name
         end
       end.sort.each { |name| puts name }

@@ -426,7 +426,7 @@ module Laser
     # collide with ::Method.
     class LaserMethod
       extend ModuleExtensions
-      attr_reader :name, :signatures, :visibility, :arity
+      attr_reader :name, :signatures, :visibility, :arity, :owner
       attr_accessor :body_ast
       attr_accessor_with_default :pure, false
 

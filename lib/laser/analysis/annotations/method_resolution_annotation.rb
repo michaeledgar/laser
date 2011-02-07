@@ -47,6 +47,11 @@ module Laser
         raise NoSuchMethodError.new("Called super in method '#{current_method.name}', " +
                                     "but no superclass has a method with that name.", node)
       end
+      
+      add :var_ref do |node|
+        next unless node.binding.nil?
+        
+      end
     end
   end
 end

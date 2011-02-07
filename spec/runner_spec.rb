@@ -72,7 +72,7 @@ describe Runner do
         runner = Runner.new(['--list-modules'])
         runner.run
       end
-      modules = output.split("\n")
+      modules = output.split("\n")[2..-1]
       modules.should_not be_empty
       modules.should == modules.sort
       ["Array < Object", "Module < Object", "Proc < Object", "Class < Module", "Object"].each do |mod|

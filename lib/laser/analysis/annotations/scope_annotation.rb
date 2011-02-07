@@ -187,6 +187,10 @@ module Laser
            @current_scope.self_ptr.klass.ancestors.include?(ClassRegistry['Module']))
           if args.empty?
             @visibility = :private
+          elsif args.is_constant?
+            args.constant_values.map(&:to_s).each do |method_name|
+              
+            end
           end
         else
           default_visit node

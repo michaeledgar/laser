@@ -47,7 +47,7 @@ check them off when I'm done.
 8. No block provided to method requiring one
 9. Shadowing of really important methods (private = :xyz)
 10. Type conflicts
-11. Constants in for loops (P0)
+11. √ Constants in for loops (P0)
 12. Useless lhs or rhs in mlhs/mrhs
 
 ## Optimization
