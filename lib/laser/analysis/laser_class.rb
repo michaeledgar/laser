@@ -88,7 +88,7 @@ module Laser
     # Laser representation of a module. Named LaserModule to avoid naming
     # conflicts. It has lists of methods, instance variables, and so on.
     class LaserModule < LaserObject
-      attr_reader :path, :instance_methods, :binding, :superclass
+      attr_reader :path, :binding, :superclass
       cattr_accessor_with_default :all_modules, []
       
       def initialize(klass = ClassRegistry['Module'], scope = Scope::GlobalScope,
@@ -164,6 +164,14 @@ module Laser
       
       def add_instance_method!(method)
         @instance_methods[method.name] = method
+        method.owner = self
+      end
+
+      def instance_methods
+        if superclass
+        then superclass.instance_methods.merge(@instance_methods)
+        else @instance_methods
+        end
       end
       
       def instance_signatures
@@ -335,13 +343,6 @@ module Laser
         subset - [self]
       end
       
-      def instance_methods
-        if superclass
-        then superclass.instance_methods.merge(@instance_methods)
-        else @instance_methods
-        end
-      end
-      
       def class_name
         'Class'
       end
@@ -426,8 +427,8 @@ module Laser
     # collide with ::Method.
     class LaserMethod
       extend ModuleExtensions
-      attr_reader :name, :signatures, :visibility, :arity, :owner
-      attr_accessor :body_ast
+      attr_reader :name
+      attr_accessor :body_ast, :owner, :visibility, :signatures, :arity
       attr_accessor_with_default :pure, false
 
       def initialize(name, visibility = :public)
@@ -436,6 +437,16 @@ module Laser
         @visibility = visibility
         @arity = nil
         yield self if block_given?
+      end
+
+      def dup
+        result = LaserMethod.new(name)
+        result.body_ast = self.body_ast
+        result.owner = self.owner
+        result.visibility = self.visibility
+        result.signatures = self.signatures
+        result.arity = self.arity
+        result
       end
 
       def add_signature!(signature)

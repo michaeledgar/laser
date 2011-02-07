@@ -1372,6 +1372,7 @@ end
       generic.instance_variables['@name'].should be_a(Bindings::InstanceVariableBinding)
       generic.instance_variables['@value'].should be_a(Bindings::InstanceVariableBinding)
       class_binding = ClassRegistry["#{bindings_mod}::ConstantBinding"]
+      kw_binding = ClassRegistry["#{bindings_mod}::KeywordBinding"]
       arg_binding = ClassRegistry["#{bindings_mod}::ArgumentBinding"]
       arg_binding.instance_variables['@name'].should be generic.instance_variables['@name']
       arg_binding.instance_variables['@value'].should be generic.instance_variables['@value']
@@ -1385,6 +1386,7 @@ end
         generic.instance_methods[method].should_not be_empty
         generic.instance_methods[method].visibility.should == :public
       end
+      kw_binding.instance_methods['bind!'].visibility.should == :private
       init_sig = generic.instance_methods['initialize'].signatures.first
       init_sig.arguments.size.should == 2
       init_sig.arguments.map(&:name).should == ['name', 'value']
