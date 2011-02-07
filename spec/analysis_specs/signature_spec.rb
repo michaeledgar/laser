@@ -73,7 +73,7 @@ describe Signature do
           args.size.should be 3
           args.each do |arg|
             arg.kind.should be :positional
-            arg.protocol.should == Protocols::UnknownProtocol.new
+            arg.protocol.should == Protocols::InstanceProtocol.new(ClassRegistry['Object'])
             arg.default_value_sexp.should be nil
           end
           x, y, z = args
@@ -94,7 +94,7 @@ describe Signature do
           args.zip(names).each {|arg, name| arg.name.should == name }
           args.zip(kinds).each {|arg, kind| arg.kind.should == kind }
           x, a, y, rest, z, d, blk = args
-          [x, a, y, z, d].each {|arg| arg.protocol.should == Protocols::UnknownProtocol.new }
+          [x, a, y, z, d].each {|arg| arg.protocol.should == Protocols::InstanceProtocol.new(ClassRegistry['Object']) }
           rest.protocol.should == ProtocolRegistry['Array'].first
           blk.protocol.should == ProtocolRegistry['Proc'].first
           a.default_value_sexp.type.should == :@int

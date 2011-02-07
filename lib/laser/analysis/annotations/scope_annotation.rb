@@ -182,6 +182,13 @@ module Laser
         end
       end
       
+      def implicit_receiver
+        if @current_scope.parent.nil?
+        then receiving_class = ClassRegistry['Object']
+        else receiving_class = @current_scope.self_ptr
+        end
+      end
+      
       def apply_visibility(node, args, visibility)
         if @current_scope.parent.nil? && visibility == :protected
           node.errors << NoSuchMethodError.new("No 'protected' method at the top level.", node)
@@ -190,11 +197,13 @@ module Laser
           if args.empty?
             @visibility = visibility
           elsif args.is_constant?
+            receiving_class = implicit_receiver
+
             args.constant_values.map(&:to_s).each do |method_name|
-              found_method = @current_scope.self_ptr.instance_methods[method_name]
-              if found_method.owner != @current_scope.self_ptr
+              found_method = receiving_class.instance_methods[method_name]
+              if found_method.owner != receiving_class
                 found_method = found_method.dup
-                @current_scope.self_ptr.add_instance_method!(found_method)
+                receiving_class.add_instance_method!(found_method)
               end
               found_method.visibility = visibility
             end
@@ -218,7 +227,7 @@ module Laser
 
       # Normal method definitions.
       add :def do |node, (_, name), arglist, body|
-        receiver = @current_scope.self_ptr
+        receiver = implicit_receiver
         # Time to create a brand new LaserMethod!
         # Which class this is added to depends on the value of +self+.
         # 1. If self is a module or class (as is typical), the method is

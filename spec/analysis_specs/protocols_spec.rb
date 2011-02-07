@@ -73,7 +73,7 @@ describe Protocols::InstanceProtocol do
   
   describe '#signatures' do
     it 'returns an empty list when no methods are declared' do
-      @a_proto.signatures.should be_empty
+      (@a_proto.signatures - ClassRegistry['Object'].signatures).should be_empty
     end
     
     it "gets its class's signatures when they are specified, which are its methods' signatures" do

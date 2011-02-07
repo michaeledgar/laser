@@ -76,7 +76,7 @@ shared_examples_for 'a Ruby module' do
   
   describe '#instance_signatures' do
     it 'returns an empty list when no methods are declared' do
-      @a.instance_signatures.should be_empty
+      (@a.signatures - ClassRegistry['Object'].signatures).should be_empty
     end
     
     it "flattens all its normal instance method's signatures" do

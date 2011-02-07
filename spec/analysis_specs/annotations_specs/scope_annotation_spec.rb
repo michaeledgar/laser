@@ -466,7 +466,6 @@ describe ScopeAnnotation do
     body = definition[3]
     [body, *body.all_subtrees].each do |node|
       new_scope = node.scope
-      new_scope.self_ptr.name.should == 'main'
       new_scope.self_ptr.should be_a(LaserObject)
       new_scope.self_ptr.klass.should == ClassRegistry['Object']
       new_scope.locals.should_not be_empty
@@ -1127,6 +1126,18 @@ describe ScopeAnnotation do
     ClassRegistry['A125'].instance_methods['t17'].visibility.should == :private
     ClassRegistry['A125'].instance_methods['t18'].visibility.should == :public
     ClassRegistry['A125'].instance_methods['t19'].visibility.should == :private
+  end
+  
+  
+  it 'allows specifying private/public/protected for individual methods' do
+    input = 'def t17; end; def t18; end; def t19; end; public *[:t17, :t19]'
+    tree = annotate_all(input)
+
+    # recovers by not changing visibility
+    singleton = Scope::GlobalScope.self_ptr.singleton_class
+    singleton.instance_methods['t17'].visibility.should == :public
+    singleton.instance_methods['t18'].visibility.should == :private
+    singleton.instance_methods['t19'].visibility.should == :public
   end
   
   it 'can resolve constant aliasing with superclasses' do
