@@ -154,8 +154,9 @@ module Laser
       end
 
       # Enter the singleton class.
-      add :sclass do |node, (_, singleton), body|
-        method_self = @current_scope.lookup(singleton.children.first).value
+      add :sclass do |node, singleton, body|
+        visit singleton
+        method_self = @current_scope.lookup(singleton.expanded_identifier).value
         receiver = method_self.singleton_class
         singleton.scope = @current_scope
         visit_with_scope(body, receiver.scope)
@@ -191,7 +192,7 @@ module Laser
       
       def apply_visibility(node, args, visibility)
         if @current_scope.parent.nil? && visibility == :protected
-          node.errors << NoSuchMethodError.new("No 'protected' method at the top level.", node)
+          # node.errors << NoSuchMethodError.new("No 'protected' method at the top level.", node)
         elsif node.runtime == :load && (@current_scope.parent.nil? ||
            @current_scope.self_ptr.klass.ancestors.include?(ClassRegistry['Module']))
           if args.empty?
@@ -243,8 +244,9 @@ module Laser
       end
 
       # Singleton method definition: def receiver.method_name
-      add :defs do |node, (_, singleton), op, (_, name), arglist, body|
-        method_self = @current_scope.lookup(singleton.children.first).value
+      add :defs do |node, singleton, op, (_, name), arglist, body|
+        visit singleton
+        method_self = @current_scope.lookup(singleton.expanded_identifier).value
         receiver = method_self.singleton_class
         add_method_to_object(receiver, method_self, name, arglist, body)
       end
@@ -260,6 +262,8 @@ module Laser
         method_locals = Hash[new_signature.arguments.map { |arg| [arg.name, arg] }]
         new_scope = ClosedScope.new(@current_scope, method_self, {}, method_locals)
         new_scope.method = new_method
+        
+        visit_with_scope(arglist, new_scope)
         visit_with_scope(body, new_scope)
       end
       
@@ -318,6 +322,7 @@ module Laser
         
         method_locals = Hash[arglist.map { |arg| [arg.name, arg] }]
         new_scope = OpenScope.new(@current_scope, @current_scope.self_ptr, {}, method_locals)
+        visit_with_scope(argnode, new_scope) if argnode
         visit_with_scope(body, new_scope)
       end
       

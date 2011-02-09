@@ -10,6 +10,7 @@ module Laser
       def compatible?(other)
         self.first <= other.last && other.first <= self.last
       end
+      EMPTY = Arity.new(0..0)
     end
   end
 end

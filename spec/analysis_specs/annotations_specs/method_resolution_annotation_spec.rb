@@ -131,4 +131,48 @@ describe LiteralTypeAnnotation do
       tree.all_errors.should be_empty
     end
   end
+  
+  describe 'performing a simple no-arg implicit self call' do
+    it 'should resolve to the only method when there are no subclasses' do
+      input = 'class A700; def printall(x); foobar; end; def foobar(); end; end'
+      tree = annotate_all(input)
+      tree.all_errors.should be_empty
+      
+      foobar_call = tree.deep_find { |node| node.type == :var_ref && node.expanded_identifier == 'foobar' }
+      foobar_call.should_not be_nil
+      foobar_call.method_estimate.should == [ClassRegistry['A700'].instance_methods['foobar']]
+    end
+    
+    it 'should raise an error when there is no method to resolve to' do
+      input = 'class A701; def printall(x); foobar; end; def foobaz(); end; end'
+      tree = annotate_all(input)
+      tree.all_errors.should_not be_empty
+      tree.all_errors.size.should == 1
+      tree.all_errors.first.should be_a(NoSuchMethodError)
+    end
+    
+    it 'should resolve to all possible subclass implementations' do
+      input = 'class A702; def printall(x); foobar; end; def foobar(); end; end;' +
+              'class A703 < A702; def foobar; end; end; class A704 < A702; def foobar; end; end;' +
+              'class A705 < A703; def foobar; end; end'
+      tree = annotate_all(input)
+      tree.all_errors.should be_empty
+      
+      foobar_call = tree.deep_find { |node| node.type == :var_ref && node.binding.nil? && node.expanded_identifier == 'foobar' }
+      foobar_call.should_not be_nil
+      foobar_call.method_estimate.should ==
+          [ClassRegistry['A702'].instance_methods['foobar'],
+           ClassRegistry['A703'].instance_methods['foobar'],
+           ClassRegistry['A705'].instance_methods['foobar'],
+           ClassRegistry['A704'].instance_methods['foobar']]
+    end
+    
+    it 'should throw an error if an implementation is found, but has mismatched arity' do
+      input = 'class A706 def printall(x); foobar; end; def foobar(x, y=x); end; end'
+      tree = annotate_all(input)
+      tree.all_errors.should_not be_empty
+      tree.all_errors.size.should == 1
+      tree.all_errors.first.should be_a(NoSuchMethodError)
+    end
+  end
 end

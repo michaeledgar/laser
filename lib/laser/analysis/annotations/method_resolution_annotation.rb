@@ -44,9 +44,23 @@ module Laser
                                     "but no superclass has a method with that name.", node)
       end
       
+      add :call do |node, recv, sep, meth|
+        
+      end
+
       add :var_ref do |node|
         next unless node.binding.nil?
-        
+        type = node.scope.lookup('self').expr_type
+        name = node.expanded_identifier
+        methods = type.matching_methods(name)
+        if methods.empty?
+          raise NoSuchMethodError.new("Could not find any methods named #{name}.", node)
+        end
+        pruned_methods = methods.select { |meth| meth.arity.compatible?(Arity::EMPTY) }
+        if pruned_methods.empty?
+          raise NoSuchMethodError.new("Could not find any methods named #{name} that take 0 arguments.", node)
+        end
+        node.method_estimate = pruned_methods
       end
     end
   end

@@ -19,7 +19,10 @@ module Laser
               'must create OpenScope or ClosedScope. Not just Scope.')
         end
         @parent, @constants, @locals = parent, constants, locals
-        @locals['self'] = Bindings::GenericBinding.new('self', self_ptr)
+        @locals['self'] = Bindings::LocalVariableBinding.new('self', self_ptr)
+        if self_ptr && Bootstrap::COMPLETE
+          @locals['self'].expr_type = Types::ClassType.new(self_ptr.klass.path, :covariant)
+        end
         @method = nil
       end
       
@@ -33,7 +36,7 @@ module Laser
       end
       
       def self_ptr=(other)
-        @locals['self'] = Bindings::GenericBinding.new('self', other)
+        @locals['self'] = Bindings::LocalVariableBinding.new('self', other)
       end
       
       def add_binding!(new_binding)

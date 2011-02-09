@@ -7,6 +7,7 @@ module Laser
         include Comparable
         attr_accessor :name
         attr_reader :value
+        attr_writer :expr_type
 
         def initialize(name, value)
           @name = name
@@ -14,7 +15,7 @@ module Laser
           bind!(value)
         end
         
-        def class_estimate
+        def expr_type
           @expr_type ||= Types::ClassType.new('Object', :covariant)
         end
       

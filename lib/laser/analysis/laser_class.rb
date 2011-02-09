@@ -136,9 +136,9 @@ module Laser
       # table and perform module initialization.
       def initialize_scope
         if @scope && !(@scope.parent.nil?)
-          @scope.self_ptr = self
           @scope.parent.constants[name] = self.binding if @scope.parent
-          @scope.locals['self'] = self.binding
+          @scope.locals['self'] = Bindings::LocalVariableBinding.new('self', self)
+          @scope.locals['self'].expr_type = Types::ClassType.new(@path, :covariant)
         end
       end
       
@@ -207,6 +207,10 @@ module Laser
         then [self]
         else [self] + @superclass.ancestors
         end
+      end
+      
+      def subset
+        [self]
       end
       
       def included_modules

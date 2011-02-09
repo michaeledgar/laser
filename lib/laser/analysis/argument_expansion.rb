@@ -24,7 +24,7 @@ module Laser
       # Returns the arity of the argument block being passed, as a range of
       # possible values.
       def arity
-        return Arity.new(0..0) if node.nil?
+        return Arity::EMPTY if node.nil?
         Arity.new(arity_for_node(node))
       end
 

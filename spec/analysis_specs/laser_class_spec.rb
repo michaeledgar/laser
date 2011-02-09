@@ -67,6 +67,15 @@ shared_examples_for 'a Ruby module' do
     end
   end
   
+  describe '#scope' do
+    it 'should return a scope with a self local' do
+      x = described_class.new(ClassRegistry[@name], OpenScope.new(Scope::GlobalScope, nil), 'A::TemporaryA123')
+      x.scope.lookup('self').should_not be_nil
+      x.scope.lookup('self').value.should be x
+      x.scope.lookup('self').expr_type.should == Types::ClassType.new('A::TemporaryA123', :covariant)
+    end
+  end
+  
   describe '#name' do
     it 'extracts the name from the full path' do
       x = described_class.new(ClassRegistry[@name], Scope::GlobalScope, '::A::B::C::D::EverybodysFavoriteClass')

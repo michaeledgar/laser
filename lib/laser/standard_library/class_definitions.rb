@@ -1,5 +1,7 @@
 RUBY_VERSION = '1.9.2'
 module Kernel
+  def p(*args)
+  end
 end
 module Comparable
 end
@@ -316,6 +318,13 @@ end
 class Errno::EPROGUNAVAIL < SystemCallError
 end
 class Errno::ERPCMISMATCH < SystemCallError
+end
+
+class << self
+  def private
+  end
+  def public
+  end
 end
 
 

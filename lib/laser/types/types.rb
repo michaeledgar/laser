@@ -40,13 +40,7 @@ module Laser
     end
     
     class StructuralType < TypeConstraint
-      attr_reader :method_name, :argument_types, :return_type
-      
-      def initialize(method_name, argument_types, return_type)
-        @method_name = method_name
-        @argument_types = argument_types
-        @return_type = return_type
-      end
+      acts_as_struct :method_name, :variance, :return_type
       
       def signature
         {method_name: method_name, argument_types: argument_types,
@@ -57,11 +51,15 @@ module Laser
     class ClassType < Base
       acts_as_struct :class_name, :variance
       
+      def matching_methods(name)
+        possible_classes.map { |klass| klass.instance_methods[name] }.compact.uniq
+      end
+      
       def possible_classes
         case variance
-        when :invariant then ClassRegistry[class_name]
-        when :covariant then ClassRegistry[class_name].subset
-        when :contravariant then ClassRegistry[class_name].superset
+        when :invariant then SexpAnalysis::ClassRegistry[class_name]
+        when :covariant then SexpAnalysis::ClassRegistry[class_name].subset
+        when :contravariant then SexpAnalysis::ClassRegistry[class_name].superset
         end
       end
       

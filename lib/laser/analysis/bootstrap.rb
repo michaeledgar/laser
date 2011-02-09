@@ -3,6 +3,7 @@ module Laser
     # This module contains bootstrapping code. This initializes the first classes
     # and modules that build up the meta-model (Class, Module, Object).
     module Bootstrap
+      COMPLETE = false
       extend SexpAnalysis
       class BootstrappingError < StandardError; end
       def self.bootstrap
@@ -18,7 +19,8 @@ module Laser
         global = ClosedScope.new(nil, main_object,
             {'Object' => Bindings::ConstantBinding.new('Object', object_class),
              'Module' => Bindings::ConstantBinding.new('Module', module_class),
-             'Class' => Bindings::ConstantBinding.new('Class', class_class) })
+             'Class' => Bindings::ConstantBinding.new('Class', class_class) },
+            {'self' => main_object})
         if Scope.const_defined?("GlobalScope")
           raise BootstrappingError.new('GlobalScope has already been initialized')
         else
@@ -46,6 +48,8 @@ module Laser
             Bindings::KeywordBinding.new('nil', nil_class.get_instance))
           
         bootstrap_literals(global, class_class)
+        remove_const("COMPLETE")
+        const_set("COMPLETE", true)
       rescue StandardError => err
         new_exception = BootstrappingError.new("Bootstrapping failed: #{err.message}")
         new_exception.set_backtrace(err.backtrace)
