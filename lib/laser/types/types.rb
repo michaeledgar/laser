@@ -57,7 +57,7 @@ module Laser
       
       def possible_classes
         case variance
-        when :invariant then SexpAnalysis::ClassRegistry[class_name]
+        when :invariant then [SexpAnalysis::ClassRegistry[class_name]]
         when :covariant then SexpAnalysis::ClassRegistry[class_name].subset
         when :contravariant then SexpAnalysis::ClassRegistry[class_name].superset
         end
