@@ -15,7 +15,7 @@ module Laser
         end
         
         def class_estimate
-          @class_estimate ||= ClassEstimate.new
+          @expr_type ||= Types::ClassType.new('Object', :covariant)
         end
       
         def bind!(value)

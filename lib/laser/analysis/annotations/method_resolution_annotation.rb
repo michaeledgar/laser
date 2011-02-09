@@ -11,7 +11,7 @@ module Laser
         matched_method = resolve_super_call(node)
         node.method_estimate = Set.new([matched_method])
         call_arity = ArgumentExpansion.new(node[1]).arity
-        unless arity_compatible?(matched_method.arity, call_arity)
+        unless matched_method.arity.compatible?(call_arity)
           raise IncompatibleArityError.new(
               "Called super with #{call_arity} implicit arguments, but " +
               "the superclass implementation takes #{matched_method.arity} arguments.",
@@ -23,16 +23,12 @@ module Laser
         matched_method = resolve_super_call(node)
         node.method_estimate = Set.new([matched_method])
         call_arity = node.scope.method.arity
-        unless arity_compatible?(matched_method.arity, call_arity)
+        unless matched_method.arity.compatible?(call_arity)
           raise IncompatibleArityError.new(
               "Called super with #{call_arity} implicit arguments, but " +
               "the superclass implementation takes #{matched_method.arity} arguments.",
               node)
         end
-      end
-      
-      def arity_compatible?(r1, r2)
-        r1.first <= r2.last && r2.first <= r1.last
       end
       
       def resolve_super_call(node)

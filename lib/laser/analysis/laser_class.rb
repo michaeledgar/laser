@@ -451,7 +451,7 @@ module Laser
 
       def add_signature!(signature)
         @signatures << signature
-        @arity = refine_arity(signature.arity)
+        @arity = Arity.new(refine_arity(signature.arity))
       end
       
       def refine_arity(new_arity)

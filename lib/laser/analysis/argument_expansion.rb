@@ -10,7 +10,7 @@ module Laser
         node = node[1] if !node.nil? && node.type == :arg_paren
         @node = node
       end
-      
+
       # Returns whether the node has a block argument. If it does, it
       # returns the block argument's node.
       def has_block?
@@ -20,25 +20,25 @@ module Laser
           node[2]
         end
       end
-      
+
       # Returns the arity of the argument block being passed, as a range of
       # possible values.
       def arity
-        return (0..0) if node.nil?
-        arity_for_node(node)
+        return Arity.new(0..0) if node.nil?
+        Arity.new(arity_for_node(node))
       end
-      
+
       # Are there no arguments being passed?
       def empty?
         arity == (0..0)
       end
-      
+
       # Returns whether all arguments are constant.
       def is_constant?
         return true if node.nil?
         node_is_constant?(node)
       end
-      
+
       # Returns an array of constant values that are the arguments being passed.
       #
       # pre-contract: is_constant?.should be_true
@@ -46,9 +46,9 @@ module Laser
         return [] if node.nil?
         node_constant_values(node)
       end
-      
+
       private
-      
+
       # Finds the arity of a given argument node.
       def arity_for_node(node)
         case node[0]

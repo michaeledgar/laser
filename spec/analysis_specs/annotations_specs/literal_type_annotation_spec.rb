@@ -5,8 +5,8 @@ describe LiteralTypeAnnotation do
   
   it_should_behave_like 'an annotator'
   
-  it 'adds the #class_estimate method to Sexp' do
-    Sexp.instance_methods.should include(:class_estimate)
+  it 'adds the #expr_type method to Sexp' do
+    Sexp.instance_methods.should include(:expr_type)
   end
   
   # This is the AST that Ripper generates for the parsed code. It is
@@ -19,9 +19,7 @@ describe LiteralTypeAnnotation do
     tree = Sexp.new(Ripper.sexp('a = 5'))
     LiteralTypeAnnotation.new.annotate!(tree)
     list = tree[1]
-    estimate = list[0][2].class_estimate
-    estimate.should be_exact
-    estimate.exact_class.should == ClassRegistry['Fixnum']
+    list[0][2].expr_type.should == Types::ClassType.new('Integer', :covariant)
   end
   
   # This is the AST that Ripper generates for the parsed code. It is
@@ -43,9 +41,7 @@ describe LiteralTypeAnnotation do
     LiteralTypeAnnotation.new.annotate!(tree)
     list = tree[1]
     [list[0][2], list[0][2][1], list[0][2][1][1], list[0][2][1][2]].each do |entry|
-      estimate = entry.class_estimate
-      estimate.should be_exact
-      estimate.exact_class.should == ClassRegistry['String']
+      entry.expr_type.should == Types::ClassType.new('String', :invariant)
     end
   end
 
@@ -57,9 +53,7 @@ describe LiteralTypeAnnotation do
     tree = Sexp.new(Ripper.sexp('a = %x(find .)'))
     LiteralTypeAnnotation.new.annotate!(tree)
     list = tree[1]
-    estimate = list[0][2].class_estimate
-    estimate.should be_exact
-    estimate.exact_class.should == ClassRegistry['String']
+    list[0][2].expr_type.should == Types::ClassType.new('String', :invariant)
   end
 
   # [:program,
@@ -70,9 +64,7 @@ describe LiteralTypeAnnotation do
     tree = Sexp.new(Ripper.sexp('a = ?a'))
     LiteralTypeAnnotation.new.annotate!(tree)
     list = tree[1]
-    estimate = list[0][2].class_estimate
-    estimate.should be_exact
-    estimate.exact_class.should == ClassRegistry['String']
+    list[0][2].expr_type.should == Types::ClassType.new('String', :invariant)
   end
   
   # [:program,
@@ -83,9 +75,7 @@ describe LiteralTypeAnnotation do
     tree = Sexp.new(Ripper.sexp('x = 3.14'))
     LiteralTypeAnnotation.new.annotate!(tree)
     list = tree[1]
-    estimate = list[0][2].class_estimate
-    estimate.should be_exact
-    estimate.exact_class.should == ClassRegistry['Float']
+    list[0][2].expr_type.should == Types::ClassType.new('Float', :invariant)
   end
   
   # [:program,
@@ -98,9 +88,7 @@ describe LiteralTypeAnnotation do
     tree = Sexp.new(Ripper.sexp('x = /abc/im'))
     LiteralTypeAnnotation.new.annotate!(tree)
     list = tree[1]
-    estimate = list[0][2].class_estimate
-    estimate.should be_exact
-    estimate.exact_class.should == ClassRegistry['Regexp']
+    list[0][2].expr_type.should == Types::ClassType.new('Regexp', :invariant)
   end
   
   # [:program,
@@ -111,9 +99,7 @@ describe LiteralTypeAnnotation do
     tree = Sexp.new(Ripper.sexp('x = [1, 2]'))
     LiteralTypeAnnotation.new.annotate!(tree)
     list = tree[1]
-    estimate = list[0][2].class_estimate
-    estimate.should be_exact
-    estimate.exact_class.should == ClassRegistry['Array']
+    list[0][2].expr_type.should == Types::ClassType.new('Array', :invariant)
   end
   
   # [:program,
@@ -128,9 +114,7 @@ describe LiteralTypeAnnotation do
     tree = Sexp.new(Ripper.sexp('x = {a: :b}'))
     LiteralTypeAnnotation.new.annotate!(tree)
     list = tree[1]
-    estimate = list[0][2].class_estimate
-    estimate.should be_exact
-    estimate.exact_class.should == ClassRegistry['Hash']
+    list[0][2].expr_type.should == Types::ClassType.new('Hash', :invariant)
   end
   
   # [:program,
@@ -146,9 +130,7 @@ describe LiteralTypeAnnotation do
     tree = Sexp.new(Ripper.sexp('p(a: 3, b: 3)'))
     LiteralTypeAnnotation.new.annotate!(tree)
     list = tree[1]
-    estimate = list[0][2][1][1][0].class_estimate
-    estimate.should be_exact
-    estimate.exact_class.should == ClassRegistry['Hash']
+    list[0][2][1][1][0].expr_type.should == Types::ClassType.new('Hash', :invariant)
   end
   
   # [:program,
@@ -159,9 +141,7 @@ describe LiteralTypeAnnotation do
     tree = Sexp.new(Ripper.sexp('x = :abcdef'))
     LiteralTypeAnnotation.new.annotate!(tree)
     list = tree[1]
-    estimate = list[0][2].class_estimate
-    estimate.should be_exact
-    estimate.exact_class.should == ClassRegistry['Symbol']
+    list[0][2].expr_type.should == Types::ClassType.new('Symbol', :invariant)
   end
   
   # [:program,
@@ -175,9 +155,7 @@ describe LiteralTypeAnnotation do
     tree = Sexp.new(Ripper.sexp('x = :"abc{xyz}def"'))
     LiteralTypeAnnotation.new.annotate!(tree)
     list = tree[1]
-    estimate = list[0][2].class_estimate
-    estimate.should be_exact
-    estimate.exact_class.should == ClassRegistry['Symbol']
+    list[0][2].expr_type.should == Types::ClassType.new('Symbol', :invariant)
   end
   
   # [:program,
@@ -192,9 +170,7 @@ describe LiteralTypeAnnotation do
     tree = Sexp.new(Ripper.sexp('x = {a: :b}'))
     LiteralTypeAnnotation.new.annotate!(tree)
     list = tree[1]
-    estimate = list[0][2][1][1][0][1].class_estimate  # aye carumba
-    estimate.should be_exact
-    estimate.exact_class.should == ClassRegistry['Symbol']
+    list[0][2][1][1][0][1].expr_type.should == Types::ClassType.new('Symbol', :invariant)
   end
 
   # [:program,
@@ -205,9 +181,7 @@ describe LiteralTypeAnnotation do
     tree = Sexp.new(Ripper.sexp('x = true'))
     LiteralTypeAnnotation.new.annotate!(tree)
     list = tree[1]
-    estimate = list[0][2].class_estimate
-    estimate.should be_exact
-    estimate.exact_class.should == ClassRegistry['TrueClass']
+    list[0][2].expr_type.should == Types::ClassType.new('TrueClass', :invariant)
   end
 
   # [:program,
@@ -218,9 +192,7 @@ describe LiteralTypeAnnotation do
     tree = Sexp.new(Ripper.sexp('x = false'))
     LiteralTypeAnnotation.new.annotate!(tree)
     list = tree[1]
-    estimate = list[0][2].class_estimate
-    estimate.should be_exact
-    estimate.exact_class.should == ClassRegistry['FalseClass']
+    list[0][2].expr_type.should == Types::ClassType.new('FalseClass', :invariant)
   end
 
   # [:program,
@@ -231,9 +203,7 @@ describe LiteralTypeAnnotation do
     tree = Sexp.new(Ripper.sexp('x = nil'))
     LiteralTypeAnnotation.new.annotate!(tree)
     list = tree[1]
-    estimate = list[0][2].class_estimate
-    estimate.should be_exact
-    estimate.exact_class.should == ClassRegistry['NilClass']
+    list[0][2].expr_type.should == Types::ClassType.new('NilClass', :invariant)
   end
 
   # [:program,
@@ -244,9 +214,7 @@ describe LiteralTypeAnnotation do
     tree = Sexp.new(Ripper.sexp('x = __FILE__'))
     LiteralTypeAnnotation.new.annotate!(tree)
     list = tree[1]
-    estimate = list[0][2].class_estimate
-    estimate.should be_exact
-    estimate.exact_class.should == ClassRegistry['String']
+    list[0][2].expr_type.should == Types::ClassType.new('String', :invariant)
   end
 
   # [:program,
@@ -257,9 +225,7 @@ describe LiteralTypeAnnotation do
     tree = Sexp.new(Ripper.sexp('x = __LINE__'))
     LiteralTypeAnnotation.new.annotate!(tree)
     list = tree[1]
-    estimate = list[0][2].class_estimate
-    estimate.should be_exact
-    estimate.exact_class.should == ClassRegistry['Fixnum']
+    list[0][2].expr_type.should == Types::ClassType.new('Fixnum', :invariant)
   end
   
 
@@ -271,9 +237,7 @@ describe LiteralTypeAnnotation do
     tree = Sexp.new(Ripper.sexp('x = __ENCODING__'))
     LiteralTypeAnnotation.new.annotate!(tree)
     list = tree[1]
-    estimate = list[0][2].class_estimate
-    estimate.should be_exact
-    estimate.exact_class.should == ClassRegistry['Encoding']
+    list[0][2].expr_type.should == Types::ClassType.new('Encoding', :invariant)
   end
   
   
@@ -285,9 +249,7 @@ describe LiteralTypeAnnotation do
     tree = Sexp.new(Ripper.sexp('x = 2..9'))
     LiteralTypeAnnotation.new.annotate!(tree)
     list = tree[1]
-    estimate = list[0][2].class_estimate
-    estimate.should be_exact
-    estimate.exact_class.should == ClassRegistry['Range']
+    list[0][2].expr_type.should == Types::ClassType.new('Range', :invariant)
   end
   
   
@@ -299,9 +261,7 @@ describe LiteralTypeAnnotation do
     tree = Sexp.new(Ripper.sexp('x = 2...9'))
     LiteralTypeAnnotation.new.annotate!(tree)
     list = tree[1]
-    estimate = list[0][2].class_estimate
-    estimate.should be_exact
-    estimate.exact_class.should == ClassRegistry['Range']
+    list[0][2].expr_type.should == Types::ClassType.new('Range', :invariant)
   end
   
   # [:program,
@@ -314,8 +274,6 @@ describe LiteralTypeAnnotation do
     tree = Sexp.new(Ripper.sexp('x = ->(a, b=2){ a + b }'))
     LiteralTypeAnnotation.new.annotate!(tree)
     list = tree[1]
-    estimate = list[0][2].class_estimate
-    estimate.should be_exact
-    estimate.exact_class.should == ClassRegistry['Proc']
+    list[0][2].expr_type.should == Types::ClassType.new('Proc', :invariant)
   end
 end

@@ -57,6 +57,14 @@ module Laser
     class ClassType < Base
       acts_as_struct :class_name, :variance
       
+      def possible_classes
+        case variance
+        when :invariant then ClassRegistry[class_name]
+        when :covariant then ClassRegistry[class_name].subset
+        when :contravariant then ClassRegistry[class_name].superset
+        end
+      end
+      
       def signature
         {class_name: class_name, variance: variance}
       end
