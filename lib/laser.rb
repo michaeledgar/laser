@@ -36,6 +36,7 @@ require 'laser/analysis/bootstrap'
 Laser::SexpAnalysis::Bootstrap.bootstrap
 # Load the type engine
 require 'laser/types/types'
+Laser::SexpAnalysis::Bootstrap.bootstrap_literals
 require 'laser/annotation_parser/parsers'
 
 require 'laser/analysis/visitor'

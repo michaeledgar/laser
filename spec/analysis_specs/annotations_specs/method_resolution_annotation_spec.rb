@@ -186,4 +186,84 @@ describe LiteralTypeAnnotation do
       tree.all_errors.first.should be_a(NoSuchMethodError)
     end
   end
+  
+  describe 'performing a no-arg method call with a receiver (:call)' do
+    it 'should resolve to the appropriate method(s) based on the receiver type' do
+      input = '[1, 2].uniq!'
+      tree = annotate_all(input)
+      tree.all_errors.should be_empty
+      
+      uniq_call = tree.deep_find { |node| node.type == :call }
+      uniq_call.should_not be_nil
+      uniq_call.method_estimate.should ==
+          [ClassRegistry['Array'].instance_methods['uniq!']]
+    end
+    
+    it 'should resolve to the appropriate method(s) based on the receiver type' do
+      input = '"hello world".center(100, "=")'
+      tree = annotate_all(input)
+      tree.all_errors.should be_empty
+      
+      uniq_call = tree.deep_find { |node| node.type == :call }
+      uniq_call.should_not be_nil
+      uniq_call.method_estimate.should ==
+          [ClassRegistry['String'].instance_methods['center']]
+    end
+  end
+  
+  describe 'handling binary operators' do
+    it 'should resolve to a precise lookup when possible' do
+      input = '"hello %s" % ["world!"]'
+      tree = annotate_all(input)
+      tree.all_errors.should be_empty
+      
+      uniq_call = tree.deep_find { |node| node.type == :binary }
+      uniq_call.should_not be_nil
+      uniq_call.method_estimate.should ==
+          [ClassRegistry['String'].instance_methods['%']]
+    end
+
+    it 'should resolve to all subclass operators by looking up the method with the name of the operator' do
+      input = '1 + 3'
+      tree = annotate_all(input)
+      tree.all_errors.should be_empty
+      
+      uniq_call = tree.deep_find { |node| node.type == :binary }
+      uniq_call.should_not be_nil
+      uniq_call.method_estimate.should ==
+          [ClassRegistry['Fixnum'].instance_methods['+'],
+           ClassRegistry['Bignum'].instance_methods['+']]
+    end
+    
+    it 'should throw an error if the operator does not exist on the given type' do
+      input = '"hello" - "el"'
+      tree = annotate_all(input)
+      tree.all_errors.should_not be_empty
+      tree.all_errors.size.should == 1
+      tree.all_errors.first.should be_a(NoSuchMethodError)
+    end
+  end
+  
+  describe 'handling unary operators' do
+    it 'should resolve to all subclass operators by looking up the method with the name of the operator' do
+      input = '-3'
+      tree = annotate_all(input)
+      tree.all_errors.should be_empty
+      
+      uniq_call = tree.deep_find { |node| node.type == :unary }
+      uniq_call.should_not be_nil
+      uniq_call.method_estimate.should ==
+          [ClassRegistry['Numeric'].instance_methods['-@'],
+           ClassRegistry['Fixnum'].instance_methods['-@'],
+           ClassRegistry['Bignum'].instance_methods['-@']]
+    end
+    
+    it 'raises an error when the the operator does not exist on the given type' do
+      input = '-"hello"'
+      tree = annotate_all(input)
+      tree.all_errors.should_not be_empty
+      tree.all_errors.size.should == 1
+      tree.all_errors.first.should be_a(NoSuchMethodError)
+    end
+  end
 end

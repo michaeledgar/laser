@@ -11,6 +11,7 @@ module Laser
         self.first <= other.last && other.first <= self.last
       end
       EMPTY = Arity.new(0..0)
+      ANY = Arity.new(0..Float::INFINITY)
     end
   end
 end

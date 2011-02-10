@@ -2,6 +2,7 @@
 
 $LOAD_PATH.unshift(File.dirname(__FILE__))
 $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
+
 require 'simplecov'
 require 'simplecov-gem-adapter'
 SimpleCov.start 'gem'
@@ -9,6 +10,8 @@ require 'laser'
 require 'rspec'
 require 'rspec/autorun'
 require 'stringio'
+
+#require 'profile'
 
 class Object
   def debug_print

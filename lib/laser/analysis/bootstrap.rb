@@ -46,8 +46,7 @@ module Laser
             Bindings::KeywordBinding.new('false', false_class.get_instance))
         Scope::GlobalScope.add_binding!(
             Bindings::KeywordBinding.new('nil', nil_class.get_instance))
-          
-        bootstrap_literals(global, class_class)
+
         remove_const("COMPLETE")
         const_set("COMPLETE", true)
       rescue StandardError => err
@@ -56,24 +55,27 @@ module Laser
         raise new_exception
       end
       
-      def self.bootstrap_literals(global, class_class)
+      def self.bootstrap_literals
+        global = Scope::GlobalScope
+        class_class = ClassRegistry['Class']
+        superclass_assignment = proc { |klass| klass.superclass = ClassRegistry['Object'] }
         # Need literal classes or we can't analyze anything
         global.add_binding!(Bindings::ConstantBinding.new(
-            'String', LaserClass.new(class_class, Scope::GlobalScope, 'String')))
+            'String', LaserClass.new(class_class, ClosedScope.new(Scope::GlobalScope, nil), 'String', &superclass_assignment)))
         global.add_binding!(Bindings::ConstantBinding.new(
-            'Regexp', LaserClass.new(class_class, Scope::GlobalScope, 'Regexp')))
+            'Regexp', LaserClass.new(class_class, ClosedScope.new(Scope::GlobalScope, nil), 'Regexp', &superclass_assignment)))
         global.add_binding!(Bindings::ConstantBinding.new(
-            'Array', LaserClass.new(class_class, Scope::GlobalScope, 'Array')))
+            'Array', LaserClass.new(class_class, ClosedScope.new(Scope::GlobalScope, nil), 'Array', &superclass_assignment)))
         global.add_binding!(Bindings::ConstantBinding.new(
-            'Hash', LaserClass.new(class_class, Scope::GlobalScope, 'Hash')))
+            'Hash', LaserClass.new(class_class, ClosedScope.new(Scope::GlobalScope, nil), 'Hash', &superclass_assignment)))
         numeric = global.add_binding!(Bindings::ConstantBinding.new(
-            'Numeric', LaserClass.new(class_class, Scope::GlobalScope, 'Numeric'))).value
+            'Numeric', LaserClass.new(class_class, ClosedScope.new(Scope::GlobalScope, nil), 'Numeric', &superclass_assignment))).value
         global.add_binding!(Bindings::ConstantBinding.new(
-            'Integer', LaserClass.new(class_class, Scope::GlobalScope, 'Integer') do |klass|
+            'Integer', LaserClass.new(class_class, ClosedScope.new(Scope::GlobalScope, nil), 'Integer') do |klass|
               klass.superclass = numeric
             end))
         global.add_binding!(Bindings::ConstantBinding.new(
-            'Float', LaserClass.new(class_class, Scope::GlobalScope, 'Float') do |klass|
+            'Float', LaserClass.new(class_class, ClosedScope.new(Scope::GlobalScope, nil), 'Float') do |klass|
               klass.superclass = numeric
             end))
       end

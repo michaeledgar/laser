@@ -44,24 +44,43 @@ module Laser
                                     "but no superclass has a method with that name.", node)
       end
       
+      add :unary do |node, op, rhs|
+        type = rhs.expr_type
+        name = op.to_s
+        node.method_estimate = filter_by_arity(
+            methods_for_type_name(type, name, node), name, Arity::EMPTY, node)
+      end
+      
+      add :binary do |node, lhs, op, rhs|
+        type = lhs.expr_type
+        name = op.to_s
+        node.method_estimate = filter_by_arity(
+            methods_for_type_name(type, name, node), name, Arity.new(1..1), node)
+      end
+      
       add :call do |node, recv, sep, meth|
         type = recv.expr_type
         name = meth.expanded_identifier
-        node.method_estimate = methods_for_type_name_and_arity(type, name, Arity::EMPTY, node)
+        node.method_estimate = methods_for_type_name(type, name, node)
       end
 
       add :var_ref do |node|
         next unless node.binding.nil?
         type = node.scope.lookup('self').expr_type
         name = node.expanded_identifier
-        node.method_estimate = methods_for_type_name_and_arity(type, name, Arity::EMPTY, node)
+        node.method_estimate = filter_by_arity(
+            methods_for_type_name(type, name, node), name, Arity::EMPTY, node)
       end
       
-      def methods_for_type_name_and_arity(type, name, arity, node)
+      def methods_for_type_name(type, name, node)
         methods = type.matching_methods(name)
         if methods.empty?
           raise NoSuchMethodError.new("Could not find any methods named #{name}.", node)
         end
+        methods
+      end
+      
+      def filter_by_arity(methods, name, arity, node)
         pruned_methods = methods.select { |meth| meth.arity.compatible?(arity) }
         if pruned_methods.empty?
           raise NoSuchMethodError.new("Could not find any methods named #{name} that take 0 arguments.", node)
