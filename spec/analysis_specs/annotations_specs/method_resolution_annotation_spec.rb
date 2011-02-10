@@ -135,6 +135,17 @@ describe LiteralTypeAnnotation do
   describe 'performing a simple no-arg implicit self call' do
     it 'should resolve to the only method when there are no subclasses' do
       input = 'class A700; def printall(x); foobar; end; def foobar(); end; end'
+      
+      
+      class A700
+        def printall(x)
+          foobar
+        end
+        def foobar()
+        end
+      end
+      
+      
       tree = annotate_all(input)
       tree.all_errors.should be_empty
       

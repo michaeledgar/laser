@@ -7,7 +7,7 @@ module Laser
       add_property :expr_type
       
       def default_visit(node)
-        node.expr_type = Types::ClassType.new('Object', :covariant)
+        node.expr_type = Types::TOP
         visit_children(node)
       end
 
@@ -58,6 +58,8 @@ module Laser
               when '__LINE__' then Types::ClassType.new('Fixnum', :invariant)
               when '__ENCODING__' then Types::ClassType.new('Encoding', :invariant)
               end
+        else
+          default_visit node
         end
         visit_children(node)
       end

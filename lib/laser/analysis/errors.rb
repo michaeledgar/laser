@@ -42,7 +42,7 @@ module Laser
   end
   
   class UselessIncludeError < Laser::Error
-    severity TRICKY_ERROR
+    severity MAJOR_WARNING
   end
   
   class DynamicSuperclassError < Laser::Error

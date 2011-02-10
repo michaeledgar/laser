@@ -67,6 +67,7 @@ module Laser
         {class_name: class_name, variance: variance}
       end
     end
+    TOP = ClassType.new('Object', :covariant)
 
     class GenericType < Base
       acts_as_struct :base_type, :subtypes

@@ -31,7 +31,7 @@ module Laser
         visit_with_runtime(params, body, :run)
       end
       
-      add :sdef do |node, singleton, separator, name, params, body|
+      add :defs do |node, singleton, separator, name, params, body|
         default_visit(node)
         default_visit(singleton)
         default_visit(name)

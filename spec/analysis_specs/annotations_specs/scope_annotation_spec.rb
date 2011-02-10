@@ -765,7 +765,7 @@ describe ScopeAnnotation do
   #      [:@ident, "p", [1, 58]],
   #      [:args_add_block, [[:var_ref, [:@ident, "x", [1, 60]]]], false]]]]]]]
   it 'creates a new open scope when a block is used' do
-    tree = annotate_all('p nil; [1,2].crazy_blocker(2,5) do |x, y=x, *rest, &blk|; p x; end')
+    tree = annotate_all('p nil; [1,2].fetch(2) do |x, y=x, *rest, &blk|; p x; end')
     list = tree[1]
 
     block_body = list[1][2][2]
@@ -802,7 +802,7 @@ describe ScopeAnnotation do
   #      [:@ident, "p", [1, 46]],
   #      [:args_add_block, [[:var_ref, [:@ident, "x", [1, 48]]]], false]]]]]]]
   it 'creates a scope that can reference parent scope variables when a block is found' do
-    tree = annotate_all('z = 10; [1,2].crazy_blocker(2,5) do |x, y=x|; p x; end')
+    tree = annotate_all('z = 10; [1,2].fetch(2) do |x, y=x|; p x; end')
     list = tree[1]
     list[0].should see_var('z')
 
@@ -1281,13 +1281,23 @@ module Laser
       # class, value (if constant!), and a variety of other details.
       class GenericBinding
         include Comparable
-        attr_accessor :name
-        attr_reader :value
 
         def initialize(name, value)
           @name = name
           @value = :uninitialized
           bind!(value)
+        end
+        
+        def name
+          @name
+        end
+        
+        def name=(other)
+          @name = other
+        end
+        
+        def value
+          @value
         end
 
         def bind!(value)

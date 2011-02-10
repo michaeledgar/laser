@@ -30,6 +30,7 @@ module Laser
       add :var_field do |node, ref|
         default_visit node
         node.binding = @current_scope.lookup(node.expanded_identifier)
+        node.expr_type = node.binding.expr_type
         if Bindings::ConstantBinding === node.binding
           node.is_constant = true
           node.constant_value = node.binding.value
@@ -43,6 +44,7 @@ module Laser
         default_visit node
         begin
           node.binding = @current_scope.lookup(node.expanded_identifier)
+          node.expr_type = node.binding.expr_type
           if Bindings::ConstantBinding === node.binding
             node.is_constant = true
             node.constant_value = node.binding.value
