@@ -209,6 +209,22 @@ describe LiteralTypeAnnotation do
       center_call.method_estimate.should ==
           [ClassRegistry['String'].instance_methods['center']]
     end
+    
+    it 'should raise an error if the method cannot be found on the given type' do
+      input = '[1, 2].center(2,3)'
+      tree = annotate_all(input)
+      tree.all_errors.should_not be_empty
+      tree.all_errors.size.should == 1
+      tree.all_errors.first.should be_a(NoSuchMethodError)
+    end
+    
+    it 'should raise an error if the method cannot be found on any type' do
+      input = 'x.hiybbprqag(2,3)'
+      tree = annotate_all(input)
+      tree.all_errors.should_not be_empty
+      tree.all_errors.size.should == 1
+      tree.all_errors.first.should be_a(NoSuchMethodError)
+    end
   end
   
   describe 'handling binary operators' do
