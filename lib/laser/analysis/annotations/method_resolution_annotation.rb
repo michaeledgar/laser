@@ -44,38 +44,65 @@ module Laser
                                     "but no superclass has a method with that name.", node)
       end
       
+      def with_default_method_estimate(node)
+        yield
+      rescue NoSuchMethodError => err
+        node.method_estimate = []
+        raise err
+      end
+      
       add :unary do |node, op, rhs|
         type = rhs.expr_type
         name = op.to_s
-        node.method_estimate = filter_by_arity(
-            methods_for_type_name(type, name, node), name, Arity::EMPTY, node)
+        with_default_method_estimate(node) do
+          node.method_estimate = filter_by_arity(
+              methods_for_type_name(type, name, node), name, Arity::EMPTY, node)
+        end
       end
       
       add :binary do |node, lhs, op, rhs|
         type = lhs.expr_type
         name = op.to_s
-        node.method_estimate = filter_by_arity(
-            methods_for_type_name(type, name, node), name, Arity.new(1..1), node)
+        with_default_method_estimate(node) do
+          node.method_estimate = filter_by_arity(
+              methods_for_type_name(type, name, node), name, Arity.new(1..1), node)
+        end
+      end
+      
+      add :method_add_arg do |node, meth, args|
+        visit meth
+        existing_methods = meth.method_estimate
+        if existing_methods.any?
+          expansion = ArgumentExpansion.new(args)
+          node.method_estimate = filter_by_arity(
+              meth.method_estimate, existing_methods.first.name, expansion.arity, node)
+        end
       end
       
       add :fcall do |node, meth|
         type = node.scope.lookup('self').expr_type
         name = meth.expanded_identifier
-        node.method_estimate = methods_for_type_name(type, name, node)
+        with_default_method_estimate(node) do
+          node.method_estimate = methods_for_type_name(type, name, node)
+        end
       end
       
       add :call do |node, recv, sep, meth|
         type = recv.expr_type
         name = meth.expanded_identifier
-        node.method_estimate = methods_for_type_name(type, name, node)
+        with_default_method_estimate(node) do
+          node.method_estimate = methods_for_type_name(type, name, node)
+        end
       end
 
       add :var_ref do |node|
         next unless node.binding.nil?
         type = node.scope.lookup('self').expr_type
         name = node.expanded_identifier
-        node.method_estimate = filter_by_arity(
-            methods_for_type_name(type, name, node), name, Arity::EMPTY, node)
+        with_default_method_estimate(node) do
+          node.method_estimate = filter_by_arity(
+              methods_for_type_name(type, name, node), name, Arity::EMPTY, node)
+        end
       end
       
       def methods_for_type_name(type, name, node)
