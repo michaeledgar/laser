@@ -204,9 +204,9 @@ describe LiteralTypeAnnotation do
       tree = annotate_all(input)
       tree.all_errors.should be_empty
       
-      uniq_call = tree.deep_find { |node| node.type == :call }
-      uniq_call.should_not be_nil
-      uniq_call.method_estimate.should ==
+      center_call = tree.deep_find { |node| node.type == :call }
+      center_call.should_not be_nil
+      center_call.method_estimate.should ==
           [ClassRegistry['String'].instance_methods['center']]
     end
   end
@@ -217,9 +217,9 @@ describe LiteralTypeAnnotation do
       tree = annotate_all(input)
       tree.all_errors.should be_empty
       
-      uniq_call = tree.deep_find { |node| node.type == :binary }
-      uniq_call.should_not be_nil
-      uniq_call.method_estimate.should ==
+      mod_call = tree.deep_find { |node| node.type == :binary }
+      mod_call.should_not be_nil
+      mod_call.method_estimate.should ==
           [ClassRegistry['String'].instance_methods['%']]
     end
 
@@ -228,9 +228,9 @@ describe LiteralTypeAnnotation do
       tree = annotate_all(input)
       tree.all_errors.should be_empty
       
-      uniq_call = tree.deep_find { |node| node.type == :binary }
-      uniq_call.should_not be_nil
-      uniq_call.method_estimate.should ==
+      plus_call = tree.deep_find { |node| node.type == :binary }
+      plus_call.should_not be_nil
+      plus_call.method_estimate.should ==
           [ClassRegistry['Fixnum'].instance_methods['+'],
            ClassRegistry['Bignum'].instance_methods['+']]
     end
@@ -242,6 +242,27 @@ describe LiteralTypeAnnotation do
       tree.all_errors.size.should == 1
       tree.all_errors.first.should be_a(NoSuchMethodError)
     end
+
+    it 'works for custom classes' do
+      input = "class A709; def +(other); end; def temp; self + 5; end; end"
+      tree = annotate_all(input)
+      
+      tree.all_errors.should be_empty
+      plus_call = tree.deep_find { |node| node.type == :binary }
+      plus_call.should_not be_nil
+      plus_call.method_estimate.should ==
+          [ClassRegistry['A709'].instance_methods['+']]
+    end
+    
+    it 'raises an error if, for some silly reason, the unary operator is defined but with args' do
+      input = "class A710; def +(); end; def temp; self + 5; end; end"
+      tree = annotate_all(input)
+      
+      tree.all_errors.should_not be_empty
+      tree.all_errors.size.should == 1
+      tree.all_errors.first.should be_a(NoSuchMethodError)
+      tree.all_errors.first.ast_node.type.should == :binary
+    end
   end
   
   describe 'handling unary operators' do
@@ -250,9 +271,9 @@ describe LiteralTypeAnnotation do
       tree = annotate_all(input)
       tree.all_errors.should be_empty
       
-      uniq_call = tree.deep_find { |node| node.type == :unary }
-      uniq_call.should_not be_nil
-      uniq_call.method_estimate.should ==
+      minus_call = tree.deep_find { |node| node.type == :unary }
+      minus_call.should_not be_nil
+      minus_call.method_estimate.should ==
           [ClassRegistry['Numeric'].instance_methods['-@'],
            ClassRegistry['Fixnum'].instance_methods['-@'],
            ClassRegistry['Bignum'].instance_methods['-@']]
@@ -264,6 +285,27 @@ describe LiteralTypeAnnotation do
       tree.all_errors.should_not be_empty
       tree.all_errors.size.should == 1
       tree.all_errors.first.should be_a(NoSuchMethodError)
+    end
+
+    it 'works for custom classes' do
+      input = "class A708; def +@; end; def temp; +self; end; end"
+      tree = annotate_all(input)
+      
+      tree.all_errors.should be_empty
+      plus_call = tree.deep_find { |node| node.type == :unary }
+      plus_call.should_not be_nil
+      plus_call.method_estimate.should ==
+          [ClassRegistry['A708'].instance_methods['+@']]
+    end
+    
+    it 'raises an error if, for some silly reason, the unary operator is defined but with args' do
+      input = "class A707; def +@(arg1, arg2); end; def temp; +self; end; end"
+      tree = annotate_all(input)
+      
+      tree.all_errors.should_not be_empty
+      tree.all_errors.size.should == 1
+      tree.all_errors.first.should be_a(NoSuchMethodError)
+      tree.all_errors.first.ast_node.type.should == :unary
     end
   end
 end
