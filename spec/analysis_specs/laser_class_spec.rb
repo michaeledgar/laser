@@ -72,7 +72,7 @@ shared_examples_for 'a Ruby module' do
       x = described_class.new(ClassRegistry[@name], OpenScope.new(Scope::GlobalScope, nil), 'A::TemporaryA123')
       x.scope.lookup('self').should_not be_nil
       x.scope.lookup('self').value.should be x
-      x.scope.lookup('self').expr_type.should == Types::ClassType.new('A::TemporaryA123', :covariant)
+      x.scope.lookup('self').expr_type.should == Types::ClassType.new(x.klass.path, :covariant)
     end
   end
   

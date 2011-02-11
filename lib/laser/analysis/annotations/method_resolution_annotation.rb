@@ -58,6 +58,12 @@ module Laser
             methods_for_type_name(type, name, node), name, Arity.new(1..1), node)
       end
       
+      add :fcall do |node, meth|
+        type = node.scope.lookup('self').expr_type
+        name = meth.expanded_identifier
+        node.method_estimate = methods_for_type_name(type, name, node)
+      end
+      
       add :call do |node, recv, sep, meth|
         type = recv.expr_type
         name = meth.expanded_identifier

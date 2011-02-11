@@ -166,22 +166,20 @@ module Laser
 
       ######## Detecting includes - requires method call detection! ########
       match_method_call 'include' do |node, args|
+        default_visit node
         if node.runtime == :load && @current_scope.self_ptr.klass.ancestors.include?(ClassRegistry['Module']) && args.is_constant?
           args.constant_values.reverse.each do |arg|
             @current_scope.self_ptr.include_module(arg)
           end
-        else
-          default_visit node
         end
       end
       
       match_method_call 'extend' do |node, args|
+        default_visit node
         if node.runtime == :load && @current_scope.self_ptr.klass.ancestors.include?(ClassRegistry['Module']) && args.is_constant?
           args.constant_values.reverse.each do |arg|
             @current_scope.self_ptr.singleton_class.include_module(arg)
           end
-        else
-          default_visit node
         end
       end
       
@@ -231,18 +229,29 @@ module Laser
       # Normal method definitions.
       add :def do |node, (_, name), arglist, body|
         receiver = implicit_receiver
-        # Time to create a brand new LaserMethod!
-        # Which class this is added to depends on the value of +self+.
-        # 1. If self is a module or class (as is typical), the method is
-        #    added to self's instance method list.
-        # 2. If self does not have Module in its class hierarchy, then it
-        #    should be added to self's singleton class.
+
+        new_signature = Signature.for_definition_sexp(name, arglist, body)
+        new_method = LaserMethod.new(name, @visibility) do |method|
+          method.body_ast = body
+          method.add_signature!(new_signature)
+        end
+        receiver.add_instance_method!(new_method)
+
+        method_locals = Hash[new_signature.arguments.map { |arg| [arg.name, arg] }]
+        new_scope = ClosedScope.new(@current_scope, nil, {}, method_locals)
+        
         if LaserModule === receiver
-        then method_self = receiver.get_instance
+        then method_self = receiver.get_instance(new_scope)
         else method_self = receiver
         end
-
-        add_method_to_object(receiver, method_self, name, arglist, body)
+        if new_scope.self_ptr.nil?
+          new_scope.self_ptr = method_self
+          new_scope.locals['self'].expr_type = Types::ClassType.new(method_self.klass.path, :covariant)
+        end
+        new_scope.method = new_method
+        
+        visit_with_scope(arglist, new_scope)
+        visit_with_scope(body, new_scope)
       end
 
       # Singleton method definition: def receiver.method_name

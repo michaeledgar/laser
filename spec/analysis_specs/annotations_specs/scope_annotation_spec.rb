@@ -972,6 +972,7 @@ describe ScopeAnnotation do
     c117.should_not be nil
     c117.ancestors.should == [ClassRegistry['C117'], ClassRegistry['A117'], ClassRegistry['B117'],
                               ClassRegistry['Object'], ClassRegistry['Kernel']]
+
     tree.all_errors.should be_empty
   end
   
@@ -1043,7 +1044,6 @@ describe ScopeAnnotation do
                                               ClassRegistry['Object'].singleton_class,
                                               ClassRegistry['Class'], ClassRegistry['Module'],
                                               ClassRegistry['Object'], ClassRegistry['Kernel']]
-                                              
     tree.all_errors.should be_empty
   end
   

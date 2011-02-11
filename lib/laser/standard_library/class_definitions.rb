@@ -21,6 +21,13 @@ end
 class Object
   include Kernel
 end
+class Module
+  def include(*mods)
+  end
+
+  def extend(*mods)
+  end
+end
 
 class Exception < Object
 end

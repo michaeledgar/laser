@@ -138,7 +138,7 @@ module Laser
         if @scope && !(@scope.parent.nil?)
           @scope.parent.constants[name] = self.binding if @scope.parent
           @scope.locals['self'] = Bindings::LocalVariableBinding.new('self', self)
-          @scope.locals['self'].expr_type = Types::ClassType.new(@path, :covariant)
+          @scope.locals['self'].expr_type = Types::ClassType.new(klass.path, :covariant)
         end
       end
       
@@ -373,7 +373,9 @@ module Laser
           @singleton_instance = instance_or_name
         end
       end
-      alias_method :get_instance, :singleton_instance
+      def get_instance(scope=nil)
+        singleton_instance
+      end
     end
 
     # When you include a module in Ruby, it uses inheritance to model the
