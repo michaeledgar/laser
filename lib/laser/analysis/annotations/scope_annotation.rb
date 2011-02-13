@@ -191,6 +191,7 @@ module Laser
       end
       
       def apply_visibility(node, args, visibility)
+        default_visit node
         if @current_scope.parent.nil? && visibility == :protected
           # node.errors << NoSuchMethodError.new("No 'protected' method at the top level.", node)
         elsif node.runtime == :load && (@current_scope.parent.nil? ||
@@ -209,8 +210,6 @@ module Laser
               found_method.visibility = visibility
             end
           end
-        else
-          default_visit node
         end
       end
       

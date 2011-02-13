@@ -105,6 +105,16 @@ module Laser
         end
       end
       
+      add :command do |node, meth, args|
+        type = node.scope.lookup('self').expr_type
+        name = meth.expanded_identifier
+        expansion = ArgumentExpansion.new(args)
+        with_default_method_estimate(node) do
+          node.method_estimate = filter_by_arity(
+              methods_for_type_name(type, name, node), name, expansion.arity, node)
+        end
+      end
+      
       def methods_for_type_name(type, name, node)
         methods = type.matching_methods(name)
         if methods.empty?

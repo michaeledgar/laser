@@ -168,8 +168,8 @@ module Laser
       end
 
       def instance_methods
-        if superclass
-        then superclass.instance_methods.merge(@instance_methods)
+        if @superclass
+        then @superclass.instance_methods.merge(@instance_methods)
         else @instance_methods
         end
       end
