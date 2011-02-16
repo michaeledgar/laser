@@ -292,6 +292,69 @@ describe LiteralTypeAnnotation do
     end
   end
   
+  describe 'performing method calls with an implicit receiver and non-parenthesized args (:command)' do
+    it 'should resolve to all subclass methods if they all match arity' do
+      input = 'class A731; def printall(x); foobar :a; end; def foobar(a); end; end;' +
+              'class A732 < A731; def foobar(b); end; end; class A733 < A731; def foobar(c); end; end;' +
+              'class A734 < A732; def foobar(d); end; end'
+      tree = annotate_all(input)
+      tree.all_errors.should be_empty
+      
+      foobar_call = tree.deep_find { |node| node.type == :command && node[1].expanded_identifier == 'foobar' }
+      foobar_call.should_not be_nil
+      foobar_call.method_estimate.should ==
+          [ClassRegistry['A731'].instance_methods['foobar'],
+           ClassRegistry['A732'].instance_methods['foobar'],
+           ClassRegistry['A734'].instance_methods['foobar'],
+           ClassRegistry['A733'].instance_methods['foobar']]
+    end
+    
+    it 'should resolve to all subclass methods with matching arity' do
+      input = 'class A735; def printall(x); foobar 1; end; def foobar(x, y=x); end; end;' +
+              'class A736 < A735; def foobar(x, y=x); end; end; class A737 < A735; def foobar(x, y=x); end; end;' +
+              'class A738 < A736; def foobar(x, y); end; end'
+      tree = annotate_all(input)
+      tree.all_errors.should be_empty
+      
+      foobar_call = tree.deep_find { |node| node.type == :command && node[1].expanded_identifier == 'foobar' }
+      foobar_call.should_not be_nil
+      foobar_call.method_estimate.should ==
+          [ClassRegistry['A735'].instance_methods['foobar'],
+           ClassRegistry['A736'].instance_methods['foobar'],
+           ClassRegistry['A737'].instance_methods['foobar']]
+    end
+    
+    it 'should resolve to a single method with matched arity' do
+      input = 'class A739; def printall(x); foobaz 1, 2; end; def foobaz(x, y, *rest); end; end'
+      tree = annotate_all(input)
+      tree.all_errors.should be_empty
+      
+      foobaz_call = tree.deep_find { |node| node.type == :command && node[1].expanded_identifier == 'foobaz' }
+      foobaz_call.should_not be_nil
+      foobaz_call.method_estimate.should ==
+          [ClassRegistry['A739'].instance_methods['foobaz']]
+    end
+    
+    it 'should raise an error if no such method exists on any subclasses' do
+      input = 'class A740; def printall(x); hiybbprqag 1, 2; end; end'
+      tree = annotate_all(input)
+      tree.all_errors.should_not be_empty
+      tree.all_errors.size.should == 1
+      tree.all_errors.first.should be_a(NoSuchMethodError)
+      tree.all_errors.first.message.should include('hiybbprqag')
+    end
+    
+    it 'should raise an error if no such method exists with the correct arity on any subclasses' do
+      input = 'class A741; def printall(x); foobaz 1, 2; end; def foobaz(x); end; end;' +
+              'class A742 < A741; def foobaz(x, y, z); end; end'
+      tree = annotate_all(input)
+      tree.all_errors.should_not be_empty
+      tree.all_errors.size.should == 1
+      tree.all_errors.first.should be_a(NoSuchMethodError)
+      tree.all_errors.first.message.should include('foobaz')
+    end
+  end
+  
   describe 'handling binary operators' do
     it 'should resolve to a precise lookup when possible' do
       input = '"hello %s" % ["world!"]'
