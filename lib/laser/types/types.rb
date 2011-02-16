@@ -60,7 +60,10 @@ module Laser
         case variance
         when :invariant then [klass]
         when :covariant
-          SexpAnalysis::LaserClass === klass ? klass.subset : klass.classes_including
+          if SexpAnalysis::LaserClass === klass
+          then klass.subset
+          else klass.classes_including.map(&:subset).flatten
+          end
         when :contravariant then klass.superset
         end
       end

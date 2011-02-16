@@ -284,6 +284,7 @@ end
 class Proc
 end
 class String
+  include Comparable
   def %(format)
   end
   def *(integer)
