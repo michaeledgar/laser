@@ -213,6 +213,10 @@ module Laser
         [self]
       end
       
+      def classes_including
+        @classes_including ||= []
+      end
+      
       def included_modules
         ancestors.select { |mod| LaserModuleCopy === mod }
       end
@@ -246,7 +250,9 @@ module Laser
             end
           end
           if should_change
-            current = (current.superclass = LaserModuleCopy.new(mod, current.ancestors[1]))
+            new_super = (current.superclass = LaserModuleCopy.new(mod, current.ancestors[1]))
+            mod.classes_including << current
+            current = new_super
             any_changes = true
           end
           mod = mod.superclass
@@ -426,6 +432,13 @@ module Laser
       
       def instance_variables
         @delegated.instance_variables
+      end
+      
+      def instance_methods
+        if @superclass
+        then @superclass.instance_methods.merge(@delegated.instance_methods)
+        else @delegated.instance_methods
+        end
       end
     end
 

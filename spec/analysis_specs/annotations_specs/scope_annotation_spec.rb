@@ -168,7 +168,7 @@ describe ScopeAnnotation do
   #        nil,  nil, nil]]],
   #     nil, nil, nil]]]]
   it 'defines methods on the current Module, if inside a module lexically' do
-    tree = annotate_all('module M13; def silly(*rest); p rest; end; end')
+    tree = annotate_all('module M13; def silly(*rest); p rest; end; end; class C13; include M13; end')
     definition = tree[1][0][2][1][1]
     body = definition[3]
     [body, *body.all_subtrees].each do |node|

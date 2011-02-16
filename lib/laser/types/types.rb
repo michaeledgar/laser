@@ -56,10 +56,12 @@ module Laser
       end
       
       def possible_classes
+        klass = SexpAnalysis::ClassRegistry[class_name]
         case variance
-        when :invariant then [SexpAnalysis::ClassRegistry[class_name]]
-        when :covariant then SexpAnalysis::ClassRegistry[class_name].subset
-        when :contravariant then SexpAnalysis::ClassRegistry[class_name].superset
+        when :invariant then [klass]
+        when :covariant
+          SexpAnalysis::LaserClass === klass ? klass.subset : klass.classes_including
+        when :contravariant then klass.superset
         end
       end
       
