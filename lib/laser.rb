@@ -15,6 +15,7 @@ require 'laser/support/module_extensions'
 require 'laser/support/object_regex'
 require 'laser/analysis/errors'
 require 'laser/analysis/lexical_analysis'
+require 'laser/analysis/sexp'
 require 'laser/analysis/sexp_analysis'
 
 require 'laser/analysis/arity'

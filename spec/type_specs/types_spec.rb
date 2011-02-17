@@ -1,6 +1,11 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 
 describe Types do
+  describe Types::TOP do
+    it 'should be equal to a covariant Object instance' do
+      Types::TOP.should == Types::ClassType.new('Object', :covariant)
+    end
+  end
   describe Types::ClassType do
     describe '#possible_classes' do
       it 'should find subclasses if the ClassType is covariant and is a Class' do

@@ -1,5 +1,5 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
-describe LiteralTypeAnnotation do
+describe MethodResolutionAnnotation do
   extend AnalysisHelpers
   clean_registry
   
