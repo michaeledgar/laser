@@ -17,12 +17,7 @@ module Laser::SexpAnalysis
         when :unary, :binary, :fcall, :call, :command, :var_ref
           filter_by_arity(methods_for_type_name(receiver_type, method_call_name), method_call_arity)
         when :method_add_arg
-          meth, args = children
-          existing_methods = meth.method_estimate
-          if existing_methods.any?
-            expansion = ArgumentExpansion.new(args)
-            filter_by_arity(meth.method_estimate, expansion.arity)
-          end
+          filter_by_arity(self[1].method_estimate, method_call_arity)
         end || []
       rescue Error => err
         errors << err
@@ -61,7 +56,7 @@ module Laser::SexpAnalysis
         when :unary, :var_ref then Arity::EMPTY
         when :binary then Arity.new(1..1)
         when :fcall, :call then Arity::ANY
-        when :command then ArgumentExpansion.new(self[2]).arity
+        when :command, :method_add_arg then ArgumentExpansion.new(self[2]).arity
         when :super then ArgumentExpansion.new(self[1]).arity
         when :zsuper then scope.method.arity
         end
@@ -90,6 +85,7 @@ module Laser::SexpAnalysis
       end
       
       def filter_by_arity(methods, arity)
+        return [] if methods.empty?
         name = methods.first.name
         pruned_methods = methods.select { |meth| meth.arity.compatible?(arity) }
         if pruned_methods.empty?
