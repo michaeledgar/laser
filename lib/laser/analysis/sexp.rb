@@ -286,17 +286,6 @@ module Laser
         RealObjectProxy.new(klass, nil, name, val)
       end
       
-      
-      def default_visit(node)
-        visit_children(node)
-        if (first_child = node.children.find { |child| Sexp === child })
-          node.source_begin = first_child.source_begin
-        end
-        if (last_end = node.children.select { |child| Sexp === child }.map(&:source_end).compact.last)
-          node.source_end = last_end
-        end
-      end
-      
       # Calculates, with some lossiness, the start position of the current node
       # in the original text. This will sometimes fail, as the AST does not include
       # sufficient information in many cases to determine where a node lies. We

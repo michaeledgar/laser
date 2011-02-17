@@ -8,8 +8,7 @@ module Laser
       
       def self.annotate_inputs(inputs)
         inputs.map! do |filename, text|
-          tree = Sexp.new(Ripper.sexp(text), filename, text)
-          [filename, text, tree]
+          [filename, text, Sexp.new(Ripper.sexp(text), filename, text)]
         end
         ordered_annotations.each do |annotator|
           inputs.each do |filename, text, tree|
