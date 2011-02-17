@@ -4,7 +4,7 @@ module Laser
     # giving a pointer to that node's parent. That way AST traversal
     # is easier.
     # This is the annotator for the parent annotation.
-    class ParentAnnotation < BasicAnnotation
+    class NodePointersAnnotation < BasicAnnotation
       add_property :parent, :next, :prev
       add_computed_property :ancestors do
         case parent
