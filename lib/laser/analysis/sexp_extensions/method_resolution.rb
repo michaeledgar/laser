@@ -7,8 +7,9 @@ module Laser::SexpAnalysis
           matched_method = resolve_super_call
           call_arity = method_call_arity
           unless matched_method.arity.compatible?(call_arity)
+            call_type = type == :super ? 'explicit' : 'implicit'
             raise IncompatibleArityError.new(
-                "Called super with #{call_arity} implicit arguments, but " +
+                "Called super with #{call_arity} #{call_type} arguments, but " +
                 "the superclass implementation takes #{matched_method.arity} arguments.",
                 self)
           end
