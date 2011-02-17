@@ -9,6 +9,7 @@ module Laser
       #
       # @param [Array<Object>] other the other 
       def initialize(other)
+        @expr_type = nil
         @errors = []
         replace other
         replace_children!
@@ -101,27 +102,37 @@ module Laser
       private :replace_children!
       
       def expr_type
+        return @expr_type if @expr_type
         case self.type
         when :string_literal, :@CHAR, :@tstring_content, :string_embexpr, :string_content,
-             :xstring_literal then Types::ClassType.new('String', :invariant)
-        when :@int then Types::ClassType.new('Integer', :covariant)
-        when :@float then Types::ClassType.new('Float', :invariant)
-        when :regexp_literal then Types::ClassType.new('Regexp', :invariant)
-        when :hash, :bare_assoc_hash then Types::ClassType.new('Hash', :invariant)
-        when :symbol_literal, :dyna_symbol, :@label then Types::ClassType.new('Symbol', :invariant)
-        when :array then Types::ClassType.new('Array', :invariant)
-        when :dot2, :dot3 then Types::ClassType.new('Range', :invariant)
-        when :lambda then Types::ClassType.new('Proc', :invariant)
+             :xstring_literal
+          @expr_type ||= Types::ClassType.new('String', :invariant)
+        when :@int
+          @expr_type ||= Types::ClassType.new('Integer', :covariant)
+        when :@float
+          @expr_type ||= Types::ClassType.new('Float', :invariant)
+        when :regexp_literal
+          @expr_type ||= Types::ClassType.new('Regexp', :invariant)
+        when :hash, :bare_assoc_hash
+          @expr_type ||= Types::ClassType.new('Hash', :invariant)
+        when :symbol_literal, :dyna_symbol, :@label
+          @expr_type ||= Types::ClassType.new('Symbol', :invariant)
+        when :array
+          @expr_type ||= Types::ClassType.new('Array', :invariant)
+        when :dot2, :dot3 
+          @expr_type ||= Types::ClassType.new('Range', :invariant)
+        when :lambda 
+          @expr_type ||= Types::ClassType.new('Proc', :invariant)
         when :var_ref
           ref = self[1]
           if ref.type == :@kw && ref.expanded_identifier != 'self'
             case ref[1]
-            when 'nil' then Types::ClassType.new('NilClass', :invariant)
-            when 'true' then Types::ClassType.new('TrueClass', :invariant)
-            when 'false' then Types::ClassType.new('FalseClass', :invariant)
-            when '__FILE__' then Types::ClassType.new('String', :invariant)
-            when '__LINE__' then Types::ClassType.new('Fixnum', :invariant)
-            when '__ENCODING__' then Types::ClassType.new('Encoding', :invariant)
+            when 'nil' then @expr_type ||= Types::ClassType.new('NilClass', :invariant)
+            when 'true' then @expr_type ||= Types::ClassType.new('TrueClass', :invariant)
+            when 'false' then @expr_type ||= Types::ClassType.new('FalseClass', :invariant)
+            when '__FILE__' then @expr_type ||= Types::ClassType.new('String', :invariant)
+            when '__LINE__' then @expr_type ||= Types::ClassType.new('Fixnum', :invariant)
+            when '__ENCODING__' then @expr_type ||= Types::ClassType.new('Encoding', :invariant)
             end
           else
             self.scope.lookup(expanded_identifier).expr_type rescue Types::TOP
