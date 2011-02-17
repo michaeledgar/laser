@@ -479,7 +479,7 @@ describe Sexp do
     describe 'handling string literals' do
       it 'should interpret simple strings' do
         input = 'a = "abc def"'
-        tree = Sexp.new(Ripper.sexp(input))
+        tree = annotate_all(input)
         list = tree[1]
         list[0][2].is_constant.should be true
         list[0][2].constant_value.should == "abc def"
@@ -487,14 +487,14 @@ describe Sexp do
 
       it 'should give up with complex interpolation' do
         input = 'a = "abc #{foobar()} def"'
-        tree = Sexp.new(Ripper.sexp(input))
+        tree = annotate_all(input)
         list = tree[1]
         list[0][2].is_constant.should be false
       end
 
       it 'should handle embedded escapes' do
         input = 'a = "abc \n \x12def"'
-        tree = Sexp.new(Ripper.sexp(input))
+        tree = annotate_all(input)
         list = tree[1]
         list[0][2].is_constant.should be true
         list[0][2].constant_value.should == "abc \n \x12def"
@@ -502,7 +502,7 @@ describe Sexp do
 
       it 'should not evaluate embedded escapes for single-quoted strings' do
         input = %q{a = 'abc \n \x12def'}
-        tree = Sexp.new(Ripper.sexp(input))
+        tree = annotate_all(input)
         list = tree[1]
         list[0][2].is_constant.should be true
         list[0][2].constant_value.should == 'abc \n \x12def'
@@ -559,7 +559,7 @@ describe Sexp do
       [:abc_def, :ABC_DEF, :@abc_def, :$abc_def, :@@abc_def, :"hello-world"].each do |sym|
         it "should convert simple symbols of the form #{sym.inspect}" do
           input = "a = #{sym.inspect}"
-          tree = Sexp.new(Ripper.sexp(input))
+          tree = annotate_all(input)
           list = tree[1]
           list[0][2].is_constant.should be true
           list[0][2].constant_value.should == sym
@@ -614,7 +614,7 @@ describe Sexp do
     describe 'regex literals' do
       it 'interprets a simple constant regex with standard syntax' do
         input = 'a = /abcdef/'
-        tree = Sexp.new(Ripper.sexp(input))
+        tree = annotate_all(input)
         list = tree[1]
         list[0][2].is_constant.should be true
         list[0][2].constant_value.should == /abcdef/
@@ -622,14 +622,14 @@ describe Sexp do
 
       it 'does not try to fold complex interpolated regexps' do
         input = 'a = /abc#{abc()}def/'
-        tree = Sexp.new(Ripper.sexp(input))
+        tree = annotate_all(input)
         list = tree[1]
         list[0][2].is_constant.should be false
       end
 
       it 'interprets a simple regex with nonstandard syntax and options' do
         input = 'a = %r|abcdef|im'
-        tree = Sexp.new(Ripper.sexp(input))
+        tree = annotate_all(input)
         list = tree[1]
         list[0][2].is_constant.should be true
         list[0][2].constant_value.should == /abcdef/im
@@ -637,7 +637,7 @@ describe Sexp do
 
       it 'interprets a simple regex with extended mode' do
         input = 'a = %r|abcdef|x'
-        tree = Sexp.new(Ripper.sexp(input))
+        tree = annotate_all(input)
         list = tree[1]
         list[0][2].is_constant.should be true
         list[0][2].constant_value.should == /abcdef/x
@@ -655,7 +655,7 @@ describe Sexp do
 
       it 'should find the constant value if all members are constant' do
         input = 'a = [:a, 3.14, "hello", /abc/x]'
-        tree = Sexp.new(Ripper.sexp(input))
+        tree = annotate_all(input)
         list = tree[1]
         list[0][2].is_constant.should be true
         list[0][2].constant_value.should == [:a, 3.14, "hello", /abc/x]
@@ -663,7 +663,7 @@ describe Sexp do
 
       it 'should not calculate a constant if a member is not a constant' do
         input = 'a = [:a, :"hi-there", 3.14, foobar()]'
-        tree = Sexp.new(Ripper.sexp(input))
+        tree = annotate_all(input)
         list = tree[1]
         list[0][2].is_constant.should be false
       end
@@ -680,7 +680,7 @@ describe Sexp do
 
       it 'can evaluate simple constant hashes' do
         input = 'a = {:a => :b, 3 => 2, "hi" => "world", :a => :c}'
-        tree = Sexp.new(Ripper.sexp(input))
+        tree = annotate_all(input)
         list = tree[1]
         list[0][2].is_constant.should be true
         list[0][2].constant_value.should == {:a => :c, 3 => 2, "hi" => "world"}
@@ -695,7 +695,7 @@ describe Sexp do
 
       it 'can evaluate constant, bare hashes' do
         input = 'a = foo(:a => :b, 3 => 2, "hi" => "world", :a => :c)'
-        tree = Sexp.new(Ripper.sexp(input))
+        tree = annotate_all(input)
         list = tree[1]
         list[0][2][2][1][1][0].is_constant.should be true
         list[0][2][2][1][1][0].constant_value.should == {:a => :c, 3 => 2, "hi" => "world"}
@@ -705,7 +705,7 @@ describe Sexp do
     describe 'stuff in parentheses' do
       it 'can handle a range in parens' do
         input = 'a = ("a".."z")'
-        tree = Sexp.new(Ripper.sexp(input))
+        tree = annotate_all(input)
         list = tree[1]
         list[0][2].is_constant.should be true
         list[0][2].constant_value.should == ("a".."z")
@@ -713,7 +713,7 @@ describe Sexp do
 
       it 'can handle compound expressions in parens, taking the value of the last constant' do
         input = 'a = (3; 2; "a".."z")'
-        tree = Sexp.new(Ripper.sexp(input))
+        tree = annotate_all(input)
         list = tree[1]
         list[0][2].is_constant.should be true
         list[0][2].constant_value.should == ("a".."z")

@@ -34,6 +34,10 @@ module Laser
         SexpAnalysis::Sexp === sexp
       end
 
+      def lines
+        @file_source.lines.to_a
+      end
+
       # Same as #find for Enumerable, only recursively. Useful for "jumping"
       # past useless parser nodes.
       def deep_find
@@ -202,17 +206,14 @@ module Laser
             wrap(ClassRegistry['String'], eval(%Q{"#{char_part}"}))
           end
         when :@tstring_content
-          # add :@tstring_content do |node, str, location|
-          #   node.is_constant = true
-          #   pos = node.parent.parent.source_begin
-          #   first_two = lines[pos[0]-1][pos[1],2]
-          #   if first_two[0,1] == '"' || first_two == '%Q'
-          #     wrap(node, ClassRegistry['String'], eval(%Q{"#{str}"}))
-          #   else
-          #     wrap(node, ClassRegistry['String'], str)
-          #   end
-          # end
-          wrap(ClassRegistry['String'], self[1])
+          str = self[1]
+          pos = self.parent.parent.source_begin
+          first_two = lines[pos[0]-1][pos[1],2]
+          if first_two[0,1] == '"' || first_two == '%Q'
+            wrap(ClassRegistry['String'], eval(%Q{"#{str}"}))
+          else   
+            wrap(ClassRegistry['String'], str)
+          end
         when :string_content
           wrap(ClassRegistry['String'],
                children.map(&:constant_value).map(&:raw_object).join)
