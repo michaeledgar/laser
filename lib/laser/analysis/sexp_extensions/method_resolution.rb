@@ -1,6 +1,13 @@
 module Laser::SexpAnalysis
   module SexpExtensions
     module MethodResolution
+      # Returns the possible methods that this node could be calling, assuming
+      # this node is a method-call node. If no method is found, either due to
+      # naming or arity conflicts, or super being called not in a method,
+      # an error is raised.
+      #
+      # raises: NotInMethodError | NoSuchMethodError
+      # returns: [LaserMethod]
       def method_estimate
         case type
         when :super, :zsuper
@@ -62,6 +69,13 @@ module Laser::SexpAnalysis
         end
       end
       
+      # Finds the superclass implementation of the current method, assuming the
+      # current node is a super call (either explicit or implicit). If no
+      # superclass method is found, or super is being called not inside a method,
+      # an error is raised.
+      #
+      # raises: NotInMethodError | NoSuchMethodError
+      # returns: LaserMethod
       def resolve_super_call
         current_method = scope.method
         if current_method.nil?
@@ -76,6 +90,11 @@ module Laser::SexpAnalysis
             "but no superclass has a method with that name.", self)
       end
 
+      # Finds all methods of a given name that exist on the given type. If
+      # no methods are found, an error is raised.
+      #
+      # raises: NoSuchMethodError
+      # returns: [LaserMethod]
       def methods_for_type_name(type, name)
         methods = type.matching_methods(name)
         if methods.empty?
@@ -84,12 +103,17 @@ module Laser::SexpAnalysis
         methods
       end
       
+      # Filters a set of methods to those that are of the given arity. If this
+      # filtering removes all methods, an error is raised.
+      #
+      # raises: NoSuchMethodError
+      # returns: [LaserMethod]
       def filter_by_arity(methods, arity)
         return [] if methods.empty?
-        name = methods.first.name
         pruned_methods = methods.select { |meth| meth.arity.compatible?(arity) }
         if pruned_methods.empty?
-          raise NoSuchMethodError.new("Could not find any methods named #{name} that take 0 arguments.", self)
+          raise NoSuchMethodError.new("Could not find any methods named #{methods.first.name} that "+
+                                      "take #{arity} arguments.", self)
         end
         pruned_methods
       end
