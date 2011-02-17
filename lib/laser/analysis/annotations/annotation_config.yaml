@@ -1,6 +1,5 @@
 - NodePointersAnnotation
 - RuntimeAnnotation
-- SourceLocationAnnotation
 - CommentAttachmentAnnotation
 - ScopeAnnotation
 - MethodResolutionAnnotation

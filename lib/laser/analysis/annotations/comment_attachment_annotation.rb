@@ -8,7 +8,6 @@ module Laser
     # which due to limitations in Ripper's output, cannot always succeed.
     class CommentAttachmentAnnotation < BasicAnnotation
       add_property :comment
-      depends_on :SourceLocationAnnotator
       def annotate_with_text(root, text)
         comments = extract_comments(text)
         # root[1] here to ignore the spurious :program node
