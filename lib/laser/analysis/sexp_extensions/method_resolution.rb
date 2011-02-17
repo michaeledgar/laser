@@ -3,65 +3,67 @@ module Laser::SexpAnalysis
     module MethodResolution
       def method_estimate
         case type
-        when :super
+        when :super, :zsuper
           matched_method = resolve_super_call
-          result = Set.new([matched_method])
-          call_arity = ArgumentExpansion.new(self[1]).arity
+          call_arity = method_call_arity
           unless matched_method.arity.compatible?(call_arity)
             raise IncompatibleArityError.new(
                 "Called super with #{call_arity} implicit arguments, but " +
                 "the superclass implementation takes #{matched_method.arity} arguments.",
                 self)
           end
-        when :zsuper
-          matched_method = resolve_super_call
-          result = Set.new([matched_method])
-          call_arity = scope.method.arity
-          unless matched_method.arity.compatible?(call_arity)
-            raise IncompatibleArityError.new(
-                "Called super with #{call_arity} implicit arguments, but " +
-                "the superclass implementation takes #{matched_method.arity} arguments.",
-                self)
-          end
-        when :unary
-          op, rhs = children
-          result = filter_by_arity(methods_for_type_name(rhs.expr_type, op.to_s), Arity::EMPTY)
-        when :binary
-          lhs, op, rhs = children
-          result = filter_by_arity(methods_for_type_name(lhs.expr_type, op.to_s), Arity.new(1..1))
-        when :fcall
-          meth = self[1]
-          result = methods_for_type_name(scope.lookup('self').expr_type, meth.expanded_identifier)
-        when :call
-          recv, sep, meth = children
-          result = methods_for_type_name(recv.expr_type, meth.expanded_identifier)
-        when :command
-          meth, args = children
-          type = scope.lookup('self').expr_type
-          name = meth.expanded_identifier
-          expansion = ArgumentExpansion.new(args)
-          result = filter_by_arity(methods_for_type_name(type, name), expansion.arity)
-        when :var_ref
-          return nil unless binding.nil?
-          type = scope.lookup('self').expr_type
-          name = expanded_identifier
-          result = filter_by_arity(methods_for_type_name(type, name), Arity::EMPTY)
+          Set.new([matched_method])
+        when :unary, :binary, :fcall, :call, :command, :var_ref
+          filter_by_arity(methods_for_type_name(receiver_type, method_call_name), method_call_arity)
         when :method_add_arg
           meth, args = children
           existing_methods = meth.method_estimate
           if existing_methods.any?
             expansion = ArgumentExpansion.new(args)
-            result = filter_by_arity(meth.method_estimate, expansion.arity)
-          else
-            result = []
+            filter_by_arity(meth.method_estimate, expansion.arity)
           end
-        else
-          result = []
-        end
-        result
+        end || []
       rescue Error => err
         errors << err
-        return []
+        []
+      end
+      
+      # What is the receiver type (assuming this node is a method call)?
+      # returns: Types::Base
+      def receiver_type
+        receiver = case type
+                   when :unary then self[2]
+                   when :binary, :call then self[1]
+                   when :fcall, :command, :var_ref then scope.lookup('self')
+                   end
+        receiver.expr_type
+      end
+      
+      # What is the name of the method being called (assuming this node is a
+      # method call?)
+      # returns: String
+      def method_call_name
+        case type
+        when :unary then self[1].to_s
+        when :binary then self[2].to_s
+        when :fcall, :command then self[1].expanded_identifier
+        when :call then self[3].expanded_identifier
+        when :var_ref then expanded_identifier
+        end
+      end
+      
+      # What is the (best guess) arity of this method call (assuming this node
+      # is a method call?)
+      # returns: Arity
+      def method_call_arity
+        case type
+        when :unary, :var_ref then Arity::EMPTY
+        when :binary then Arity.new(1..1)
+        when :fcall, :call then Arity::ANY
+        when :command then ArgumentExpansion.new(self[2]).arity
+        when :super then ArgumentExpansion.new(self[1]).arity
+        when :zsuper then scope.method.arity
+        end
       end
       
       def resolve_super_call
