@@ -8,7 +8,6 @@ describe SexpAnalysis::SingleLHSExpression do
   describe '#name' do
     it 'extracts the name from the identifier wrapped by the SingleLHSExpression' do
       tree = Sexp.new([:var_field, [:@ident, "a", [1, 0]]])
-      ExpandedIdentifierAnnotation.new.annotate!(tree)
       SingleLHSExpression.new(tree).names.should == ['a']
     end
   end
@@ -16,7 +15,6 @@ describe SexpAnalysis::SingleLHSExpression do
   describe '#assignment_pairs' do
     it 'should simply pair the given values to the LHS node' do
       tree = Sexp.new([:var_field, [:@ident, "$b", [1, 0]]])
-      ExpandedIdentifierAnnotation.new.annotate!(tree)
       SingleLHSExpression.new(tree).assignment_pairs(4).should == [[tree, 4]]
       SingleLHSExpression.new(tree).assignment_pairs([1, 2]).should == [[tree, [1, 2]]]
     end
@@ -28,13 +26,11 @@ describe SexpAnalysis::MultipleLHSExpression do
     it 'extracts the names from a simple set of expressions' do
       input = 'a, b, c, d = nil'
       tree = Sexp.new(Ripper.sexp(input))[1][0][1]
-      ExpandedIdentifierAnnotation.new.annotate!(tree)
       MultipleLHSExpression.new(tree).names.should == ['a', 'b', 'c', 'd']
     end
     it 'extracts all the names from the subexpressions' do
       input = 'a, (Z, ((b, $f, j), (i, p)), *d, e), *k, $l = nil'
       tree = Sexp.new(Ripper.sexp(input))[1][0][1]
-      ExpandedIdentifierAnnotation.new.annotate!(tree)
       MultipleLHSExpression.new(tree).names.should == ['a', 'Z', 'b', '$f', 'j', 'i', 'p', 'd', 'e', 'k', '$l']
     end
   end

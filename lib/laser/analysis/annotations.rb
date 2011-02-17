@@ -7,7 +7,10 @@ module Laser
       cattr_accessor_with_default :global_annotations, []
       
       def self.annotate_inputs(inputs)
-        inputs.map! { |filename, text| [filename, text, Sexp.new(Ripper.sexp(text))] }
+        inputs.map! do |filename, text|
+          tree = Sexp.new(Ripper.sexp(text), filename, text)
+          [filename, text, tree]
+        end
         ordered_annotations.each do |annotator|
           inputs.each do |filename, text, tree|
             annotator.annotate_with_text(tree, text)

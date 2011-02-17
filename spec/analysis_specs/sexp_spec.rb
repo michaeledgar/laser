@@ -107,6 +107,64 @@ describe Sexp do
     end
   end
   
+  describe '#expanded_identifier' do
+    ['abc', '@abc', 'ABC', '@@abc', '$abc'].each do |id|
+      tree = Sexp.new(Ripper.sexp(id))
+      actual_ident = tree[1][0][1]
+      it "discovers expanded identifiers for simple identifiers of type #{actual_ident[0]}" do
+        actual_ident.expanded_identifier.should == id
+      end
+    end
+
+    # [:program,
+    #  [[:assign,
+    #    [:var_field, [:@ident, "abc", [1, 0]]],
+    #    [:var_ref, [:@const, "ABC", [1, 6]]]]]]
+    it 'handles var_ref and var_field nodes' do
+      input = 'abc = ABC'
+      tree = Sexp.new(Ripper.sexp(input))
+      assign = tree[1][0]
+      assign[1].expanded_identifier.should == 'abc'
+      assign[2].expanded_identifier.should == 'ABC'
+    end
+
+    # [:program,
+    # [[:assign,
+    #   [:top_const_field, [:@const, "ABC", [1, 2]]],
+    #   [:top_const_ref, [:@const, "DEF", [1, 10]]]]]]
+    it 'handles top_const_ref and top_const_field nodes' do
+      input = '::ABC = ::DEF'
+      tree = Sexp.new(Ripper.sexp(input))
+      assign = tree[1][0]
+      assign[1].expanded_identifier.should == '::ABC'
+      assign[2].expanded_identifier.should == '::DEF'
+    end
+
+    # [:program,
+    #  [[:class,
+    #    [:const_ref, [:@const, "ABC", [1, 6]]],
+    #    nil,
+    #    [:bodystmt, [[:void_stmt]], nil, nil, nil]]]]
+    it 'handles const_ref nodes (found in module/class declarations)' do
+      input = 'class ABC; end'
+      tree = Sexp.new(Ripper.sexp(input))
+      klass = tree[1][0]
+      klass[1].expanded_identifier.should == 'ABC'
+    end
+
+    # [:program,
+    # [[:assign,
+    #   [:top_const_field, [:@const, "ABC", [1, 2]]],
+    #   [:top_const_ref, [:@const, "DEF", [1, 10]]]]]]
+    it 'handles top_const_ref and top_const_field nodes' do
+      input = '::ABC::DEF = ::DEF::XYZ'
+      tree = Sexp.new(Ripper.sexp(input))
+      assign = tree[1][0]
+      assign[1].expanded_identifier.should == '::ABC::DEF'
+      assign[2].expanded_identifier.should == '::DEF::XYZ'
+    end
+  end
+  
   describe '#expr_type' do
     # This is the AST that Ripper generates for the parsed code. It is
     # provided here because otherwise the test is inscrutable.
@@ -365,12 +423,49 @@ describe Sexp do
       list[0][1].constant_value.should be :none
     end
 
+    describe 'keyword literals' do
+      it 'should resolve nil' do
+        tree = Sexp.new(Ripper.sexp('a = nil'))
+        list = tree[1]
+        list[0][2].is_constant.should be true
+        list[0][2].constant_value.should == nil
+      end
+      
+      it 'should resolve true' do
+        tree = Sexp.new(Ripper.sexp('a = true'))
+        list = tree[1]
+        list[0][2].is_constant.should be true
+        list[0][2].constant_value.should == true
+      end
+      
+      it 'should resolve false' do
+        tree = Sexp.new(Ripper.sexp('a = false'))
+        list = tree[1]
+        list[0][2].is_constant.should be true
+        list[0][2].constant_value.should == false
+      end
+      
+      it 'should resolve __LINE__' do
+        tree = Sexp.new(Ripper.sexp("a = \n__LINE__"))
+        list = tree[1]
+        list[0][2].is_constant.should be true
+        list[0][2].constant_value.should == 2
+      end
+      
+      it 'should resolve __FILE__' do
+        tree = Sexp.new(Ripper.sexp("a = \n__FILE__"), 'abc/def.rb', "a = \n__FILE__")
+        list = tree[1]
+        list[0][2].is_constant.should be true
+        list[0][2].constant_value.should == 'abc/def.rb'
+      end
+    end
+
     describe 'character literals' do
       it 'works with single-char literals' do
         tree = Sexp.new(Ripper.sexp('a = ?X'))
         list = tree[1]
         list[0][2].is_constant.should be true
-        (list[0][2].constant_value == 'X').should be true
+        list[0][2].constant_value.should == 'X'
       end
 
       it 'works with oddball char literals' do

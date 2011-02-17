@@ -3,14 +3,16 @@ module Laser
     # Replaces the ParseTree Sexps by adding a few handy-dandy methods.
     class Sexp < Array
       extend ModuleExtensions
-      attr_accessor :errors, :binding
+      attr_accessor :errors, :binding, :file_name, :file_source
 
       # Initializes the Sexp with the contents of the array returned by Ripper.
       #
       # @param [Array<Object>] other the other 
-      def initialize(other)
+      def initialize(other, file_name=nil, file_source=nil)
         @expr_type = nil
         @errors = []
+        @file_name = file_name
+        @file_source = file_source
         replace other
         replace_children!
       end
@@ -94,12 +96,27 @@ module Laser
         replace(map do |x|
           case x
           when Array
-            self.class.new(x)
+            self.class.new(x, @file_name, @file_source)
           else x
           end
         end)
       end
       private :replace_children!
+      
+      # Returns the text of the identifier, assuming this node identifies something.
+      def expanded_identifier
+        case type
+        when :@ident, :@const, :@gvar, :@cvar, :@ivar, :@kw
+          self[1]
+        when :var_ref, :var_field, :const_ref
+          self[1].expanded_identifier
+        when :top_const_ref, :top_const_field
+          "::#{self[1].expanded_identifier}"
+        when :const_path_ref, :const_path_field
+          lhs, rhs = children
+          "#{lhs.expanded_identifier}::#{rhs.expanded_identifier}"
+        end
+      end
       
       # Finds the type of the AST node. This depends on the node's scope sometimes,
       # and always upon its node type.
@@ -159,7 +176,7 @@ module Laser
         when :var_ref, :const_ref, :const_path_ref, :var_field
           case self[1].type
           when :@kw
-            %w(nil true false __LINE__).include?(expanded_identifier)
+            %w(nil true false __LINE__ __FILE__).include?(expanded_identifier)
           else
             Bindings::ConstantBinding === scope.lookup(expanded_identifier)
           end
@@ -243,9 +260,10 @@ module Laser
           when :@kw
             case self[1][1]
             when 'nil' then wrap(ClassRegistry['NilClass'], nil)
-            when 'true' then wrap(ClassRegistry['NilClass'], nil)
-            when 'false' then wrap(ClassRegistry['NilClass'], nil)
-            when '__LINE__' then wrap(ClassRegistry['NilClass'], self[1][2][0])
+            when 'true' then wrap(ClassRegistry['TrueClass'], true)
+            when 'false' then wrap(ClassRegistry['FalseClass'], false)
+            when '__LINE__' then wrap(ClassRegistry['Integer'], self[1][2][0])
+            when '__FILE__' then wrap(ClassRegistry['String'], @file_name)
             end
           else
             scope.lookup(expanded_identifier).value
@@ -263,6 +281,7 @@ module Laser
         end
       end
       
+      # Wraps a value in a constant proxy of the given class/name.
       def wrap(klass, name="#<#{klass.path}:#{object_id.to_s(16)}>", val)
         RealObjectProxy.new(klass, nil, name, val)
       end

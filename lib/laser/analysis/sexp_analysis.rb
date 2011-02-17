@@ -3,7 +3,7 @@ module Laser
   # parse-tree analysis of their bodies.
   module SexpAnalysis
     extend ModuleExtensions
-        
+    
     # inputs: Array<(String, String)>
     #   Array of (filename, body) tuples.
     def self.analyze_inputs(inputs)
