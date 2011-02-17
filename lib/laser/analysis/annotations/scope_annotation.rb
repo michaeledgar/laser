@@ -30,11 +30,6 @@ module Laser
       add :var_field do |node, ref|
         default_visit node
         node.binding = @current_scope.lookup(node.expanded_identifier)
-        #node.expr_type = node.binding.expr_type
-        if Bindings::ConstantBinding === node.binding
-          node.is_constant = true
-          node.constant_value = node.binding.value
-        end
       end
       
       # Here we handle Ruby's resolution of rvalues: if it looks like a local variable,
@@ -44,11 +39,6 @@ module Laser
         default_visit node
         begin
           node.binding = @current_scope.lookup(node.expanded_identifier)
-          #node.expr_type = node.binding.expr_type
-          if Bindings::ConstantBinding === node.binding
-            node.is_constant = true
-            node.constant_value = node.binding.value
-          end
         rescue Scope::ScopeLookupFailure => err
           if err.query =~ /^[A-Z]/
             raise err

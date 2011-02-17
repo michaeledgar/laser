@@ -3,6 +3,5 @@
 - ExpandedIdentifierAnnotation
 - SourceLocationAnnotation
 - CommentAttachmentAnnotation
-- LiteralConstantAnnotation
 - ScopeAnnotation
 - MethodResolutionAnnotation
