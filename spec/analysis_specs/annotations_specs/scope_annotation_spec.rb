@@ -1107,7 +1107,7 @@ describe ScopeAnnotation do
   it 'raises an error if you try to use protected at the top level' do
     input = 'def t14; end; protected; def t15; end; public; def t16; end'
     tree = annotate_all(input)
-
+    tree.deep_find { |node| node.expanded_identifier == 'protected' }.method_estimate.should == []
     tree.all_errors.size.should be 1
     tree.all_errors.first.should be_a(NoSuchMethodError)
     tree.all_errors.first.message.should include('protected')

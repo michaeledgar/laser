@@ -15,6 +15,12 @@ require 'laser/support/module_extensions'
 require 'laser/support/object_regex'
 require 'laser/analysis/errors'
 require 'laser/analysis/lexical_analysis'
+
+require 'laser/analysis/sexp_extensions/type_inference'
+require 'laser/analysis/sexp_extensions/constant_extraction'
+require 'laser/analysis/sexp_extensions/source_location'
+require 'laser/analysis/sexp_extensions/method_resolution'
+
 require 'laser/analysis/sexp'
 require 'laser/analysis/sexp_analysis'
 
