@@ -153,23 +153,21 @@ module Laser
         visit_with_scope(body, receiver.scope)
       end
 
+      def include_modules(klass, mods)
+        mods.reverse.each { |arg| klass.include_module(arg) }
+      end
+
       match_precise_loadtime_method(proc { 
             [ClassRegistry['Module'].instance_methods['include']]}) do |node, args|
-        default_visit node
         if args.is_constant?
-          args.constant_values.reverse.each do |arg|
-            @current_scope.self_ptr.include_module(arg)
-          end
+          include_modules(@current_scope.self_ptr, args.constant_values)
         end
       end
       
       match_precise_loadtime_method(proc { 
             [ClassRegistry['Module'].instance_methods['extend']]}) do |node, args|
-        default_visit node
         if args.is_constant?
-          args.constant_values.reverse.each do |arg|
-            @current_scope.self_ptr.singleton_class.include_module(arg)
-          end
+          include_modules(@current_scope.self_ptr.singleton_class, args.constant_values)
         end
       end
       
