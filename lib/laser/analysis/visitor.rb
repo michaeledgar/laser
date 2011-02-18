@@ -87,6 +87,33 @@ module Laser
             instance_exec(node, ArgumentExpansion.new(nil), &blk)
           end
         end
+        
+        def match_precise_loadtime_method(method_proc, &blk)
+          is_method = proc do |node|
+            node.runtime == :load &&
+                [:command, :method_add_arg, :var_ref, :call].include?(node.type) &&
+                !(node.type == :var_ref && node.binding) &&
+                !(node.type == :call && node.parent.type == :method_add_arg)
+          end
+
+          add(is_method) do |node|
+            default_visit node
+            matching_methods = method_proc.call
+            puts "Method estimate: "
+            p node.method_estimate
+            puts "Matching methods: "
+            p matching_methods
+            if matching_methods.any? { |meth| node.method_estimate == [meth] }
+              case node.type
+              when :command then args = node[2][1]
+              when :method_add_arg then args = (node[2][1] ? node[2][1][1] : [])
+              when :call then args = nil
+              when :var_ref then args = nil
+              end
+              instance_exec(node, ArgumentExpansion.new(args), &blk)
+            end
+          end
+        end
       end
       
       attr_reader :text

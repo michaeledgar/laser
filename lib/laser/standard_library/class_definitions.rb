@@ -1,5 +1,11 @@
 RUBY_VERSION = '1.9.2'
 $/ = "\n"
+class << self
+  def private(*args)
+  end
+  def public(*args)
+  end
+end
 module Kernel
   def p(*args)
   end
@@ -18,16 +24,22 @@ module Comparable
   def between?(min, max)
   end
 end
-class Object
-  include Kernel
-end
 class Module
   def include(*mods)
   end
-
   def extend(*mods)
   end
+  def private(*args)
+  end
+  def public(*args)
+  end
+  def protected(*args)
+  end
 end
+class Object
+  include Kernel
+end
+
 
 class Exception < Object
 end
@@ -1009,13 +1021,6 @@ end
 class Errno::EPROGUNAVAIL < SystemCallError
 end
 class Errno::ERPCMISMATCH < SystemCallError
-end
-
-class << self
-  def private
-  end
-  def public
-  end
 end
 
 

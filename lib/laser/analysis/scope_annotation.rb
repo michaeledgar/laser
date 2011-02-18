@@ -202,10 +202,16 @@ module Laser
         end
       end
       
+      # match_precise_loadtime_method(proc { 
+      #       [ClassRegistry['Module'].instance_methods['private'],
+      #        Scope::GlobalScope.self_ptr.singleton_class.instance_methods['private']]}) do |node, args|
+      #   apply_visibility node, args, :private
+      # end
+      
       match_method_call 'private' do |node, args|
         apply_visibility node, args, :private
       end
-      
+
       match_method_call 'public' do |node, args|
         apply_visibility node, args, :public
       end
@@ -234,7 +240,6 @@ module Laser
         end
         if new_scope.self_ptr.nil?
           new_scope.self_ptr = method_self
-          new_scope.locals['self'].expr_type = Types::ClassType.new(method_self.klass.path, :covariant)
         end
         new_scope.method = new_method
         

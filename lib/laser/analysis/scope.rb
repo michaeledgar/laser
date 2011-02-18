@@ -20,9 +20,6 @@ module Laser
         end
         @parent, @constants, @locals = parent, constants, locals
         @locals['self'] = Bindings::LocalVariableBinding.new('self', self_ptr)
-        if self_ptr && Bootstrap::COMPLETE
-          @locals['self'].expr_type = Types::ClassType.new(self_ptr.klass.path, :covariant)
-        end
         @method = nil
       end
       

@@ -39,10 +39,11 @@ module Laser
       def singleton_class
         return @singleton_class if @singleton_class
         new_scope = ClosedScope.new(self.scope, nil)
-        @singleton_class = LaserSingletonClass.new(ClassRegistry['Class'], new_scope, "Class:#{name}", self) do |new_singleton_class|
+        @singleton_class = LaserSingletonClass.new(
+            ClassRegistry['Class'], new_scope, "Class:#{name}", self) do |new_singleton_class|
           new_singleton_class.superclass = self.klass
         end
-        @singleton_class
+        @klass = @singleton_class
       end
       
       def signatures
@@ -138,7 +139,6 @@ module Laser
         if @scope && !(@scope.parent.nil?)
           @scope.parent.constants[name] = self.binding if @scope.parent
           @scope.locals['self'] = Bindings::LocalVariableBinding.new('self', self)
-          @scope.locals['self'].expr_type = Types::ClassType.new(klass.path, :covariant)
         end
       end
       

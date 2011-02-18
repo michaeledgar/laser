@@ -51,6 +51,10 @@ module Laser
     class ClassType < Base
       acts_as_struct :class_name, :variance
       
+      def inspect
+        "#<Class: #{class_name} variance: #{variance}>"
+      end
+      
       def matching_methods(name)
         possible_classes.map { |klass| klass.instance_methods[name] }.compact.uniq
       end

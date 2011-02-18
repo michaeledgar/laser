@@ -212,7 +212,7 @@ describe ScopeAnnotation do
       new_scope = node.scope
       new_scope.self_ptr.should be_a(LaserModule)
       new_scope.self_ptr.should == ClassRegistry['M49']
-      new_scope.self_ptr.klass.should == ClassRegistry['Module']
+      new_scope.self_ptr.klass.should == ClassRegistry['M49'].singleton_class
       new_scope.locals.should_not be_empty
       new_scope.lookup('a').should == Bindings::ArgumentBinding.new('a', LaserObject.new, :positional)
       new_scope.lookup('b').should == Bindings::ArgumentBinding.new(
@@ -256,7 +256,7 @@ describe ScopeAnnotation do
       new_scope = node.scope
       new_scope.self_ptr.should be_a(LaserModule)
       new_scope.self_ptr.should == ClassRegistry['M50']
-      new_scope.self_ptr.klass.should == ClassRegistry['Module']
+      new_scope.self_ptr.klass.should == ClassRegistry['M50'].singleton_class
       new_scope.locals.should_not be_empty
       new_scope.lookup('a').should == Bindings::ArgumentBinding.new('a', LaserObject.new, :positional)
       new_scope.lookup('b').should == Bindings::ArgumentBinding.new(
@@ -506,7 +506,7 @@ describe ScopeAnnotation do
       new_scope = node.scope
       new_scope.self_ptr.name.should == 'main'
       new_scope.self_ptr.should be_a(LaserObject)
-      new_scope.self_ptr.klass.should == ClassRegistry['Object']
+      new_scope.self_ptr.klass.should == Scope::GlobalScope.self_ptr.singleton_class
       new_scope.locals.should_not be_empty
       new_scope.lookup('bar').should == Bindings::ArgumentBinding.new('bar', LaserObject.new, :positional)
       new_scope.lookup('blk').should == Bindings::ArgumentBinding.new('blk', ClassRegistry['Proc'], :block)
