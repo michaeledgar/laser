@@ -48,6 +48,7 @@ require 'laser/annotation_parser/parsers'
 
 require 'laser/analysis/visitor'
 require 'laser/analysis/annotations'
+require 'laser/analysis/scope_annotation'
 # Runners
 require 'laser/runner'
 require 'laser/rake/task'

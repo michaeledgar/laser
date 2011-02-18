@@ -6,22 +6,42 @@ module Laser
       # Global annotations are only run once, at the root. 
       cattr_accessor_with_default :global_annotations, []
       
+      # Performs full analysis on the given inputs.
       def self.annotate_inputs(inputs)
         inputs.map! do |filename, text|
           [filename, text, Sexp.new(Ripper.sexp(text), filename, text)]
         end
+        apply_inherited_attributes(inputs)
+        perform_load_time_analysis(inputs)
+        inputs.map! { |filename, _, tree| [filename, tree] }
+      end
+      
+      # Applies all the inherited attributes to the given inputs, in the
+      # order specified by annotation_config.yaml
+      def self.apply_inherited_attributes(inputs)
         ordered_annotations.each do |annotator|
           inputs.each do |filename, text, tree|
             annotator.annotate_with_text(tree, text)
           end
         end
-        inputs.map! { |filename, _, tree| [filename, tree] }
       end
       
+      # Performs load-time analysis on the given inputs. Inherited attributes
+      # must be applied at this point.
+      def self.perform_load_time_analysis(inputs)
+        annotator = ScopeAnnotation.new
+        inputs.each do |filename, text, tree|
+          annotator.annotate_with_text(tree, text)
+        end
+      end
+      
+      # Returns the order that annotations should be run.
       def self.annotation_ordered
         @order ||= YAML.load_file(File.join(File.dirname(__FILE__), 'annotations', 'annotation_config.yaml'))
       end
       
+      # Returns the inherited attributes in the order they are intended
+      # to be run by the YAML file.
       def self.ordered_annotations
         annotation_ordered.map do |mod_name|
           global_annotations.select { |annotation| annotation.class.name.include?(mod_name) }.first
