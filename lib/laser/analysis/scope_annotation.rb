@@ -153,19 +153,20 @@ module Laser
         visit_with_scope(body, receiver.scope)
       end
 
-      ######## Detecting includes - requires method call detection! ########
-      match_method_call 'include' do |node, args|
+      match_precise_loadtime_method(proc { 
+            [ClassRegistry['Module'].instance_methods['include']]}) do |node, args|
         default_visit node
-        if node.runtime == :load && @current_scope.self_ptr.klass.ancestors.include?(ClassRegistry['Module']) && args.is_constant?
+        if args.is_constant?
           args.constant_values.reverse.each do |arg|
             @current_scope.self_ptr.include_module(arg)
           end
         end
       end
       
-      match_method_call 'extend' do |node, args|
+      match_precise_loadtime_method(proc { 
+            [ClassRegistry['Module'].instance_methods['extend']]}) do |node, args|
         default_visit node
-        if node.runtime == :load && @current_scope.self_ptr.klass.ancestors.include?(ClassRegistry['Module']) && args.is_constant?
+        if args.is_constant?
           args.constant_values.reverse.each do |arg|
             @current_scope.self_ptr.singleton_class.include_module(arg)
           end
