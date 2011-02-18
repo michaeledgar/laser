@@ -23,13 +23,12 @@ module Laser
             end
             Set.new([matched_method])
           when :unary, :binary, :fcall, :call, :command, :var_ref
-            puts "Resolving #{method_call_name} for #{receiver_type.inspect}"
-            filter_by_arity(methods_for_type_name(receiver_type, method_call_name), method_call_arity).tap { |x| puts "Got: #{x.inspect}"}
+            filter_by_arity(methods_for_type_name(receiver_type, method_call_name), method_call_arity)
           when :method_add_arg
             filter_by_arity(self[1].method_estimate, method_call_arity)
           end || []
         rescue Error => err
-          errors << err
+          add_error err
           []
         end
       

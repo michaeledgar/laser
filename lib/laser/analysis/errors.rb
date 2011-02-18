@@ -24,6 +24,11 @@ module Laser
       super(message)
       @ast_node, @severity = ast_node, severity
     end
+    
+    def ==(other)
+      other.class == self.class && other.message == self.message &&
+          other.ast_node == self.ast_node && self.severity == other.severity
+    end
   end
   
   class ReopenedClassAsModuleError < Laser::Error

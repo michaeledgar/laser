@@ -99,10 +99,6 @@ module Laser
           add(is_method) do |node|
             default_visit node
             matching_methods = method_proc.call
-            puts "Method estimate: "
-            p node.method_estimate
-            puts "Matching methods: "
-            p matching_methods
             if matching_methods.any? { |meth| node.method_estimate == [meth] }
               case node.type
               when :command then args = node[2][1]

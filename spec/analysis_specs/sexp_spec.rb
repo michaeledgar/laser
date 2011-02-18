@@ -1126,7 +1126,7 @@ describe Sexp do
       end
 
       it 'should throw an error if an implementation is found, but has mismatched arity' do
-        input = 'class A706 def printall(x); foobar; end; def foobar(x, y=x); end; end'
+        input = 'class A706; def printall(x); foobar; end; def foobar(x, y=x); end; end'
         tree = annotate_all(input)
         foobar_call = tree.deep_find { |node| node.type == :var_ref && node.binding.nil? &&
                                               node.expanded_identifier == 'foobar' }

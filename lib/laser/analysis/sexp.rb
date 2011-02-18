@@ -32,6 +32,10 @@ module Laser
         self[0]
       end
 
+      def add_error(error)
+        errors << error unless errors.include?(error)
+      end
+
       # is the given object a sexp?
       #
       # @return Boolean

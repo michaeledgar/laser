@@ -180,43 +180,36 @@ module Laser
       end
       
       def apply_visibility(node, args, visibility)
-        default_visit node
-        if @current_scope.parent.nil? && visibility == :protected
-          # node.errors << NoSuchMethodError.new("No 'protected' method at the top level.", node)
-        elsif node.runtime == :load && (@current_scope.parent.nil? ||
-           @current_scope.self_ptr.klass.ancestors.include?(ClassRegistry['Module']))
-          if args.empty?
-            @visibility = visibility
-          elsif args.is_constant?
-            receiving_class = implicit_receiver
+        if args.empty?
+          @visibility = visibility
+        elsif args.is_constant?
+          receiving_class = implicit_receiver
 
-            args.constant_values.map(&:to_s).each do |method_name|
-              found_method = receiving_class.instance_methods[method_name]
-              if found_method.owner != receiving_class
-                found_method = found_method.dup
-                receiving_class.add_instance_method!(found_method)
-              end
-              found_method.visibility = visibility
+          args.constant_values.map(&:to_s).each do |method_name|
+            found_method = receiving_class.instance_methods[method_name]
+            if found_method.owner != receiving_class
+              found_method = found_method.dup
+              receiving_class.add_instance_method!(found_method)
             end
+            found_method.visibility = visibility
           end
         end
       end
       
-      # match_precise_loadtime_method(proc { 
-      #       [ClassRegistry['Module'].instance_methods['private'],
-      #        Scope::GlobalScope.self_ptr.singleton_class.instance_methods['private']]}) do |node, args|
-      #   apply_visibility node, args, :private
-      # end
-      
-      match_method_call 'private' do |node, args|
+      match_precise_loadtime_method(proc { 
+            [ClassRegistry['Module'].instance_methods['private'],
+             Scope::GlobalScope.self_ptr.singleton_class.instance_methods['private']]}) do |node, args|
         apply_visibility node, args, :private
       end
-
-      match_method_call 'public' do |node, args|
+      
+      match_precise_loadtime_method(proc { 
+            [ClassRegistry['Module'].instance_methods['public'],
+             Scope::GlobalScope.self_ptr.singleton_class.instance_methods['public']]}) do |node, args|
         apply_visibility node, args, :public
       end
       
-      match_method_call 'protected' do |node, args|
+      match_precise_loadtime_method(proc { 
+            [ClassRegistry['Module'].instance_methods['protected']]}) do |node, args|
         apply_visibility node, args, :protected
       end
 
