@@ -3,7 +3,6 @@ module Laser
     # This module contains bootstrapping code. This initializes the first classes
     # and modules that build up the meta-model (Class, Module, Object).
     module Bootstrap
-      COMPLETE = false
       extend SexpAnalysis
       class BootstrappingError < StandardError; end
       def self.bootstrap
@@ -35,29 +34,31 @@ module Laser
         object_class.instance_variable_set("@klass", class_class)
         module_class.instance_variable_set("@klass", class_class)
         class_class.instance_variable_set("@klass", class_class)
-        
-        true_class = LaserSingletonClass.new(class_class, Scope::GlobalScope, 'TrueClass', 'true')
-        false_class = LaserSingletonClass.new(class_class, Scope::GlobalScope, 'FalseClass', 'false')
-        nil_class = LaserSingletonClass.new(class_class, Scope::GlobalScope, 'NilClass', 'nil')
-
-        Scope::GlobalScope.add_binding!(
-            Bindings::KeywordBinding.new('true', true_class.get_instance))
-        Scope::GlobalScope.add_binding!(
-            Bindings::KeywordBinding.new('false', false_class.get_instance))
-        Scope::GlobalScope.add_binding!(
-            Bindings::KeywordBinding.new('nil', nil_class.get_instance))
-
-        remove_const("COMPLETE")
-        const_set("COMPLETE", true)
+        bootstrap_literals
       rescue StandardError => err
         new_exception = BootstrappingError.new("Bootstrapping failed: #{err.message}")
         new_exception.set_backtrace(err.backtrace)
         raise new_exception
       end
       
+      # Before we analyze any code, we need to create classes for all the
+      # literals that are in Ruby. Otherwise, when we see those literals,
+      # if we haven't yet created the class they are an instance of, shit
+      # will blow up.
       def self.bootstrap_literals
         global = Scope::GlobalScope
         class_class = ClassRegistry['Class']
+        true_class = LaserSingletonClass.new(class_class, Scope::GlobalScope, 'TrueClass', 'true')
+        false_class = LaserSingletonClass.new(class_class, Scope::GlobalScope, 'FalseClass', 'false')
+        nil_class = LaserSingletonClass.new(class_class, Scope::GlobalScope, 'NilClass', 'nil')
+
+        global.add_binding!(
+            Bindings::KeywordBinding.new('true', true_class.get_instance))
+        global.add_binding!(
+            Bindings::KeywordBinding.new('false', false_class.get_instance))
+        global.add_binding!(
+            Bindings::KeywordBinding.new('nil', nil_class.get_instance))
+
         superclass_assignment = proc { |klass| klass.superclass = ClassRegistry['Object'] }
         # Need literal classes or we can't analyze anything
         global.add_binding!(Bindings::ConstantBinding.new(
@@ -78,6 +79,8 @@ module Laser
             'Float', LaserClass.new(class_class, ClosedScope.new(Scope::GlobalScope, nil), 'Float') do |klass|
               klass.superclass = numeric
             end))
+        global.add_binding!(Bindings::ConstantBinding.new(
+            'Range', LaserClass.new(class_class, ClosedScope.new(Scope::GlobalScope, nil), 'Range', &superclass_assignment)))
       end
     end
   end
