@@ -17,7 +17,7 @@ module Laser::SexpAnalysis
         when :var_ref, :const_ref, :const_path_ref, :var_field
           case self[1].type
           when :@kw
-            %w(nil true false __LINE__ __FILE__).include?(expanded_identifier)
+            %w(nil true false self __LINE__ __FILE__).include?(expanded_identifier)
           else
             Bindings::ConstantBinding === scope.lookup(expanded_identifier)
           end
@@ -97,6 +97,7 @@ module Laser::SexpAnalysis
           case self[1].type
           when :@kw
             case self[1][1]
+            when 'self' then scope.lookup('self').value
             when 'nil' then wrap(ClassRegistry['NilClass'], nil)
             when 'true' then wrap(ClassRegistry['TrueClass'], true)
             when 'false' then wrap(ClassRegistry['FalseClass'], false)

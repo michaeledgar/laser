@@ -147,10 +147,12 @@ module Laser
       # Enter the singleton class.
       add :sclass do |node, singleton, body|
         visit singleton
-        method_self = @current_scope.lookup(singleton.expanded_identifier).value
-        receiver = method_self.singleton_class
-        singleton.scope = @current_scope
-        visit_with_scope(body, receiver.scope)
+        if singleton.is_constant
+          method_self = singleton.constant_value
+          receiver = method_self.singleton_class
+          singleton.scope = @current_scope
+          visit_with_scope(body, receiver.scope)
+        end
       end
 
       def include_modules(klass, mods)
@@ -179,7 +181,7 @@ module Laser
       end
       
       def apply_visibility(node, args, visibility)
-        if args.empty?
+        if args.nil? || args.empty?
           @visibility = visibility
         elsif args.is_constant?
           receiving_class = implicit_receiver
@@ -323,6 +325,23 @@ module Laser
       end
       
       # Eval handlers!
+      SEARCH_EXTENSIONS = ['', '.rb']
+      match_precise_loadtime_method(proc { [ClassRegistry['Kernel'].instance_methods['require']] }) do |node, args|
+        if args.is_constant?
+          file = args.constant_values.first
+          load_path = @current_scope.lookup('$:').value
+          loaded_values = @current_scope.lookup('$"').value
+          SEARCH_EXTENSIONS.each do |ext|
+            to_load = file + ext
+            load_path.each do |path|
+              joined = File.join(path, to_load)
+              if File.exist?(joined) && !loaded_values.include?(joined)
+                Annotations.annotate_inputs([[joined, File.read(joined)]])
+              end
+            end
+          end
+        end
+      end
       
       ################## Scope management methods #######################
 

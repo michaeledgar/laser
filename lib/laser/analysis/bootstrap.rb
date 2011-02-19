@@ -58,6 +58,17 @@ module Laser
             Bindings::KeywordBinding.new('false', false_class.get_instance))
         global.add_binding!(
             Bindings::KeywordBinding.new('nil', nil_class.get_instance))
+
+        superclass_assignment = proc { |klass| klass.superclass = ClassRegistry['Object'] }
+        global.add_binding!(Bindings::ConstantBinding.new(
+            'Array', LaserClass.new(class_class, ClosedScope.new(Scope::GlobalScope, nil), 'Array', &superclass_assignment)))
+        global.add_binding!(
+            Bindings::GlobalVariableBinding.new('$:',
+              RealObjectProxy.new(ClassRegistry['Array'], global, '$:',
+                [File.expand_path(File.join(File.dirname(__FILE__), '..', 'standard_library'))])))
+        global.add_binding!(
+            Bindings::GlobalVariableBinding.new('$"',
+              RealObjectProxy.new(ClassRegistry['Array'], global, '$"', [])))
       end
     end
   end
