@@ -166,6 +166,10 @@ module Laser
         @instance_methods[method.name] = method
         method.owner = self
       end
+      
+      def alias_instance_method!(new, old)
+        @instance_methods[new] = @instance_methods[old]
+      end
 
       def instance_methods
         if @superclass

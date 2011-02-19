@@ -119,7 +119,7 @@ module Laser
       # Returns the text of the identifier, assuming this node identifies something.
       def expanded_identifier
         case type
-        when :@ident, :@const, :@gvar, :@cvar, :@ivar, :@kw
+        when :@ident, :@const, :@gvar, :@cvar, :@ivar, :@kw, :@op
           self[1]
         when :var_ref, :var_field, :const_ref
           self[1].expanded_identifier

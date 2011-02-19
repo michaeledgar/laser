@@ -265,6 +265,21 @@ module Laser
         visit_with_scope(body, new_scope)
       end
       
+      # Handles keyword aliases: alias keyword uses the lexical value of self
+      add :alias do |node, new, old|
+        next unless node.runtime == :load
+        current_self = @current_scope.self_ptr
+        new_name, old_name = new[1].expanded_identifier, old[1].expanded_identifier
+        if current_self.instance_methods[old_name]
+          current_self.alias_instance_method!(new_name, old_name)
+        else
+          p "FAILING TO ALIAS #{new_name} from #{old_name}"
+          raise FailedAliasError.new(
+            "Tried to alias #{old_name} to #{new_name}, but" +
+            " no method #{old_name} exists.", node)
+        end
+      end
+      
       # On assignment: ensure bindings exist for all vars on the LHS
       add :assign, :massign do |node, names, vals|
         assgn_expression = AssignmentExpression.new(node)

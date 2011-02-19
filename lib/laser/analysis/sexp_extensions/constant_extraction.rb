@@ -97,7 +97,7 @@ module Laser::SexpAnalysis
           case self[1].type
           when :@kw
             case self[1][1]
-            when 'self' then scope.lookup('self').value
+            when 'self' then scope.self_ptr
             when 'nil' then wrap(ClassRegistry['NilClass'], nil)
             when 'true' then wrap(ClassRegistry['TrueClass'], true)
             when 'false' then wrap(ClassRegistry['FalseClass'], false)

@@ -65,4 +65,8 @@ module Laser
   class IncompatibleArityError < Laser::Error
     severity MAJOR_ERROR
   end
+  
+  class FailedAliasError < Laser::Error
+    severity MAJOR_ERROR
+  end
 end
