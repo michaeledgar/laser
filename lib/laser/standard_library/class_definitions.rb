@@ -1,5 +1,13 @@
+class String
+end
+class Array
+end
+class Proc
+end
+
 RUBY_VERSION = '1.9.2'
 $/ = "\n"
+
 class << self
   def private(*args)
   end

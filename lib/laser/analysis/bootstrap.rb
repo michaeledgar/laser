@@ -58,29 +58,6 @@ module Laser
             Bindings::KeywordBinding.new('false', false_class.get_instance))
         global.add_binding!(
             Bindings::KeywordBinding.new('nil', nil_class.get_instance))
-
-        superclass_assignment = proc { |klass| klass.superclass = ClassRegistry['Object'] }
-        # Need literal classes or we can't analyze anything
-        global.add_binding!(Bindings::ConstantBinding.new(
-            'String', LaserClass.new(class_class, ClosedScope.new(Scope::GlobalScope, nil), 'String', &superclass_assignment)))
-        global.add_binding!(Bindings::ConstantBinding.new(
-            'Regexp', LaserClass.new(class_class, ClosedScope.new(Scope::GlobalScope, nil), 'Regexp', &superclass_assignment)))
-        global.add_binding!(Bindings::ConstantBinding.new(
-            'Array', LaserClass.new(class_class, ClosedScope.new(Scope::GlobalScope, nil), 'Array', &superclass_assignment)))
-        global.add_binding!(Bindings::ConstantBinding.new(
-            'Hash', LaserClass.new(class_class, ClosedScope.new(Scope::GlobalScope, nil), 'Hash', &superclass_assignment)))
-        numeric = global.add_binding!(Bindings::ConstantBinding.new(
-            'Numeric', LaserClass.new(class_class, ClosedScope.new(Scope::GlobalScope, nil), 'Numeric', &superclass_assignment))).value
-        global.add_binding!(Bindings::ConstantBinding.new(
-            'Integer', LaserClass.new(class_class, ClosedScope.new(Scope::GlobalScope, nil), 'Integer') do |klass|
-              klass.superclass = numeric
-            end))
-        global.add_binding!(Bindings::ConstantBinding.new(
-            'Float', LaserClass.new(class_class, ClosedScope.new(Scope::GlobalScope, nil), 'Float') do |klass|
-              klass.superclass = numeric
-            end))
-        global.add_binding!(Bindings::ConstantBinding.new(
-            'Range', LaserClass.new(class_class, ClosedScope.new(Scope::GlobalScope, nil), 'Range', &superclass_assignment)))
       end
     end
   end

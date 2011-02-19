@@ -322,6 +322,8 @@ module Laser
         visit_with_scope(body, new_scope)
       end
       
+      # Eval handlers!
+      
       ################## Scope management methods #######################
 
       # Yields with the current visibility preserved.
