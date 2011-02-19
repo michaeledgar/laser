@@ -340,19 +340,17 @@ module Laser
       end
       
       # Eval handlers!
-      SEARCH_EXTENSIONS = ['', '.rb']
       match_precise_loadtime_method(proc { [ClassRegistry['Kernel'].instance_methods['require']] }) do |node, args|
         if args.is_constant?
           file = args.constant_values.first
           load_path = @current_scope.lookup('$:').value
           loaded_values = @current_scope.lookup('$"').value
-          SEARCH_EXTENSIONS.each do |ext|
-            to_load = file + ext
-            load_path.each do |path|
-              joined = File.join(path, to_load)
-              if File.exist?(joined) && !loaded_values.include?(joined)
-                Annotations.annotate_inputs([[joined, File.read(joined)]])
-              end
+          to_load = file + '.rb'
+          load_path.each do |path|
+            joined = File.join(path, to_load)
+            if File.exist?(joined) && !loaded_values.include?(joined)
+              Annotations.annotate_inputs([[joined, File.read(joined)]])
+              break
             end
           end
         end

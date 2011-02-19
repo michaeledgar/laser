@@ -1147,6 +1147,44 @@ describe ScopeAnnotation do
     
     tree.all_errors.should be_empty
   end
+  
+  describe 'performing requires' do
+    it 'should load the file from $: if it is not yet in $"' do
+      load_paths = Scope::GlobalScope.lookup('$:').value
+      features = Scope::GlobalScope.lookup('$"').value
+      original = load_paths.raw_object.dup
+      orig_features = features.raw_object.dup
+      begin
+        load_paths.unshift('/abc/def')
+        File.should_receive(:exist?).with('/abc/def/foobaz.rb').and_return(true)
+        File.should_receive(:read).with('/abc/def/foobaz.rb').and_return('class Alpha112 < Hash;end')
+        annotate_all("require 'foobaz'")
+        ClassRegistry['Alpha112'].superclass.should == ClassRegistry['Hash']
+      ensure
+        load_paths.raw_object.replace(original)
+        features.raw_object.replace(orig_features)
+      end
+    end
+    
+    it 'should check all paths in $: for the file in a row' do
+      load_paths = Scope::GlobalScope.lookup('$:').value
+      features = Scope::GlobalScope.lookup('$"').value
+      original = load_paths.raw_object.dup
+      orig_features = features.raw_object.dup
+      begin
+        load_paths.unshift('/abc/def').unshift('/def/jkl').unshift('/jkl/uio')
+        File.should_receive(:exist?).with('/jkl/uio/foobaz.rb').and_return(false)
+        File.should_receive(:exist?).with('/def/jkl/foobaz.rb').and_return(false)
+        File.should_receive(:exist?).with('/abc/def/foobaz.rb').and_return(true)
+        File.should_receive(:read).with('/abc/def/foobaz.rb').and_return('class Alpha113 < Array;end')
+        annotate_all("require 'foobaz'")
+        ClassRegistry['Alpha113'].superclass.should == ClassRegistry['Array']
+      ensure
+        load_paths.raw_object.replace(original)
+        features.raw_object.replace(orig_features)
+      end
+    end
+  end
 end
   
 describe 'complete tests' do
