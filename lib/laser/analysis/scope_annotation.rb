@@ -348,8 +348,10 @@ module Laser
           to_load = file + '.rb'
           load_path.each do |path|
             joined = File.join(path, to_load)
-            if File.exist?(joined) && !loaded_values.include?(joined)
-              Annotations.annotate_inputs([[joined, File.read(joined)]])
+            if File.exist?(joined)
+              if !loaded_values.include?(joined)
+                Annotations.annotate_inputs([[joined, File.read(joined)]])
+              end
               break
             end
           end

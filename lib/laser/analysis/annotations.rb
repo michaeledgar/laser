@@ -21,6 +21,7 @@ module Laser
       def self.apply_inherited_attributes(inputs)
         ordered_annotations.each do |annotator|
           inputs.each do |filename, text, tree|
+            Scope::GlobalScope.lookup('$"').value.unshift(filename)
             annotator.annotate_with_text(tree, text)
           end
         end
