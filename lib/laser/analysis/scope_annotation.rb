@@ -273,7 +273,7 @@ module Laser
         if current_self.instance_methods[old_name]
           current_self.alias_instance_method!(new_name, old_name)
         else
-          p "FAILING TO ALIAS #{new_name} from #{old_name}"
+          p "FAILING TO ALIAS #{new.inspect} from #{old.inspect}"
           raise FailedAliasError.new(
             "Tried to alias #{old_name} to #{new_name}, but" +
             " no method #{old_name} exists.", node)
@@ -350,7 +350,8 @@ module Laser
             joined = File.join(path, to_load)
             if File.exist?(joined)
               if !loaded_values.include?(joined)
-                Annotations.annotate_inputs([[joined, File.read(joined)]])
+                tree = Annotations.annotate_inputs([[joined, File.read(joined)]])
+                node.errors.concat tree[0][1].all_errors
               end
               break
             end

@@ -111,6 +111,7 @@ module Laser
         def signatures
           @protocols.map(&:signatures).inject(:&)
         end
+        
       end
       
       # A protocol that has the same signatures as a given class.

@@ -121,7 +121,7 @@ module Laser
         case type
         when :@ident, :@const, :@gvar, :@cvar, :@ivar, :@kw, :@op
           self[1]
-        when :var_ref, :var_field, :const_ref
+        when :var_ref, :var_field, :const_ref, :symbol
           self[1].expanded_identifier
         when :top_const_ref, :top_const_field
           "::#{self[1].expanded_identifier}"

@@ -29,6 +29,11 @@ module Laser
       other.class == self.class && other.message == self.message &&
           other.ast_node == self.ast_node && self.severity == other.severity
     end
+    
+    def inspect
+      "#<#{self.class}: #{message} (#{ast_node.file_name}:#{ast_node.source_begin[0]})>"
+    end
+    
   end
   
   class ReopenedClassAsModuleError < Laser::Error

@@ -92,7 +92,7 @@ module Laser
           is_method = proc do |node|
             node.runtime == :load &&
                 [:command, :method_add_arg, :var_ref, :call].include?(node.type) &&
-                !(node.type == :var_ref && node.binding) &&
+                !(node.type == :var_ref && (node.binding || node[1].type == :@kw)) &&
                 !(node.type == :call && node.parent.type == :method_add_arg)
           end
 

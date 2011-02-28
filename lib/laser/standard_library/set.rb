@@ -53,7 +53,6 @@
 #
 class Set
   include Enumerable
-
   # Creates a new set containing the given objects.
   def self.[](*ary)
     new(ary)

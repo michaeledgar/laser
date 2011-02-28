@@ -1066,7 +1066,7 @@ describe ScopeAnnotation do
     errors[0].should be_a(Scope::ScopeLookupFailure)
     errors[0].query.should == 'Z223'
     errors[0].scope.self_ptr.should == ClassRegistry['A121'].scope.self_ptr
-    errors[0].ast_node.should == tree[1][0][3][1][1]
+    errors[0].ast_node.should == tree[1][0][3][1][1][2]
     errors[0].ast_node.binding.should == nil
   end
   

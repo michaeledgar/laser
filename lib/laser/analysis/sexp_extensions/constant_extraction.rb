@@ -15,10 +15,9 @@ module Laser::SexpAnalysis
         when :array, :regexp_literal, :assoclist_from_args, :bare_assoc_hash, :dyna_symbol
           self[1].nil? || self[1].all?(&:is_constant)
         when :var_ref, :const_ref, :const_path_ref, :var_field
-          case self[1].type
-          when :@kw
+          if self[1].type == :@kw
             %w(nil true false self __LINE__ __FILE__).include?(expanded_identifier)
-          else
+          elsif !self.binding.nil?
             Bindings::ConstantBinding === scope.lookup(expanded_identifier)
           end
         when :paren

@@ -17,6 +17,8 @@ begin
     gem.add_development_dependency 'metric_fu', '>= 2.0.1'
     gem.add_development_dependency 'simplecov', '>= 0.3.9'
     gem.add_development_dependency 'simplecov-gem-adapter', '>= 1.0.0'
+    gem.add_development_dependency 'guard'
+    gem.add_development_dependency 'guard-rspec'
     # gem is a Gem::Specification... see http://www.rubygems.org/read/chapter/20 for additional settings
   end
   Jeweler::GemcutterTasks.new

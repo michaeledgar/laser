@@ -32,6 +32,8 @@ module Kernel
   end
   def p(*args)
   end
+  def eval(string, bndg = nil, filename = nil, lineno = nil)
+  end
 end
 
 class Object
@@ -39,9 +41,11 @@ class Object
 end
 
 require 'comparable'
+require 'enumerable'
 require 'array'
 require 'string'
 require 'numbers'
+require '_thread'
 
 class Range
 end
@@ -69,6 +73,8 @@ class Struct
 end
 
 class IO
+  def read(len=nil)
+  end
 end
 class File < IO
 end
