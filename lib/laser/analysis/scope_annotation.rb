@@ -273,7 +273,6 @@ module Laser
         if current_self.instance_methods[old_name]
           current_self.alias_instance_method!(new_name, old_name)
         else
-          p "FAILING TO ALIAS #{new.inspect} from #{old.inspect}"
           raise FailedAliasError.new(
             "Tried to alias #{old_name} to #{new_name}, but" +
             " no method #{old_name} exists.", node)

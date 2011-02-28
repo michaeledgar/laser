@@ -33,6 +33,43 @@ module Laser
         r0
       end
 
+      def _nt_annotation_name
+        start_index = index
+        if node_cache[:annotation_name].has_key?(index)
+          cached = node_cache[:annotation_name][index]
+          if cached
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            @index = cached.interval.end
+          end
+          return cached
+        end
+
+        s0, i0 = [], index
+        loop do
+          if has_terminal?('\G[A-Za-z0-9_]', true, index)
+            r1 = true
+            @index += 1
+          else
+            r1 = nil
+          end
+          if r1
+            s0 << r1
+          else
+            break
+          end
+        end
+        if s0.empty?
+          @index = i0
+          r0 = nil
+        else
+          r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
+        end
+
+        node_cache[:annotation_name][start_index] = r0
+
+        r0
+      end
+
       module MethodName0
       end
 

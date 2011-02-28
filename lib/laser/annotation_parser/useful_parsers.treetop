@@ -5,6 +5,10 @@ module Laser
         [ \t]
       end
       
+      rule annotation_name
+        [A-Za-z0-9_]+
+      end
+      
       rule method_name
         [A-Za-z0-9_]+ [=!?]? / operator
       end

@@ -4,11 +4,11 @@ module Laser
       include Class
       include Structural
       include GeneralPurpose
-
-      rule root
-        space* type space* {
+      
+      rule named_annotation
+        space* annotation_name ':' space* type space* {
           def type
-            elements[1].type
+            elements[4].type
           end
         }
       end

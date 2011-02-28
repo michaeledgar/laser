@@ -83,7 +83,7 @@ module Laser
 
         def matches?(actual)
           @input = actual
-          @result = Parsers::AnnotationParser.new.parse(actual)
+          @result = Parsers::AnnotationParser.new.parse(actual, :root => :type)
           @result && @result.type == @output
         end
 

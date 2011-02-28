@@ -5,7 +5,7 @@ module Laser
       # class, value (if constant!), and a variety of other details.
       class GenericBinding
         include Comparable
-        attr_accessor :name
+        attr_accessor :name, :inferred_type
         attr_reader :value
 
         def initialize(name, value)
@@ -15,7 +15,7 @@ module Laser
         end
         
         def expr_type
-          Types::ClassType.new(@value.klass.path, :covariant)
+          inferred_type || Types::ClassType.new(@value.klass.path, :covariant)
         end
       
         def bind!(value)
