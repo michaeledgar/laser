@@ -7,8 +7,8 @@ module Laser::SexpAnalysis
       # sufficient information in many cases to determine where a node lies. We
       # have to figure it out based on nearby identifiers and keywords.
       def source_begin
-        default_result = children.find { |child| Sexp === child }
-        default_result = default_result.source_begin if default_result
+        default_result = children.select { |child| Sexp === child }.
+                                  map(&:source_begin).compact.first
 
         case type
         when :@ident, :@int, :@kw, :@float, :@tstring_content, :@regexp_end,

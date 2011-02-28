@@ -539,7 +539,7 @@ describe ScopeAnnotation do
   #       [:var_field, [:@ident, "z", [1, 36]]],
   #       [:var_ref, [:@ident, "a", [1, 40]]]]],
   #     nil, nil, nil]]]]
-  it 'creates new scopes on single assignments' do
+  it 'creates new bindings on single assignments' do
     tree = annotate_all('def abc(bar, &blk); p blk; a = bar; z = a; end')
     definition = tree[1][0]
     body = definition[3]
@@ -621,7 +621,7 @@ EOF
   #        :*,
   #        [:@int, "2", [1, 36]]]]],
   #     nil, nil, nil]]]]
-  it 'creates new scopes as new constants are assigned to' do
+  it 'creates new constant bindings as new constants are assigned to' do
     tree = annotate_all('module TestA; PI = 3.14; TAU = PI * 2; end')
     body = tree[1][0][2][1]
     
@@ -630,6 +630,23 @@ EOF
     
     body[1].scope.lookup('PI').should be_a(Bindings::ConstantBinding)
     body[2].scope.lookup('TAU').should be_a(Bindings::ConstantBinding)
+    tree.all_errors.should be_empty
+  end
+  
+  it 'attaches annotated types as new constants are assigned to' do
+    tree = annotate_all <<-EOF
+module TestB
+# PI: Float | Integer
+PI = 3.14; TAU = PI * 2
+end
+EOF
+
+    body = tree[1][0][2][1]
+
+    body[1].scope.lookup('PI').expr_type.should == Types::UnionType.new([
+        Types::ClassType.new('Float', :covariant),
+        Types::ClassType.new('Integer', :covariant)
+    ])
     tree.all_errors.should be_empty
   end
   
@@ -759,9 +776,9 @@ EOF
   it 'attaches types to for loop variables' do
     begin
       tree = annotate_all <<-EOF
-  # x: #to_i -> Integer
-  for x in [1, 2]; p x; end
-  EOF
+# x: #to_i -> Integer
+for x in [1, 2]; p x; end
+EOF
 
       list = tree[1]
       forloop = list[0][3]
@@ -777,10 +794,10 @@ EOF
   it 'attaches types to multiple for loop variables' do
     begin
       tree = annotate_all <<-EOF
-  # x: #to_i -> Integer
-  # y: String=
-  for x, y in [[1, "hello"], [2, "world"]]; p x; end
-  EOF
+# x: #to_i -> Integer
+# y: String=
+for x, y in [[1, "hello"], [2, "world"]]; p x; end
+EOF
 
       list = tree[1]
       forloop = list[0][3]
@@ -963,6 +980,33 @@ EOF
     first_block_body.should see_var('y')
     
     first_block_body.scope.lookup('x').should_not be list[0].scope.lookup('x')
+    tree.all_errors.should be_empty
+  end
+  
+  it 'attaches types to block variables' do
+    tree = annotate_all <<-EOF
+# x: Integer
+x = 10
+# x: Float
+# y: TrueClass
+[].each do |x, y=x| 
+  y
+end
+EOF
+
+    list = tree[1]
+    list[0].should see_var('x')
+    list[0].scope.lookup('x').expr_type.should ==
+        Types::ClassType.new('Integer', :covariant)
+
+    first_block_body = list[1][2][2]
+    first_block_body.should see_var('x')
+    first_block_body.scope.lookup('x').expr_type.should ==
+        Types::ClassType.new('Float', :covariant)
+    first_block_body.should see_var('y')
+    first_block_body.scope.lookup('y').expr_type.should ==
+        Types::ClassType.new('TrueClass', :covariant)
+    
     tree.all_errors.should be_empty
   end
   

@@ -46,9 +46,7 @@ module Laser
       # must all share the comment. Otherwise, we'll have a lot of trouble making
       # sure that the interesting nodes, often nested deeply, will be annotated.
       def extend_annotation_to_equal_nodes(first, generator)
-        while generator.peek.source_begin == first.source_begin ||
-              (generator.peek.source_begin != nil && first.source_begin != nil &&
-               generator.peek.source_begin[0] == first.source_begin[0])
+        while generator.peek.source_begin.nil? || generator.peek.source_begin[0] <= first.source_begin[0]
           generator.next.comment = first.comment
         end
       end
