@@ -218,27 +218,16 @@ module Laser
       add :def do |node, (_, name), arglist, body|
         receiver = implicit_receiver
 
-        new_signature = Signature.for_definition_sexp(name, arglist, body)
-        new_method = LaserMethod.new(name, @visibility) do |method|
-          method.body_ast = body
-          method.add_signature!(new_signature)
-        end
-        receiver.add_instance_method!(new_method)
-
-        method_locals = Hash[new_signature.arguments.map { |arg| [arg.name, arg] }]
+        new_method, method_locals = build_new_method(receiver, name, arglist, body)
         new_scope = ClosedScope.new(@current_scope, nil, {}, method_locals)
         
         if LaserModule === receiver
         then method_self = receiver.get_instance(new_scope)
         else method_self = receiver
         end
-        if new_scope.self_ptr.nil?
-          new_scope.self_ptr = method_self
-        end
-        new_scope.method = new_method
+        new_scope.self_ptr = method_self
         
-        visit_with_scope(arglist, new_scope)
-        visit_with_scope(body, new_scope)
+        attach_new_method_scope(new_method, new_scope, arglist, body)
       end
 
       # Singleton method definition: def receiver.method_name
@@ -246,23 +235,43 @@ module Laser
         visit singleton
         method_self = @current_scope.lookup(singleton.expanded_identifier).value
         receiver = method_self.singleton_class
-        add_method_to_object(receiver, method_self, name, arglist, body)
-      end
 
-      def add_method_to_object(receiver, method_self, name, arglist, body)
+        new_method, method_locals = build_new_method(receiver, name, arglist, body)
+
+        new_scope = ClosedScope.new(@current_scope, method_self, {}, method_locals)
+        attach_new_method_scope(new_method, new_scope, arglist, body)
+      end
+      
+      # Builds a new method based on the content of the definition node.
+      #
+      # returns: (LaserMethod, String => Argument)
+      def build_new_method(receiver, name, arglist, body)
         new_signature = Signature.for_definition_sexp(name, arglist, body)
         new_method = LaserMethod.new(name, @visibility) do |method|
           method.body_ast = body
           method.add_signature!(new_signature)
         end
         receiver.add_instance_method!(new_method)
-
-        method_locals = Hash[new_signature.arguments.map { |arg| [arg.name, arg] }]
-        new_scope = ClosedScope.new(@current_scope, method_self, {}, method_locals)
-        new_scope.method = new_method
-        
+        [new_method, extract_signature_locals(new_signature)]
+      end
+      
+      # Attaches the given scope to the newly created method. This will
+      # require setting the method attribute on the new scope as well as
+      # visiting the body and argument list with the new scope.
+      #
+      # Visiting the argument list is done because optional arguments can
+      # perform arbitrary computations.
+      def attach_new_method_scope(new_method, new_scope, arglist, body)
+        new_scope.method = new_method        
         visit_with_scope(arglist, new_scope)
         visit_with_scope(body, new_scope)
+      end
+      
+      # Extracts the signature's arguments as a hash.
+      #
+      # returns: String => Argument
+      def extract_signature_locals(new_signature)
+        Hash[new_signature.arguments.map { |arg| [arg.name, arg] }]
       end
       
       # Handles keyword aliases: alias keyword uses the lexical value of self
