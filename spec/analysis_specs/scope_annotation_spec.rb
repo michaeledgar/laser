@@ -755,6 +755,28 @@ describe ScopeAnnotation do
     end
   end
   
+  it 'attaches types to multiple for loop variables' do
+    begin
+      tree = annotate_all <<-EOF
+  # x: #to_i -> Integer
+  # y: String=
+  for x, y in [[1, "hello"], [2, "world"]]; p x; end
+  EOF
+
+      list = tree[1]
+      forloop = list[0][3]
+      binding = forloop.scope.lookup('x')
+      binding.expr_type.should == Types::StructuralType.new('to_i', [], 
+          Types::ClassType.new('Integer', :covariant))
+      binding = forloop.scope.lookup('y')
+      binding.expr_type.should == Types::ClassType.new('String', :invariant)
+      tree.all_errors.should be_empty
+    ensure
+      Scope::GlobalScope.lookup('x').inferred_type = nil
+      Scope::GlobalScope.lookup('y').inferred_type = nil
+    end
+  end
+  
   # [:program,
   # [[:command,
   #   [:@ident, "p", [1, 0]],
