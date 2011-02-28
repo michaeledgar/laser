@@ -552,6 +552,25 @@ describe ScopeAnnotation do
     tree.all_errors.should be_empty
   end
   
+  it 'attaches annotated types on single assignments' do
+    tree = annotate_all <<-EOF
+def abc(bar, &blk)
+  # a: Symbol= => String=
+  p blk; a = bar; z = a
+end
+EOF
+    definition = tree[1][0]
+    body = definition[3]
+    body_def = body[1][0..-1]
+
+    type = body_def[2].scope.lookup('a').expr_type
+    type.should == Types::GenericType.new(Types::ClassType.new('Hash', :covariant),
+        [Types::ClassType.new('Symbol', :invariant),
+         Types::ClassType.new('String', :invariant)])
+    
+    tree.all_errors.should be_empty
+  end
+  
   # [:program,
   #  [[:def,
   #    [:@ident, "abc", [1, 4]],
