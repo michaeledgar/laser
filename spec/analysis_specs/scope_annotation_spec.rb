@@ -737,6 +737,24 @@ describe ScopeAnnotation do
     end
   end
   
+  it 'attaches types to for loop variables' do
+    begin
+      tree = annotate_all <<-EOF
+  # x: #to_i -> Integer
+  for x in [1, 2]; p x; end
+  EOF
+
+      list = tree[1]
+      forloop = list[0][3]
+      binding = forloop.scope.lookup('x')
+      binding.expr_type.should == Types::StructuralType.new('to_i', [], 
+          Types::ClassType.new('Integer', :covariant))
+      tree.all_errors.should be_empty
+    ensure
+      Scope::GlobalScope.lookup('x').inferred_type = nil
+    end
+  end
+  
   # [:program,
   # [[:command,
   #   [:@ident, "p", [1, 0]],
