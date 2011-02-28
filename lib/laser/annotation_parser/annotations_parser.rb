@@ -29,7 +29,11 @@ module Laser
 
       module NamedAnnotation1
         def type
-          elements[4].type
+          super.type
+        end
+        
+        def name
+          annotation_name.text_value
         end
       end
 
@@ -155,9 +159,19 @@ module Laser
           elements[0]
         end
 
+        def rest_members
+          elements[1]
+        end
       end
 
       module UnionType2
+        def type
+          Types::UnionType.new([non_union_type, *rest_members].map(&:type))
+        end
+        
+        def rest_members
+          super.elements.map(&:non_union_type)
+        end
       end
 
       def _nt_union_type

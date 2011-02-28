@@ -8,7 +8,11 @@ module Laser
       rule named_annotation
         space* annotation_name ':' space* type space* {
           def type
-            elements[4].type
+            super.type
+          end
+          
+          def name
+            annotation_name.text_value
           end
         }
       end
@@ -18,8 +22,14 @@ module Laser
       end
 
       rule union_type
-        non_union_type (space* '|' space* non_union_type)+ {
+        non_union_type rest_members:(space* '|' space* non_union_type)+ {
+          def type
+            Types::UnionType.new([non_union_type, *rest_members].map(&:type))
+          end
           
+          def rest_members
+            super.elements.map(&:non_union_type)
+          end
         }
       end
 

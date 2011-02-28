@@ -6,7 +6,6 @@ describe 'the Set module' do
   end
   
   it 'should have no errors from the inclusion' do
-    p @tree.all_errors
     @tree.all_errors.should be_empty
   end
 

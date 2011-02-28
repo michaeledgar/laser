@@ -22,12 +22,16 @@ module Laser
 
     class UnionType < TypeConstraint
       acts_as_struct :member_types
-      def initialize(*member_types)
+      def initialize(member_types)
         @member_types = member_types
       end
       
       def signature
         {member_types: member_types}
+      end
+      
+      def matching_methods(name)
+        member_types.map { |type| type.matching_methods(name) }.flatten
       end
     end
 

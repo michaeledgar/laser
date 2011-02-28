@@ -282,7 +282,7 @@ module Laser
       # On assignment: ensure bindings exist for all vars on the LHS
       add :assign, :massign do |node, names, vals|
         assgn_expression = AssignmentExpression.new(node)
-        bind_variable_names(assgn_expression.lhs.names)
+        bind_variable_names(assgn_expression.lhs.names, node)
         node.scope = @current_scope
         visit names
         visit vals
@@ -298,8 +298,9 @@ module Laser
       end
       
       # Ensures bindings exist for the given variable names.
-      def bind_variable_names(names)
+      def bind_variable_names(names, node)
         names = names.compact  # nil in 'names' represents a field, i.e. abc.foo = or abc[foo] =
+        annotation_map = node.comment && node.comment.annotation_map
         unless names.all? { |name| @current_scope.sees_var?(name) }
           names.each do |name|
             next if @current_scope.sees_var?(name)
@@ -310,6 +311,9 @@ module Laser
             value = LaserObject.new(ClassRegistry['Object'], @current_scope)
             binding = binding_class.new(name, value)
             @current_scope.add_binding!(binding)
+            if annotation_map && annotation_map[name]
+              binding.inferred_type = annotation_map[name].type
+            end
           end
         end
       end
@@ -318,7 +322,7 @@ module Laser
       add :for do |node, vars, iterable, body|
         lhs = LHSExpression.new(vars)
         all_var_names = lhs.names
-        bind_variable_names(all_var_names)
+        bind_variable_names(all_var_names, node)
         all_var_names.select { |name| name =~ /^[A-Z]/ }.each do |const|
           node.errors << ConstantInForLoopError.new(const, node)
         end
