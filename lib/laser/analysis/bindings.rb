@@ -1,7 +1,7 @@
 module Laser
   module SexpAnalysis
     module Bindings
-      # This class represents a GenericBinding in Ruby. It may have a known protocol (type),
+      # This class represents a GenericBinding in Ruby. It may have a known type,
       # class, value (if constant!), and a variety of other details.
       class GenericBinding
         include Comparable
@@ -31,10 +31,6 @@ module Laser
       
         def scope
           value.scope
-        end
-      
-        def protocol
-          value.protocol
         end
       
         def class_used

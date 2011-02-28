@@ -18,12 +18,11 @@ module Laser
     end
 
     module BasicLaserObjectBehavior
-      attr_reader :protocol, :scope, :klass, :name
+      attr_reader :scope, :klass, :name
       attr_writer :singleton_class
       def initialize(klass = ClassRegistry['Object'], scope = Scope::GlobalScope,
                      name = "#<#{klass.path}:#{object_id.to_s(16)}>")
         @klass = klass
-        @protocol = klass.protocol unless %w(Class Module Object).include?(name)
         @scope = scope
         @name = name
       end
@@ -146,10 +145,8 @@ module Laser
       def initialize_protocol
         if ProtocolRegistry[path].any? && !TESTS_ACTIVATED
           $stderr.puts "Warning: creating new instance of #{class_name} #{path}"
-          @protocol = ProtocolRegistry[path].first
         else
-          @protocol = Protocols::InstanceProtocol.new(self)
-          ProtocolRegistry.add_class_protocol(@protocol)
+          ProtocolRegistry.add_class(self)
         end
       end
       

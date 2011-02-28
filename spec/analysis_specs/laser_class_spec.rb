@@ -9,21 +9,15 @@ describe LaserObject do
     @instance.scope.should == Scope::GlobalScope
   end
   
-  describe '#protocol' do
-    it 'should get its protocol from its class' do
-      @instance.protocol.should == ClassRegistry['Array'].protocol
-    end
-  end
-  
   describe '#add_instance_method!' do
     it 'should add the method to its singleton class' do
       @instance.add_instance_method!(LaserMethod.new('abcdef') do |method|
-        method.add_signature!(Signature.new('abcdef', Protocols::UnknownProtocol.new, []))
+        method.add_signature!(Signature.new('abcdef', Types::TOP, []))
       end)
       @instance.signatures.should include(
-          Signature.new('abcdef', Protocols::UnknownProtocol.new, []))
+          Signature.new('abcdef', Types::TOP, []))
       @instance.singleton_class.instance_signatures.should include(
-          Signature.new('abcdef', Protocols::UnknownProtocol.new, []))
+          Signature.new('abcdef', Types::TOP, []))
     end
   end
   
@@ -40,19 +34,19 @@ shared_examples_for 'a Ruby module' do
 
   before do
     @name = if described_class == LaserModule then 'Module'
-           elsif described_class == LaserClass then 'Class'
-           end
+            elsif described_class == LaserClass then 'Class'
+            end
     @a = described_class.new(ClassRegistry[@name], Scope::GlobalScope, 'A')
     @b = described_class.new(ClassRegistry[@name], Scope::GlobalScope, 'B') do |b|
       b.add_instance_method!(LaserMethod.new('foo') do |method|
-        method.add_signature!(Signature.new('foo', @a.protocol, []))
-        method.add_signature!(Signature.new('foo', b.protocol,
-            [Bindings::ArgumentBinding.new('a', @a, :positional)]))
+        method.add_signature!(Signature.new('foo', Types::ClassType.new(@a.path, :covariant), []))
+        method.add_signature!(Signature.new('foo', Types::ClassType.new(b.path, :covariant),
+            [Bindings::ArgumentBinding.new('a', LaserObject.new(@a), :positional)]))
       end)
       b.add_instance_method!(LaserMethod.new('bar') do |method|
-        method.add_signature!(Signature.new('bar', b.protocol,
-            [Bindings::ArgumentBinding.new('a', @a, :positional),
-             Bindings::ArgumentBinding.new('b', b, :positional)]))
+        method.add_signature!(Signature.new('bar', Types::ClassType.new(b.path, :covariant),
+            [Bindings::ArgumentBinding.new('a', LaserObject.new(@a), :positional),
+             Bindings::ArgumentBinding.new('b', LaserObject.new(b), :positional)]))
       end)
     end
   end
@@ -89,21 +83,21 @@ shared_examples_for 'a Ruby module' do
     end
     
     it "flattens all its normal instance method's signatures" do
-      @b.instance_signatures.should include(Signature.new('foo', @a.protocol, []))
-      @b.instance_signatures.should include(Signature.new('foo', @b.protocol,
-          [Bindings::ArgumentBinding.new('a', :positional, @a.protocol)]))
+      @b.instance_signatures.should include(Signature.new('foo', Types::ClassType.new(@a.path, :covariant), []))
+      @b.instance_signatures.should include(Signature.new('foo', Types::ClassType.new(@b.path, :covariant),
+          [Bindings::ArgumentBinding.new('a', LaserObject.new(@a), :positional)]))
       @b.instance_signatures.should include(
-          Signature.new('bar', @b.protocol,
-          [Bindings::ArgumentBinding.new('a', @a, :positional),
-           Bindings::ArgumentBinding.new('b', @b, :positional)]))
+          Signature.new('bar', Types::ClassType.new(@b.path, :covariant),
+          [Bindings::ArgumentBinding.new('a', LaserObject.new(@a), :positional),
+           Bindings::ArgumentBinding.new('b', LaserObject.new(@b), :positional)]))
     end
   end
   
   describe '#add_signature!' do
     it 'adds the signature to the instance method with the given name' do
-      @b.add_signature! Signature.new('foo', @b.protocol, [])
+      @b.add_signature! Signature.new('foo', Types::ClassType.new(@b, :covariant), [])
       @b.instance_methods['foo'].signatures.should include(
-          Signature.new('foo', @b.protocol, []))
+          Signature.new('foo', Types::ClassType.new(@b, :covariant), []))
     end
   end
   
@@ -377,13 +371,13 @@ describe LaserMethod do
   
   describe '#add_signature!' do
     it 'creates signature objects and returns them in #signatures' do
-      @method.add_signature!(Signature.new('foobar', @a.protocol, []))
-      @method.add_signature!(Signature.new('foobar', @b.protocol,
+      @method.add_signature!(Signature.new('foobar', Types::ClassType.new(@a, :covariant), []))
+      @method.add_signature!(Signature.new('foobar', Types::ClassType.new(@b, :covariant),
           [Bindings::ArgumentBinding.new('a', @a, :positional),
            Bindings::ArgumentBinding.new('a2', @a, :positional)]))
-      @method.signatures.should include(Signature.new('foobar', @a.protocol, []))
+      @method.signatures.should include(Signature.new('foobar', Types::ClassType.new(@a, :covariant), []))
       @method.signatures.should include(
-          Signature.new('foobar', @b.protocol,
+          Signature.new('foobar', Types::ClassType.new(@b, :covariant),
               [Bindings::ArgumentBinding.new('a', @a, :positional),
                Bindings::ArgumentBinding.new('a2', @a, :positional)]))
     end

@@ -45,7 +45,7 @@ module Laser
       #
       # rest_arg: Sexp
       def parse_rest_arg(rest_arg)
-        Bindings::ArgumentBinding.new(rest_arg[1][1], ClassRegistry['Array'], :rest)
+        Bindings::ArgumentBinding.new(rest_arg[1][1], LaserObject.new(ClassRegistry['Array']), :rest)
       end
       
       # Parses the block argument of an argument list Sexp and adds it to
@@ -53,7 +53,7 @@ module Laser
       #
       # block_arg: Sexp
       def parse_block_arg(block_arg)
-        Bindings::ArgumentBinding.new(block_arg[1][1], ClassRegistry['Proc'], :block)
+        Bindings::ArgumentBinding.new(block_arg[1][1], LaserObject.new(ClassRegistry['Proc']), :block)
       end
     end
     
@@ -63,22 +63,22 @@ module Laser
     # return type and all arguments.
     #
     # name: String
-    # return_protocol: Protocol
+    # return_type: Protocol
     # arguments: Symbol => Protocol
-    class Signature < Struct.new(:name, :return_protocol, :arguments)
+    class Signature < Struct.new(:name, :return_type, :arguments)
       include Comparable
       extend ArgumentListHandling
 
       def self.for_definition_sexp(name, arglist, body)
         arg_hash = {}
         arglist = arglist.deep_find { |node| node.type == :params }
-        new_signature = Signature.new(name, Protocols::UnknownProtocol.new, arg_list_for_arglist(arglist))
+        new_signature = Signature.new(name, Types::TOP, arg_list_for_arglist(arglist))
       end
 
       def initialize(*args)
         super
         # validate state
-        unless String === self.name && Protocols::Base === self.return_protocol &&
+        unless String === self.name && Types::Base === self.return_type &&
                Array === self.arguments && self.arguments.all? { |v| Bindings::ArgumentBinding === v }
           raise ArgumentError.new("Invalid arguments to a signature: #{args.inspect}")
         end
@@ -108,7 +108,7 @@ module Laser
       # than any other visible character. Thus, when sorted, we can achieve
       # a piecewise comparison purely lexicographically.
       def mangled_form
-        "#{name} #{return_protocol} #{arguments.to_a.flatten.map(&:to_s).sort.join(' ')}"
+        "#{name} #{return_type.inspect} #{arguments.to_a.flatten.map(&:to_s).sort.join(' ')}"
       end
 
       def <=>(other)

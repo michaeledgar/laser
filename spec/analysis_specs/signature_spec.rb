@@ -4,10 +4,10 @@ describe Signature do
   describe '#initialize' do
     it 'assigns the basic struct values when successful' do
       result = Signature.new(
-          'hello', Protocols::InstanceProtocol.new(ClassRegistry['Array']),
+          'hello', Types::ClassType.new('Array', :covariant),
           [Bindings::ArgumentBinding.new('a1', LaserObject.new, :positional)])
       result.name.should == 'hello'
-      result.return_protocol.should == ClassRegistry['Array'].protocol
+      result.return_type.should == Types::ClassType.new('Array', :covariant)
       result.arguments.size.should == 1
       result.arguments.first.should ==
           Bindings::ArgumentBinding.new('a1', LaserObject.new, :positional)
@@ -15,12 +15,12 @@ describe Signature do
     
     it 'requires a string name' do
       expect {
-        Signature.new(:hello, Protocols::InstanceProtocol.new(ClassRegistry['Array']),
+        Signature.new(:hello, Types::ClassType.new('Array', :covariant),
             [Bindings::ArgumentBinding.new('a1', LaserObject.new, :positional)])
       }.to raise_error(ArgumentError)
     end
     
-    it 'requires a protocol for a return protocol' do
+    it 'requires a type for a return type' do
       expect {
         Signature.new('hello', 'Array',
             [Bindings::ArgumentBinding.new('a1', LaserObject.new, :positional)])
@@ -29,15 +29,14 @@ describe Signature do
     
     it 'requires an array for its argument list' do
       expect {
-        Signature.new('hello', Protocols::InstanceProtocol.new(ClassRegistry['Array']),
+        Signature.new('hello', Types::ClassType.new('Array', :covariant),
             Bindings::ArgumentBinding.new('a1', LaserObject.new, :positional))
       }.to raise_error(ArgumentError)
     end
     
     it 'requires its argument list be an array of Argument objects' do
       expect {
-        Signature.new(
-            'hello', ClassRegistry['Array'], ['a1'])
+        Signature.new('hello', ClassRegistry['Array'], ['a1'])
       }.to raise_error(ArgumentError)
     end
   end
@@ -73,7 +72,7 @@ describe Signature do
           args.size.should be 3
           args.each do |arg|
             arg.kind.should be :positional
-            arg.protocol.should == Protocols::InstanceProtocol.new(ClassRegistry['Object'])
+            arg.expr_type.should == Types::TOP
             arg.default_value_sexp.should be nil
           end
           x, y, z = args
@@ -94,9 +93,9 @@ describe Signature do
           args.zip(names).each {|arg, name| arg.name.should == name }
           args.zip(kinds).each {|arg, kind| arg.kind.should == kind }
           x, a, y, rest, z, d, blk = args
-          [x, a, y, z, d].each {|arg| arg.protocol.should == Protocols::InstanceProtocol.new(ClassRegistry['Object']) }
-          rest.protocol.should == ProtocolRegistry['Array'].first
-          blk.protocol.should == ProtocolRegistry['Proc'].first
+          [x, a, y, z, d].each {|arg| arg.expr_type.should == Types::TOP }
+          rest.expr_type.should == Types::ClassType.new('Array', :covariant)
+          blk.expr_type.should == Types::ClassType.new('Proc', :covariant)
           a.default_value_sexp.type.should == :@int
           y.default_value_sexp.type.should == :@int
         end

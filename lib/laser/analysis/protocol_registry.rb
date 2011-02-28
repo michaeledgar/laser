@@ -6,34 +6,22 @@ module Laser
     # distinct classes may have equivalent protocols).
     module ProtocolRegistry
       extend ModuleExtensions
-      cattr_accessor_with_default :protocols, []
       cattr_accessor_with_default :class_protocols, {}
 
-      def self.add_protocol(proto)
-        self.protocols << proto
-      end
-      
-      def self.add_class_protocol(class_protocol)
-        add_protocol class_protocol
-        self.class_protocols[class_protocol.value.path] = class_protocol
+      def self.add_class(klass)
+        self.class_protocols[klass.path] = klass
       end
 
       def self.[](class_name)
-        query(class_path: class_name.gsub(/^::/, ''))
-      end
-
-      def self.query(query={})
-        if query[:class_path]
-          result = self.class_protocols[query[:class_path]]
-          result ? [result] : []
-        end
+        result = self.class_protocols[class_name.gsub(/^::/, '')]
+        result ? [result] : []
       end
     end
     
     module ClassRegistry
       def self.[](class_name)
         if ProtocolRegistry[class_name].any?
-        then ProtocolRegistry[class_name].first.value
+        then ProtocolRegistry[class_name].first
         else raise ArgumentError.new("No class found with the path #{class_name}.")
         end
       end
