@@ -39,7 +39,7 @@ module Laser::SexpAnalysis
             self.scope.lookup(expanded_identifier).expr_type rescue Types::TOP
           end
         else
-          Types::TOP
+          Laser::Types::TOP
         end
       end
     end

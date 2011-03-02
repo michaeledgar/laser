@@ -15,6 +15,11 @@ describe LexicalAnalysis do
     it 'lexes its body' do
       @class.new('a').lex.should == [LexicalAnalysis::Token.new([[1,0], :on_ident, 'a'])]
     end
+    
+    it 'returns the empty list when parsing the first line with an encoding marker' do
+      @class.new('# this actually has nothing to do with encoding but it triggers').lex.should ==
+          []
+    end
   end
 
   describe '#text_between_token_positions' do

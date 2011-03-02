@@ -29,6 +29,7 @@ module Laser
     #   why the 1 is always there. At any rate - the result is an array of those
     #   tokens.
     def lex(body = self.body)
+      return [] if body =~ /^#.*encoding.*/
       Ripper.lex(body).map {|token| Token.new(token) }
     end
 
@@ -112,6 +113,7 @@ module Laser
     # @return [Array] the token in the form returned by Ripper. See #lex.
     def find_token(*args)
       body, list = _extract_token_search_args(args)
+      # grr match comment with encoding in it
       lexed = lex(body)
       lexed.find.with_index do |tok, idx|
         is_token = list.include?(tok.type)
