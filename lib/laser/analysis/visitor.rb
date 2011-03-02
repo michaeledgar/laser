@@ -25,7 +25,7 @@ module Laser
         # an AST. It includes a set of possible ways to match a node, including
         # node types and general procs, and it includes a block to run in order
         # to do some interesting manipulation of the matching node.
-        class Filter < Struct.new(:args, :blk)
+        Filter = Struct.new(:args, :blk) do
           def matches?(node)
             args.any? do |filter|
               case filter

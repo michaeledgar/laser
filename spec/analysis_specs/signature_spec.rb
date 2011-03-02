@@ -4,8 +4,9 @@ describe Signature do
   describe '#initialize' do
     it 'assigns the basic struct values when successful' do
       result = Signature.new(
-          'hello', Types::ClassType.new('Array', :covariant),
-          [Bindings::ArgumentBinding.new('a1', LaserObject.new, :positional)])
+          'hello',
+          [Bindings::ArgumentBinding.new('a1', LaserObject.new, :positional)],
+          Types::ClassType.new('Array', :covariant))
       result.name.should == 'hello'
       result.return_type.should == Types::ClassType.new('Array', :covariant)
       result.arguments.size.should == 1
@@ -15,28 +16,30 @@ describe Signature do
     
     it 'requires a string name' do
       expect {
-        Signature.new(:hello, Types::ClassType.new('Array', :covariant),
-            [Bindings::ArgumentBinding.new('a1', LaserObject.new, :positional)])
+        Signature.new(:hello,
+            [Bindings::ArgumentBinding.new('a1', LaserObject.new, :positional)],
+            Types::ClassType.new('Array', :covariant))
       }.to raise_error(ArgumentError)
     end
     
     it 'requires a type for a return type' do
       expect {
-        Signature.new('hello', 'Array',
-            [Bindings::ArgumentBinding.new('a1', LaserObject.new, :positional)])
+        Signature.new('hello',
+            [Bindings::ArgumentBinding.new('a1', LaserObject.new, :positional)], 'Array')
       }.to raise_error(ArgumentError)
     end
     
     it 'requires an array for its argument list' do
       expect {
-        Signature.new('hello', Types::ClassType.new('Array', :covariant),
-            Bindings::ArgumentBinding.new('a1', LaserObject.new, :positional))
+        Signature.new('hello',
+            Bindings::ArgumentBinding.new('a1', LaserObject.new, :positional),
+            Types::ClassType.new('Array', :covariant))
       }.to raise_error(ArgumentError)
     end
     
     it 'requires its argument list be an array of Argument objects' do
       expect {
-        Signature.new('hello', ClassRegistry['Array'], ['a1'])
+        Signature.new('hello', ['a1'], ClassRegistry['Array'])
       }.to raise_error(ArgumentError)
     end
   end

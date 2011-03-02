@@ -65,14 +65,14 @@ module Laser
     # name: String
     # return_type: Protocol
     # arguments: Symbol => Protocol
-    class Signature < Struct.new(:name, :return_type, :arguments)
+    Signature = Struct.new(:name, :arguments, :return_type) do
       include Comparable
       extend ArgumentListHandling
 
       def self.for_definition_sexp(name, arglist, body)
         arg_hash = {}
         arglist = arglist.deep_find { |node| node.type == :params }
-        new_signature = Signature.new(name, Types::TOP, arg_list_for_arglist(arglist))
+        new_signature = Signature.new(name, arg_list_for_arglist(arglist), Types::TOP)
       end
 
       def initialize(*args)

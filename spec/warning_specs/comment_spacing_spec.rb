@@ -24,6 +24,14 @@ describe InlineCommentSpaceWarning do
     InlineCommentSpaceWarning.should warn('a + b # comment', settings)
     InlineCommentSpaceWarning.should_not warn('a + b# comment', settings)
   end
+  
+  it 'should not warn for improperly spaced comments that are inside comments' do
+    InlineCommentSpaceWarning.should_not warn('#a + b   # comment', SETTINGS)
+  end
+  
+  it 'should not warn for an empty comment at the start of a line' do
+    InlineCommentSpaceWarning.should_not warn('#', SETTINGS)
+  end
 
   it 'has a remotely useful description' do
     InlineCommentSpaceWarning.new('(stdin)', 'hello  #').desc.should =~ /inline.*comment/i

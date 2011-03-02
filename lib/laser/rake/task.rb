@@ -1,7 +1,7 @@
 module Laser
   module Rake
     class LaserTask
-      class Settings < Struct.new(:libs, :extras, :options, :using, :fix)
+      Settings = Struct.new(:libs, :extras, :options, :using, :fix) do
         def initialize(*args)
           super
           self.libs ||= []

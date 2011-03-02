@@ -6,7 +6,7 @@ module Laser
     # This is a wrapper class around the tokens returned by Ripper. Since the
     # tokens are just arrays, this class lets us use nice mnemonics with almost zero
     # runtime overhead.
-    class Token < Struct.new(:type, :body, :line, :col)
+    Token = Struct.new(:type, :body, :line, :col) do
       # Unpacks the token from Ripper and breaks it into its separate components.
       #
       # @param [Array<Array<Integer, Integer>, Symbol, String>] token the token

@@ -1,5 +1,5 @@
 module Laser
-  class Warning < Struct.new(:name, :file, :body, :line_number, :severity)
+  Warning = Struct.new(:name, :file, :body, :line_number, :severity) do
     extend ModuleExtensions
     include LexicalAnalysis
     include SexpAnalysis

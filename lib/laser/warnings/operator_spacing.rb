@@ -15,7 +15,7 @@ class Laser::OperatorSpacing < Laser::LineWarning
     lexed = lex(working_line)
     lexed.each_with_index do |token, idx|
       next unless token.type == :on_op
-      next if token.body == '::'
+      next if token.body == '::' || token.body[0,2] == '..'
       next if idx == lexed.size - 1  # Last token on line (continuation) is ok
       next if token.body == '-' && [:on_float, :on_int].include?(lexed[idx+1].type)
       return token if lexed[idx+1].type != :on_sp && lexed[idx+1].type != :on_op

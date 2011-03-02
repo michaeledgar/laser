@@ -787,7 +787,7 @@ EOF
           Types::ClassType.new('Integer', :covariant))
       tree.all_errors.should be_empty
     ensure
-      Scope::GlobalScope.lookup('x').inferred_type = nil
+      Scope::GlobalScope.lookup('x').annotated_type = nil
     end
   end
   
@@ -808,8 +808,8 @@ EOF
       binding.expr_type.should == Types::ClassType.new('String', :invariant)
       tree.all_errors.should be_empty
     ensure
-      Scope::GlobalScope.lookup('x').inferred_type = nil
-      Scope::GlobalScope.lookup('y').inferred_type = nil
+      Scope::GlobalScope.lookup('x').annotated_type = nil
+      Scope::GlobalScope.lookup('y').annotated_type = nil
     end
   end
   

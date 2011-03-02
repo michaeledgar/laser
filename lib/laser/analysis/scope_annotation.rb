@@ -197,6 +197,7 @@ module Laser
         end
       end
       
+      # Visibility emulation
       match_precise_loadtime_method(proc { 
             [ClassRegistry['Module'].instance_methods['private'],
              Scope::GlobalScope.self_ptr.singleton_class.instance_methods['private']]}) do |node, args|
@@ -244,7 +245,7 @@ module Laser
       
       # Builds a new method based on the content of the definition node.
       #
-      # returns: (LaserMethod, String => Argument)
+      # return: (LaserMethod, String => Argument)
       def build_new_method(receiver, name, arglist, body)
         new_signature = Signature.for_definition_sexp(name, arglist, body)
         new_method = LaserMethod.new(name, @visibility) do |method|
@@ -361,7 +362,7 @@ module Laser
       def attach_type_annotations(names, annotation_map)
         names.select { |name| annotation_map[name] }.each do |name|
           binding = @current_scope.lookup name
-          binding.inferred_type = annotation_map[name].type
+          binding.annotated_type = annotation_map[name].type
         end
       end
       
