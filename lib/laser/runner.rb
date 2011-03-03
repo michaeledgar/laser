@@ -94,9 +94,9 @@ module Laser
                   then "#{mod.path} < #{mod.superclass.path}"
                   else mod.name
                   end
-        # mod.instance_methods(false).each do |name, method|
-        #   result << "  ##{name} (arity = #{method.arity})"
-        # end
+        mod.instance_methods(false).each do |name, method|
+          result << "  ##{name} (#{method.visibility}, arity = #{method.arity})"
+        end
         result
       end.sort.flatten.each { |name| puts name }
     end

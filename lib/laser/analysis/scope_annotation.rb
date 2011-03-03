@@ -14,6 +14,7 @@ module Laser
       def annotate!(root)
         @current_scope = Scope::GlobalScope
         @visibility = :private
+        @module_function = false
         super
       end
       
@@ -180,9 +181,10 @@ module Laser
         end
       end
       
-      def apply_visibility(node, args, visibility)
+      def apply_visibility(args, visibility)
         if args.nil? || args.empty?
           @visibility = visibility
+          @module_function = false
         elsif args.is_constant?
           receiving_class = implicit_receiver
 
@@ -197,22 +199,39 @@ module Laser
         end
       end
       
-      # Visibility emulation
+      # Visibility emulation.
+      # module_function also applies private visibility, but we'll need
+      # a second hook later to apply the singleton duplicator bit.
       match_precise_loadtime_method(proc { 
             [ClassRegistry['Module'].instance_methods['private'],
-             Scope::GlobalScope.self_ptr.singleton_class.instance_methods['private']]}) do |node, args|
-        apply_visibility node, args, :private
+             Scope::GlobalScope.self_ptr.singleton_class.instance_methods['private'],
+             ClassRegistry['Module'].instance_methods['module_function']]}) do |node, args|
+        apply_visibility args, :private
       end
       
       match_precise_loadtime_method(proc { 
             [ClassRegistry['Module'].instance_methods['public'],
              Scope::GlobalScope.self_ptr.singleton_class.instance_methods['public']]}) do |node, args|
-        apply_visibility node, args, :public
+        apply_visibility args, :public
       end
       
       match_precise_loadtime_method(proc { 
             [ClassRegistry['Module'].instance_methods['protected']]}) do |node, args|
-        apply_visibility node, args, :protected
+        apply_visibility args, :protected
+      end
+      
+      match_precise_loadtime_method(proc { 
+            [ClassRegistry['Module'].instance_methods['module_function']]}) do |node, args|
+        if args.nil? || args.empty?
+          @module_function = true
+        elsif args.is_constant?
+          receiving_class = implicit_receiver
+          args.constant_values.map(&:to_s).each do |method_name|
+            found_method = receiving_class.instance_methods[method_name].dup
+            receiving_class.singleton_class.add_instance_method!(found_method)
+            found_method.visibility = :public
+          end
+        end
       end
 
       # Normal method definitions.

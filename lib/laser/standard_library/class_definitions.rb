@@ -1,5 +1,7 @@
 class String
 end
+class Symbol
+end
 class Array
 end
 class Proc
@@ -21,11 +23,13 @@ class << self
   end
 end
 class Module
+  def private(*args)
+  end
+  private :private
+ private
   def include(*mods)
   end
   def extend(*mods)
-  end
-  def private(*args)
   end
   def public(*args)
   end

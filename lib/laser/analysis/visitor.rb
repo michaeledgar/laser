@@ -79,13 +79,14 @@ module Laser
 
           add(is_method) do |node|
             default_visit node
-            matching_methods = method_proc.call
+            matching_methods = method_proc.call rescue []
             if matching_methods.any? { |meth| node.method_estimate == [meth] }
               case node.type
               when :command then args = node[2][1]
               when :method_add_arg then args = (node[2][1] ? node[2][1][1] : [])
               when :call then args = nil
               when :var_ref then args = nil
+              when :command_call then args = node[4][1]
               end
               instance_exec(node, ArgumentExpansion.new(args), &blk)
             end
