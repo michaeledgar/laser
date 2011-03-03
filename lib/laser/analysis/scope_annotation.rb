@@ -262,7 +262,7 @@ module Laser
       # return: (LaserMethod, String => Argument)
       def build_new_method(receiver, name, arglist, body)
         new_signature = Signature.for_definition_sexp(name, arglist, body)
-        new_method = LaserMethod.new(name, @visibility) do |method|
+        new_method = LaserMethod.new(name) do |method|
           method.body_ast = body
           method.add_signature!(new_signature)
         end

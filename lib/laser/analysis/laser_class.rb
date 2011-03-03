@@ -461,10 +461,10 @@ module Laser
     class LaserMethod
       extend ModuleExtensions
       attr_reader :name
-      attr_accessor :body_ast, :owner, :visibility, :signatures, :arity
+      attr_accessor :body_ast, :owner, :signatures, :arity
       attr_accessor_with_default :pure, false
 
-      def initialize(name, visibility = :public)
+      def initialize(name)
         @name = name
         @signatures = []
         @arity = nil
