@@ -50,6 +50,25 @@ describe 'the automatically analyzed Ruby Standard Library' do
       @class.superclass.should == nil
     end
     
+    %w(! == != equal? __send__ instance_eval instance_exec).each do |method|
+      it "should define the instance method #{method}" do
+        @class.instance_methods[method].should_not be_nil
+      end
+      it "should define the instance method #{method} as public" do
+        @class.instance_methods[method].visibility.should be :public
+      end
+    end
+    
+    %w(initialize method_missing singleton_method_added singleton_method_removed
+       singleton_method_undefined).each do |method|
+      it "should define the instance method #{method}" do
+        @class.instance_methods[method].should_not be_nil
+      end
+      it "should define the instance method #{method} as private" do
+        @class.instance_methods[method].visibility.should be :private
+      end
+    end
+    
     it_should_behave_like 'a class'
   end
 

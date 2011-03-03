@@ -59,6 +59,7 @@ class Object
   include Kernel
 end
 
+require 'basic_object'
 require 'comparable'
 require 'enumerable'
 require 'array'
