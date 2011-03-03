@@ -1210,13 +1210,53 @@ EOF
   end
   
   it 'switches to private on module_function and back on public/protected' do
-    input = 'module A200; def abc; end; module_function; def foobar; end; protected; def silly; end; public; def priv; end; end'
+    input = 'module A200; def abc; end; module_function; def foobar; end; protected;' +
+            'def silly; end; public; def priv; end; end'
     tree = annotate_all(input)
 
     ClassRegistry['A200'].visibility_table['abc'].should == :public
     ClassRegistry['A200'].visibility_table['foobar'].should == :private
     ClassRegistry['A200'].visibility_table['silly'].should == :protected
     ClassRegistry['A200'].visibility_table['priv'].should == :public
+  end
+  
+  it 'sets all module_function methods to private when specified as arguments' do
+    input = 'module A201; def abc; end; def foobar; end; def silly; end; module_function :abc, :silly; end'
+    tree = annotate_all(input)
+
+    ClassRegistry['A201'].visibility_table['abc'].should == :private
+    ClassRegistry['A201'].visibility_table['foobar'].should == :public
+    ClassRegistry['A201'].visibility_table['silly'].should == :private
+  end
+
+  it 'creates public singleton class methods when module_function is used with no args' do
+    input = 'module A202; def def; end; module_function; def foobar; "hi"; 3; end;' +
+            'def silly; /regex/; end; public; def priv; end; end'
+    tree = annotate_all(input)
+
+    ClassRegistry['A202'].singleton_class.instance_methods['foobar'].body_ast.should ==
+        ClassRegistry['A202'].instance_methods['foobar'].body_ast
+    ClassRegistry['A202'].singleton_class.instance_methods['silly'].body_ast.should ==
+        ClassRegistry['A202'].instance_methods['silly'].body_ast
+    ClassRegistry['A202'].singleton_class.visibility_table['foobar'].should == :public
+    ClassRegistry['A202'].singleton_class.visibility_table['silly'].should == :public
+    ClassRegistry['A202'].singleton_class.instance_methods['def'].should be nil
+    ClassRegistry['A202'].singleton_class.instance_methods['priv'].should be nil
+  end
+  
+  it 'creates public singleton class methods when module_function is used with args' do
+    input = 'module A203; def def; end; def foobar; "hi"; 3; end;' +
+            'def silly; /regex/; end; public; def priv; end; module_function :foobar, :silly; end'
+    tree = annotate_all(input)
+
+    ClassRegistry['A203'].singleton_class.instance_methods['foobar'].body_ast.should ==
+        ClassRegistry['A203'].instance_methods['foobar'].body_ast
+    ClassRegistry['A203'].singleton_class.instance_methods['silly'].body_ast.should ==
+        ClassRegistry['A203'].instance_methods['silly'].body_ast
+    ClassRegistry['A203'].singleton_class.visibility_table['foobar'].should == :public
+    ClassRegistry['A203'].singleton_class.visibility_table['silly'].should == :public
+    ClassRegistry['A203'].singleton_class.instance_methods['def'].should be nil
+    ClassRegistry['A203'].singleton_class.instance_methods['priv'].should be nil
   end
   
   it 'uses a default private scope at the top level but can switch to public and private' do
