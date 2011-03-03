@@ -189,12 +189,7 @@ module Laser
           receiving_class = implicit_receiver
 
           args.constant_values.map(&:to_s).each do |method_name|
-            found_method = receiving_class.instance_methods[method_name]
-            if found_method.owner != receiving_class
-              found_method = found_method.dup
-              receiving_class.add_instance_method!(found_method)
-            end
-            found_method.visibility = visibility
+            receiving_class.set_visibility!(method_name, visibility)
           end
         end
       end
@@ -229,7 +224,7 @@ module Laser
           args.constant_values.map(&:to_s).each do |method_name|
             found_method = receiving_class.instance_methods[method_name].dup
             receiving_class.singleton_class.add_instance_method!(found_method)
-            found_method.visibility = :public
+            receiving_class.singleton_class.set_visibility!(found_method.name, :public)
           end
         end
       end
@@ -272,10 +267,11 @@ module Laser
           method.add_signature!(new_signature)
         end
         receiver.add_instance_method!(new_method)
+        receiver.set_visibility!(new_method.name, @visibility)
         if @module_function
           duplicate_method = new_method.dup
-          duplicate_method.visibility = :public
           receiver.singleton_class.add_instance_method!(duplicate_method)
+          receiver.singleton_class.set_visibility!(duplicate_method.name, :public)
         end
         [new_method, extract_signature_locals(new_signature)]
       end

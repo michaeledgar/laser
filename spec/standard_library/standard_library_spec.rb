@@ -55,7 +55,7 @@ describe 'the automatically analyzed Ruby Standard Library' do
         @class.instance_methods[method].should_not be_nil
       end
       it "should define the instance method #{method} as public" do
-        @class.instance_methods[method].visibility.should be :public
+        @class.visibility_table[method].should be :public
       end
     end
     
@@ -65,7 +65,7 @@ describe 'the automatically analyzed Ruby Standard Library' do
         @class.instance_methods[method].should_not be_nil
       end
       it "should define the instance method #{method} as private" do
-        @class.instance_methods[method].visibility.should be :private
+        @class.visibility_table[method].should be :private
       end
     end
     

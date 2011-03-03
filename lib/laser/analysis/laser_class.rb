@@ -100,6 +100,7 @@ module Laser
         @path = full_path
         @instance_methods = {}
         @instance_variables = {}
+        @visibility_table = {}
         @scope = scope
         @methods = {}
         @superclass ||= nil
@@ -166,6 +167,7 @@ module Laser
       
       def alias_instance_method!(new, old)
         @instance_methods[new] = @instance_methods[old]
+        @visibility_table[new] = @visibility_table[old]
       end
 
       def instance_methods(include_superclass = true)
@@ -192,6 +194,17 @@ module Laser
       
       def add_instance_variable!(binding)
         @instance_variables[binding.name] = binding
+      end
+      
+      def visibility_table
+        if @superclass
+        then @superclass.visibility_table.merge(@visibility_table)
+        else @visibility_table
+        end
+      end
+      
+      def set_visibility!(method, visibility)
+        @visibility_table[method] = visibility
       end
       
       def get_instance(scope = self.scope)
@@ -454,7 +467,6 @@ module Laser
       def initialize(name, visibility = :public)
         @name = name
         @signatures = []
-        @visibility = visibility
         @arity = nil
         yield self if block_given?
       end
@@ -463,7 +475,6 @@ module Laser
         result = LaserMethod.new(name)
         result.body_ast = self.body_ast
         result.owner = self.owner
-        result.visibility = self.visibility
         result.signatures = self.signatures
         result.arity = self.arity
         result

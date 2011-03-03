@@ -474,7 +474,7 @@ describe ScopeAnnotation do
     end
     method = Scope::GlobalScope.self_ptr.singleton_class.instance_methods['abc']
     method.should_not be_nil
-    method.visibility.should == :private
+    Scope::GlobalScope.self_ptr.singleton_class.visibility_table['abc'].should == :private
     method.signatures.size.should == 1
     signature = method.signatures.first
     signature.arguments.should == [body.scope.lookup('bar'), body.scope.lookup('blk')]
@@ -1189,34 +1189,34 @@ EOF
     input = 'class A122; private; def foobar; end; end'
     tree = annotate_all(input)
 
-    ClassRegistry['A122'].instance_methods['foobar'].visibility.should == :private
+    ClassRegistry['A122'].visibility_table['foobar'].should == :private
   end
   
   it 'does not switch to private visibility if a local variable is called private' do
     input = 'class A123; private = 5; private; def foobar; end; end'
     tree = annotate_all(input)
 
-    ClassRegistry['A123'].instance_methods['foobar'].visibility.should == :public
+    ClassRegistry['A123'].visibility_table['foobar'].should == :public
   end
   
   it 'switches back and forth from public, private, and protected visibility in a class/module' do
     input = 'module A124; def abc; end; private; def foobar; end; protected; def silly; end; private; def priv; end; end'
     tree = annotate_all(input)
 
-    ClassRegistry['A124'].instance_methods['abc'].visibility.should == :public
-    ClassRegistry['A124'].instance_methods['foobar'].visibility.should == :private
-    ClassRegistry['A124'].instance_methods['silly'].visibility.should == :protected
-    ClassRegistry['A124'].instance_methods['priv'].visibility.should == :private
+    ClassRegistry['A124'].visibility_table['abc'].should == :public
+    ClassRegistry['A124'].visibility_table['foobar'].should == :private
+    ClassRegistry['A124'].visibility_table['silly'].should == :protected
+    ClassRegistry['A124'].visibility_table['priv'].should == :private
   end
   
   it 'switches to private on module_function and back on public/protected' do
     input = 'module A200; def abc; end; module_function; def foobar; end; protected; def silly; end; public; def priv; end; end'
     tree = annotate_all(input)
 
-    ClassRegistry['A200'].instance_methods['abc'].visibility.should == :public
-    ClassRegistry['A200'].instance_methods['foobar'].visibility.should == :private
-    ClassRegistry['A200'].instance_methods['silly'].visibility.should == :protected
-    ClassRegistry['A200'].instance_methods['priv'].visibility.should == :public
+    ClassRegistry['A200'].visibility_table['abc'].should == :public
+    ClassRegistry['A200'].visibility_table['foobar'].should == :private
+    ClassRegistry['A200'].visibility_table['silly'].should == :protected
+    ClassRegistry['A200'].visibility_table['priv'].should == :public
   end
   
   it 'uses a default private scope at the top level but can switch to public and private' do
@@ -1224,9 +1224,9 @@ EOF
     tree = annotate_all(input)
 
     singleton = Scope::GlobalScope.self_ptr.singleton_class
-    singleton.instance_methods['t11'].visibility.should == :private
-    singleton.instance_methods['t12'].visibility.should == :public
-    singleton.instance_methods['t13'].visibility.should == :private
+    singleton.visibility_table['t11'].should == :private
+    singleton.visibility_table['t12'].should == :public
+    singleton.visibility_table['t13'].should == :private
   end
   
   it 'raises an error if you try to use protected at the top level' do
@@ -1239,18 +1239,18 @@ EOF
     
     # recovers by not changing visibility
     singleton = Scope::GlobalScope.self_ptr.singleton_class
-    singleton.instance_methods['t14'].visibility.should == :private
-    singleton.instance_methods['t15'].visibility.should == :private
-    singleton.instance_methods['t16'].visibility.should == :public
+    singleton.visibility_table['t14'].should == :private
+    singleton.visibility_table['t15'].should == :private
+    singleton.visibility_table['t16'].should == :public
   end
   
   it 'allows specifying private/public/protected for individual methods at the top level' do
     input = 'class A125; def t17; end; def t18; end; def t19; end; private *[:t17, :t19]; end'
     tree = annotate_all(input)
 
-    ClassRegistry['A125'].instance_methods['t17'].visibility.should == :private
-    ClassRegistry['A125'].instance_methods['t18'].visibility.should == :public
-    ClassRegistry['A125'].instance_methods['t19'].visibility.should == :private
+    ClassRegistry['A125'].visibility_table['t17'].should == :private
+    ClassRegistry['A125'].visibility_table['t18'].should == :public
+    ClassRegistry['A125'].visibility_table['t19'].should == :private
   end
   
   
@@ -1260,9 +1260,9 @@ EOF
 
     # recovers by not changing visibility
     singleton = Scope::GlobalScope.self_ptr.singleton_class
-    singleton.instance_methods['t17'].visibility.should == :public
-    singleton.instance_methods['t18'].visibility.should == :private
-    singleton.instance_methods['t19'].visibility.should == :public
+    singleton.visibility_table['t17'].should == :public
+    singleton.visibility_table['t18'].should == :private
+    singleton.visibility_table['t19'].should == :public
   end
   
   it 'can resolve constant aliasing with superclasses' do
@@ -1582,9 +1582,9 @@ end
       
       %w(initialize bind! <=> scope protocol class_used to_s inspect).each do |method|
         generic.instance_methods[method].should_not be_empty
-        generic.instance_methods[method].visibility.should == :public
+        generic.visibility_table[method].should == :public
       end
-      kw_binding.instance_methods['bind!'].visibility.should == :private
+      kw_binding.visibility_table['bind!'].should == :private
       init_sig = generic.instance_methods['initialize'].signatures.first
       init_sig.arguments.size.should == 2
       init_sig.arguments.map(&:name).should == ['name', 'value']
