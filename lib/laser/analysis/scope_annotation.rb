@@ -272,6 +272,11 @@ module Laser
           method.add_signature!(new_signature)
         end
         receiver.add_instance_method!(new_method)
+        if @module_function
+          duplicate_method = new_method.dup
+          duplicate_method.visibility = :public
+          receiver.singleton_class.add_instance_method!(duplicate_method)
+        end
         [new_method, extract_signature_locals(new_signature)]
       end
       
