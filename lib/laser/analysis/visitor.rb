@@ -72,28 +72,9 @@ module Laser
         # The filter, when matched, will run the block provided to #match_method_call with
         # the node as the first argument to the block and the array of argument nodes to
         # the method call as the second argument to the block.
-        def match_method_call(named, &blk)
-          add(proc { |node| node.type == :command && node[1][1] == named }) do |node|
-            visit node[2][1]
-            instance_exec(node, ArgumentExpansion.new(node[2][1]), &blk)
-          end
-          add(proc { |node| node.type == :method_add_arg && node[1].type == :fcall &&
-                            node[1][1][1] == named}) do |node|
-            args = node[2][1] ? node[2][1][1] : []
-            visit args
-            instance_exec(node, ArgumentExpansion.new(args), &blk)
-          end
-          add(proc { |node| node.type == :var_ref && node.binding.nil? && node[1][1] == named}) do |node|
-            instance_exec(node, ArgumentExpansion.new(nil), &blk)
-          end
-        end
-        
         def match_precise_loadtime_method(method_proc, &blk)
           is_method = proc do |node|
-            node.runtime == :load &&
-                [:command, :method_add_arg, :var_ref, :call].include?(node.type) &&
-                !(node.type == :var_ref && (node.binding || node[1].type == :@kw)) &&
-                !(node.type == :call && node.parent.type == :method_add_arg)
+            node.runtime == :load && node.is_method_call?
           end
 
           add(is_method) do |node|

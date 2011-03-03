@@ -245,45 +245,45 @@ describe Sexp do
 
      describe 'performing method calls with an implicit receiver and parenthesized args (:fcall)' do
        it 'should resolve to all subclass methods if they all match arity' do
-         input = 'class A711; def printall(x); foobar(); end; def foobar(); end; end;' +
-                 'class A712 < A711; def foobar; end; end; class A713 < A711; def foobar; end; end;' +
-                 'class A714 < A712; def foobar; end; end'
+         input = 'class A751; def printall(x); foobar(); end; def foobar(); end; end;' +
+                 'class A752 < A751; def foobar; end; end; class A753 < A751; def foobar; end; end;' +
+                 'class A754 < A752; def foobar; end; end'
          tree = annotate_all(input)
          tree.all_errors.should be_empty
 
          foobar_call = tree.deep_find { |node| node.type == :fcall && node[1].expanded_identifier == 'foobar' }
          foobar_call.should_not be_nil
          foobar_call.method_estimate.should ==
-             [ClassRegistry['A711'].instance_methods['foobar'],
-              ClassRegistry['A712'].instance_methods['foobar'],
-              ClassRegistry['A714'].instance_methods['foobar'],
-              ClassRegistry['A713'].instance_methods['foobar']]
+             [ClassRegistry['A751'].instance_methods['foobar'],
+              ClassRegistry['A752'].instance_methods['foobar'],
+              ClassRegistry['A754'].instance_methods['foobar'],
+              ClassRegistry['A753'].instance_methods['foobar']]
        end
 
        it 'should resolve to all subclass methods with matching arity' do
-         input = 'class A715; def printall(x); foobar(1); end; def foobar(x, y=x); end; end;' +
-                 'class A716 < A715; def foobar(x, y=x); end; end; class A717 < A715; def foobar(x, y=x); end; end;' +
-                 'class A718 < A716; def foobar(x, y); end; end'
+         input = 'class A755; def printall(x); foobar(1); end; def foobar(x, y=x); end; end;' +
+                 'class A756 < A755; def foobar(x, y=x); end; end; class A757 < A755; def foobar(x, y=x); end; end;' +
+                 'class A758 < A756; def foobar(x, y); end; end'
          tree = annotate_all(input)
          tree.all_errors.should be_empty
 
          foobar_call = tree.deep_find { |node| node.type == :method_add_arg && node[1][1].expanded_identifier == 'foobar' }
          foobar_call.should_not be_nil
          foobar_call.method_estimate.should ==
-             [ClassRegistry['A715'].instance_methods['foobar'],
-              ClassRegistry['A716'].instance_methods['foobar'],
-              ClassRegistry['A717'].instance_methods['foobar']]
+             [ClassRegistry['A755'].instance_methods['foobar'],
+              ClassRegistry['A756'].instance_methods['foobar'],
+              ClassRegistry['A757'].instance_methods['foobar']]
        end
 
        it 'should resolve to a single method with matched arity' do
-         input = 'class A719; def printall(x); foobaz(1, 2); end; def foobaz(x, y, *rest); end; end'
+         input = 'class A759; def printall(x); foobaz(1, 2); end; def foobaz(x, y, *rest); end; end'
          tree = annotate_all(input)
          tree.all_errors.should be_empty
 
          foobaz_call = tree.deep_find { |node| node.type == :method_add_arg }
          foobaz_call.should_not be_nil
          foobaz_call.method_estimate.should ==
-             [ClassRegistry['A719'].instance_methods['foobaz']]
+             [ClassRegistry['A759'].instance_methods['foobaz']]
        end
 
        it 'should raise an error if no such method exists on any subclasses' do
@@ -301,6 +301,71 @@ describe Sexp do
                  'class A722 < A721; def foobaz(x, y, z); end; end'
          tree = annotate_all(input)
          tree.deep_find { |node| node.type == :method_add_arg }.method_estimate.should == []
+         tree.all_errors.should_not be_empty
+         tree.all_errors.size.should == 1
+         tree.all_errors.first.should be_a(NoSuchMethodError)
+         tree.all_errors.first.message.should include('foobaz')
+       end
+     end
+     
+     describe 'performing method calls with an explicit receiver and unparenthesized args (:command_call)' do
+       it 'should resolve to all subclass methods if they all match arity' do
+         input = 'class A751; def printall(x); self.foobar 1; end; def foobar(a); end; end;' +
+                 'class A752 < A751; def foobar(a); end; end; class A753 < A751; def foobar(a); end; end;' +
+                 'class A754 < A752; def foobar(a); end; end'
+         tree = annotate_all(input)
+         tree.all_errors.should be_empty
+
+         foobar_call = tree.deep_find { |node| node.type == :command_call }
+         foobar_call.should_not be_nil
+         foobar_call.method_estimate.should ==
+             [ClassRegistry['A751'].instance_methods['foobar'],
+              ClassRegistry['A752'].instance_methods['foobar'],
+              ClassRegistry['A754'].instance_methods['foobar'],
+              ClassRegistry['A753'].instance_methods['foobar']]
+       end
+
+       it 'should resolve to all subclass methods with matching arity' do
+         input = 'class A755; def printall(x); self.foobar 1; end; def foobar(x, y=x); end; end;' +
+                 'class A756 < A755; def foobar(x, y=x); end; end; class A757 < A755; def foobar(x, y=x); end; end;' +
+                 'class A758 < A756; def foobar(x, y); end; end'
+         tree = annotate_all(input)
+         tree.all_errors.should be_empty
+
+         foobar_call = tree.deep_find { |node| node.type == :command_call }
+         foobar_call.should_not be_nil
+         foobar_call.method_estimate.should ==
+             [ClassRegistry['A755'].instance_methods['foobar'],
+              ClassRegistry['A756'].instance_methods['foobar'],
+              ClassRegistry['A757'].instance_methods['foobar']]
+       end
+
+       it 'should resolve to a single method with matched arity' do
+         input = 'class A759; def printall(x); self.foobaz 1, 2; end; def foobaz(x, y, *rest); end; end'
+         tree = annotate_all(input)
+         tree.all_errors.should be_empty
+
+         foobaz_call = tree.deep_find { |node| node.type == :command_call }
+         foobaz_call.should_not be_nil
+         foobaz_call.method_estimate.should ==
+             [ClassRegistry['A759'].instance_methods['foobaz']]
+       end
+
+       it 'should raise an error if no such method exists on any subclasses' do
+         input = 'class A760; def printall(x); self.hiybbprqag 1, 2; end; end'
+         tree = annotate_all(input)
+         tree.deep_find { |node| node.type == :command_call }.method_estimate.should == []
+         tree.all_errors.should_not be_empty
+         tree.all_errors.size.should == 1
+         tree.all_errors.first.should be_a(NoSuchMethodError)
+         tree.all_errors.first.message.should include('hiybbprqag')
+       end
+
+       it 'should raise an error if no such method exists with the correct arity on any subclasses' do
+         input = 'class A761; def printall(x); self.foobaz 1, 2; end; def foobaz(x); end; end;' +
+                 'class A762 < A761; def foobaz(x, y, z); end; end'
+         tree = annotate_all(input)
+         tree.deep_find { |node| node.type == :command_call }.method_estimate.should == []
          tree.all_errors.should_not be_empty
          tree.all_errors.size.should == 1
          tree.all_errors.first.should be_a(NoSuchMethodError)

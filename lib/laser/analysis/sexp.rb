@@ -130,6 +130,12 @@ module Laser
           "#{lhs.expanded_identifier}::#{rhs.expanded_identifier}"
         end
       end
+      
+      def is_method_call?
+        [:command, :method_add_arg, :var_ref, :call, :command_call].include?(type) &&
+            !(type == :var_ref && (binding || self[1].type == :@kw)) &&
+            !(type == :call && parent.type == :method_add_arg)
+      end
     end
   end
 end
