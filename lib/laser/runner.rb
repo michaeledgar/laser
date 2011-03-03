@@ -95,7 +95,7 @@ module Laser
                   else mod.name
                   end
         # mod.instance_methods(false).each do |name, method|
-        #           result << "  ##{name} (#{method.visibility}, arity = #{method.arity})"
+        #           result << "  ##{name} (#{mod.visibility_table[name]}, arity = #{method.arity})"
         #         end
         result
       end.sort.flatten.each { |name| puts name }
