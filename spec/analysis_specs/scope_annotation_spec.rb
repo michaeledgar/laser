@@ -1029,7 +1029,7 @@ EOF
     c113 = ClassRegistry['C113']
     c113.should_not be nil
     c113.ancestors.should == [ClassRegistry['C113'], ClassRegistry['A113'], ClassRegistry['B113'],
-                              ClassRegistry['Object'], ClassRegistry['Kernel']]
+                              ClassRegistry['Object'], ClassRegistry['Kernel'], ClassRegistry['BasicObject']]
                               
     tree.all_errors.should be_empty
   end
@@ -1044,10 +1044,10 @@ EOF
     ClassRegistry['C114'].ancestors.should == [ClassRegistry['C114'], ClassRegistry['B114'], ClassRegistry['A114']]
     
     ClassRegistry['X114'].ancestors.should == [ClassRegistry['X114'], ClassRegistry['A114'], ClassRegistry['Object'],
-                                               ClassRegistry['Kernel']]
+                                               ClassRegistry['Kernel'], ClassRegistry['BasicObject']]
     ClassRegistry['Y114'].ancestors.should == [ClassRegistry['Y114'], ClassRegistry['C114'], ClassRegistry['B114'],
                                                ClassRegistry['X114'], ClassRegistry['A114'], ClassRegistry['Object'],
-                                               ClassRegistry['Kernel']]
+                                               ClassRegistry['Kernel'], ClassRegistry['BasicObject']]
     tree.all_errors.should be_empty
   end
   
@@ -1073,8 +1073,9 @@ EOF
     
     c117 = ClassRegistry['C117']
     c117.should_not be nil
-    c117.ancestors.should == [ClassRegistry['C117'], ClassRegistry['A117'], ClassRegistry['B117'],
-                              ClassRegistry['Object'], ClassRegistry['Kernel']]
+    c117.ancestors.should == [ClassRegistry['C117'], ClassRegistry['A117'],
+                              ClassRegistry['B117'], ClassRegistry['Object'],
+                              ClassRegistry['Kernel'], ClassRegistry['BasicObject']]
 
     tree.all_errors.should be_empty
   end
@@ -1085,8 +1086,9 @@ EOF
     
     c240 = ClassRegistry['C240']
     c240.should_not be nil
-    c240.ancestors.should == [ClassRegistry['C240'], ClassRegistry['B240'], ClassRegistry['A240'],
-                              ClassRegistry['Object'], ClassRegistry['Kernel']]
+    c240.ancestors.should == [ClassRegistry['C240'], ClassRegistry['B240'],
+                              ClassRegistry['A240'], ClassRegistry['Object'],
+                              ClassRegistry['Kernel'], ClassRegistry['BasicObject']]
     tree.all_errors.should_not be_empty
     tree.all_errors.size.should == 1
     tree.all_errors.first.should be_a(UselessIncludeError)
@@ -1101,8 +1103,10 @@ EOF
     c118.singleton_class.ancestors.should == [ClassRegistry['C118'].singleton_class,
                                               ClassRegistry['A118'], ClassRegistry['B118'],
                                               ClassRegistry['Object'].singleton_class,
+                                              ClassRegistry['BasicObject'].singleton_class,
                                               ClassRegistry['Class'], ClassRegistry['Module'],
-                                              ClassRegistry['Object'], ClassRegistry['Kernel']]
+                                              ClassRegistry['Object'], ClassRegistry['Kernel'],
+                                              ClassRegistry['BasicObject']]
     tree.all_errors.should be_empty
   end
 
@@ -1113,25 +1117,31 @@ EOF
     
     ClassRegistry['A119'].singleton_class.ancestors.should ==
         [ClassRegistry['A119'].singleton_class, ClassRegistry['Module'],
-         ClassRegistry['Object'], ClassRegistry['Kernel']]
+         ClassRegistry['Object'], ClassRegistry['Kernel'], ClassRegistry['BasicObject']]
     ClassRegistry['B119'].singleton_class.ancestors.should ==
         [ClassRegistry['B119'].singleton_class, ClassRegistry['A119'],
-         ClassRegistry['Module'], ClassRegistry['Object'], ClassRegistry['Kernel']]
+         ClassRegistry['Module'], ClassRegistry['Object'], ClassRegistry['Kernel'],
+         ClassRegistry['BasicObject']]
     ClassRegistry['C119'].singleton_class.ancestors.should ==
         [ClassRegistry['C119'].singleton_class, ClassRegistry['B119'],
-         ClassRegistry['Module'], ClassRegistry['Object'], ClassRegistry['Kernel']]
+         ClassRegistry['Module'], ClassRegistry['Object'], ClassRegistry['Kernel'],
+         ClassRegistry['BasicObject']]
 
     ClassRegistry['X119'].singleton_class.ancestors.should ==
         [ClassRegistry['X119'].singleton_class, ClassRegistry['A119'],
          ClassRegistry['Object'].singleton_class,
+         ClassRegistry['BasicObject'].singleton_class,
          ClassRegistry['Class'], ClassRegistry['Module'],
-         ClassRegistry['Object'], ClassRegistry['Kernel']]
+         ClassRegistry['Object'], ClassRegistry['Kernel'],
+         ClassRegistry['BasicObject']]
     ClassRegistry['Y119'].singleton_class.ancestors.should ==
         [ClassRegistry['Y119'].singleton_class, ClassRegistry['C119'],
          ClassRegistry['X119'].singleton_class, ClassRegistry['A119'],
          ClassRegistry['Object'].singleton_class,
+         ClassRegistry['BasicObject'].singleton_class,
          ClassRegistry['Class'], ClassRegistry['Module'],
-         ClassRegistry['Object'], ClassRegistry['Kernel']]
+         ClassRegistry['Object'], ClassRegistry['Kernel'],
+         ClassRegistry['BasicObject']]
          
     tree.all_errors.should be_empty
   end
@@ -1145,8 +1155,10 @@ EOF
     c120.singleton_class.ancestors.should == [ClassRegistry['C120'].singleton_class,
                                               ClassRegistry['A120'], ClassRegistry['B120'],
                                               ClassRegistry['Object'].singleton_class,
+                                              ClassRegistry['BasicObject'].singleton_class,
                                               ClassRegistry['Class'], ClassRegistry['Module'],
-                                              ClassRegistry['Object'], ClassRegistry['Kernel']]
+                                              ClassRegistry['Object'], ClassRegistry['Kernel'],
+                                              ClassRegistry['BasicObject']]
     tree.all_errors.should be_empty
   end
   
@@ -1555,7 +1567,8 @@ end
       arg_binding.instance_variables['@default_value_sexp'].should be_a(Bindings::InstanceVariableBinding)
       
       arg_binding.ancestors.should == [arg_binding, generic, ClassRegistry['Comparable'],
-                                       ClassRegistry['Object'], ClassRegistry['Kernel']]
+                                       ClassRegistry['Object'], ClassRegistry['Kernel'],
+                                       ClassRegistry['BasicObject']]
       
       %w(initialize bind! <=> scope protocol class_used to_s inspect).each do |method|
         generic.instance_methods[method].should_not be_empty

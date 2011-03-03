@@ -40,13 +40,26 @@ describe 'the automatically analyzed Ruby Standard Library' do
     
     it_should_behave_like 'a module'
   end
+
+  describe 'BasicObject' do
+    before do
+      @class = ClassRegistry['BasicObject']
+    end
+
+    it 'should have no superclass' do
+      @class.superclass.should == nil
+    end
+    
+    it_should_behave_like 'a class'
+  end
+
   describe 'Object' do
     before do
       @class = ClassRegistry['Object']
     end
 
-    it 'should have no superclass' do
-      @class.superclass.should == nil
+    it 'should be a subclass of BasicObject' do
+      @class.superclass.should == ClassRegistry['BasicObject']
     end
     
     it 'should include the Kernel module' do

@@ -254,29 +254,36 @@ describe LaserClass do
 
     it "inserts the included module into the receiving module's hierarchy when not already there" do
       @x.include_module(@a)
-      @x.ancestors.should == [@x, @a, ClassRegistry['Object'], ClassRegistry['Kernel']]
+      @x.ancestors.should == [@x, @a, ClassRegistry['Object'],
+                              ClassRegistry['Kernel'], ClassRegistry['BasicObject']]
       @y.include_module(@b)
-      @y.ancestors.should == [@y, @b, @x, @a, ClassRegistry['Object'], ClassRegistry['Kernel']]
+      @y.ancestors.should == [@y, @b, @x, @a, ClassRegistry['Object'],
+                              ClassRegistry['Kernel'], ClassRegistry['BasicObject']]
       @z.include_module(@c)
-      @z.ancestors.should == [@z, @c, @y, @b, @x, @a, ClassRegistry['Object'], ClassRegistry['Kernel']]
+      @z.ancestors.should == [@z, @c, @y, @b, @x, @a, ClassRegistry['Object'],
+                              ClassRegistry['Kernel'], ClassRegistry['BasicObject']]
     end
     
     it 'mixes multiple modules into one class' do
       @x.include_module(@a)
       @x.include_module(@b)
       @x.include_module(@c)
-      @x.ancestors.should == [@x, @c, @b, @a, ClassRegistry['Object'], ClassRegistry['Kernel']]
+      @x.ancestors.should == [@x, @c, @b, @a, ClassRegistry['Object'],
+                              ClassRegistry['Kernel'], ClassRegistry['BasicObject']]
     end
     
     it "does nothing when the included module is already in the receiving module's hierarchy" do
       # setup
       @b.include_module(@a)
       @x.include_module(@b)
-      @x.ancestors.should == [@x, @b, @a, ClassRegistry['Object'], ClassRegistry['Kernel']]
+      @x.ancestors.should == [@x, @b, @a, ClassRegistry['Object'],
+                              ClassRegistry['Kernel'], ClassRegistry['BasicObject']]
       # verification
-      @y.ancestors.should == [@y, @x, @b, @a, ClassRegistry['Object'], ClassRegistry['Kernel']]
+      @y.ancestors.should == [@y, @x, @b, @a, ClassRegistry['Object'],
+                              ClassRegistry['Kernel'], ClassRegistry['BasicObject']]
       expect { @y.include_module(@b) }.to raise_error(UselessIncludeError)
-      @y.ancestors.should == [@y, @x, @b, @a, ClassRegistry['Object'], ClassRegistry['Kernel']]
+      @y.ancestors.should == [@y, @x, @b, @a, ClassRegistry['Object'],
+                              ClassRegistry['Kernel'], ClassRegistry['BasicObject']]
     end
     
     it 'only inserts the necessary modules, handling diamond inheritance' do
@@ -289,9 +296,12 @@ describe LaserClass do
       @y.include_module(@c)
       @z.include_module(@d)
       
-      @x.ancestors.should == [@x, @a, ClassRegistry['Object'], ClassRegistry['Kernel']]
-      @y.ancestors.should == [@y, @c, @b, @x, @a, ClassRegistry['Object'], ClassRegistry['Kernel']]
-      @z.ancestors.should == [@z, @d, @y, @c, @b, @x, @a, ClassRegistry['Object'], ClassRegistry['Kernel']]
+      @x.ancestors.should == [@x, @a, ClassRegistry['Object'], ClassRegistry['Kernel'],
+                              ClassRegistry['BasicObject']]
+      @y.ancestors.should == [@y, @c, @b, @x, @a, ClassRegistry['Object'],
+                              ClassRegistry['Kernel'], ClassRegistry['BasicObject']]
+      @z.ancestors.should == [@z, @d, @y, @c, @b, @x, @a, ClassRegistry['Object'],
+                              ClassRegistry['Kernel'], ClassRegistry['BasicObject']]
     end
   end
 end
@@ -324,21 +334,21 @@ describe 'hierarchy methods' do
   
   describe '#superset' do
     it 'should return all ancestors and the current class, in order' do
-      @x.superset.should == [@x, ClassRegistry['Object']]
-      @y.superset.should == [@y, @x, ClassRegistry['Object']]
-      @y2.superset.should == [@y2, @x, ClassRegistry['Object']]
-      @z.superset.should == [@z, @y, @x, ClassRegistry['Object']]
-      @w.superset.should == [@w, @y2, @x, ClassRegistry['Object']]
+      @x.superset.should == [@x, ClassRegistry['Object'], ClassRegistry['BasicObject']]
+      @y.superset.should == [@y, @x, ClassRegistry['Object'], ClassRegistry['BasicObject']]
+      @y2.superset.should == [@y2, @x, ClassRegistry['Object'], ClassRegistry['BasicObject']]
+      @z.superset.should == [@z, @y, @x, ClassRegistry['Object'], ClassRegistry['BasicObject']]
+      @w.superset.should == [@w, @y2, @x, ClassRegistry['Object'], ClassRegistry['BasicObject']]
     end
   end
   
   describe '#proper_superset' do
     it 'should return all ancestors, in order' do
-      @x.proper_superset.should == [ClassRegistry['Object']]
-      @y.proper_superset.should == [@x, ClassRegistry['Object']]
-      @y2.proper_superset.should == [@x, ClassRegistry['Object']]
-      @z.proper_superset.should == [@y, @x, ClassRegistry['Object']]
-      @w.proper_superset.should == [@y2, @x, ClassRegistry['Object']]
+      @x.proper_superset.should == [ClassRegistry['Object'], ClassRegistry['BasicObject']]
+      @y.proper_superset.should == [@x, ClassRegistry['Object'], ClassRegistry['BasicObject']]
+      @y2.proper_superset.should == [@x, ClassRegistry['Object'], ClassRegistry['BasicObject']]
+      @z.proper_superset.should == [@y, @x, ClassRegistry['Object'], ClassRegistry['BasicObject']]
+      @w.proper_superset.should == [@y2, @x, ClassRegistry['Object'], ClassRegistry['BasicObject']]
     end
   end
   

@@ -1,0 +1,2 @@
+class StringIO < Data
+end

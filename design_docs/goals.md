@@ -44,6 +44,7 @@ check them off when I'm done.
 5. √ super with wrong number of args
 6. √ super when no super method exists
 7. √ re-open class as module (and vice-versa)
+8. Superclass mismatch
 8. No block provided to method requiring one
 9. Shadowing of really important methods (private = :xyz)
 10. Type conflicts

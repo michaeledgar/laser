@@ -89,11 +89,16 @@ module Laser
     # Prints the known modules after analysis.
     def print_modules
       SexpAnalysis::LaserModule.all_modules.map do |mod|
-        if SexpAnalysis::LaserClass === mod && mod.superclass
-        then "#{mod.path} < #{mod.superclass.path}"
-        else mod.name
-        end
-      end.sort.each { |name| puts name }
+        result = []
+        result << if SexpAnalysis::LaserClass === mod && mod.superclass
+                  then "#{mod.path} < #{mod.superclass.path}"
+                  else mod.name
+                  end
+        # mod.instance_methods(false).each do |name, method|
+        #   result << "  ##{name} (arity = #{method.arity})"
+        # end
+        result
+      end.sort.flatten.each { |name| puts name }
     end
 
     def read_file(file)

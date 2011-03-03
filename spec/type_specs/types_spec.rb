@@ -21,7 +21,7 @@ describe Types do
       it 'should find superclasses if the ClassType is invariant and is a Class' do
         Types::ClassType.new('Fixnum', :contravariant).possible_classes.should ==
             [ClassRegistry['Fixnum'], ClassRegistry['Integer'], ClassRegistry['Numeric'],
-             ClassRegistry['Object']]
+             ClassRegistry['Object'], ClassRegistry['BasicObject']]
       end
       
       it 'should find classes including the module if the ClassType is covariant and is a Module' do

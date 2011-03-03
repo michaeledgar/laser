@@ -48,12 +48,14 @@ describe 'ClassRegistry' do
 
   describe 'built-in classes' do
     it 'sets up Module, Class, and Object as instances of Class correctly' do
+      ClassRegistry['BasicObject'].binding.class_used.should == ClassRegistry['Class']
       ClassRegistry['Object'].binding.class_used.should == ClassRegistry['Class']
       ClassRegistry['Module'].binding.class_used.should == ClassRegistry['Class']
       ClassRegistry['Class'].binding.class_used.should == ClassRegistry['Class']
     end
     it "sets up Module, Class, and Object's hierarchy" do
-      ClassRegistry['Object'].superclass.should == nil
+      ClassRegistry['BasicObject'].superclass.should == nil
+      ClassRegistry['Object'].superclass.should == ClassRegistry['BasicObject']
       ClassRegistry['Module'].superclass.should == ClassRegistry['Object']
       ClassRegistry['Class'].superclass.should == ClassRegistry['Module']
     end

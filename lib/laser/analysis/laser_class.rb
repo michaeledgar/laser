@@ -168,8 +168,8 @@ module Laser
         @instance_methods[new] = @instance_methods[old]
       end
 
-      def instance_methods
-        if @superclass
+      def instance_methods(include_superclass = true)
+        if include_superclass && @superclass
         then @superclass.instance_methods.merge(@instance_methods)
         else @instance_methods
         end
@@ -279,7 +279,7 @@ module Laser
                      full_path="#{klass.path}:Anonymous:#{object_id.to_s(16)}")
         @subclasses ||= []
         # bootstrapping exception
-        unless ['Class', 'Module', 'Object'].include?(full_path)
+        unless ['Class', 'Module', 'Object', 'BasicObject'].include?(full_path)
           @superclass = ClassRegistry['Object']
         end
         super # can yield, so must come last
@@ -435,8 +435,8 @@ module Laser
         @delegated.instance_variables
       end
       
-      def instance_methods
-        if @superclass
+      def instance_methods(include_superclass = true)
+        if include_superclass && @superclass
         then @superclass.instance_methods.merge(@delegated.instance_methods)
         else @delegated.instance_methods
         end
