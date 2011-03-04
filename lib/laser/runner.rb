@@ -48,7 +48,11 @@ module Laser
           (w.name && w.name.index(only_name)) || (w.short_name && only_name.index(w.short_name))
         end
       end
-      require 'profile' if settings[:profile]
+      if settings[:profile]
+        require 'benchmark'
+        require 'profile'
+        SETTINGS[:profile] = true
+      end
       ARGV.replace(['(stdin)']) if settings[:stdin]
     end
 

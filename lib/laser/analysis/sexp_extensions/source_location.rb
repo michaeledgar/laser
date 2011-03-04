@@ -7,55 +7,57 @@ module Laser::SexpAnalysis
       # sufficient information in many cases to determine where a node lies. We
       # have to figure it out based on nearby identifiers and keywords.
       def source_begin
+        return @source_begin if @source_begin
         default_result = children.select { |child| Sexp === child }.
                                   map(&:source_begin).compact.first
 
-        case type
-        when :@ident, :@int, :@kw, :@float, :@tstring_content, :@regexp_end,
-             :@ivar, :@cvar, :@gvar, :@const, :@label, :@CHAR, :@op
-          children[1]
-        when :regexp_literal
-          result = default_result.dup
-          if backtrack_expecting!(result, -1, '/') || backtrack_expecting!(result, -3, '%r')
-            result
-          end
-        when :string_literal
-          if default_result
-            result = default_result.dup  # make a copy we can mutate
-            if backtrack_expecting!(result, -1, "'") ||
-               backtrack_expecting!(result, -1, '"')
+        @source_begin = 
+            case type
+            when :@ident, :@int, :@kw, :@float, :@tstring_content, :@regexp_end,
+                 :@ivar, :@cvar, :@gvar, :@const, :@label, :@CHAR, :@op
+              children[1]
+            when :regexp_literal
+              result = default_result.dup
+              if backtrack_expecting!(result, -1, '/') || backtrack_expecting!(result, -3, '%r')
+                result
+              end
+            when :string_literal
+              if default_result
+                result = default_result.dup  # make a copy we can mutate
+                if backtrack_expecting!(result, -1, "'") ||
+                   backtrack_expecting!(result, -1, '"')
+                  result
+                end
+              end
+            when :string_embexpr
+              if default_result
+                result = default_result.dup
+                result[1] -= 2
+                result
+              end
+            when :dyna_symbol
+              if default_result
+                result = default_result.dup
+                result[1] -= 2
+                result
+              end
+            when :symbol_literal
+              result = default_result.dup
+              result[1] -= 1
               result
+            when :hash
+              backtrack_searching(default_result, '{') if default_result
+            when :array
+              backtrack_searching(default_result, '[') if default_result
+            when :def, :defs
+              backtrack_searching(default_result, 'def')
+            when :class, :sclass
+              backtrack_searching(default_result, 'class')
+            when :module
+              backtrack_searching(default_result, 'module')
+            else
+              default_result
             end
-          end
-        when :string_embexpr
-          if default_result
-            result = default_result.dup
-            result[1] -= 2
-            result
-          end
-        when :dyna_symbol
-          if default_result
-            result = default_result.dup
-            result[1] -= 2
-            result
-          end
-        when :symbol_literal
-          result = default_result.dup
-          result[1] -= 1
-          result
-        when :hash
-          backtrack_searching(default_result, '{') if default_result
-        when :array
-          backtrack_searching(default_result, '[') if default_result
-        when :def, :defs
-          backtrack_searching(default_result, 'def')
-        when :class, :sclass
-          backtrack_searching(default_result, 'class')
-        when :module
-          backtrack_searching(default_result, 'module')
-        else
-          default_result
-        end
       end
       
       # Calculates, with some lossiness, the end position of the current node

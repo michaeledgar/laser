@@ -22,7 +22,12 @@ module Laser
         ordered_annotations.each do |annotator|
           inputs.each do |filename, text, tree|
             Scope::GlobalScope.lookup('$"').value.unshift(filename)
-            annotator.annotate_with_text(tree, text)
+            if SETTINGS[:profile]
+              time = Benchmark.realtime { annotator.annotate_with_text(tree, text) }
+              puts "Time spent running #{annotator.class} on #{filename}: #{time}"
+            else
+              annotator.annotate_with_text(tree, text)
+            end
           end
         end
       end
@@ -32,7 +37,12 @@ module Laser
       def self.perform_load_time_analysis(inputs)
         annotator = ScopeAnnotation.new
         inputs.each do |filename, text, tree|
-          annotator.annotate_with_text(tree, text)
+          if SETTINGS[:profile]
+            time = Benchmark.realtime { annotator.annotate_with_text(tree, text) }
+            puts "Time spent running #{annotator.class} on #{filename}: #{time}"
+          else
+            annotator.annotate_with_text(tree, text)
+          end
         end
       end
       

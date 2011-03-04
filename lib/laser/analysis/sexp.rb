@@ -24,7 +24,7 @@ module Laser
   
       # @return [Array<Object>] the children of the node.
       def children
-        (Array === self[0] ? self : self[1..-1]) || []
+        @children ||= ((Array === self[0] ? self : self[1..-1]) || [])
       end
   
       # @return [Symbol] the type of the node.

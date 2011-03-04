@@ -20,7 +20,7 @@ class Laser::SexpErrorWarning < Laser::FileWarning
 
   def match?(body = self.body)
     parse.all_errors.map do |error|
-      Laser::SexpErrorWarning.new(file, body, error: error)
+      Laser::SexpErrorWarning.new(error.ast_node.file_name, body, error: error)
     end
   end
 end

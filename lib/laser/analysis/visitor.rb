@@ -157,13 +157,13 @@ module Laser
         end
         any_ran
       end
-      
+
       ################## Source text manipulation methods ###############
-      
+
       def lines
         @lines ||= text.lines.to_a
       end
-      
+
     end
   end
 end

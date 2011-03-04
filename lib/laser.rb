@@ -2,6 +2,7 @@ module Laser
   VERSION = "0.5.0"
   TESTS_ACTIVATED = false
   ROOT = File.expand_path(File.dirname(__FILE__))
+  SETTINGS = {}
 end
 
 # Dependencies

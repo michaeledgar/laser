@@ -47,3 +47,9 @@ TO LOSS OF DATA OR DATA BEING RENDERED INACCURATE OR LOSSES SUSTAINED BY
 YOU OR THIRD PARTIES OR A FAILURE OF THE PROGRAM TO OPERATE WITH ANY OTHER
 PROGRAMS), EVEN IF SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGES.
+
+                Notes on Third Party Software Included in Laser
+
+1. Trollop: Trollop is released under the Ruby license.
+2. stream.rb: the Stream library is released under the Ruby license.
+3. RGL: RGL is released under the Ruby license.
