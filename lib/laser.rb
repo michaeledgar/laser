@@ -61,5 +61,12 @@ require 'laser/scanner'
   path = File.join(File.dirname(__FILE__), 'laser', 'standard_library', file)
   [path, File.read(path)]
 end.tap do |tuples|
-  Laser::SexpAnalysis.analyze_inputs(tuples)
+  trees = Laser::SexpAnalysis.analyze_inputs(tuples)
+  trees.each do |filename, tree|
+    if tree.all_errors != []
+      $stderr.puts "Default file #{filename} had these errors:"
+      PP.pp(tree.all_errors, $stderr)
+      exit 1
+    end
+  end
 end

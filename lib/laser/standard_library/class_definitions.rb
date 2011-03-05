@@ -1,3 +1,7 @@
+class Class < Module
+  def self.new
+  end
+end
 class String
 end
 class Symbol
@@ -64,6 +68,7 @@ class Object < BasicObject
 end
 
 require 'basic_object'
+require 'exceptions'
 require 'comparable'
 require 'enumerable'
 require 'array'
@@ -125,7 +130,7 @@ class Time
 end
   
 
-require 'exceptions'
+
 
 # ARGV: [String]
 ARGV = []
