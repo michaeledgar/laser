@@ -72,7 +72,7 @@ module Laser
         global.add_binding!(
             Bindings::GlobalVariableBinding.new('$:',
               RealObjectProxy.new(ClassRegistry['Array'], global, '$:',
-                [File.expand_path(File.join(File.dirname(__FILE__), '..', 'standard_library'))])))
+                ['.', File.expand_path(File.join(File.dirname(__FILE__), '..', 'standard_library'))])))
         global.add_binding!(
             Bindings::GlobalVariableBinding.new('$"',
               RealObjectProxy.new(ClassRegistry['Array'], global, '$"', [])))

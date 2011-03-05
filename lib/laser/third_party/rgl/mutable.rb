@@ -43,6 +43,20 @@ module RGL
       edges.each { |edge| add_edge(edge[0], edge[1]) }
     end
 
+    # Add the graph to the current graph. All vertices in the other graph
+    # are added, as are all edges.
+    
+    def add_graph(graph)
+      add_vertices(*graph.vertices)
+      add_edges(*graph.edges)
+    end
+    
+    # Adds all the given graphs to the current graph. See #add_graph.
+    
+    def add_graphs(*graphs)
+      graphs.each { |graph| add_graph graph }
+    end
+
     # Remove u from the vertex set of the graph.  All edges whose target is
     # _v_ are also removed from the edge set of the graph.
     #

@@ -41,10 +41,8 @@ module RGL
     def initialize (edgelist_class = Set, *other_graphs)
       @edgelist_class = edgelist_class
       @vertice_dict   = Hash.new
-      other_graphs.each do |g|
-        g.each_vertex {|v| add_vertex v}
-        g.each_edge {|v,w| add_edge v,w}
-      end
+      
+      add_graphs(*other_graphs)
     end
 
     # Copy internal vertice_dict
