@@ -18,6 +18,10 @@ class Laser::OperatorSpacing < Laser::LineWarning
       next if token.body == '::' || token.body[0,2] == '..'
       next if idx == lexed.size - 1  # Last token on line (continuation) is ok
       next if token.body == '-' && [:on_float, :on_int].include?(lexed[idx+1].type)
+      if token.body == '&' && (idx == 0 || [:on_sp, :on_lparen, :on_comma].include?(lexed[idx-1].type))
+        next if [:on_lparen, :on_comma, :on_sp].include?(lexed[idx+1].type) || 
+                (lexed[idx+2] && [:on_rparen, :on_comma].include?(lexed[idx+2].type))
+      end
       return token if lexed[idx+1].type != :on_sp && lexed[idx+1].type != :on_op
       return token if idx > 0 && ![:on_sp, :on_op].include?(lexed[idx-1].type)
     end

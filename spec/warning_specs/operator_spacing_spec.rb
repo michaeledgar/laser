@@ -51,6 +51,9 @@ describe OperatorSpacing do
     OperatorSpacing.should_not warn('x.call(a, &b)')
     OperatorSpacing.should_not warn('x.call(&b, b)')
     OperatorSpacing.should_not warn('x.call(a, &b, b)')
+    OperatorSpacing.should_not warn('@peek = wrapped_stream.move_forward_until(&@filter) or return true')
+    OperatorSpacing.should_not warn('wrapped_stream.move_forward_until(&@filter)')
+    OperatorSpacing.should_not warn('wrapped_stream.move_backward_until(&@filter) or self')
   end
 
   it "doesn't match the [*item] idiom" do

@@ -375,7 +375,7 @@ module Stream
     # If the current stream is at end, than at_end? has to look ahead to find a non
     # empty in the stream of streams, which than gets the current stream.
     def at_end?
-       @currentStream.at_end? and
+      @currentStream.at_end? and
         begin
           until streamOfStreams.at_end?
             dir, @dirOfLastMove = @dirOfLastMove, :forward
@@ -393,29 +393,29 @@ module Stream
           end
           reachedBoundary        # sets @dirOfLastMove and @currentStream
         end
-      end
+    end
 
     # Same as at_end? the other way round.
-      def at_beginning?
-      # same algorithm as at_end? the other way round. Could we do it
-      # with metaprogramming?
-       @currentStream.at_beginning? and
-        begin
-          until streamOfStreams.at_beginning?
-            dir, @dirOfLastMove = @dirOfLastMove, :backward
-            s = streamOfStreams.basic_backward
-            next if dir == :forward
-            s.set_to_end
-            if s.at_beginning?
-              next
-            else
-              @currentStream = s
-              return false
-            end
+    def at_beginning?
+    # same algorithm as at_end? the other way round. Could we do it
+    # with metaprogramming?
+     @currentStream.at_beginning? and
+      begin
+        until streamOfStreams.at_beginning?
+          dir, @dirOfLastMove = @dirOfLastMove, :backward
+          s = streamOfStreams.basic_backward
+          next if dir == :forward
+          s.set_to_end
+          if s.at_beginning?
+            next
+          else
+            @currentStream = s
+            return false
           end
-          reachedBoundary
         end
+        reachedBoundary
       end
+    end
       
     def set_to_begin; super; reachedBoundary end
     def set_to_end; super; reachedBoundary end
