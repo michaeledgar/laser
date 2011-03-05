@@ -74,4 +74,8 @@ module Laser
   class FailedAliasError < Laser::Error
     severity MAJOR_ERROR
   end
+  
+  class SuperclassMismatchError < Laser::Error
+    severity TRICKY_ERROR
+  end
 end

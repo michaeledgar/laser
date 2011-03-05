@@ -82,7 +82,14 @@ module Laser
         superclass_node.scope = @current_scope if superclass_node
 
         temp_cur_scope, new_class_name = unpack_path(@current_scope, path_node)
-        new_scope = lookup_or_create_class(temp_cur_scope, new_class_name, superclass)
+        # We allow BasicObject and Object to omit their superclasses when we open them
+        if new_class_name == 'BasicObject' && !superclass_node
+          superclass = nil
+        elsif new_class_name == 'Object' && !superclass_node
+          superclass = ClassRegistry['BasicObject']
+        end
+
+        new_scope = lookup_or_create_class(temp_cur_scope, new_class_name, superclass, node)
         if new_scope.self_ptr.klass != ClassRegistry['Class']
           node.errors << ReopenedModuleAsClassError.new("Opened module #{new_scope.self_ptr.name} as a class.", node)
         end
@@ -111,14 +118,22 @@ module Laser
       end
 
       # Looks up a class, and creates it on failure.
-      def lookup_or_create_class(scope, new_class_name, superclass)
-        lookup_or_create(scope, new_class_name) do
+      def lookup_or_create_class(scope, new_class_name, superclass, node)
+        result = lookup_or_create(scope, new_class_name) do
           new_scope = ClosedScope.new(scope, nil)
           new_class = LaserClass.new(ClassRegistry['Class'], new_scope, new_class_name) do |klass|
             klass.superclass = superclass
           end
           new_scope
         end
+        if result.self_ptr.klass == ClassRegistry['Class'] && superclass != result.self_ptr.superclass
+          super_path = result.self_ptr.superclass ? result.self_ptr.superclass.path : 'nil'
+          new_super_path = superclass ? superclass.path : 'nil'
+          raise SuperclassMismatchError.new(
+              "Class #{new_class_name} originally had superclass #{super_path}," +
+              " but was reopened with superclass #{new_super_path}.", node)
+        end
+        result
       end
       
       # Given a current scope and any possible way to describe a constant,

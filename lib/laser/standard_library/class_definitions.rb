@@ -59,7 +59,7 @@ module Kernel
   alias fail raise
 end
 
-class Object
+class Object < BasicObject
   include Kernel
 end
 

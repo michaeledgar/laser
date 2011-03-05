@@ -1353,6 +1353,64 @@ EOF
       File.should_not_receive(:read)
       annotate_all("require 'foobaz'")
     end
+    
+    it 'should raise a SuperclassMismatchError when an improper superclass is specified' do
+      input = 'class A250 < String; end; class A250; end'
+      tree = annotate_all(input)
+      tree.all_errors.size.should be 1
+      tree.all_errors.first.should be_a(SuperclassMismatchError)
+      tree.all_errors.first.message.should include('A250')
+      tree.all_errors.first.message.should include('String')
+      tree.all_errors.first.message.should include('Object')
+    end
+    
+    it "should not raise a SuperclassMismatchError when BasicObject's superclass is omitted" do
+      input = 'class BasicObject; end'
+      tree = annotate_all(input)
+      tree.all_errors.should be_empty
+    end
+    
+    it "should not raise a SuperclassMismatchError when BasicObject's superclass is specified and not nil" do
+      input = 'class BasicObject < Object; end'
+      tree = annotate_all(input)
+      tree.all_errors.size.should be 1
+      tree.all_errors.first.should be_a(SuperclassMismatchError)
+      tree.all_errors.first.message.should include('BasicObject')
+      tree.all_errors.first.message.should include('nil')
+      tree.all_errors.first.message.should include('Object')
+    end
+    
+    it "should not raise a SuperclassMismatchError when Object's superclass is omitted" do
+      input = 'class Object; end'
+      tree = annotate_all(input)
+      tree.all_errors.should be_empty
+    end
+    
+    it "should not raise a SuperclassMismatchError when Object's superclass is specified and not BasicObject" do
+      input = 'class Object < Array; end'
+      tree = annotate_all(input)
+      tree.all_errors.size.should be 1
+      tree.all_errors.first.should be_a(SuperclassMismatchError)
+      tree.all_errors.first.message.should include('Object')
+      tree.all_errors.first.message.should include('BasicObject')
+      tree.all_errors.first.message.should include('Array')
+    end
+    
+    it "should raise a SuperclassMismatchError when a class is opened without it's non-Object superclass" do
+      input = 'class Integer; end'
+      tree = annotate_all(input)
+      tree.all_errors.size.should be 1
+      tree.all_errors.first.should be_a(SuperclassMismatchError)
+      tree.all_errors.first.message.should include('Integer')
+      tree.all_errors.first.message.should include('Numeric')
+      tree.all_errors.first.message.should include('Object')
+    end
+    
+    it "should not raise a SuperclassMismatchError when a class is opened without it's Object superclass" do
+      input = 'class String; end'
+      tree = annotate_all(input)
+      tree.all_errors.should be_empty
+    end
   end
 end
   
