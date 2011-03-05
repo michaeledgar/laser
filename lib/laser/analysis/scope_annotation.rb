@@ -69,25 +69,13 @@ module Laser
       add :class do |node, path_node, superclass_node, body|
         # TODO(adgar): Make this do real lookup.
         visit superclass_node
-        if superclass_node && superclass_node.is_constant
-        then superclass = superclass_node.constant_value
-        elsif superclass_node 
-          raise DynamicSuperclassError.new(
-              "Superclass of #{path_node.expanded_identifier}" +
-              " is not a constant value. bad idea!", superclass_node)
-        else superclass = ClassRegistry['Object']
-        end
         default_visit(path_node)
+        
         node.scope = @current_scope
-        superclass_node.scope = @current_scope if superclass_node
-
         temp_cur_scope, new_class_name = unpack_path(@current_scope, path_node)
         # We allow BasicObject and Object to omit their superclasses when we open them
-        if new_class_name == 'BasicObject' && !superclass_node
-          superclass = nil
-        elsif new_class_name == 'Object' && !superclass_node
-          superclass = ClassRegistry['BasicObject']
-        end
+        superclass_node.scope = @current_scope if superclass_node
+        superclass = extract_superclass(superclass_node, new_class_name)
 
         new_scope = lookup_or_create_class(temp_cur_scope, new_class_name, superclass, node)
         if new_scope.self_ptr.klass != ClassRegistry['Class']
@@ -95,6 +83,30 @@ module Laser
         end
         with_visibility(:public) do
           visit_with_scope(body, new_scope)
+        end
+      end
+      
+      # Extracts the precise superclass from the node, or raises a warning if a
+      # dynamic superclass is detected.
+      #
+      # This method implements some special-case behavior concerning how Ruby
+      # allows "class BasicObject; end" and "class Object; end" without specifying
+      # their superclasses.
+      def extract_superclass(superclass_node, new_class_name)
+        # Is superclass specified?
+        if superclass_node && superclass_node.is_constant
+          return superclass_node.constant_value
+        elsif superclass_node 
+          raise DynamicSuperclassError.new(
+              "Superclass of #{path_node.expanded_identifier}" +
+              " is not a constant value. bad idea!", superclass_node)
+        end
+        # No specified superclass
+        case new_class_name
+        when 'BasicObject' then return nil
+        when 'Object' then return ClassRegistry['BasicObject']
+        when 'Class' then return ClassRegistry['Module']
+        else return ClassRegistry['Object']
         end
       end
       

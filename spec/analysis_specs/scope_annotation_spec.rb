@@ -1370,7 +1370,13 @@ EOF
       tree.all_errors.should be_empty
     end
     
-    it "should not raise a SuperclassMismatchError when BasicObject's superclass is specified and not nil" do
+    it "should not raise a SuperclassMismatchError when BasicObject's superclass is nil" do
+      input = 'class BasicObject < nil; end'
+      tree = annotate_all(input)
+      tree.all_errors.should be_empty
+    end
+    
+    it "should raise a SuperclassMismatchError when BasicObject's superclass is specified and not nil" do
       input = 'class BasicObject < Object; end'
       tree = annotate_all(input)
       tree.all_errors.size.should be 1
@@ -1386,7 +1392,13 @@ EOF
       tree.all_errors.should be_empty
     end
     
-    it "should not raise a SuperclassMismatchError when Object's superclass is specified and not BasicObject" do
+    it "should not raise a SuperclassMismatchError when Object's superclass is BasicObject" do
+      input = 'class Object < BasicObject; end'
+      tree = annotate_all(input)
+      tree.all_errors.should be_empty
+    end
+    
+    it "should raise a SuperclassMismatchError when Object's superclass is specified and not BasicObject" do
       input = 'class Object < Array; end'
       tree = annotate_all(input)
       tree.all_errors.size.should be 1
@@ -1394,6 +1406,28 @@ EOF
       tree.all_errors.first.message.should include('Object')
       tree.all_errors.first.message.should include('BasicObject')
       tree.all_errors.first.message.should include('Array')
+    end
+    
+    it "should not raise a SuperclassMismatchError when Class's superclass is omitted" do
+      input = 'class Class; end'
+      tree = annotate_all(input)
+      tree.all_errors.should be_empty
+    end
+    
+    it "should not raise a SuperclassMismatchError when Class's superclass is Module" do
+      input = 'class Class < Module; end'
+      tree = annotate_all(input)
+      tree.all_errors.should be_empty
+    end
+    
+    it "should raise a SuperclassMismatchError when Class's superclass is specified and not Module" do
+      input = 'class Class < Object; end'
+      tree = annotate_all(input)
+      tree.all_errors.size.should be 1
+      tree.all_errors.first.should be_a(SuperclassMismatchError)
+      tree.all_errors.first.message.should include('Class')
+      tree.all_errors.first.message.should include('Module')
+      tree.all_errors.first.message.should include('Object')
     end
     
     it "should raise a SuperclassMismatchError when a class is opened without it's non-Object superclass" do

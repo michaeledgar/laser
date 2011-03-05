@@ -1,4 +1,4 @@
-class Class < Module
+class Class
   def self.new
   end
 end
@@ -128,8 +128,6 @@ class Time
     new
   end
 end
-  
-
 
 
 # ARGV: [String]
