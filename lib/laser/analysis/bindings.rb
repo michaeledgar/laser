@@ -70,6 +70,9 @@ module Laser
       class LocalVariableBinding < GenericBinding
       end
       
+      class TemporaryBinding < GenericBinding
+      end
+      
       class InstanceVariableBinding < GenericBinding
       end
 
