@@ -11,6 +11,7 @@ require 'treetop'
 $:.unshift(File.expand_path(File.dirname(__FILE__)))
 require 'laser/third_party/trollop'
 require 'laser/third_party/stream'
+require 'laser/third_party/rgl/dot'  # KILLME
 require 'laser/support/inheritable_attributes'
 require 'laser/support/acts_as_struct'
 require 'laser/support/module_extensions'

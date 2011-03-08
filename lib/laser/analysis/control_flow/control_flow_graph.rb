@@ -8,11 +8,9 @@ module Laser
         # tests will have to know block names. Oh well.
         def ==(other)
           pairs = self.vertices.sort_by(&:name).zip(other.vertices.sort_by(&:name))
-          pairs.each do |v1, v2|
-            v1.name.should == v2.name
-            v1.instructions.should == v2.instructions
-          end
-          self.edges.sort.should == other.edges.sort
+          (pairs.all? do |v1, v2|
+            v1.name.should == v2.name && v1.instructions.should == v2.instructions
+          end) && (self.edges.sort.should == other.edges.sort)
         end
         
         # Looks up the basic block (vertex) with the given name.

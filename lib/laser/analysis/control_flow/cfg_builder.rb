@@ -4,7 +4,7 @@ module Laser
       # This class builds a control flow graph. The algorithm used is
       # derived from Robert Morgan's "Building an Optimizing Compiler".
       class GraphBuilder
-        attr_reader :graph, :enter, :exit, :temporary_counter, :current_block
+        attr_reader :graph, :enter, :exit, :temporary_counter, :current_block, :sexp
         
         def initialize(sexp)
           @sexp = sexp
@@ -248,6 +248,7 @@ module Laser
             result
           when :return0
             return0_instruct
+            const_instruct(nil)
           when :void_stmt
             const_instruct(nil)
           when :@CHAR, :@tstring_content, :@int, :@float, :@regexp_end, :symbol, :@label
@@ -263,7 +264,6 @@ module Laser
           @block_counter = 0
           @enter = create_block('Enter')
           @exit = create_block('Exit')
-          @dead = create_block('Dead Code')
           @temporary_counter = 0
           
           start_block @enter
@@ -295,14 +295,14 @@ module Laser
         def return0_instruct
           add_instruction(:return, nil)
           uncond_instruct @exit
-          start_block @dead
+          start_block create_block
         end
         
         def return_instruct(val)
           result = value_walk val
           add_instruction(:return, result)
           uncond_instruct @exit
-          start_block @dead
+          start_block create_block
           result
         end
 
@@ -325,8 +325,7 @@ module Laser
         def binary_instruct(lhs, op, rhs)
           call_instruct(lhs, op, rhs)
         end
-        
-        # Calls a 
+
         def call_instruct_novalue(receiver, method, *args)
           add_instruction(:call, nil, receiver, method, *args)
         end
