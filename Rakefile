@@ -86,8 +86,6 @@ task sc: :build_parsers do
   system("irb -r./lib/laser")
 end
 
-task spec: :check_dependencies
-
 task default: [:spec, :test]
 
 begin

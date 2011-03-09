@@ -52,11 +52,12 @@ describe ControlFlow::GraphBuilder do
   describe 'with a while loop' do
     it 'should create a new block with a loop-back edge' do
       cfg = cfg_builder_for('def CFG_T1(x); while x > 10; x -= 1; end; 5; end').build
-      first, b1, b2, last = %w(Enter B1 B2 Exit).map do |name|
+      first, b1, b2, b3, last = %w(Enter B1 B2 B3 Exit).map do |name|
         cfg.vertex_with_name(name)
       end
-      cfg.should have_edge(first, b1)
-      cfg.should have_edge(first, b2)
+      cfg.should have_edge(first, b3)
+      cfg.should have_edge(b3, b1)
+      cfg.should have_edge(b3, b2)
       cfg.should have_edge(b1, b1)
       cfg.should have_edge(b1, b2)
       cfg.should have_edge(b2, last)
@@ -75,18 +76,227 @@ describe ControlFlow::GraphBuilder do
       it 'should produce an appropriate graph' do
         cfg = cfg_builder_for('def CFG_T1(x); while x > 10; y = x - 1; '+
                               'while y > 0; y -= 1; end; end; end').build
+        first, b1, b2, b3, b4, b5, b6, last = %w(Enter B1 B2 B3 B4 B5 B6 Exit).map do |name|
+          cfg.vertex_with_name(name)
+        end
+
+        cfg.should have_edge(first, b3)
+        
+        cfg.should have_edge(b3, b1)
+        cfg.should have_edge(b3, b2)
+        
+        cfg.should have_edge(b1, b6)
+        cfg.should have_edge(b6, b4)
+        cfg.should have_edge(b4, b4)
+        cfg.should have_edge(b4, b5)
+        cfg.should have_edge(b5, b1)
+        cfg.should have_edge(b5, b2)
+
+        cfg.should have_edge(b2, last)
+      end
+    end
+  end
+  
+  describe 'breaking from a loop' do
+    describe 'with no value context' do
+      it 'should create an edge leaving a single loop' do
+        cfg = cfg_builder_for('def CFG_T1(x); while x > 10; if x == 5; break; end; x -= 1; end; 5; end').build
         first, b1, b2, b3, b4, b5, last = %w(Enter B1 B2 B3 B4 B5 Exit).map do |name|
           cfg.vertex_with_name(name)
         end
-        cfg.should have_edge(first, b1)
-        cfg.should have_edge(first, b2)
-        
-        cfg.should have_edge(b1, b3)
+        cfg.should have_edge(first, b3)
+        cfg.should have_edge(b3, b1)
+        cfg.should have_edge(b3, b2)
         cfg.should have_edge(b1, b4)
-        cfg.should have_edge(b3, b3)
-        cfg.should have_edge(b3, b4)
-        
+        cfg.should have_edge(b4, b1)
         cfg.should have_edge(b4, b2)
+        cfg.should have_edge(b1, b5)
+        cfg.should have_edge(b5, b2)
+        cfg.should have_edge(b2, last)
+      end
+
+      it 'should create an edge leaving the most-nested loop' do
+        cfg = cfg_builder_for('def CFG_T1(x); while x > 10; y = x; while y > 0; if y == 5; break; end; y -= 1; end; x -= 1; end; 5; end').build
+        first, b1, b2, b3, b4, b5, b6, b7, b8, last = %w(Enter B1 B2 B3 B4 B5 B6 B7 B8 Exit).map do |name|
+          cfg.vertex_with_name(name)
+        end
+        
+        cfg.should have_edge(first, b3)
+        
+        cfg.should have_edge(b3, b1)
+        cfg.should have_edge(b3, b2)
+
+        cfg.should have_edge(b1, b6)
+        
+        cfg.should have_edge(b6, b4)
+        cfg.should have_edge(b6, b5)
+        
+        cfg.should have_edge(b4, b7)
+        cfg.should have_edge(b4, b8)
+        
+        cfg.should have_edge(b7, b4)
+        cfg.should have_edge(b7, b5)
+        
+        cfg.should have_edge(b8, b5)
+        cfg.should have_edge(b5, b1)
+        cfg.should have_edge(b5, b2)
+
+        cfg.should have_edge(b2, last)
+      end
+      
+      it 'should evaluate but discard its arguments'
+    end
+    
+    describe 'in a value context' do
+      it 'should create an edge leaving a single loop'
+      it 'should create an edge leaving the most-nested loop'
+      it 'should evaluate and return its arguments'
+    end
+  end
+  
+  describe 'next-ing in a loop' do
+    it 'should create an edge restarting a single loop' do
+      cfg = cfg_builder_for('def CFG_T1(x); while x > 10; if x == 5; next; end; x -= 1; end; 5; end').build
+      first, b1, b2, b3, b4, b5, last = %w(Enter B1 B2 B3 B4 B5 Exit).map do |name|
+        cfg.vertex_with_name(name)
+      end
+      cfg.should have_edge(first, b3)
+      cfg.should have_edge(b3, b1)
+      cfg.should have_edge(b3, b2)
+      cfg.should have_edge(b1, b4)
+      cfg.should have_edge(b4, b1)
+      cfg.should have_edge(b4, b2)
+      cfg.should have_edge(b1, b5)
+      cfg.should have_edge(b5, b3)
+      cfg.should have_edge(b2, last)
+    end
+
+    it 'should create an edge restarting the most-nested loop' do
+      cfg = cfg_builder_for('def CFG_T1(x); while x > 10; y = x; while y > 0; if y == 5; next; end; y -= 1; end; x -= 1; end; 5; end').build
+      first, b1, b2, b3, b4, b5, b6, b7, b8, last = %w(Enter B1 B2 B3 B4 B5 B6 B7 B8 Exit).map do |name|
+        cfg.vertex_with_name(name)
+      end
+
+      cfg.should have_edge(first, b3)
+      
+      cfg.should have_edge(b3, b1)
+      cfg.should have_edge(b3, b2)
+
+      cfg.should have_edge(b1, b6)
+      
+      cfg.should have_edge(b6, b4)
+      cfg.should have_edge(b6, b5)
+      
+      cfg.should have_edge(b4, b7)
+      cfg.should have_edge(b4, b8)
+      
+      cfg.should have_edge(b7, b4)
+      cfg.should have_edge(b7, b5)
+      
+      cfg.should have_edge(b8, b6)
+      cfg.should have_edge(b5, b1)
+      cfg.should have_edge(b5, b2)
+
+      cfg.should have_edge(b2, last)
+    end
+    
+    it 'should evaluate but discard its arguments'
+  end
+  
+  describe 'redo in a loop' do
+    describe 'with no value context' do
+      it 'should create an edge restarting a single loop' do
+        cfg = cfg_builder_for('def CFG_T1(x); while x > 10; if x == 5; redo; end; x -= 1; end; 5; end').build
+        first, b1, b2, b3, b4, b5, last = %w(Enter B1 B2 B3 B4 B5 Exit).map do |name|
+          cfg.vertex_with_name(name)
+        end
+        
+        cfg.should have_edge(first, b3)
+        cfg.should have_edge(b3, b1)
+        cfg.should have_edge(b3, b2)
+
+        cfg.should have_edge(b1, b4)
+        cfg.should have_edge(b4, b1)
+        cfg.should have_edge(b4, b2)
+        cfg.should have_edge(b1, b5)
+        cfg.should have_edge(b5, b1)
+        cfg.should have_edge(b2, last)
+      end
+
+      it 'should create an edge restarting the most-nested loop' do
+        cfg = cfg_builder_for('def CFG_T1(x); while x > 10; y = x; while y > 0; if y == 5; redo; end; y -= 1; end; x -= 1; end; 5; end').build
+        first, b1, b2, b3, b4, b5, b6, b7, b8, last = %w(Enter B1 B2 B3 B4 B5 B6 B7 B8 Exit).map do |name|
+          cfg.vertex_with_name(name)
+        end
+
+        cfg.should have_edge(first, b3)
+        
+        cfg.should have_edge(b3, b1)
+        cfg.should have_edge(b3, b2)
+
+        cfg.should have_edge(b1, b6)
+
+        cfg.should have_edge(b6, b4)
+        cfg.should have_edge(b6, b5)
+        
+        cfg.should have_edge(b4, b8)
+        cfg.should have_edge(b4, b7)
+        
+        cfg.should have_edge(b8, b4)
+        cfg.should have_edge(b7, b4)
+        cfg.should have_edge(b7, b5)
+        
+        cfg.should have_edge(b5, b1)
+        cfg.should have_edge(b5, b2)
+
+        cfg.should have_edge(b2, last)
+      end
+    end
+    
+    describe 'in a value context' do
+      it 'should create an edge restarting a single loop' do
+        cfg = cfg_builder_for('def CFG_T1(x); while x > 10; if x == 5; redo; end; x -= 1; end; end').build
+        first, b1, b2, b3, b4, b5, last = %w(Enter B1 B2 B3 B4 B5 Exit).map do |name|
+          cfg.vertex_with_name(name)
+        end
+
+        cfg.should have_edge(first, b3)
+        cfg.should have_edge(b3, b1)
+        cfg.should have_edge(b3, b2)
+        cfg.should have_edge(b1, b4)
+        cfg.should have_edge(b4, b1)
+        cfg.should have_edge(b4, b2)
+        cfg.should have_edge(b1, b5)
+        cfg.should have_edge(b5, b1)
+        cfg.should have_edge(b2, last)
+      end
+
+      it 'should create an edge leaving the most-nested loop' do
+        cfg = cfg_builder_for('def CFG_T1(x); while x > 10; y = x; while y > 0; if y == 5; redo; end; y -= 1; end; x -= 1; end; end').build
+        first, b1, b2, b3, b4, b5, b6, b7, b8, last = %w(Enter B1 B2 B3 B4 B5 B6 B7 B8 Exit).map do |name|
+          cfg.vertex_with_name(name)
+        end
+
+        cfg.should have_edge(first, b3)
+        cfg.should have_edge(b3, b1)
+        cfg.should have_edge(b3, b2)
+
+        cfg.should have_edge(b1, b6)
+        
+        cfg.should have_edge(b6, b5)
+        cfg.should have_edge(b6, b4)
+
+        cfg.should have_edge(b4, b7)
+        cfg.should have_edge(b4, b8)
+
+        cfg.should have_edge(b7, b4)
+        cfg.should have_edge(b7, b5)
+
+        cfg.should have_edge(b8, b4)
+
+        cfg.should have_edge(b5, b2)
+        cfg.should have_edge(b5, b1)
+
         cfg.should have_edge(b2, last)
       end
     end
@@ -95,17 +305,18 @@ describe ControlFlow::GraphBuilder do
   describe 'with while as a modifier' do
     it 'should create a new block with a loop-back edge' do
       cfg = cfg_builder_for('def CFG_T1(x); x -= 1 while x > 10; 5; end').build
-      first, b1, b2, last = %w(Enter B1 B2 Exit).map do |name|
+      first, b1, b2, b3, last = %w(Enter B1 B2 B3 Exit).map do |name|
         cfg.vertex_with_name(name)
       end
-      cfg.should have_edge(first, b1)
-      cfg.should have_edge(first, b2)
+      
+      cfg.should have_edge(first, b3)
+      cfg.should have_edge(b3, b1)
+      cfg.should have_edge(b3, b2)
       cfg.should have_edge(b1, b1)
       cfg.should have_edge(b1, b2)
       cfg.should have_edge(b2, last)
     end
-    
-    
+
     it 'should return nil in a value context' do
       cfg = cfg_builder_for('def CFG_T1(x); x -= 1 while x > 10; end').build
       b2 = cfg.vertex_with_name('B2')
@@ -119,11 +330,13 @@ describe ControlFlow::GraphBuilder do
   describe 'with a until loop' do
     it 'should create a new block with a loop-back edge' do
       cfg = cfg_builder_for('def CFG_T1(x); until x > 10; x -= 1; end; 5; end').build
-      first, b1, b2, last = %w(Enter B1 B2 Exit).map do |name|
+      first, b1, b2, b3, last = %w(Enter B1 B2 B3 Exit).map do |name|
         cfg.vertex_with_name(name)
       end
-      cfg.should have_edge(first, b1)
-      cfg.should have_edge(first, b2)
+      
+      cfg.should have_edge(first, b3)
+      cfg.should have_edge(b3, b1)
+      cfg.should have_edge(b3, b2)
       cfg.should have_edge(b1, b1)
       cfg.should have_edge(b1, b2)
       cfg.should have_edge(b2, last)
@@ -142,11 +355,13 @@ describe ControlFlow::GraphBuilder do
   describe 'with until as a modifier' do
     it 'should create a new block with a loop-back edge' do
       cfg = cfg_builder_for('def CFG_T1(x); x -= 1 until x > 10; 5; end').build
-      first, b1, b2, last = %w(Enter B1 B2 Exit).map do |name|
+      first, b1, b2, b3, last = %w(Enter B1 B2 B3 Exit).map do |name|
         cfg.vertex_with_name(name)
       end
-      cfg.should have_edge(first, b1)
-      cfg.should have_edge(first, b2)
+      
+      cfg.should have_edge(first, b3)
+      cfg.should have_edge(b3, b1)
+      cfg.should have_edge(b3, b2)
       cfg.should have_edge(b1, b1)
       cfg.should have_edge(b1, b2)
       cfg.should have_edge(b2, last)

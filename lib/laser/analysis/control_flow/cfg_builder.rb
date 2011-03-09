@@ -25,6 +25,8 @@ module Laser
           case node.type
           when :void_stmt
             # Do nothing.
+          when :paren
+            node[1].each { |stmt| novalue_walk stmt }
           when :assign
             lhs, rhs = node.children
             # TODO(adgar): :field!!!!!!
@@ -119,10 +121,26 @@ module Laser
             start_block after
           when :return0
             return0_instruct
+          when :break
+            break_instruct(node[1])
+          when :next
+            next_instruct(node[1])
+          when :redo
+            redo_instruct
           when :var_ref
             if node.binding.nil?
               call_instruct_novalue(node.scope.lookup('self'), node.expanded_identifier)
             end
+          when :string_embexpr
+            node[1].each { |elt| novalue_walk(elt) }
+          when :string_literal
+            content_nodes = node[1].children
+            content_nodes.each do |node|
+              novalue_walk node
+            end
+          when :xstring_literal
+            body = build_string_instruct(node[1])
+            call_instruct(node.scope.lookup('self'), :`, body)
           else
             raise ArgumentError.new("Unknown AST node type #{node.type.inspect}")
           end
@@ -138,6 +156,8 @@ module Laser
               novalue_walk(elt)
             end
             return_instruct(body.last)
+          when :paren
+            walk_body node[1]
           when :assign
             lhs, rhs = node.children
             assign_instruct(lhs.binding, rhs)
@@ -212,7 +232,8 @@ module Laser
               end
               
               start_block true_block
-              walk_body_saving_result body, result
+              body_result = walk_body body
+              copy_instruct(result, body_result)
               uncond_instruct(after)
               
               start_block next_block
@@ -235,12 +256,14 @@ module Laser
             cond_instruct(cond_result, next_block, true_block)
             
             start_block true_block
-            walk_body_saving_result body, result
+            body_result = walk_body body
+            copy_instruct(result, body_result)
             uncond_instruct(after)
             
             if else_block
               start_block next_block
-              walk_body_saving_result else_block[1], result
+              body_result = walk_body else_block[1]
+              copy_instruct result, body_result
               uncond_instruct(after)
             end
             
@@ -249,10 +272,29 @@ module Laser
           when :return0
             return0_instruct
             const_instruct(nil)
+          when :break
+            break_instruct(node[1])
+            const_instruct(nil)
+          when :next
+            next_instruct(node[1])
+            const_instruct(nil)
+          when :redo
+            redo_instruct
+            const_instruct(nil)
           when :void_stmt
             const_instruct(nil)
-          when :@CHAR, :@tstring_content, :@int, :@float, :@regexp_end, :symbol, :@label
+          when :@CHAR, :@tstring_content, :@int, :@float, :@regexp_end, :symbol,
+               :@label, :symbol_literal
             const_instruct(node.constant_value)
+          when :string_literal
+            content_nodes = node[1].children
+            build_string_instruct(content_nodes)
+          when :string_embexpr
+            final = walk_body node[1]
+            call_instruct(final, :to_s)
+          when :xstring_literal
+            body = build_string_instruct(node[1])
+            call_instruct(node.scope.lookup('self'), :`, body)
           else
             raise ArgumentError.new("Unknown AST node type #{node.type.inspect}")
           end
@@ -265,17 +307,34 @@ module Laser
           @enter = create_block('Enter')
           @exit = create_block('Exit')
           @temporary_counter = 0
+          @current_break = @current_next = @current_redo = nil
           
           start_block @enter
         end
         
-        def walk_body_saving_result(body, result)
+        # Yields with jump targets specified. Since a number of jump targets
+        # require temporary specification in a stack-like fashion during CFG construction,
+        # I use the call stack to simulate the explicit one suggested by Morgan.
+        def with_jump_targets(targets={})
+          old_break, old_next, old_redo = @current_break, @current_next, @current_redo
+          
+          @current_break = targets[:break] if targets.has_key?(:break)
+          @current_next = targets[:next] if targets.has_key?(:next)
+          @current_redo = targets[:redo] if targets.has_key?(:redo)
+          yield
+        ensure
+          @current_break, @current_next, @current_redo = old_break, old_next, old_redo
+        end
+        
+        # Walks over a series of statements, ignoring the return value of
+        # everything except the last statement. Stores the result of the
+        # last statement in the result parameter.
+        def walk_body(body)
           body[0..-2].each { |elt| novalue_walk(elt) }
           if body.any?
-            body_result = value_walk(body.last)
-            copy_instruct(result, body_result)
+            value_walk(body.last)
           else
-            copy_instruct(result, nil)
+            const_instruct(nil)
           end
         end
         
@@ -286,12 +345,15 @@ module Laser
           start_block target
         end
         
+        # Creates an unconditional branch from the current block, based on the given
+        # value, to either the true block or the false block.
         def cond_instruct(val, true_block, false_block)
           add_instruction(:branch, val, true_block.name, false_block.name)
           @graph.add_edge(@current_block, true_block)
           @graph.add_edge(@current_block, false_block)
         end
         
+        # Performs a no-arg return.
         def return0_instruct
           add_instruction(:return, nil)
           uncond_instruct @exit
@@ -305,31 +367,55 @@ module Laser
           start_block create_block
           result
         end
+        
+        # TODO(adgar): ARGUMENTS
+        def break_instruct(args)
+          uncond_instruct @current_break
+          start_block create_block
+        end
+        
+        # TODO(adgar): ARGUMENTS
+        def next_instruct(args)
+          uncond_instruct @current_next
+          start_block create_block
+        end
 
+        def redo_instruct
+          uncond_instruct @current_redo
+          start_block create_block
+        end
+
+        # Creates a temporary, assigns it a constant value, and returns it.
         def const_instruct(val)
           result = create_temporary
           add_instruction(:assign, result, val)
           result
         end
         
+        # Copies one register to another.
         def copy_instruct(lhs, rhs)
           add_instruction(:assign, lhs, rhs)
         end
         
+        # Computes the RHS and assigns it to the LHS, returning the RHS result.
         def assign_instruct(lhs, rhs)
           result = value_walk rhs
           add_instruction(:assign, lhs, result)
           result
         end
         
+        # Adds a binary operation. Just calls the operator on the lhs
+        # with the rhs as a single argument.
         def binary_instruct(lhs, op, rhs)
           call_instruct(lhs, op, rhs)
         end
 
+        # Adds a no-value call instruction (it discards the return value).
         def call_instruct_novalue(receiver, method, *args)
           add_instruction(:call, nil, receiver, method, *args)
         end
         
+        # Adds a generic method call instruction.
         def call_instruct(receiver, method, *args)
           result = create_temporary
           add_instruction(:call, result, receiver, method, *args)
@@ -345,15 +431,20 @@ module Laser
         
         # Runs the list of operations in body while the condition is true.
         def while_instruct_novalue(condition, body)
-          body_block, after_block = create_blocks 2
+          body_block, after_block, precond_block = create_blocks 3
 
-          cond_result = value_walk condition
-          cond_instruct(cond_result, body_block, after_block)
+          with_jump_targets(:break => after_block, :redo => body_block, :next => precond_block) do
+            uncond_instruct precond_block
+            start_block precond_block
+            
+            cond_result = value_walk condition
+            cond_instruct(cond_result, body_block, after_block)
 
-          start_block body_block
-          body.each { |elt| novalue_walk(elt) }
-          cond_result = value_walk condition
-          cond_instruct(cond_result, body_block, after_block)
+            start_block body_block
+            body.each { |elt| novalue_walk(elt) }
+            cond_result = value_walk condition
+            cond_instruct(cond_result, body_block, after_block)
+          end
           
           start_block after_block
         end
@@ -361,21 +452,43 @@ module Laser
         # Runs the list of operations in body while the condition is true.
         # Then returns nil.
         def while_instruct(condition, body)
-          while_instruct_novalue(condition, body)
+          body_block, after_block, precond_block = create_blocks 3
+
+          with_jump_targets(:break => after_block, :redo => body_block, :next => precond_block) do
+            uncond_instruct precond_block
+            start_block precond_block
+            
+            cond_result = value_walk condition
+            cond_instruct(cond_result, body_block, after_block)
+
+            start_block body_block
+          
+            body.each { |elt| novalue_walk(elt) }
+            cond_result = value_walk condition
+            cond_instruct(cond_result, body_block, after_block)
+          end
+          
+          start_block after_block
           const_instruct(nil)
         end
         
         # Runs the list of operations in body until the condition is true.
         def until_instruct_novalue(condition, body)
-          body_block, after_block = create_blocks 2
+          body_block, after_block, precond_block = create_blocks 3
 
-          cond_result = value_walk condition
-          cond_instruct(cond_result, after_block, body_block)
+          with_jump_targets(:break => after_block, :redo => body_block, :next => precond_block) do
+            uncond_instruct precond_block
+            start_block precond_block
+            
+            cond_result = value_walk condition
+            cond_instruct(cond_result, after_block, body_block)
 
-          start_block body_block
-          body.each { |elt| novalue_walk(elt) }
-          cond_result = value_walk condition
-          cond_instruct(cond_result, after_block, body_block)
+            start_block body_block
+          
+            body.each { |elt| novalue_walk(elt) }
+            cond_result = value_walk condition
+            cond_instruct(cond_result, after_block, body_block)
+          end
           
           start_block after_block
         end
@@ -383,7 +496,23 @@ module Laser
         # Runs the list of operations in body until the condition is true.
         # Then returns nil.
         def until_instruct(condition, body)
-          until_instruct_novalue(condition, body)
+          body_block, after_block, precond_block = create_blocks 3
+
+          with_jump_targets(:break => after_block, :redo => body_block, :next => precond_block) do
+            uncond_instruct precond_block
+            start_block precond_block
+            
+            cond_result = value_walk condition
+            cond_instruct(cond_result, after_block, body_block)
+
+            start_block body_block
+          
+            body.each { |elt| novalue_walk(elt) }
+            cond_result = value_walk condition
+            cond_instruct(cond_result, after_block, body_block)
+          end
+          
+          start_block after_block
           const_instruct(nil)
         end
         
@@ -457,6 +586,18 @@ module Laser
           novalue_walk rhs
           uncond_instruct(after)
           start_block(after)
+        end
+        
+        # Takes a set of either :@tstring_content or :string_embexpr nodes
+        # and constructs a string out of them. (In other words, this computes
+        # the contents of possibly-interpolated strings).
+        def build_string_instruct(components)
+          temp = const_instruct('')
+          content_nodes.each do |node|
+            as_string = value_walk node
+            temp = call_instruct(temp, :concat, as_string)
+          end
+          temp
         end
         
         # Returns the name of the current temporary.
