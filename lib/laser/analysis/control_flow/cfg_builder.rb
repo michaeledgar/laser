@@ -62,6 +62,10 @@ module Laser
             lhs_result = value_walk lhs
             rhs_result = value_walk rhs
             call_instruct_novalue(lhs, op, rhs)
+          when :unary
+            op, receiver = node.children
+            receiver = value_walk(receiver)
+            call_instruct_novalue(receiver, op)
           when :while
             condition, body = node.children
             while_instruct_novalue(condition, body)
@@ -141,6 +145,8 @@ module Laser
           when :xstring_literal
             body = build_string_instruct(node[1])
             call_instruct(node.scope.lookup('self'), :`, body)
+          when :regexp_literal
+            node[1].each { |part| novalue_walk node }
           else
             raise ArgumentError.new("Unknown AST node type #{node.type.inspect}")
           end
@@ -192,6 +198,10 @@ module Laser
             lhs_result = value_walk lhs
             rhs_result = value_walk rhs
             binary_instruct(lhs_result, op, rhs_result)
+          when :unary
+            op, receiver = node.children
+            receiver = value_walk(receiver)
+            call_instruct(receiver, op)
           when :var_field
             variable_instruct(node)
           when :var_ref
@@ -295,6 +305,11 @@ module Laser
           when :xstring_literal
             body = build_string_instruct(node[1])
             call_instruct(node.scope.lookup('self'), :`, body)
+          when :regexp_literal
+            body = build_string_instruct(node[1])
+            options = const_instruct(node[2].constant_value)
+            receiver = Scope::GlobalScope.lookup('Regexp')
+            call_instruct(receiver, :new, body, options)
           else
             raise ArgumentError.new("Unknown AST node type #{node.type.inspect}")
           end
@@ -593,7 +608,7 @@ module Laser
         # the contents of possibly-interpolated strings).
         def build_string_instruct(components)
           temp = const_instruct('')
-          content_nodes.each do |node|
+          components.each do |node|
             as_string = value_walk node
             temp = call_instruct(temp, :concat, as_string)
           end
