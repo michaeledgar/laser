@@ -12,25 +12,30 @@ module RGL
 
   module Graph
 
-  # Return a RGL::DOT::Digraph for directed graphs or a DOT::Subgraph for an
-  # undirected Graph.  _params_ can contain any graph property specified in
-  # rdot.rb.
+    # Return a RGL::DOT::Digraph for directed graphs or a DOT::Subgraph for an
+    # undirected Graph.  _params_ can contain any graph property specified in
+    # rdot.rb.
 
-  def to_dot_graph (params = {})
-    params['name'] ||= self.class.name.gsub(/:/,'_')
-    fontsize   = params['fontsize'] ? params['fontsize'] : '8'
-    graph      = (directed? ? DOT::Digraph : DOT::Subgraph).new(params)
-    edge_class = directed? ? DOT::DirectedEdge : DOT::Edge
-    each_vertex do |v|
-      name = v.to_s
-      graph << DOT::Node.new('name'     => name,
-                             'fontsize' => fontsize,
-                             'label'    => name)
-    end
-    each_edge do |u,v|
-      graph << edge_class.new('from'     => u.to_s,
-                              'to'       => v.to_s,
-                              'fontsize' => fontsize)
+    def to_dot_graph (params = {})
+      params['name'] ||= self.class.name.gsub(/:/,'_')
+      fontsize   = params['fontsize'] || '8'
+      fontname   = params['fontname'] || 'Times-Roman'
+      graph      = (directed? ? DOT::Digraph : DOT::Subgraph).new(params)
+      edge_class = directed? ? DOT::DirectedEdge : DOT::Edge
+      shape = params['shape'] || 'ellipse'
+      each_vertex do |v|
+        name = v.to_s
+        graph << DOT::Node.new('name'     => name,
+                               'fontsize' => fontsize,
+                               'label'    => name,
+                               'shape'    => shape,
+                               'fontname' => fontname)
+      end
+      each_edge do |u,v|
+        graph << edge_class.new('from'     => u.to_s,
+                                'to'       => v.to_s,
+                                'fontsize' => fontsize,
+                                'fontname' => fontname)
       end
       graph
     end
@@ -55,15 +60,15 @@ module RGL
     # Use dot[http://www.graphviz.org] to create a graphical representation of
     # the graph.  Returns the filename of the graphics file.
 
-    def write_to_graphic_file (fmt='png', dotfile="graph")
+    def write_to_graphic_file (fmt='png', dotfile='graph', params = {})
       src = dotfile + ".dot"
       dot = dotfile + "." + fmt
 
       File.open(src, 'w') do |f|
-        f << self.to_dot_graph.to_s << "\n"
+        f << self.to_dot_graph(params).to_s << "\n"
       end
 
-      system( "dot -T#{fmt} #{src} -o #{dot}" )
+      system( "dot -T#{fmt} -o #{dot} #{src}" )
       dot
     end
 
