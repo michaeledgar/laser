@@ -23,7 +23,18 @@ module Laser
           name.hash
         end
 
-        alias to_s name
+        def to_s
+          " | #{name} | \\n" + instructions.map do |ins|
+            opcode = ins.first.to_s
+            args = ins[1..-1].map do |arg|
+              if Bindings::GenericBinding === arg
+              then arg.name
+              else arg.inspect
+              end
+            end
+            [opcode, *args].join(', ')
+          end.join('\\n')
+        end
         alias leader first
       end
     end
