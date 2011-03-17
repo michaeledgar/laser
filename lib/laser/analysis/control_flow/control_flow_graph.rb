@@ -17,6 +17,14 @@ module Laser
         def vertex_with_name(name)
           self.vertices.find { |vert| vert.name == name }
         end
+        
+        def save_pretty_picture(fmt='png', dotfile='graph', params = {'shape' => 'box'})
+          write_to_graphic_file(fmt, dotfile, params)
+        end
+        
+        def dotty(params = {'shape' => 'box'})
+          super
+        end
       end
     end
   end

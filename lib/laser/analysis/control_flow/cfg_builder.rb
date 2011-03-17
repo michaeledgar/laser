@@ -46,7 +46,7 @@ module Laser
               # all other binary operators
               lhs_result = value_walk lhs
               rhs_result = value_walk rhs
-              result = binary_instruct(lhs_result, op, rhs_result)
+              result = call_instruct(lhs_result, op, rhs_result)
               copy_instruct(lhs.binding, result)
             end
           when :binary
@@ -79,50 +79,15 @@ module Laser
             condition, body_stmt = node.children
             until_instruct_novalue(condition, [body_stmt])
           when :if
-            after = create_block
-            current = node
-            next_block = nil
-            
-            while current
-              
-              if current.type == :else
-                true_block = next_block
-                body, next_block, else_block = current[1], after, nil
-              else
-                true_block = create_block
-                condition, body, else_block = current.children
-                next_block = else_block ? create_block : after
-                
-                cond_result = value_walk condition
-                cond_instruct(cond_result, true_block, next_block)
-              end
-              
-              start_block true_block
-              body.each { |elt| novalue_walk(elt) }
-              uncond_instruct(after)
-              
-              start_block next_block
-              current = else_block
-            end
+            if_instruct_novalue(node)
           when :unless
-            after, true_block = create_blocks 2
             condition, body, else_block = node.children
-            next_block = else_block ? create_block : after
-            
-            cond_result = value_walk condition
-            cond_instruct(cond_result, next_block, true_block)
-            
-            start_block true_block
-            body.each { |elt| novalue_walk(elt) }
-            uncond_instruct(after)
-            
-            if else_block
-              start_block next_block
-              else_block[1].each { |elt| novalue_walk(elt) }
-              uncond_instruct(after)
-            end
-            
-            start_block after
+            unless_instruct_novalue(condition, body, else_block)
+          when :if_mod
+            if_instruct_novalue(node, true)
+          when :unless_mod
+            condition, body = node.children
+            unless_instruct_novalue(condition, [body], nil)
           when :return0
             return0_instruct
           when :break
@@ -135,6 +100,19 @@ module Laser
             if node.binding.nil?
               call_instruct_novalue(node.scope.lookup('self'), node.expanded_identifier)
             end
+          when :command
+            method, (_, args, block) = node.children
+            generic_call_instruct_novalue(node.scope.lookup('self'),
+                method.expanded_identifier, args, block)
+          when :command_call
+            receiver, _, method, (_, args, block) = node.children
+            generic_call_instruct_novalue(value_walk(receiver),
+                method.expanded_identifier, args, block)
+          when :super
+            args = node[1]
+            args = args[1] if args.type == :arg_paren
+            _, args, block = args
+            generic_super_instruct_novalue(args, block)
           when :string_embexpr
             node[1].each { |elt| novalue_walk(elt) }
           when :string_literal
@@ -183,7 +161,7 @@ module Laser
               # all other binary operators
               lhs_result = value_walk lhs
               rhs_result = value_walk rhs
-              result = binary_instruct(lhs_result, op, rhs_result)
+              result = call_instruct(lhs_result, op, rhs_result)
               copy_instruct(lhs.binding, result)
               result
             end
@@ -197,7 +175,7 @@ module Laser
             # all other binary operators
             lhs_result = value_walk lhs
             rhs_result = value_walk rhs
-            binary_instruct(lhs_result, op, rhs_result)
+            call_instruct(lhs_result, op, rhs_result)
           when :unary
             op, receiver = node.children
             receiver = value_walk(receiver)
@@ -210,6 +188,19 @@ module Laser
             else
               call_instruct(node.scope.lookup('self'), node.expanded_identifier)
             end
+          when :command
+            method, (_, args, block) = node.children
+            generic_call_instruct(node.scope.lookup('self'),
+                method.expanded_identifier, args, block)
+          when :command_call
+            receiver, _, method, (_, args, block) = node.children
+            generic_call_instruct(value_walk(receiver),
+                method.expanded_identifier, args, block)
+          when :super
+            args = node[1]
+            args = args[1] if args.type == :arg_paren
+            _, args, block = args
+            generic_super_instruct(args, block)
           when :while
             condition, body = node.children
             while_instruct(condition, body)
@@ -223,62 +214,15 @@ module Laser
             condition, body_stmt = node.children
             until_instruct(condition, [body_stmt])
           when :if
-            result = create_temporary
-            after = create_block
-            current = node
-            next_block = nil
-            
-            while current
-              if current.type == :else
-                true_block = next_block
-                body, next_block, else_block = current[1], after, nil
-              else
-                true_block = create_block
-                condition, body, else_block = current.children
-                next_block = create_block
-                
-                cond_result = value_walk condition
-                cond_instruct(cond_result, true_block, next_block)
-              end
-              
-              start_block true_block
-              body_result = walk_body body
-              copy_instruct(result, body_result)
-              uncond_instruct(after)
-              
-              start_block next_block
-              # check: is there no else at all, and we're about to break out of the loop?
-              if current.type != :else && else_block.nil?
-                copy_instruct(result, nil)
-                uncond_instruct(after)
-                start_block after
-              end
-              current = else_block
-            end
-            result
+            if_instruct(node)
           when :unless
-            result = create_temporary
-            after, true_block = create_blocks 2
             condition, body, else_block = node.children
-            next_block = else_block ? create_block : after
-            
-            cond_result = value_walk condition
-            cond_instruct(cond_result, next_block, true_block)
-            
-            start_block true_block
-            body_result = walk_body body
-            copy_instruct(result, body_result)
-            uncond_instruct(after)
-            
-            if else_block
-              start_block next_block
-              body_result = walk_body else_block[1]
-              copy_instruct result, body_result
-              uncond_instruct(after)
-            end
-            
-            start_block after
-            result
+            unless_instruct(condition, body, else_block)
+          when :if_mod
+            if_instruct(node, true)
+          when :unless_mod
+            condition, body = node.children
+            unless_instruct(condition, [body], nil)
           when :return0
             return0_instruct
             const_instruct(nil)
@@ -418,11 +362,98 @@ module Laser
           add_instruction(:assign, lhs, result)
           result
         end
+
+        #TODO(adgar): RAISES HERE!
+        def convert_type(value, klass, method)
+          result = create_temporary
+          if_klass_block, if_not_klass_block, after = create_blocks 3
+          
+          comparison_result = call_instruct(klass, :===, value)
+          cond_instruct(comparison_result, if_klass_block, if_not_klass_block)
+          
+          start_block if_not_klass_block
+          conversion_result = call_instruct(value, method)
+          copy_instruct result, conversion_result
+          uncond_instruct after
+          
+          start_block if_klass_block
+          copy_instruct(result, value)
+          uncond_instruct after
+          
+          start_block after
+          result
+        end
+
+        # Given a receiver, a method, a method_add_arg node, and a block value,
+        # issue a call instruction. This will involve computing the arguments,
+        # potentially issuing a vararg call (if splats are used). The return
+        # value is captured and returned to the caller of this method.
+        def generic_call_instruct(receiver, method, args, block)
+          if args[0] == :args_add_star
+            arg_array = compute_varargs(args)
+            call_vararg_instruct(receiver, method, arg_array, :block => block)
+          else
+            arg_temps = args.map { |arg| value_walk arg }
+            call_instruct(receiver, method, *arg_temps, :block => block)
+          end
+        end
         
-        # Adds a binary operation. Just calls the operator on the lhs
-        # with the rhs as a single argument.
-        def binary_instruct(lhs, op, rhs)
-          call_instruct(lhs, op, rhs)
+        # Given a receiver, a method, a method_add_arg node, and a block value,
+        # issue a call instruction. This will involve computing the arguments,
+        # potentially issuing a vararg call (if splats are used). The return
+        # value is not captured.
+        def generic_call_instruct_novalue(receiver, method, args, block)
+          if args[0] == :args_add_star
+            arg_array = compute_varargs(args)
+            call_vararg_instruct_novalue(receiver, method_name, arg_array, :block => block)
+          else
+            arg_temps = args.map { |arg| value_walk arg }
+            call_instruct_novalue(receiver, method_name, *arg_temps, :block => block)
+          end
+        end
+
+        # Given a receiver, a method, a method_add_arg node, and a block value,
+        # issue a super instruction. This will involve computing the arguments,
+        # potentially issuing a vararg super (if splats are used). The return
+        # value is captured and returned to the superer of this method.
+        def generic_super_instruct(args, block)
+          if args[0] == :args_add_star
+            arg_array = compute_varargs(args)
+            super_vararg_instruct(arg_array, :block => block)
+          else
+            arg_temps = args.map { |arg| value_walk arg }
+            super_instruct(*arg_temps, :block => block)
+          end
+        end
+
+        # Given a receiver, a method, a method_add_arg node, and a block value,
+        # issue a super instruction. This will involve computing the arguments,
+        # potentially issuing a vararg super (if splats are used). The return
+        # value is not captured.
+        def generic_super_instruct_novalue(args, block)
+          if args[0] == :args_add_star
+            arg_array = compute_varargs(args)
+            super_vararg_instruct_novalue(arg_array, :block => block)
+          else
+            arg_temps = args.map { |arg| value_walk arg }
+            super_instruct_novalue(*arg_temps, :block => block)
+          end
+        end
+
+        # Computes a splatting node (:args_add_star)
+        def compute_varargs(args)
+          result = create_temporary
+          prefix = if args[1][0] == :args_add_star
+                   then compute_varargs(args[1])
+                   else prefix = build_array_instruct(args[1].children)
+                   end
+          call_instruct_novalue(result, :concat, prefix)
+          starred = value_walk args[2]
+          starred_converted = convert_type(starred, ClassRegistry['Array'].binding, :to_a)
+          call_instruct_novalue(result, :concat, starred_converted)
+          suffix = build_array_instruct(args[3..-1])
+          call_instruct_novalue(result, :concat, suffix)
+          result
         end
 
         # Adds a no-value call instruction (it discards the return value).
@@ -437,6 +468,42 @@ module Laser
           result
         end
         
+        # Adds a no-value call instruction (it discards the return value).
+        def call_vararg_instruct_novalue(receiver, method, args, block)
+          add_instruction(:call_vararg, nil, receiver, method, args, block)
+        end
+        
+        # Adds a generic method call instruction.
+        def call_vararg_instruct(receiver, method, args, block)
+          result = create_temporary
+          add_instruction(:call_vararg, result, receiver, method, args, block)
+          result
+        end
+
+        # Adds a no-value super instruction (it discards the return value).
+        def super_instruct_novalue(*args)
+          add_instruction(:super, nil, *args)
+        end
+        
+        # Adds a generic method super instruction.
+        def super_instruct(*args)
+          result = create_temporary
+          add_instruction(:super, result, *args)
+          result
+        end
+        
+        # Adds a no-value super instruction (it discards the return value).
+        def super_vararg_instruct_novalue(args, block)
+          add_instruction(:super_vararg, nil, args, block)
+        end
+        
+        # Adds a generic method super instruction.
+        def super_vararg_instruct(args, block)
+          result = create_temporary
+          add_instruction(:super_vararg, result, args, block)
+          result
+        end
+
         # Looks up the value of a variable and assigns it to a new temporary
         def variable_instruct(var_ref)
           result = create_temporary
@@ -584,8 +651,8 @@ module Laser
           start_block(false_block)
           copy_instruct(result, lhs_result)
           uncond_instruct(after)
+
           start_block(after)
-          
           result
         end
         
@@ -602,6 +669,138 @@ module Laser
           uncond_instruct(after)
           start_block(after)
         end
+
+        # Performs a value-capturing if instruction, with unlimited else-ifs
+        # and a potential else block.
+        #
+        # condition: Sexp
+        # body: [Sexp]
+        # else_block: Sexp | NilClass
+        def if_instruct(node, is_mod=false)
+          result = create_temporary
+          after = create_block
+          current = node
+          next_block = nil
+          
+          while current
+            if current.type == :else
+              true_block = next_block
+              body, next_block, else_block = current[1], after, nil
+            else
+              true_block = create_block
+              condition, body, else_block = current.children
+              next_block = create_block
+              
+              cond_result = value_walk condition
+              cond_instruct(cond_result, true_block, next_block)
+            end
+            
+            start_block true_block
+            body = [body] if is_mod
+            body_result = walk_body body
+            copy_instruct(result, body_result)
+            uncond_instruct(after)
+            
+            start_block next_block
+            # check: is there no else at all, and we're about to break out of the loop?
+            if current.type != :else && else_block.nil?
+              copy_instruct(result, nil)
+              uncond_instruct(after)
+              start_block after
+            end
+            current = else_block
+          end
+          result
+        end
+        
+        # Performs an if instruction that ignores result values, with unlimited else-ifs
+        # and a potential else block.
+        #
+        # condition: Sexp
+        # body: [Sexp]
+        # else_block: Sexp | NilClass
+        def if_instruct_novalue(node, is_mod=false)
+          current = node
+          after = create_block
+          next_block = nil
+          
+          while current
+            if current.type == :else
+              true_block = next_block
+              body, next_block, else_block = current[1], after, nil
+            else
+              true_block = create_block
+              condition, body, else_block = current.children
+              next_block = else_block ? create_block : after
+              
+              cond_result = value_walk condition
+              cond_instruct(cond_result, true_block, next_block)
+            end
+            
+            start_block true_block
+            body = [body] if is_mod
+            body.each { |elt| novalue_walk(elt) }
+            uncond_instruct(after)
+            
+            start_block next_block
+            current = else_block
+          end
+        end
+        
+        # Performs a value-capturing unless instruction.
+        #
+        # condition: Sexp
+        # body: [Sexp]
+        # else_block: Sexp | NilClass
+        def unless_instruct(condition, body, else_block)
+          result = create_temporary
+          after, true_block, next_block = create_blocks 3
+
+          cond_result = value_walk condition
+          cond_instruct(cond_result, next_block, true_block)
+          
+          start_block true_block
+          body_result = walk_body body
+          copy_instruct(result, body_result)
+          uncond_instruct(after)
+
+          start_block next_block
+          body_result = if else_block
+                        then walk_body else_block[1]
+                        else const_instruct nil
+                        end
+          copy_instruct result, body_result
+          uncond_instruct(after)
+
+          start_block after
+          result
+        end
+        
+        # Performs an unless instruction, ignoring the potential that its value
+        # is saved.
+        #
+        # condition: Sexp
+        # body: [Sexp]
+        # else_block: Sexp | NilClass
+        def unless_instruct_novalue(condition, body, else_block)
+          after, true_block = create_blocks 2
+          next_block = else_block ? create_block : after
+          
+          cond_result = value_walk condition
+          cond_instruct(cond_result, next_block, true_block)
+          
+          start_block true_block
+          body.each { |elt| novalue_walk(elt) }
+          uncond_instruct(after)
+          
+          if else_block
+            start_block next_block
+            else_block[1].each { |elt| novalue_walk(elt) }
+            uncond_instruct(after)
+          end
+          
+          start_block after
+        end
         
         # Takes a set of either :@tstring_content or :string_embexpr nodes
         # and constructs a string out of them. (In other words, this computes
@@ -611,6 +810,16 @@ module Laser
           components.each do |node|
             as_string = value_walk node
             temp = call_instruct(temp, :concat, as_string)
+          end
+          temp
+        end
+        
+        # Takes a set of nodes, finds their values, and builds a temporary holding
+        # the array containing them.
+        def build_array_instruct(components)
+          temp = call_instruct(ClassRegistry['Array'].binding, :new)
+          components.each do |node|
+            call_instruct_novalue(temp, :concat, value_walk(node))
           end
           temp
         end
