@@ -21,7 +21,7 @@ module Laser
       # Replaces the general node visit method with one that assigns
       # the current scope to the visited node.
       def default_visit(node)
-        node.scope = @current_scope
+        node.scope ||= @current_scope
         visit_children(node)
       end
       
@@ -44,6 +44,21 @@ module Laser
             raise err
           end
         end
+      end
+      
+      # any block *at all*: check for arguments, create a new scope with those arguments.
+      add :method_add_block do |node, callnode, blocknode|
+        default_visit callnode
+        argnode, body = blocknode.children
+        arglist = argnode ? Signature.arg_list_for_arglist(argnode[1]) : []
+        
+        method_locals = Hash[arglist.map { |arg| [arg.name, arg] }]
+        new_scope = OpenScope.new(@current_scope, @current_scope.self_ptr, {}, method_locals)
+        with_scope new_scope do
+          attach_comment_annotations(arglist.map(&:name), node.comment)
+        end
+        visit_with_scope(argnode, new_scope) if argnode
+        visit_with_scope(body, new_scope)
       end
 
       # Visits a module node and either creates or re-enters the corresponding scope, annotating the
@@ -384,20 +399,7 @@ module Laser
         node.scope = @current_scope
         visit vars
         visit body
-      end
-      
-      # any block *at all*: check for arguments, create a new scope with those arguments.
-      add :method_add_block do |node, callnode, blocknode|
-        argnode, body = blocknode.children
-        arglist = argnode ? Signature.arg_list_for_arglist(argnode[1]) : []
-        
-        method_locals = Hash[arglist.map { |arg| [arg.name, arg] }]
-        new_scope = OpenScope.new(@current_scope, @current_scope.self_ptr, {}, method_locals)
-        with_scope new_scope do
-          attach_comment_annotations(arglist.map(&:name), node.comment)
-        end
-        visit_with_scope(argnode, new_scope) if argnode
-        visit_with_scope(body, new_scope)
+        visit iterable
       end
       
       def attach_comment_annotations(names, comment)

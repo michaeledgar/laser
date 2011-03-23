@@ -29,6 +29,7 @@ require 'laser/analysis/sexp_analysis'
 
 require 'laser/analysis/arity'
 require 'laser/analysis/argument_expansion'
+require 'laser/analysis/method_call'
 require 'laser/analysis/assignment_expression'
 require 'laser/analysis/bindings'
 require 'laser/analysis/signature'

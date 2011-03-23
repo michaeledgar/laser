@@ -29,39 +29,59 @@ module Laser
             node[1].each { |stmt| novalue_walk stmt }
           when :assign
             lhs, rhs = node.children
-            # TODO(adgar): :field!!!!!!
-            assign_instruct(lhs.binding, rhs)
+            case lhs.type
+            when :field
+              # In 1.9.2, receiver is evaulated first, then the arguments
+              receiver = value_walk lhs[1]
+              method_name = lhs[3].expanded_identifier
+              rhs_val = value_walk rhs
+              call_instruct_novalue(receiver, "#{method_name}=".to_sym, rhs_val, :block => false)
+            else
+              assign_instruct(lhs.binding, rhs)
+            end
           when :opassign
             lhs, op, rhs = node.children
             op = op.expanded_identifier[0..-2].to_sym
             if lhs.type == :field
-              # TODO(adgar): FIELD!!!
-            else
-              result = create_temporary
-              if op == :or || op == :"||"
-                result = or_instruct(lhs, rhs)
-              elsif op == :and || op == :"&&"
-                result = and_instruct(lhs, rhs)
+              receiver = value_walk lhs[1]
+              method_name = lhs[3].expanded_identifier
+              # Receiver is ONLY EVALUATED ONCE
+              # (on ruby 1.9.2p136 (2010-12-25 revision 30365) [x86_64-darwin10.6.0])
+              current_val = call_instruct(receiver, method_name.to_sym, :block => false)
+              if op == :"||"
+                false_block, after = create_blocks 2
+                cond_instruct(current_val, after, false_block)
+
+                start_block false_block
+                rhs_value = value_walk rhs
+                call_instruct_novalue(receiver, "#{method_name}=".to_sym, rhs_value, :block => false)
+                uncond_instruct after
+                
+                start_block after
+              elsif op == :"&&"
+                true_block, after = create_blocks 2
+                cond_instruct(current_val, true_block, after)
+
+                start_block true_block
+                rhs_value = value_walk rhs
+                call_instruct_novalue(receiver, "#{method_name}=".to_sym, rhs_value, :block => false)
+                uncond_instruct after
+                
+                start_block after
+              else
+                rhs_value = value_walk rhs
+                temp_result = call_instruct(current_val, op, rhs_value, :block => false)
+                call_instruct_novalue(receiver, "#{method_name}=".to_sym, temp_result, :block => false)
               end
-              # all other binary operators
-              lhs_result = value_walk lhs
-              rhs_result = value_walk rhs
-              result = call_instruct(lhs_result, op, rhs_result)
+            else
+              result = binary_instruct(lhs, op, rhs)
               copy_instruct(lhs.binding, result)
             end
           when :binary
             # If someone makes an overloaded operator that mutates something....
             # we have to run it (maybe), even if we hate them.
             lhs, op, rhs = node.children
-            if op == :or || op == :"||"
-              return or_instruct_novalue(lhs, rhs)
-            elsif op == :and || opr == :"&&"
-              return and_instruct_novalue(lhs, rhs)
-            end
-
-            lhs_result = value_walk lhs
-            rhs_result = value_walk rhs
-            call_instruct_novalue(lhs, op, rhs)
+            binary_instruct_novalue(lhs, op, rhs)
           when :unary
             op, receiver = node.children
             receiver = value_walk(receiver)
@@ -101,18 +121,42 @@ module Laser
               call_instruct_novalue(node.scope.lookup('self'), node.expanded_identifier)
             end
           when :command
-            method, (_, args, block) = node.children
-            generic_call_instruct_novalue(node.scope.lookup('self'),
-                method.expanded_identifier, args, block)
+            issue_call_novalue node
           when :command_call
-            receiver, _, method, (_, args, block) = node.children
-            generic_call_instruct_novalue(value_walk(receiver),
-                method.expanded_identifier, args, block)
+            issue_call_novalue node
+          when :method_add_arg
+            issue_call_novalue node
+          when :method_add_block
+            # need: the receiver, the method name, the arguments, and the block body
+            method_call = node.method_call
+            receiver = if method_call.receiver_node
+                       then value_walk method_call.receiver_node
+                       else self_instruct(node[2][2].scope)
+                       end
+            call_method_with_block_novalue(
+                receiver, method_call.method_name, method_call.arg_node,
+                Signature.arg_list_for_arglist(node[2][1][1]), node[2][2])
           when :super
             args = node[1]
             args = args[1] if args.type == :arg_paren
             _, args, block = args
             generic_super_instruct_novalue(args, block)
+          when :for
+            lhs, receiver, body = node.children
+            receiver_value = value_walk receiver
+            if Symbol === lhs[0]
+              # field or var_ref/const_ref
+              case lhs.type
+              when :field
+                # TODO(adgar): generate calls
+              else
+                # just get the value
+                arg_bindings = [lhs.binding]
+                call_method_with_block_novalue(receiver_value, :each, [], arg_bindings, body)
+              end
+            else
+              # TODO(adgar): multiple assign
+            end
           when :string_embexpr
             node[1].each { |elt| novalue_walk(elt) }
           when :string_literal
@@ -144,38 +188,73 @@ module Laser
             walk_body node[1]
           when :assign
             lhs, rhs = node.children
-            assign_instruct(lhs.binding, rhs)
-            # TODO(adgar): :field!!!!!
+            case lhs.type
+            when :field
+              # In 1.9.2, receiver is evaulated first, then the arguments
+              receiver = value_walk lhs[1]
+              method_name = lhs[3].expanded_identifier
+              rhs_val = value_walk rhs
+              call_instruct(receiver, "#{method_name}=".to_sym, rhs_val, :block => false)
+            else
+              assign_instruct(lhs.binding, rhs)
+            end
           when :opassign
             lhs, op, rhs = node.children
             op = op.expanded_identifier[0..-2].to_sym
             if lhs.type == :field
-              # TODO(adgar): FIELD!!!
-            else
-              result = create_temporary
-              if op == :or || op == :"||"
-                result = or_instruct(lhs, rhs)
-              elsif op == :and || op == :"&&"
-                result = and_instruct(lhs, rhs)
+              receiver = value_walk lhs[1]
+              method_name = lhs[3].expanded_identifier
+              # Receiver is ONLY EVALUATED ONCE
+              # (on ruby 1.9.2p136 (2010-12-25 revision 30365) [x86_64-darwin10.6.0])
+              current_val = call_instruct(receiver, method_name.to_sym, :block => false)
+              if op == :"||"
+                result = create_temporary
+                true_block, false_block, after = create_blocks 3
+                cond_instruct(current_val, true_block, false_block)
+
+                start_block true_block
+                copy_instruct result, current_val
+                uncond_instruct after
+
+                start_block false_block
+                rhs_value = value_walk rhs
+                call_instruct_novalue(receiver, "#{method_name}=".to_sym, rhs_value, :block => false)
+                copy_instruct result, rhs_value
+                uncond_instruct after
+                
+                start_block after
+                result
+              elsif op == :"&&"
+                result = create_temporary
+                true_block, false_block, after = create_blocks 3
+                cond_instruct(current_val, true_block, false_block)
+
+                start_block true_block
+                rhs_value = value_walk rhs
+                call_instruct_novalue(receiver, "#{method_name}=".to_sym, rhs_value, :block => false)
+                copy_instruct result, rhs_value
+                uncond_instruct after
+
+                start_block false_block
+                copy_instruct result, current_val
+                uncond_instruct after
+                
+                start_block after
+                result
+              else
+                rhs_value = value_walk rhs
+                temp_result = call_instruct(current_val, op, rhs_value, :block => false)
+                call_instruct_novalue(receiver, "#{method_name}=".to_sym, temp_result, :block => false)
+                temp_result
               end
-              # all other binary operators
-              lhs_result = value_walk lhs
-              rhs_result = value_walk rhs
-              result = call_instruct(lhs_result, op, rhs_result)
+            else
+              result = binary_instruct(lhs, op, rhs)
               copy_instruct(lhs.binding, result)
               result
             end
           when :binary
             lhs, op, rhs = node.children
-            if op == :or || op == :"||"
-              return or_instruct(lhs, rhs)
-            elsif op == :and || op == :"&&"
-              return and_instruct(lhs, rhs)
-            end
-            # all other binary operators
-            lhs_result = value_walk lhs
-            rhs_result = value_walk rhs
-            call_instruct(lhs_result, op, rhs_result)
+            binary_instruct(lhs, op, rhs)
           when :unary
             op, receiver = node.children
             receiver = value_walk(receiver)
@@ -186,21 +265,84 @@ module Laser
             if node.binding
               variable_instruct(node)
             else
-              call_instruct(node.scope.lookup('self'), node.expanded_identifier)
+              issue_call node
             end
+          when :call
+            issue_call node
           when :command
-            method, (_, args, block) = node.children
-            generic_call_instruct(node.scope.lookup('self'),
-                method.expanded_identifier, args, block)
+            issue_call node
           when :command_call
-            receiver, _, method, (_, args, block) = node.children
-            generic_call_instruct(value_walk(receiver),
-                method.expanded_identifier, args, block)
+            issue_call node
+          when :method_add_arg
+            issue_call node
+          when :method_add_block
+            # need: the receiver, the method name, the arguments, and the block body
+            method_call = node.method_call
+            receiver = if method_call.receiver_node
+                       then value_walk method_call.receiver_node
+                       else self_instruct(node[2][2].scope)
+                       end
+            arg_node = method_call.arg_node
+            arg_node = arg_node[1] if arg_node.type == :arg_paren
+            case node[1].type
+            when :super
+              arg_node = arg_node[1] if arg_node.type == :args_add_block
+              call_method_with_block(
+                  receiver, method_call.method_name, arg_node,
+                  Signature.arg_list_for_arglist(node[2][1][1]), node[2][2])
+            when :zsuper
+              
+            else
+              call_method_with_block(
+                  receiver, method_call.method_name, arg_node,
+                  Signature.arg_list_for_arglist(node[2][1][1]), node[2][2])
+            end
           when :super
             args = node[1]
             args = args[1] if args.type == :arg_paren
             _, args, block = args
             generic_super_instruct(args, block)
+          when :zsuper
+            # we actually walk the *formal* arguments now!
+            # implicit super args must be re-calculated at point of invocation
+            args_to_walk = node.scope.method.signatures.first.arguments
+            has_star = args_to_walk.any? { |arg| arg.kind == :rest }
+            if has_star
+              index_of_star = args_to_walk.index { |arg| arg.kind == :rest }
+              # splatting vararg call. assholes
+              result = call_instruct(ClassRegistry['Array'].binding, :new)
+              args_to_walk[0...index_of_star].each do |arg|
+                call_instruct_novalue(result, :<<, variable_instruct(arg), :block => false)
+              end
+              starred = variable_instruct args_to_walk[index_of_star]
+              starred_converted = convert_type(starred, ClassRegistry['Array'].binding, :to_a)
+              call_instruct_novalue(result, :concat, starred_converted)
+              args_to_walk[index_of_star+1 .. -1].each do |arg|
+                call_instruct_novalue(result, :<<, variable_instruct(arg), :block => false)
+              end
+              super_vararg_instruct(result, :block => false)
+            else
+              # simple call, known arity. Use actual argument bindings!
+              arg_temps = args_to_walk.map { |arg| variable_instruct arg }
+              # TODO(adgar): blocks in args & style
+              super_instruct(*arg_temps, :block => false)
+            end
+          when :for
+            lhs, receiver, body = node.children
+            receiver_value = value_walk receiver
+            if Symbol === lhs[0]
+              # field or var_ref/const_ref
+              case lhs.type
+              when :field
+                # call
+              else
+                # just get the value
+                arg_bindings = [lhs.binding]
+                call_method_with_block(receiver_value, :each, [], arg_bindings, body)
+              end
+            else
+              # TODO(adgar): multiple assign
+            end
           when :while
             condition, body = node.children
             while_instruct(condition, body)
@@ -304,6 +446,45 @@ module Laser
           start_block target
         end
         
+        def call_method_with_block_novalue(receiver, method, args, block_arg_bindings, block_sexp)
+          after = create_block
+          body_value, body_block = call_block_instruct block_arg_bindings, block_sexp
+          invoke_call_with_block_novalue receiver, method, args, body_block, after
+          walk_block_body body_block, block_sexp, after
+          start_block after
+        end
+
+        def call_method_with_block(receiver, method, args, block_arg_bindings, block_sexp)
+          after = create_block
+          body_value, body_block = call_block_instruct block_arg_bindings, block_sexp
+          result = invoke_call_with_block receiver, method, args, body_block, after
+          walk_block_body body_block, block_sexp, after
+          start_block after
+          result
+        end
+        
+        def invoke_call_with_block(recv, method, args, body_block, after)
+          result = generic_call_instruct recv, method, args, body_block
+          @graph.add_edge(@current_block, body_block)
+          @graph.add_edge(@current_block, after)
+          result
+        end
+        
+        def invoke_call_with_block_novalue(recv, method, args, body_block, after)
+          generic_call_instruct_novalue recv, method, args, body_block
+          @graph.add_edge(@current_block, body_block)
+          @graph.add_edge(@current_block, after)
+        end
+        
+        # Walks the block with it's new next/etc. boundaries set based on the block's
+        # scope
+        def walk_block_body(body_block, body, after)
+          start_block body_block
+          body_result = walk_body body
+          add_instruction(:resume, body_result)
+          cond_instruct(nil, body_block, after)
+        end
+        
         # Creates an unconditional branch from the current block, based on the given
         # value, to either the true block or the false block.
         def cond_instruct(val, true_block, false_block)
@@ -351,6 +532,12 @@ module Laser
           result
         end
         
+        def self_instruct(scope)
+          result = create_temporary
+          add_instruction(:assign, result, scope.lookup('self'))
+          result
+        end
+        
         # Copies one register to another.
         def copy_instruct(lhs, rhs)
           add_instruction(:assign, lhs, rhs)
@@ -384,11 +571,47 @@ module Laser
           result
         end
 
+        # Creates a block for a method send operation. Requires a binding list
+        # and a sexp for the body of the block.
+        #
+        # args: [Argument]
+        # body: Sexp
+        # returns: (TemporaryBinding, BasicBlock)
+        def call_block_instruct(args, body)
+          result = create_temporary
+          body_block = create_block
+          add_instruction :lambda, result, args, body_block.name
+          [result, body_block]
+        end
+        
+        def issue_call(node)
+          method_call = node.method_call
+          receiver = receiver_instruct node
+          generic_call_instruct(receiver,
+              method_call.method_name, method_call.arg_node, method_call.arguments.block_arg)
+        end
+        
+        def issue_call_novalue(node)
+          method_call = node.method_call
+          receiver = receiver_instruct node
+          generic_call_instruct_novalue(receiver,
+              method_call.method_name, method_call.arg_node, method_call.arguments.block_arg)
+        end
+        
+        def receiver_instruct(node)
+          method_call = node.method_call
+          if method_call.receiver_node
+          then value_walk method_call.receiver_node
+          else self_instruct(node.scope)
+          end
+        end
+        
         # Given a receiver, a method, a method_add_arg node, and a block value,
         # issue a call instruction. This will involve computing the arguments,
         # potentially issuing a vararg call (if splats are used). The return
         # value is captured and returned to the caller of this method.
         def generic_call_instruct(receiver, method, args, block)
+          args = [] if args.nil?
           if args[0] == :args_add_star
             arg_array = compute_varargs(args)
             call_vararg_instruct(receiver, method, arg_array, :block => block)
@@ -403,12 +626,13 @@ module Laser
         # potentially issuing a vararg call (if splats are used). The return
         # value is not captured.
         def generic_call_instruct_novalue(receiver, method, args, block)
+          args = [] if args.nil?
           if args[0] == :args_add_star
             arg_array = compute_varargs(args)
-            call_vararg_instruct_novalue(receiver, method_name, arg_array, :block => block)
+            call_vararg_instruct_novalue(receiver, method, arg_array, :block => block)
           else
             arg_temps = args.map { |arg| value_walk arg }
-            call_instruct_novalue(receiver, method_name, *arg_temps, :block => block)
+            call_instruct_novalue(receiver, method, *arg_temps, :block => block)
           end
         end
 
@@ -443,16 +667,20 @@ module Laser
         # Computes a splatting node (:args_add_star)
         def compute_varargs(args)
           result = create_temporary
-          prefix = if args[1][0] == :args_add_star
-                   then compute_varargs(args[1])
-                   else prefix = build_array_instruct(args[1].children)
-                   end
-          call_instruct_novalue(result, :concat, prefix)
+          if args[1][0] == :args_add_star || args[1].children.any?
+            prefix = if args[1][0] == :args_add_star
+                     then compute_varargs(args[1])
+                     else prefix = build_array_instruct(args[1].children)
+                     end
+            call_instruct_novalue(result, :concat, prefix)
+          end
           starred = value_walk args[2]
           starred_converted = convert_type(starred, ClassRegistry['Array'].binding, :to_a)
           call_instruct_novalue(result, :concat, starred_converted)
-          suffix = build_array_instruct(args[3..-1])
-          call_instruct_novalue(result, :concat, suffix)
+          if args[3..-1].any?
+            suffix = build_array_instruct(args[3..-1])
+            call_instruct_novalue(result, :concat, suffix)
+          end
           result
         end
 
@@ -507,8 +735,33 @@ module Laser
         # Looks up the value of a variable and assigns it to a new temporary
         def variable_instruct(var_ref)
           result = create_temporary
-          add_instruction(:assign, result, var_ref.binding)
+          var_ref = var_ref.binding unless Bindings::GenericBinding === var_ref
+          add_instruction(:assign, result, var_ref)
           result
+        end
+        
+        def binary_instruct_novalue(lhs, op, rhs)
+          if op == :or || op == :"||"
+            return or_instruct_novalue(lhs, rhs)
+          elsif op == :and || op == :"&&"
+            return and_instruct_novalue(lhs, rhs)
+          end
+
+          lhs_result = value_walk lhs
+          rhs_result = value_walk rhs
+          call_instruct_novalue(lhs, op, rhs)
+        end
+        
+        def binary_instruct(lhs, op, rhs)
+          if op == :or || op == :"||"
+            return or_instruct(lhs, rhs)
+          elsif op == :and || op == :"&&"
+            return and_instruct(lhs, rhs)
+          end
+
+          lhs_result = value_walk lhs
+          rhs_result = value_walk rhs
+          call_instruct(lhs, op, rhs)
         end
         
         # Runs the list of operations in body while the condition is true.
@@ -659,7 +912,7 @@ module Laser
         # Performs an AND operation, with short circuiting, that ignores
         # whatever return value results.
         def and_instruct_novalue(lhs, rhs)
-          false_block, after = create_blocks 2
+          true_block, after = create_blocks 2
 
           lhs_result = value_walk lhs
           cond_instruct(lhs_result, true_block, after)
@@ -819,7 +1072,7 @@ module Laser
         def build_array_instruct(components)
           temp = call_instruct(ClassRegistry['Array'].binding, :new)
           components.each do |node|
-            call_instruct_novalue(temp, :concat, value_walk(node))
+            call_instruct_novalue(temp, :<<, value_walk(node))
           end
           temp
         end

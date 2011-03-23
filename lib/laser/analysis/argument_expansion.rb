@@ -47,6 +47,12 @@ module Laser
         node_constant_values(node)
       end
 
+      # Returns the block argument (&blk) for the argument expansion.
+      def block_arg
+        return false if node.nil?
+        block_arg_for_node node
+      end
+
       private
 
       # Finds the arity of a given argument node.
@@ -80,6 +86,14 @@ module Laser
           size..size
         else
           0..Float::INFINITY
+        end
+      end
+      
+      # Returns the node representing the argument's block argument.
+      def block_arg_for_node(node)
+        case node.type
+        when :args_add_block then node[2].binding
+        when :arg_paren then block_arg_for_node node[1]
         end
       end
       

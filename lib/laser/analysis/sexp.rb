@@ -132,9 +132,22 @@ module Laser
       end
       
       def is_method_call?
-        [:command, :method_add_arg, :var_ref, :call, :command_call].include?(type) &&
-            !(type == :var_ref && (binding || self[1].type == :@kw)) &&
-            !(type == :call && parent.type == :method_add_arg)
+        [:command, :method_add_arg, :method_add_block, :var_ref, :call,
+         :fcall, :command_call, :binary, :unary, :super, :zsuper].include?(type) &&
+            !(type == :var_ref && (binding || self[1].type == :@kw))
+      end
+      
+      # Returns the MethodCall wrapping up all the method call information about this
+      # node.
+      #
+      # raise: TypeError
+      # return: MethodCall
+      def method_call
+        unless is_method_call?
+          raise TypeError.new("Only method call nodes define #method_call. "+
+                              "This node is of type #{type}.")
+        end
+        MethodCall.new(self)
       end
     end
   end
