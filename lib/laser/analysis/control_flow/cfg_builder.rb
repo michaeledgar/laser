@@ -283,7 +283,7 @@ module Laser
                        else self_instruct(node[2][2].scope)
                        end
             arg_node = method_call.arg_node
-            arg_node = arg_node[1] if arg_node.type == :arg_paren
+            arg_node = arg_node[1] if arg_node && arg_node.type == :arg_paren
             case node[1].type
             when :super
               arg_node = arg_node[1] if arg_node.type == :args_add_block
@@ -291,7 +291,8 @@ module Laser
                   receiver, method_call.method_name, arg_node,
                   Signature.arg_list_for_arglist(node[2][1][1]), node[2][2])
             when :zsuper
-              
+              call_zsuper_with_block(node[1], 
+                  Signature.arg_list_for_arglist(node[2][1][1]), node[2][2])
             else
               call_method_with_block(
                   receiver, method_call.method_name, arg_node,
@@ -305,27 +306,12 @@ module Laser
           when :zsuper
             # we actually walk the *formal* arguments now!
             # implicit super args must be re-calculated at point of invocation
-            args_to_walk = node.scope.method.signatures.first.arguments
-            has_star = args_to_walk.any? { |arg| arg.kind == :rest }
-            if has_star
-              index_of_star = args_to_walk.index { |arg| arg.kind == :rest }
-              # splatting vararg call. assholes
-              result = call_instruct(ClassRegistry['Array'].binding, :new)
-              args_to_walk[0...index_of_star].each do |arg|
-                call_instruct_novalue(result, :<<, variable_instruct(arg), :block => false)
-              end
-              starred = variable_instruct args_to_walk[index_of_star]
-              starred_converted = convert_type(starred, ClassRegistry['Array'].binding, :to_a)
-              call_instruct_novalue(result, :concat, starred_converted)
-              args_to_walk[index_of_star+1 .. -1].each do |arg|
-                call_instruct_novalue(result, :<<, variable_instruct(arg), :block => false)
-              end
+            result, is_vararg = compute_zsuper_arguments(node)
+            # TODO(adgar): blocks in args & style
+            if is_vararg
               super_vararg_instruct(result, :block => false)
             else
-              # simple call, known arity. Use actual argument bindings!
-              arg_temps = args_to_walk.map { |arg| variable_instruct arg }
-              # TODO(adgar): blocks in args & style
-              super_instruct(*arg_temps, :block => false)
+              super_instruct(*result, :block => false)
             end
           when :for
             lhs, receiver, body = node.children
@@ -446,6 +432,27 @@ module Laser
           start_block target
         end
         
+        # TODO(adgar): Cleanup on Aisle 6.
+
+        def call_zsuper_with_block_novalue(node, block_arg_bindings, block_sexp)
+          after = create_block
+          body_value, body_block = call_block_instruct block_arg_bindings, block_sexp
+          invoke_super_with_block_novalue node, body_block, after
+          walk_block_body body_block, block_sexp, after
+          start_block after
+          result
+        end
+
+        def call_zsuper_with_block(node, block_arg_bindings, block_sexp)
+          after = create_block
+          body_value, body_block = call_block_instruct block_arg_bindings, block_sexp
+          result = invoke_super_with_block node, body_block, after
+          walk_block_body body_block, block_sexp, after
+          start_block after
+          result
+        end
+        
+
         def call_method_with_block_novalue(receiver, method, args, block_arg_bindings, block_sexp)
           after = create_block
           body_value, body_block = call_block_instruct block_arg_bindings, block_sexp
@@ -463,15 +470,40 @@ module Laser
           result
         end
         
+        def invoke_super_with_block(node, body_block, after)
+          args, is_vararg = compute_zsuper_arguments(node)
+          # TODO(adgar): blocks in args & style
+          if is_vararg
+            result = super_vararg_instruct(args, :block => body_block.name)
+          else
+            result = super_instruct(*args, :block => body_block.name)
+          end
+          @graph.add_edge(@current_block, body_block)
+          @graph.add_edge(@current_block, after)
+          result
+        end
+        
+        def invoke_super_with_block_novalue(args, body_block, after)
+          args, is_vararg = compute_zsuper_arguments(node)
+          # TODO(adgar): blocks in args & style
+          if is_vararg
+            super_vararg_instruct_novalue(args, :block => body_block.name)
+          else
+            super_instruct_novalue(*args, :block => body_block.name)
+          end
+          @graph.add_edge(@current_block, body_block)
+          @graph.add_edge(@current_block, after)
+        end
+
         def invoke_call_with_block(recv, method, args, body_block, after)
-          result = generic_call_instruct recv, method, args, body_block
+          result = generic_call_instruct recv, method, args, body_block.name
           @graph.add_edge(@current_block, body_block)
           @graph.add_edge(@current_block, after)
           result
         end
         
         def invoke_call_with_block_novalue(recv, method, args, body_block, after)
-          generic_call_instruct_novalue recv, method, args, body_block
+          generic_call_instruct_novalue recv, method, args, body_block.name
           @graph.add_edge(@current_block, body_block)
           @graph.add_edge(@current_block, after)
         end
@@ -661,6 +693,34 @@ module Laser
           else
             arg_temps = args.map { |arg| value_walk arg }
             super_instruct_novalue(*arg_temps, :block => block)
+          end
+        end
+
+        # Computes the arguments to a zsuper call at the given node. Also returns
+        # whether the resulting argument expansion is of variable arity.
+        # This is different from normal splatting because we are computing based
+        # upon the argument list of the method, not a normal arg_ node.
+        #
+        # returns: (Bindings::GenericBinding | [Bindings::GenericBinding], Boolean)
+        def compute_zsuper_arguments(node)
+          args_to_walk = node.scope.method.signatures.first.arguments
+          is_vararg = args_to_walk.any? { |arg| arg.kind == :rest }
+          if is_vararg
+            index_of_star = args_to_walk.index { |arg| arg.kind == :rest }
+            # splatting vararg call. assholes
+            result = call_instruct(ClassRegistry['Array'].binding, :new)
+            args_to_walk[0...index_of_star].each do |arg|
+              call_instruct_novalue(result, :<<, variable_instruct(arg), :block => false)
+            end
+            starred = variable_instruct args_to_walk[index_of_star]
+            starred_converted = convert_type(starred, ClassRegistry['Array'].binding, :to_a)
+            call_instruct_novalue(result, :concat, starred_converted)
+            args_to_walk[index_of_star+1 .. -1].each do |arg|
+              call_instruct_novalue(result, :<<, variable_instruct(arg), :block => false)
+            end
+            [result, is_vararg]
+          else
+            [args_to_walk.map { |arg| variable_instruct arg }, is_vararg]
           end
         end
 

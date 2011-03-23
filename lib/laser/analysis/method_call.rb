@@ -79,7 +79,7 @@ module Laser
         when :var_ref then args = nil
         when :command_call then args = node[4][1]
         when :super then node[1]
-        when :zsuper then node.scope.method.signatures.first.arguments
+        when :zsuper then nil
         end
       end
     end
