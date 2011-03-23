@@ -434,53 +434,51 @@ module Laser
         
         # TODO(adgar): Cleanup on Aisle 6.
 
-        def call_zsuper_with_block_novalue(node, block_arg_bindings, block_sexp)
+        # Yields with an explicit block being wrapped around the execution of the
+        # user's block. The basic block object created is provided as a parameter to the
+        # caller's operations which have the possibility of invoking the block.
+        def call_with_explicit_block(block_arg_bindings, block_sexp)
           after = create_block
           body_value, body_block = call_block_instruct block_arg_bindings, block_sexp
-          invoke_super_with_block_novalue node, body_block, after
+          result = yield(body_block, after)
+          block_funcall_branch_instruct(body_block, after)
           walk_block_body body_block, block_sexp, after
           start_block after
           result
+        end
+
+        def call_zsuper_with_block_novalue(node, block_arg_bindings, block_sexp)
+          call_with_explicit_block(block_arg_bindings, block_sexp) do |body_block, after|
+            invoke_super_with_block_novalue node, body_block, after
+          end
         end
 
         def call_zsuper_with_block(node, block_arg_bindings, block_sexp)
-          after = create_block
-          body_value, body_block = call_block_instruct block_arg_bindings, block_sexp
-          result = invoke_super_with_block node, body_block, after
-          walk_block_body body_block, block_sexp, after
-          start_block after
-          result
+          call_with_explicit_block(block_arg_bindings, block_sexp) do |body_block, after|
+            invoke_super_with_block node, body_block, after
+          end
         end
         
-
         def call_method_with_block_novalue(receiver, method, args, block_arg_bindings, block_sexp)
-          after = create_block
-          body_value, body_block = call_block_instruct block_arg_bindings, block_sexp
-          invoke_call_with_block_novalue receiver, method, args, body_block, after
-          walk_block_body body_block, block_sexp, after
-          start_block after
+          call_with_explicit_block(block_arg_bindings, block_sexp) do |body_block, after|
+            generic_call_instruct_novalue receiver, method, args, body_block.name, after
+          end
         end
 
         def call_method_with_block(receiver, method, args, block_arg_bindings, block_sexp)
-          after = create_block
-          body_value, body_block = call_block_instruct block_arg_bindings, block_sexp
-          result = invoke_call_with_block receiver, method, args, body_block, after
-          walk_block_body body_block, block_sexp, after
-          start_block after
-          result
+          call_with_explicit_block(block_arg_bindings, block_sexp) do |body_block, after|
+            generic_call_instruct receiver, method, args, body_block.name, after
+          end
         end
         
         def invoke_super_with_block(node, body_block, after)
           args, is_vararg = compute_zsuper_arguments(node)
           # TODO(adgar): blocks in args & style
           if is_vararg
-            result = super_vararg_instruct(args, :block => body_block.name)
+            super_vararg_instruct(args, :block => body_block.name)
           else
-            result = super_instruct(*args, :block => body_block.name)
+            super_instruct(*args, :block => body_block.name)
           end
-          @graph.add_edge(@current_block, body_block)
-          @graph.add_edge(@current_block, after)
-          result
         end
         
         def invoke_super_with_block_novalue(args, body_block, after)
@@ -491,21 +489,13 @@ module Laser
           else
             super_instruct_novalue(*args, :block => body_block.name)
           end
-          @graph.add_edge(@current_block, body_block)
-          @graph.add_edge(@current_block, after)
-        end
-
-        def invoke_call_with_block(recv, method, args, body_block, after)
-          result = generic_call_instruct recv, method, args, body_block.name
-          @graph.add_edge(@current_block, body_block)
-          @graph.add_edge(@current_block, after)
-          result
         end
         
-        def invoke_call_with_block_novalue(recv, method, args, body_block, after)
-          generic_call_instruct_novalue recv, method, args, body_block.name
+        # Performs the branches either into the block or around it. Later, this
+        # method can provide logic for skipping provably skippable edges.
+        def block_funcall_branch_instruct(body_block, after_block)
           @graph.add_edge(@current_block, body_block)
-          @graph.add_edge(@current_block, after)
+          @graph.add_edge(@current_block, after_block)
         end
         
         # Walks the block with it's new next/etc. boundaries set based on the block's
