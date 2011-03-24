@@ -14,6 +14,8 @@ module Laser
         
         def build
           initialize_graph
+          @current_return = @exit
+          p current_return.name
           result = value_walk @sexp
           return_uncond_jump_instruct result
           @graph
@@ -27,15 +29,29 @@ module Laser
           when :void_stmt
             # Do nothing.
           when :bodystmt
+            result = create_temporary
             # TODO(adgar): RESCUE, ELSE, ENSURE
             body, rescue_body, else_body, ensure_body = node.children
+            body_block = create_block
+            uncond_instruct body_block
             
-            walk_body_novalue body
             if ensure_body
+              with_jumps_redirected(:break => ensure_body[1], :redo => ensure_body[1], :next => ensure_body[1],
+                                    :return => ensure_body[1]) do
+                start_block body_block
+                body_result = walk_body body
+              end
+              
               ensure_block, after = create_blocks 2
               uncond_instruct ensure_block
-              walk_body_novalue(ensure_body)
+              walk_body_novalue(ensure_body[1])
               uncond_instruct after
+              result
+            else
+              start_block body_block
+              body_result = walk_body body
+              copy_instruct(result, body_result)
+              result
             end
           when :begin
             novalue_walk node[1]
@@ -242,16 +258,28 @@ module Laser
             result = create_temporary
             # TODO(adgar): RESCUE, ELSE, ENSURE
             body, rescue_body, else_body, ensure_body = node.children
+            body_block = create_block
+            uncond_instruct body_block
             
-            body_result = walk_body body
-            copy_instruct(result, body_result)
             if ensure_body
+              start_block body_block
+              with_jumps_redirected(:break => ensure_body[1], :redo => ensure_body[1], :next => ensure_body[1],
+                                    :return => ensure_body[1]) do
+                start_block body_block
+                body_result = walk_body body
+              end
+              
               ensure_block, after = create_blocks 2
               uncond_instruct ensure_block
               walk_body_novalue(ensure_body[1])
               uncond_instruct after
+              result
+            else
+              start_block body_block
+              body_result = walk_body body
+              copy_instruct(result, body_result)
+              result
             end
-            result
           when :begin
             value_walk node[1]
           when :paren
@@ -494,23 +522,43 @@ module Laser
           @enter = create_block('Enter')
           @exit = create_block('Exit')
           @temporary_counter = 0
-          @current_break = @current_next = @current_redo = nil
-          
+          @current_break = @current_next = @current_redo = @current_return = nil
+          p current_return
           start_block @enter
+        end
+        
+        # Redirects break, next, redo, and return to the given Sexp for each
+        # target to redirect.
+        def with_jumps_redirected(targets={})
+          p targets
+          p({:break => current_break, :next => current_next, :redo => current_redo, :return => current_return })
+          new_targets = targets.merge(targets) do |key, redirect|
+            new_block = create_block
+            start_block new_block
+            walk_body_novalue redirect
+            uncond_instruct send("current_#{key}")
+            new_block
+          end
+          p new_targets
+          with_jump_targets(new_targets) do
+            yield
+          end
         end
         
         # Yields with jump targets specified. Since a number of jump targets
         # require temporary specification in a stack-like fashion during CFG construction,
         # I use the call stack to simulate the explicit one suggested by Morgan.
         def with_jump_targets(targets={})
-          old_break, old_next, old_redo = @current_break, @current_next, @current_redo
-          
+          old_break, old_next, old_redo, old_return =
+              @current_break, @current_next, @current_redo, @current_return
           @current_break = targets[:break] if targets.has_key?(:break)
           @current_next = targets[:next] if targets.has_key?(:next)
           @current_redo = targets[:redo] if targets.has_key?(:redo)
+          @current_return = targets[:return] if targets.has_key?(:return)
           yield
         ensure
-          @current_break, @current_next, @current_redo = old_break, old_next, old_redo
+          @current_break, @current_next, @current_redo, @current_return =
+              old_break, old_next, old_redo, old_return
         end
         
         # Walks over a series of statements, ignoring the return value of
@@ -648,6 +696,8 @@ module Laser
           start_block create_block
           result
         end
+        
+        attr_reader :current_break, :current_next, :current_redo, :current_return
         
         # TODO(adgar): ARGUMENTS
         def break_instruct(args)
