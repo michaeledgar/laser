@@ -14,7 +14,8 @@ module Laser
         
         def build
           initialize_graph
-          value_walk @sexp
+          result = value_walk @sexp
+          return_uncond_jump_instruct result
           @graph
         end
         
@@ -25,6 +26,19 @@ module Laser
           case node.type
           when :void_stmt
             # Do nothing.
+          when :bodystmt
+            # TODO(adgar): RESCUE, ELSE, ENSURE
+            body, rescue_body, else_body, ensure_body = node.children
+            
+            walk_body_novalue body
+            if ensure_body
+              ensure_block, after = create_blocks 2
+              uncond_instruct ensure_block
+              walk_body_novalue(ensure_body)
+              uncond_instruct after
+            end
+          when :begin
+            novalue_walk node[1]
           when :paren
             node[1].each { |stmt| novalue_walk stmt }
           when :assign
@@ -108,6 +122,34 @@ module Laser
           when :unless_mod
             condition, body = node.children
             unless_instruct_novalue(condition, [body], nil)
+          when :case
+            after = create_block
+            argument, body = node.children
+            argument_value = value_walk argument
+            
+            while body && body.type == :when
+              when_opts, when_body, body = body.children
+              when_body_block = create_block
+              when_opts.each do |opt|
+                after_fail = create_block
+                condition_result = call_instruct(value_walk(opt), :===, argument_value)
+                cond_instruct(condition_result, when_body_block, after_fail)
+                start_block after_fail
+              end
+              all_fail = @current_block
+
+              start_block when_body_block
+              walk_body_novalue when_body
+              uncond_instruct after
+              
+              start_block all_fail
+            end
+            if body.type == :else
+              walk_body_novalue body[1]
+            end
+            uncond_instruct after
+          when :return
+            return_instruct node
           when :return0
             return0_instruct
           when :break
@@ -133,14 +175,30 @@ module Laser
                        then value_walk method_call.receiver_node
                        else self_instruct(node[2][2].scope)
                        end
-            call_method_with_block_novalue(
-                receiver, method_call.method_name, method_call.arg_node,
-                Signature.arg_list_for_arglist(node[2][1][1]), node[2][2])
+            arg_node = method_call.arg_node
+            arg_node = arg_node[1] if arg_node && arg_node.type == :arg_paren
+            block_arg_bindings = Signature.arg_list_for_arglist(node[2][1][1])
+            body_sexp = node[2][2]
+            case node[1].type
+            when :super
+              arg_node = arg_node[1] if arg_node.type == :args_add_block
+              call_method_with_block_novalue(
+                  receiver, method_call.method_name, arg_node,
+                  block_arg_bindings, body_sexp)
+            when :zsuper
+              call_zsuper_with_block_novalue(node[1], block_arg_bindings, body_sexp)
+            else
+              call_method_with_block_novalue(
+                  receiver, method_call.method_name, arg_node, block_arg_bindings, body_sexp)
+            end
           when :super
             args = node[1]
             args = args[1] if args.type == :arg_paren
             _, args, block = args
             generic_super_instruct_novalue(args, block)
+          when :zsuper
+            # TODO(adgar): blocks in args & style
+            invoke_super_with_block_novalue(*compute_zsuper_arguments(node), false)
           when :for
             lhs, receiver, body = node.children
             receiver_value = value_walk receiver
@@ -159,6 +217,9 @@ module Laser
             end
           when :string_embexpr
             node[1].each { |elt| novalue_walk(elt) }
+          when :@CHAR, :@tstring_content, :@int, :@float, :@regexp_end, :symbol,
+               :@label, :symbol_literal
+            # do nothing
           when :string_literal
             content_nodes = node[1].children
             content_nodes.each do |node|
@@ -178,12 +239,21 @@ module Laser
         def value_walk(node)
           case node.type
           when :bodystmt
+            result = create_temporary
             # TODO(adgar): RESCUE, ELSE, ENSURE
             body, rescue_body, else_body, ensure_body = node.children
-            body[0..-2].each do |elt|
-              novalue_walk(elt)
+            
+            body_result = walk_body body
+            copy_instruct(result, body_result)
+            if ensure_body
+              ensure_block, after = create_blocks 2
+              uncond_instruct ensure_block
+              walk_body_novalue(ensure_body[1])
+              uncond_instruct after
             end
-            return_instruct(body.last)
+            result
+          when :begin
+            value_walk node[1]
           when :paren
             walk_body node[1]
           when :assign
@@ -263,9 +333,8 @@ module Laser
             variable_instruct(node)
           when :var_ref
             if node.binding
-              variable_instruct(node)
-            else
-              issue_call node
+            then variable_instruct(node)
+            else issue_call node
             end
           when :call
             issue_call node
@@ -304,15 +373,8 @@ module Laser
             _, args, block = args
             generic_super_instruct(args, block)
           when :zsuper
-            # we actually walk the *formal* arguments now!
-            # implicit super args must be re-calculated at point of invocation
-            result, is_vararg = compute_zsuper_arguments(node)
             # TODO(adgar): blocks in args & style
-            if is_vararg
-              super_vararg_instruct(result, :block => false)
-            else
-              super_instruct(*result, :block => false)
-            end
+            invoke_super_with_block(*compute_zsuper_arguments(node), false)
           when :for
             lhs, receiver, body = node.children
             receiver_value = value_walk receiver
@@ -351,6 +413,44 @@ module Laser
           when :unless_mod
             condition, body = node.children
             unless_instruct(condition, [body], nil)
+          when :case
+            after = create_block
+            result = create_temporary
+            argument, body = node.children
+            argument_value = value_walk argument
+            
+            while body && body.type == :when
+              when_opts, when_body, body = body.children
+              when_body_block = create_block
+              when_opts.each do |opt|
+                after_fail = create_block
+                condition_result = call_instruct(value_walk(opt), :===, argument_value)
+                cond_instruct(condition_result, when_body_block, after_fail)
+                start_block after_fail
+              end
+              all_fail = @current_block
+
+              start_block when_body_block
+              when_body_result = walk_body when_body
+              copy_instruct(result, when_body_result)
+              uncond_instruct after
+              
+              start_block all_fail
+            end
+            if body.nil?
+              copy_instruct(result, nil)
+              uncond_instruct after
+            elsif body.type == :else
+              else_body_result = walk_body body[1]
+              copy_instruct(result, else_body_result)
+              uncond_instruct after
+            end
+              
+            start_block after
+            result
+          when :return
+            return_instruct node
+            const_instruct(nil)
           when :return0
             return0_instruct
             const_instruct(nil)
@@ -425,6 +525,12 @@ module Laser
           end
         end
         
+        # Walks the series of statements with no regard for any of their
+        # return values.
+        def walk_body_novalue(body)
+          body.each { |node| novalue_walk node }
+        end
+        
         # Terminates the current block with a jump to the target block.
         def uncond_instruct(target)
           add_instruction(:jump, target.name)
@@ -449,45 +555,41 @@ module Laser
 
         def call_zsuper_with_block_novalue(node, block_arg_bindings, block_sexp)
           call_with_explicit_block(block_arg_bindings, block_sexp) do |body_block, after|
-            invoke_super_with_block_novalue node, body_block, after
+            invoke_super_with_block_novalue *compute_zsuper_arguments(node), body_block.name
           end
         end
 
         def call_zsuper_with_block(node, block_arg_bindings, block_sexp)
           call_with_explicit_block(block_arg_bindings, block_sexp) do |body_block, after|
-            invoke_super_with_block node, body_block, after
+            invoke_super_with_block *compute_zsuper_arguments(node), body_block.name
           end
         end
         
         def call_method_with_block_novalue(receiver, method, args, block_arg_bindings, block_sexp)
           call_with_explicit_block(block_arg_bindings, block_sexp) do |body_block, after|
-            generic_call_instruct_novalue receiver, method, args, body_block.name, after
+            generic_call_instruct_novalue receiver, method, args, body_block.name
           end
         end
 
         def call_method_with_block(receiver, method, args, block_arg_bindings, block_sexp)
           call_with_explicit_block(block_arg_bindings, block_sexp) do |body_block, after|
-            generic_call_instruct receiver, method, args, body_block.name, after
+            generic_call_instruct receiver, method, args, body_block.name
           end
         end
         
-        def invoke_super_with_block(node, body_block, after)
-          args, is_vararg = compute_zsuper_arguments(node)
+        def invoke_super_with_block(args, is_vararg, body_block)
           # TODO(adgar): blocks in args & style
           if is_vararg
-            super_vararg_instruct(args, :block => body_block.name)
-          else
-            super_instruct(*args, :block => body_block.name)
+          then super_vararg_instruct(args, :block => body_block)
+          else super_instruct(*args, :block => body_block)
           end
         end
         
-        def invoke_super_with_block_novalue(args, body_block, after)
-          args, is_vararg = compute_zsuper_arguments(node)
+        def invoke_super_with_block_novalue(args, is_vararg, body_block)
           # TODO(adgar): blocks in args & style
           if is_vararg
-            super_vararg_instruct_novalue(args, :block => body_block.name)
-          else
-            super_instruct_novalue(*args, :block => body_block.name)
+          then super_vararg_instruct_novalue(args, :block => body_block)
+          else super_instruct_novalue(*args, :block => body_block)
           end
         end
         
@@ -522,8 +624,25 @@ module Laser
           start_block create_block
         end
         
-        def return_instruct(val)
-          result = value_walk val
+        def return_instruct(node)
+          args = node[1][1]
+          if args[0] == :args_add_star
+            # if there's a splat, always return an actual array object of all the arguments.
+            result = compute_varargs(args)
+          elsif args.size > 1
+            # if there's more than 1 argument, but no splats, then we just pack
+            # them into an array and return that array.
+            arg_temps = args.map { |arg| value_walk arg }
+            result = call_instruct(ClassRegistry['Array'].binding, :new)
+            arg_temps.each { |arg| call_instruct_novalue(arg_array, :<<, arg) }
+          else
+            # Otherwise, just 1 simple argument: return it.
+            result = value_walk args[0]
+          end
+          return_uncond_jump_instruct result
+        end
+        
+        def return_uncond_jump_instruct(result)
           add_instruction(:return, result)
           uncond_instruct @exit
           start_block create_block
@@ -826,7 +945,7 @@ module Laser
             cond_instruct(cond_result, body_block, after_block)
 
             start_block body_block
-            body.each { |elt| novalue_walk(elt) }
+            walk_body_novalue body
             cond_result = value_walk condition
             cond_instruct(cond_result, body_block, after_block)
           end
@@ -848,7 +967,7 @@ module Laser
 
             start_block body_block
           
-            body.each { |elt| novalue_walk(elt) }
+            walk_body_novalue body
             cond_result = value_walk condition
             cond_instruct(cond_result, body_block, after_block)
           end
@@ -870,7 +989,7 @@ module Laser
 
             start_block body_block
           
-            body.each { |elt| novalue_walk(elt) }
+            walk_body_novalue body
             cond_result = value_walk condition
             cond_instruct(cond_result, after_block, body_block)
           end
@@ -892,7 +1011,7 @@ module Laser
 
             start_block body_block
           
-            body.each { |elt| novalue_walk(elt) }
+            walk_body_novalue body
             cond_result = value_walk condition
             cond_instruct(cond_result, after_block, body_block)
           end
@@ -1042,7 +1161,7 @@ module Laser
             
             start_block true_block
             body = [body] if is_mod
-            body.each { |elt| novalue_walk(elt) }
+            walk_body_novalue body
             uncond_instruct(after)
             
             start_block next_block
@@ -1093,7 +1212,7 @@ module Laser
           cond_instruct(cond_result, next_block, true_block)
           
           start_block true_block
-          body.each { |elt| novalue_walk(elt) }
+          walk_body_novalue body
           uncond_instruct(after)
           
           if else_block

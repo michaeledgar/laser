@@ -5,7 +5,8 @@ describe ControlFlow::GraphBuilder do
     it 'should create the entry and exit blocks, returning nil, with an edge between them' do
       # 1-0-3 skips :program, a list, and the :def
       first_block = ControlFlow::BasicBlock.new('Enter')
-      first_block << [:assign, t1 = Bindings::TemporaryBinding.new('%t1', nil), nil]
+      first_block << [:assign, t2 = Bindings::TemporaryBinding.new('%t2', nil), nil]
+      first_block << [:assign, t1 = Bindings::TemporaryBinding.new('%t1', nil), t2]
       first_block << [:return, t1]
       first_block << [:jump, 'Exit']
       last_block = ControlFlow::BasicBlock.new('Exit')
@@ -18,9 +19,10 @@ describe ControlFlow::GraphBuilder do
   describe 'with a constant as the final value' do
     it 'should return that constant value' do
       cfg = cfg_builder_for('def CFG_T1(x); 3.14; end').build
-      list = cfg.vertex_with_name('Enter').instructions[-3..-1]
+      list = cfg.vertex_with_name('Enter').instructions[-4..-1]
       list.should == [
-        [:assign, t1 = Bindings::TemporaryBinding.new('%t1', nil), 3.14],
+        [:assign, t2 = Bindings::TemporaryBinding.new('%t2', nil), 3.14],
+        [:assign, t1 = Bindings::TemporaryBinding.new('%t1', nil), t2],
         [:return, t1],
         [:jump, 'Exit']]
     end
@@ -31,20 +33,20 @@ describe ControlFlow::GraphBuilder do
       builder = cfg_builder_for('def CFG_T1(x); x = 3.14; 5; end')
       cfg = builder.build
       list = cfg.vertex_with_name('Enter').instructions
-      t1 = Bindings::TemporaryBinding.new('%t1', nil)
-      list.index([:assign, t1, 3.14]).should be <
-          list.index([:assign, builder.sexp.scope.lookup('x'), t1])
+      t2 = Bindings::TemporaryBinding.new('%t2', nil)
+      list.index([:assign, t2, 3.14]).should be <
+          list.index([:assign, builder.sexp.scope.lookup('x'), t2])
     end
     
     it 'should return the temporary being assigned' do
       builder = cfg_builder_for('def CFG_T1(x); x = 3.14; end')
       cfg = builder.build
       list = cfg.vertex_with_name('Enter').instructions
-      t1 = Bindings::TemporaryBinding.new('%t1', nil)
-      list.index([:assign, t1, 3.14]).should be <
-          list.index([:assign, builder.sexp.scope.lookup('x'), t1])
+      t2 = Bindings::TemporaryBinding.new('%t2', nil)
+      list.index([:assign, t2, 3.14]).should be <
+          list.index([:assign, builder.sexp.scope.lookup('x'), t2])
       list[-2..-1].should == [
-          [:return, t1],
+          [:return, t1 = Bindings::TemporaryBinding.new('%t1', nil)],
           [:jump, 'Exit']]
     end
   end
