@@ -41,7 +41,8 @@ module Laser
                 start_block body_block
                 body_result = walk_body body
               end
-              
+              # Natural completion with no uncaught raises leads to ensure block. This
+              # same block should be used for exits from raises!
               ensure_block, after = create_blocks 2
               uncond_instruct ensure_block
               walk_body_novalue(ensure_body[1])
@@ -668,7 +669,7 @@ module Laser
         # Performs a no-arg return.
         def return0_instruct
           add_instruction(:return, nil)
-          uncond_instruct @exit
+          uncond_instruct @current_return
           start_block create_block
         end
         
@@ -692,7 +693,7 @@ module Laser
         
         def return_uncond_jump_instruct(result)
           add_instruction(:return, result)
-          uncond_instruct @exit
+          uncond_instruct @current_return
           start_block create_block
           result
         end
