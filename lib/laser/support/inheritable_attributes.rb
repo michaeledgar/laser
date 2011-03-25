@@ -5,6 +5,7 @@ module Laser
   # children, which is unlike the regular class-level attributes that are shared across the entire hierarchy.
   module InheritedAttributes # :nodoc:
     def self.extended(base)
+      return if const_defined?(:Rails)
       base.__send__(:extend, ClassMethods)
       class << base
         alias inherited_without_inheritable_attributes inherited
