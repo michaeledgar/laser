@@ -14,7 +14,7 @@ module Laser
         
         def build
           initialize_graph
-          @current_return = @exit
+          @current_return = @current_rescue = @exit
           p current_return.name
           result = value_walk @sexp
           return_uncond_jump_instruct result
@@ -29,31 +29,7 @@ module Laser
           when :void_stmt
             # Do nothing.
           when :bodystmt
-            result = create_temporary
-            # TODO(adgar): RESCUE, ELSE, ENSURE
-            body, rescue_body, else_body, ensure_body = node.children
-            body_block = create_block
-            uncond_instruct body_block
-            
-            if ensure_body
-              with_jumps_redirected(:break => ensure_body[1], :redo => ensure_body[1], :next => ensure_body[1],
-                                    :return => ensure_body[1]) do
-                start_block body_block
-                body_result = walk_body body
-              end
-              # Natural completion with no uncaught raises leads to ensure block. This
-              # same block should be used for exits from raises!
-              ensure_block, after = create_blocks 2
-              uncond_instruct ensure_block
-              walk_body_novalue(ensure_body[1])
-              uncond_instruct after
-              result
-            else
-              start_block body_block
-              body_result = walk_body body
-              copy_instruct(result, body_result)
-              result
-            end
+            bodystmt_walk node
           when :begin
             novalue_walk node[1]
           when :paren
@@ -256,31 +232,7 @@ module Laser
         def value_walk(node)
           case node.type
           when :bodystmt
-            result = create_temporary
-            # TODO(adgar): RESCUE, ELSE, ENSURE
-            body, rescue_body, else_body, ensure_body = node.children
-            body_block = create_block
-            uncond_instruct body_block
-            
-            if ensure_body
-              start_block body_block
-              with_jumps_redirected(:break => ensure_body[1], :redo => ensure_body[1], :next => ensure_body[1],
-                                    :return => ensure_body[1]) do
-                start_block body_block
-                body_result = walk_body body
-              end
-              
-              ensure_block, after = create_blocks 2
-              uncond_instruct ensure_block
-              walk_body_novalue(ensure_body[1])
-              uncond_instruct after
-              result
-            else
-              start_block body_block
-              body_result = walk_body body
-              copy_instruct(result, body_result)
-              result
-            end
+            bodystmt_walk node
           when :begin
             value_walk node[1]
           when :paren
@@ -523,24 +475,22 @@ module Laser
           @enter = create_block('Enter')
           @exit = create_block('Exit')
           @temporary_counter = 0
-          @current_break = @current_next = @current_redo = @current_return = nil
-          p current_return
+          @current_break = @current_next = @current_redo = @current_return = @current_rescue = nil
           start_block @enter
         end
         
         # Redirects break, next, redo, and return to the given Sexp for each
         # target to redirect.
         def with_jumps_redirected(targets={})
-          p targets
-          p({:break => current_break, :next => current_next, :redo => current_redo, :return => current_return })
           new_targets = targets.merge(targets) do |key, redirect|
+            current = send("current_#{key}")
+            next nil unless current
             new_block = create_block
             start_block new_block
             walk_body_novalue redirect
-            uncond_instruct send("current_#{key}")
+            uncond_instruct current
             new_block
-          end
-          p new_targets
+          end.delete_if { |k, v| v.nil? }
           with_jump_targets(new_targets) do
             yield
           end
@@ -550,16 +500,17 @@ module Laser
         # require temporary specification in a stack-like fashion during CFG construction,
         # I use the call stack to simulate the explicit one suggested by Morgan.
         def with_jump_targets(targets={})
-          old_break, old_next, old_redo, old_return =
-              @current_break, @current_next, @current_redo, @current_return
+          old_break, old_next, old_redo, old_return, old_rescue =
+              @current_break, @current_next, @current_redo, @current_return, @current_rescue
           @current_break = targets[:break] if targets.has_key?(:break)
           @current_next = targets[:next] if targets.has_key?(:next)
           @current_redo = targets[:redo] if targets.has_key?(:redo)
           @current_return = targets[:return] if targets.has_key?(:return)
+          @current_rescue = targets[:rescue] if targets.has_key?(:rescue)
           yield
         ensure
-          @current_break, @current_next, @current_redo, @current_return =
-              old_break, old_next, old_redo, old_return
+          @current_break, @current_next, @current_redo, @current_return, @current_rescue =
+              old_break, old_next, old_redo, old_return, old_rescue
         end
         
         # Walks over a series of statements, ignoring the return value of
@@ -698,7 +649,7 @@ module Laser
           result
         end
         
-        attr_reader :current_break, :current_next, :current_redo, :current_return
+        attr_reader :current_break, :current_next, :current_redo, :current_return, :current_rescue
         
         # TODO(adgar): ARGUMENTS
         def break_instruct(args)
@@ -715,6 +666,108 @@ module Laser
         def redo_instruct
           uncond_instruct @current_redo
           start_block create_block
+        end
+
+        # Walks a body statement.
+        def bodystmt_walk(node)
+          # Pretty fucking compact encapsulation of the :bodystmt block. Damn, mother
+          # fucker.
+          result = create_temporary
+
+          body, rescue_body, else_body, ensure_body = node.children
+          body_block, after = create_blocks 2
+          uncond_instruct body_block
+
+          if ensure_body
+            ensure_block = create_block
+
+            # Generate the body with redirects to the ensure block, so no jumps get away without
+            # running the ensure block
+            with_jumps_redirected(:break => ensure_body[1], :redo => ensure_body[1], :next => ensure_body[1],
+                                  :return => ensure_body[1], :rescue => ensure_body[1]) do
+              rescue_target = build_rescue_target(node, result, rescue_body, ensure_block)
+              walk_body_with_rescue_target(result, body, body_block, rescue_target)
+            end
+            uncond_instruct ensure_block
+            walk_body_novalue(ensure_body[1])
+            uncond_instruct after
+          else
+            # Generate the body with redirects to the ensure block, so no jumps get away without
+            # running the ensure block
+            rescue_target = build_rescue_target(node, result, rescue_body, after)
+            walk_body_with_rescue_target(result, body, body_block, rescue_target)
+            uncond_instruct after
+          end
+          result
+        end
+
+        # Builds the rescue block(s) for the given rescue_body, if there is one,
+        # and returns the block to jump to when an exception is raised.
+        def build_rescue_target(node, result, rescue_body, destination)
+          if rescue_body
+          then rescue_instruct(node, result, rescue_body, destination)
+          else current_rescue
+          end
+        end
+
+        # Walks the body of code with its result copied and its rescue target set.
+        def walk_body_with_rescue_target(result, body, body_block, rescue_target)
+          with_jump_targets(:rescue => rescue_target) do
+            start_block body_block
+            body_result = walk_body body
+            copy_instruct(result, body_result)
+          end
+        end
+
+        def rescue_instruct(node, result, rescue_body, ensure_block)
+          rescue_target = create_block
+          start_block rescue_target
+          while rescue_body
+            rhs, exception_name, handler_body, rescue_body = rescue_body.children
+            handler_block = create_block
+
+            # for everything in rescue_body[1]
+            # check if === $!, if so, go to handler_block, if not, keep checking.
+            failure_block = nil
+            foreach_on_rhs(rhs) do |temp|
+              result = call_instruct(temp, :===, node.scope.lookup('$!'))
+              failure_block = create_block
+              cond_instruct(result, handler_block, failure_block)
+              start_block failure_block
+            end
+
+            # Build the handler block.
+            start_block handler_block
+            # Assign to $! if there is a requested name for the exception
+            if exception_name
+              t1 = create_temporary
+              exception_value = copy_instruct(t1, node.scope.lookup('$!'))
+              copy_instruct(exception_name.scope.lookup(exception_name.expanded_identifier),
+                            exception_value)
+            end
+            body_result = walk_body handler_body
+            copy_instruct(result, body_result)
+            uncond_instruct ensure_block
+            
+            # Back to failure.
+            start_block failure_block
+          end
+          # All rescues failed.
+          else_body = node[3]
+          rescue_else_instruct(else_body, @current_block)  # else_body
+          rescue_target
+        end
+        
+        # Builds a rescue-else body.
+        def rescue_else_instruct(else_body, failure_block)
+          start_block failure_block
+          if else_body
+            else_block = create_block
+            uncond_instruct else_block
+            start_block else_block
+            walk_body_novalue else_body[1]
+          end
+          uncond_instruct current_rescue
         end
 
         # Creates a temporary, assigns it a constant value, and returns it.
@@ -740,6 +793,18 @@ module Laser
           result = value_walk rhs
           add_instruction(:assign, lhs, result)
           result
+        end
+
+        def foreach_on_rhs(node, &blk)
+          case node[0]
+          when :mrhs_add_star
+            
+          when :mrhs_new_from_args
+            foreach_on_rhs(node[1], &blk)
+            yield value_walk(node[2])
+          when Sexp
+            node.each { |val_node| yield value_walk(val_node) }
+          end
         end
 
         #TODO(adgar): RAISES HERE!
