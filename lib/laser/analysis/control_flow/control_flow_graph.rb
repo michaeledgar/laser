@@ -61,12 +61,13 @@ module Laser
           # O(|V||E|)
           tc = self.transitive_closure
           # first, set all to reachable. O(V+E)
+          self.root.reachable = true
           self.root.dfs { |x| x.reachable = true if Sexp === x }
           # then, go over all code in dead blocks, and mark potentially dead
           # ast nodes.
           # O(V)
           (tc.vertices - tc.adjacent_vertices(@enter)).each do |blk|
-            blk.each { |ins| ins.node.reachable = false }
+            blk.each { |ins| ins.node.reachable = false unless ins[0] == :jump  }
           end
           # run through all reachable statements and mark those nodes, and their
           # parents, as partially executing.
@@ -76,7 +77,7 @@ module Laser
           tc.each_adjacent(@enter) do |blk|
             blk.instructions.each do |ins|
               cur = ins.node
-              while cur && !cur.reachable
+              while cur
                 cur.reachable = true
                 cur = cur.parent
               end
