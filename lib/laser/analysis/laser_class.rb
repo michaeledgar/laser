@@ -464,6 +464,20 @@ module Laser
       attr_accessor :body_ast, :owner, :signatures, :arity
       attr_accessor_with_default :pure, false
 
+      # Gets the laser method with the given class and name. Convenience for
+      # debugging/quick access.
+      def self.for(name)
+        if name.include?('.')
+          klass, method = name.split('.', 2)
+          Scope::GlobalScope.lookup(klass).value.singleton_class.instance_methods[method]
+        elsif name.include?('#')
+          klass, method = name.split('#', 2)
+          Scope::GlobalScope.lookup(klass).value.instance_methods[method]
+        else
+          raise ArgumentError.new("method '#{name}' should be in the form Class#instance_method or Class.singleton_method.")
+        end
+      end
+
       def initialize(name)
         @name = name
         @signatures = []
@@ -478,6 +492,10 @@ module Laser
         result.signatures = self.signatures
         result.arity = self.arity
         result
+      end
+
+      def cfg
+        ControlFlow::GraphBuilder.new(self.body_ast.deep_find { |node| node.type == :bodystmt }).build
       end
 
       def add_signature!(signature)

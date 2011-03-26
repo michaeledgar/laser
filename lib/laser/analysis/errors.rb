@@ -33,7 +33,6 @@ module Laser
     def inspect
       "#<#{self.class}: #{message} (#{ast_node.file_name}:#{ast_node.source_begin[0]})>"
     end
-    
   end
   
   class ReopenedClassAsModuleError < Laser::Error
@@ -77,5 +76,12 @@ module Laser
   
   class SuperclassMismatchError < Laser::Error
     severity TRICKY_ERROR
+  end
+  
+  class DeadCodeWarning < Laser::Error
+    severity MAJOR_WARNING
+    def initialize(message, ast_node)
+      super("Dead Code #{ast_node.source_begin[0]}:#{ast_node.source_begin[1]}", ast_node)
+    end
   end
 end

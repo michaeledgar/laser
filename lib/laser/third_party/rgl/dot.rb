@@ -32,10 +32,12 @@ module RGL
                                'fontname' => fontname)
       end
       each_edge do |u,v|
+        color = is_abnormal?(u, v) ? '#ff0000' : 'black'
         graph << edge_class.new('from'     => u.to_s,
                                 'to'       => v.to_s,
                                 'fontsize' => fontsize,
-                                'fontname' => fontname)
+                                'fontname' => fontname,
+                                'color'    => color)
       end
       graph
     end

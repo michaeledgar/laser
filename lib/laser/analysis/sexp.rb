@@ -9,11 +9,13 @@ module Laser
       
       extend ModuleExtensions
       attr_accessor :errors, :binding, :file_name, :file_source
+      attr_accessor :reachable
 
       # Initializes the Sexp with the contents of the array returned by Ripper.
       #
       # @param [Array<Object>] other the other 
       def initialize(other, file_name=nil, file_source=nil)
+        @reachable = true
         @expr_type = nil
         @errors = []
         @file_name = file_name
@@ -133,7 +135,7 @@ module Laser
       
       def is_method_call?
         [:command, :method_add_arg, :method_add_block, :var_ref, :call,
-         :fcall, :command_call, :binary, :unary, :super, :zsuper].include?(type) &&
+         :fcall, :command_call, :binary, :unary, :super, :zsuper, :aref].include?(type) &&
             !(type == :var_ref && (binding || self[1].type == :@kw))
       end
       

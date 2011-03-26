@@ -2,6 +2,7 @@ require 'enumerator'
 
 require 'laser/third_party/rgl/adjacency'
 require 'laser/third_party/rgl/base'
+require 'laser/third_party/rgl/connected_components'
 require 'laser/third_party/rgl/condensation'
 
 module RGL

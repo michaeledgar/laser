@@ -13,6 +13,7 @@ module Laser
       def method_name
         case node.type
         when :super, :zsuper then 'super'
+        when :aref then '[]'
         when :unary then node[1].to_s
         when :binary then node[2].to_s
         when :fcall, :command then node[1].expanded_identifier
@@ -27,8 +28,8 @@ module Laser
       def receiver_type
         receiver = case node.type
                    when :unary then node[2]
-                   when :binary, :call then node[1]
                    when :fcall, :command, :var_ref, :zsuper, :super then node.scope.lookup('self')
+                   when :binary, :call, :aref then node[1]
                    when :command_call then node.scope.lookup(node[1].expanded_identifier)
                    end
         receiver.expr_type
@@ -40,9 +41,9 @@ module Laser
       # return: Sexp | NilClass
       def receiver_node
         case node.type
-        when :var_ref, :command, :fcall, :super, :zsuper, :unary then nil
-        when :call, :command_call, :binary then node[1]
         when :method_add_arg, :method_add_block then node[1].method_call.receiver_node
+        when :var_ref, :command, :fcall, :super, :zsuper, :unary then nil
+        when :call, :command_call, :binary, :aref then node[1]        
         end
       end
       
@@ -72,14 +73,12 @@ module Laser
       # returns: Sexp
       def arg_node
         case node.type
-        when :command then args = node[2][1]
-        when :method_add_arg then args = (node[2][1] ? node[2][1][1] : nil)
-        when :method_add_block then args = node[1].method_call.arg_node
-        when :call then args = nil
-        when :var_ref then args = nil
-        when :command_call then args = node[4][1]
+        when :command, :aref then node[2][1]
+        when :method_add_arg then (node[2][1] ? node[2][1][1] : nil)
+        when :method_add_block then node[1].method_call.arg_node
+        when :call, :var_ref, :command_call, :zsuper then args = nil
+        when :command_call then node[4][1]
         when :super then node[1]
-        when :zsuper then nil
         end
       end
     end
