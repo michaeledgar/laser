@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Michael Edgar"]
-  s.date = %q{2011-03-26}
+  s.date = %q{2011-03-27}
   s.default_executable = %q{laser}
   s.description = %q{Laser is an advanced static analysis tool for Ruby.}
   s.email = %q{michael.j.edgar@dartmouth.edu}
@@ -122,6 +122,7 @@ Gem::Specification.new do |s|
     "lib/laser/third_party/rgl/bidirectional.rb",
     "lib/laser/third_party/rgl/condensation.rb",
     "lib/laser/third_party/rgl/connected_components.rb",
+    "lib/laser/third_party/rgl/depth_first_spanning_tree.rb",
     "lib/laser/third_party/rgl/dot.rb",
     "lib/laser/third_party/rgl/enumerable_ext.rb",
     "lib/laser/third_party/rgl/graphxml.rb",
@@ -409,6 +410,14 @@ Gem::Specification.new do |s|
       s.add_development_dependency(%q<simplecov-gem-adapter>, [">= 1.0.0"])
       s.add_development_dependency(%q<guard>, [">= 0"])
       s.add_development_dependency(%q<guard-rspec>, [">= 0"])
+      s.add_development_dependency(%q<rspec>, ["~> 2.3"])
+      s.add_development_dependency(%q<yard>, [">= 0"])
+      s.add_development_dependency(%q<cucumber>, [">= 0.10.0"])
+      s.add_development_dependency(%q<metric_fu>, [">= 2.0.1"])
+      s.add_development_dependency(%q<simplecov>, [">= 0.3.9"])
+      s.add_development_dependency(%q<simplecov-gem-adapter>, [">= 1.0.0"])
+      s.add_development_dependency(%q<guard>, [">= 0"])
+      s.add_development_dependency(%q<guard-rspec>, [">= 0"])
       s.add_runtime_dependency(%q<treetop>, ["~> 1.4"])
       s.add_development_dependency(%q<rspec>, ["~> 2.3"])
       s.add_development_dependency(%q<yard>, [">= 0"])
@@ -426,6 +435,14 @@ Gem::Specification.new do |s|
       s.add_dependency(%q<metric_fu>, [">= 2.0.1"])
       s.add_dependency(%q<simplecov>, [">= 0.3.9"])
       s.add_dependency(%q<simplecov-gem-adapter>, [">= 1.0.0"])
+      s.add_dependency(%q<rspec>, ["~> 2.3"])
+      s.add_dependency(%q<yard>, [">= 0"])
+      s.add_dependency(%q<cucumber>, [">= 0.10.0"])
+      s.add_dependency(%q<metric_fu>, [">= 2.0.1"])
+      s.add_dependency(%q<simplecov>, [">= 0.3.9"])
+      s.add_dependency(%q<simplecov-gem-adapter>, [">= 1.0.0"])
+      s.add_dependency(%q<guard>, [">= 0"])
+      s.add_dependency(%q<guard-rspec>, [">= 0"])
       s.add_dependency(%q<rspec>, ["~> 2.3"])
       s.add_dependency(%q<yard>, [">= 0"])
       s.add_dependency(%q<cucumber>, [">= 0.10.0"])
@@ -460,6 +477,14 @@ Gem::Specification.new do |s|
     s.add_dependency(%q<metric_fu>, [">= 2.0.1"])
     s.add_dependency(%q<simplecov>, [">= 0.3.9"])
     s.add_dependency(%q<simplecov-gem-adapter>, [">= 1.0.0"])
+    s.add_dependency(%q<rspec>, ["~> 2.3"])
+    s.add_dependency(%q<yard>, [">= 0"])
+    s.add_dependency(%q<cucumber>, [">= 0.10.0"])
+    s.add_dependency(%q<metric_fu>, [">= 2.0.1"])
+    s.add_dependency(%q<simplecov>, [">= 0.3.9"])
+    s.add_dependency(%q<simplecov-gem-adapter>, [">= 1.0.0"])
+    s.add_dependency(%q<guard>, [">= 0"])
+    s.add_dependency(%q<guard-rspec>, [">= 0"])
     s.add_dependency(%q<rspec>, ["~> 2.3"])
     s.add_dependency(%q<yard>, [">= 0"])
     s.add_dependency(%q<cucumber>, [">= 0.10.0"])

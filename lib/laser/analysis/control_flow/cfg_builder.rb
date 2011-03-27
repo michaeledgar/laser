@@ -183,7 +183,7 @@ module Laser
                          end
               arg_node = method_call.arg_node
               arg_node = arg_node[1] if arg_node && arg_node.type == :arg_paren
-              block_arg_bindings = Signature.arg_list_for_arglist(node[2][1][1])
+              block_arg_bindings = node[2][1] ? Signature.arg_list_for_arglist(node[2][1][1]) : []
               body_sexp = node[2][2]
               case node[1].type
               when :super

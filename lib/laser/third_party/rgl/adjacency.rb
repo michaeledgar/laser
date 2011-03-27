@@ -13,8 +13,6 @@
 # is created.
 
 require 'laser/third_party/rgl/mutable'
-require 'laser/third_party/rgl/bidirectional'
-require 'laser/third_party/rgl/depth_first_spanning_tree'
 require 'set'
 
 module RGL
