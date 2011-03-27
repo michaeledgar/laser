@@ -5,6 +5,7 @@ module Laser
       BasicBlock = DelegateClass(Array)
       BasicBlock.class_eval do
         attr_reader :name, :instructions
+        attr_accessor :depth_first_order
         def initialize(name)
           @name = name
           @instructions = []

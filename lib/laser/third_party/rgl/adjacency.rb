@@ -13,6 +13,8 @@
 # is created.
 
 require 'laser/third_party/rgl/mutable'
+require 'laser/third_party/rgl/bidirectional'
+require 'laser/third_party/rgl/depth_first_spanning_tree'
 require 'set'
 
 module RGL
@@ -40,29 +42,40 @@ module RGL
     # added to the new graph.
     def initialize (edgelist_class = Set, *other_graphs)
       @edgelist_class = edgelist_class
-      @vertice_dict   = Hash.new
+      @vertex_dict   = Hash.new
+      @predecessor_dict = Hash.new
       
       add_graphs(*other_graphs)
     end
 
     # Copy internal vertice_dict
     def initialize_copy(orig)
-      @vertice_dict = orig.instance_eval{@vertice_dict}.dup
-      @vertice_dict.keys.each do |v|
-        @vertice_dict[v] = @vertice_dict[v].dup
+      @vertex_dict = orig.instance_eval{@vertex_dict}.dup
+      @vertex_dict.keys.each do |v|
+        @vertex_dict[v] = @vertex_dict[v].dup
+      end
+      @predecessor_dict = orig.instance_eval{@predecessor_dict}.dup
+      @predecessor_dict.keys.each do |v|
+        @predecessor_dict[v] = @predecessor_dict[v].dup
       end
     end
 
     # Iterator for the keys of the vertice list hash.
 
     def each_vertex (&b)
-      @vertice_dict.each_key(&b)
+      @vertex_dict.each_key(&b)
     end
 
     def each_adjacent (v, &b)			# :nodoc:
-      adjacency_list = (@vertice_dict[v] or
+      adjacency_list = (@vertex_dict[v] or
         raise NoVertexError, "No vertex #{v}.")
       adjacency_list.each(&b)
+    end
+    
+    def each_predecessor(v, &b)
+      predecessor_dict = (@predecessor_dict[v] or
+        raise NoVertexError, "No vertex #{v}.")
+      predecessor_dict.each(&b)
     end
 
     # Returns true.
@@ -75,7 +88,7 @@ module RGL
     # as values the lists of adjacent vertices of _v_.
 
     def has_vertex? (v)
-      @vertice_dict.has_key?(v)
+      @vertex_dict.has_key?(v)
     end
 
     # Complexity is O(1), if a Set is used as adjacency list.  Otherwise,
@@ -85,7 +98,7 @@ module RGL
     # MutableGraph interface.
 
     def has_edge? (u, v)
-      has_vertex?(u) and @vertice_dict[u].include?(v)
+      has_vertex?(u) and @vertex_dict[u].include?(v)
     end
 
     # See MutableGraph#add_vertex.
@@ -94,7 +107,8 @@ module RGL
     # nothing.
 
     def add_vertex (v)
-      @vertice_dict[v] ||= @edgelist_class.new
+      @vertex_dict[v] ||= @edgelist_class.new
+      @predecessor_dict[v] ||= @edgelist_class.new
     end
 
     # See MutableGraph#add_edge.
@@ -108,32 +122,38 @@ module RGL
     # See MutableGraph#remove_vertex.
 
     def remove_vertex (v)
-      @vertice_dict.delete(v)
-          
+      @vertex_dict.delete(v)
+      @predecessor_dict.delete(v)
       # remove v from all adjacency lists
 
-      @vertice_dict.each_value { |adjList| adjList.delete(v) }
+      @vertex_dict.each_value { |adjList| adjList.delete(v) }
+      @predecessor_dict.each_value { |predlist| predlist.delete(v) }
     end
 
     # See MutableGraph::remove_edge.
 
     def remove_edge (u, v)
-      @vertice_dict[u].delete(v) unless @vertice_dict[u].nil?
+      @vertex_dict[u].delete(v) unless @vertex_dict[u].nil?
+      @predecessor_dict[v].delete(u) unless @predecessor_dict[v].nil?
     end
 
     # Converts the adjacency list of each vertex to be of type _klass_. The
     # class is expected to have a new contructor which accepts an enumerable as
     # parameter.
     def edgelist_class=(klass)
-      @vertice_dict.keys.each do |v|
-         @vertice_dict[v] = klass.new @vertice_dict[v].to_a
+      @vertex_dict.keys.each do |v|
+        @vertex_dict[v] = klass.new @vertex_dict[v].to_a
+      end
+      @predecessor_dict.keys.each do |v|
+        @predecessor_dict[v] = klass.new @predecessor_dict[v].to_a
       end
     end
 
     protected
 
     def basic_add_edge (u, v)
-      @vertice_dict[u].add(v)
+      @vertex_dict[u].add(v)
+      @predecessor_dict[v].add(u)
     end
 
   end		# class DirectedAdjacencyGraph
@@ -152,14 +172,14 @@ module RGL
 
     def remove_edge (u, v)
       super
-      @vertice_dict[v].delete(u) unless @vertice_dict[v].nil?
+      @vertex_dict[v].delete(u) unless @vertex_dict[v].nil?
     end
 
     protected
 
     def basic_add_edge (u,v)
       super
-      @vertice_dict[v].add(u)			# Insert backwards edge
+      @vertex_dict[v].add(u)			# Insert backwards edge
     end
 
   end		# class AdjacencyGraph

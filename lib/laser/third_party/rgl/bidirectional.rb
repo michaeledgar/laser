@@ -18,9 +18,8 @@ module RGL
     # edges (for undirected graphs) of vertex _v_. For both directed and
     # undirected graphs, the target of an out-edge is required to be vertex _v_
     # and the source is required to be a vertex that is adjacent to _v_.
-    def each_in_neighbor (v)
-      raise NotImplementedError
-      yield u
+    def each_in_neighbor(v, &blk)
+      each_predecessor(v, &blk)
     end
     
     # Returns the number of in-edges (for directed graphs) or the number of
