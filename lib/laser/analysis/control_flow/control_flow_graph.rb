@@ -1,14 +1,16 @@
 require 'laser/third_party/rgl/adjacency'
 require 'laser/third_party/rgl/transitivity'
+require 'laser/third_party/rgl/dominators'
 module Laser
   module SexpAnalysis
     module ControlFlow
-      class ControlFlowGraph < RGL::DirectedAdjacencyGraph
-        attr_accessor :enter, :exit, :root
+      class ControlFlowGraph < RGL::ControlFlowGraph
+        attr_accessor :root
         def initialize(*args)
           @abnormals = Set.new
           super
         end
+
         # Compares the graphs for equality. Relies on the basic blocks having unique
         # names to simplify isomorphism comparisons. Unfortunately this means
         # tests will have to know block names. Oh well.

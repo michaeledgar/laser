@@ -65,7 +65,7 @@ module RGL
     # for directed graphs.  Returns false for undirected graphs.
 
     def acyclic?
-      topsort_iterator.length == num_vertices
+      topsort_iterator.count == num_vertices
     end
 
   end                           # module Graph

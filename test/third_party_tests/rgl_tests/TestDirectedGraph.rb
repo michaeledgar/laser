@@ -50,7 +50,7 @@ class TestDirectedGraph < Test::Unit::TestCase
   end
   
   def test_edges
-    assert_equal(4, @dg.edges.length)
+    assert_equal(4, @dg.edges.count)
     assert_equal([1,2,2,3], @dg.edges.map {|l| l.source}.sort)
     assert_equal([2,2,3,4], @dg.edges.map {|l| l.target}.sort)
     assert_equal("(1-2)(2-3)(2-4)(3-2)", @dg.edges.map {|l| l.to_s}.sort.join)

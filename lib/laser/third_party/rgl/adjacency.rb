@@ -16,7 +16,6 @@ require 'laser/third_party/rgl/mutable'
 require 'set'
 
 module RGL
-
   class DirectedAdjacencyGraph
 
     include MutableGraph

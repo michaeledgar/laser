@@ -19,7 +19,17 @@ module Laser
           result = value_walk @sexp
           return_uncond_jump_instruct result
           
+          prune_totally_useless_blocks(@graph)
           @graph
+        end
+        
+        def prune_totally_useless_blocks(graph)
+          vertices = graph.to_a
+          vertices.each do |vertex|
+            if vertex.instructions.empty? && graph.degree(vertex).zero?
+              graph.remove_vertex(vertex)
+            end
+          end
         end
         
         def with_current_node(node)
@@ -92,7 +102,7 @@ module Laser
                   call_instruct_novalue(receiver, "#{method_name}=".to_sym, temp_result, :block => false)
                 end
               else
-                result = binary_instruct_novalue(lhs, op, rhs)
+                result = binary_instruct(lhs, op, rhs)
                 copy_instruct(lhs.binding, result)
               end
             when :binary
@@ -513,10 +523,8 @@ module Laser
           @graph = ControlFlowGraph.new
           @graph.root = @sexp
           @block_counter = 0
-          @enter = create_block('Enter')
-          @exit = create_block('Exit')
-          @graph.enter = @enter
-          @graph.exit = @exit
+          @enter = @graph.enter
+          @exit = @graph.exit
           @temporary_counter = 0
           @current_break = @current_next = @current_redo = @current_return = @current_rescue = nil
           start_block @enter
@@ -1473,7 +1481,9 @@ module Laser
 
         # Creates a new basic block for flow analysis.
         def create_block(name = 'B' + (@block_counter += 1).to_s)
-          BasicBlock.new(name).tap { |block| @graph.add_vertex block }
+          result = BasicBlock.new(name)
+          @graph.add_vertex result
+          result
         end
         
         # Sets the current block to be the given block.

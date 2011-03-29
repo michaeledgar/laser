@@ -88,7 +88,7 @@ module RGL
 
     # Returns an RGL::DirectedAdjacencyGraph which is the transitive reduction
     # of this graph.  Meaning, that each edge u -> v is omitted if path
-    # u -> ... -> v exists.  This method supports working with cyclic graphs;
+    # u -> ... -> v exists. This method supports working with cyclic graphs;
     # however, cycles are arbitrarily simplified which may lead to variant,
     # although equally valid, results on equivalent graphs.
     #

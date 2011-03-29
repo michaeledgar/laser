@@ -1,22 +1,45 @@
+require 'set'
 module Laser
   module SexpAnalysis
     module ControlFlow
       # Can't use the < DelegateClass(Array) syntax because of code reloading.
-      BasicBlock = DelegateClass(Array)
-      BasicBlock.class_eval do
-        attr_reader :name, :instructions
-        attr_accessor :depth_first_order
+      class BasicBlock < BasicObject
+        attr_accessor :name, :instructions, :successors, :predecessors
+        attr_accessor :depth_first_order, :post_order_number
         def initialize(name)
           @name = name
           @instructions = []
-          super(@instructions)
+          @successors = ::Set.new
+          @predecessors = ::Set.new
+        end
+
+        def dup
+          result = BasicBlock.new(name)
+          result.instructions = instructions
+          result.successors = successors.dup
+          result.predecessors = predecessors.dup
+          result
+        end
+        
+        def clear_edges
+          @successors.clear
+          @predecessors.clear
+          self
+        end
+
+        def eql?(other)
+          self == other
         end
 
         def ==(other)
-          name == other.name
+          equal?(other) || name == other.name
         end
         
-        def equals?(other)
+        def !=(other)
+          !(self == other)
+        end
+        
+        def equal?(other)
           name == other.name
         end
 
@@ -36,7 +59,16 @@ module Laser
             [opcode, *args].join(', ')
           end.join('\\n')
         end
-        alias leader first
+
+        def method_missing(meth, *args, &blk)
+          @instructions.send(meth, *args, &blk)
+        end
+      end
+      
+      class TerminalBasicBlock < BasicBlock
+        def instructions
+          []
+        end
       end
     end
   end

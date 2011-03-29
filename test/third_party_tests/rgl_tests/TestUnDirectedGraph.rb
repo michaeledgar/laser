@@ -52,7 +52,7 @@ class TestUnDirectedGraph < Test::Unit::TestCase
   end
 
   def test_edges
-    assert_equal(3, @dg.edges.length)
+    assert_equal(3, @dg.edges.count)
 	edges = [[1,2],[2,3],[2,4]].map {|x| UnDirectedEdge.new(*x)}
     assert_equal(edges, @dg.edges.sort)
 #    assert_equal([0,1,2,3], @dg.edges.map {|l| l.info}.sort)

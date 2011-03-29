@@ -3,7 +3,6 @@
 # Module RGL defines the namespace for all modules and classes of the graph
 # library. The main module is RGL::Graph which defines the abstract behavior of
 # all graphs in the library.
-require 'laser/third_party/rgl/enumerable_ext'
 
 RGL_VERSION = "0.4.0"
 
@@ -167,7 +166,7 @@ module RGL
     # Returns an array of vertices adjacent to vertex _v_.
     def adjacent_vertices (v)
       r = []
-      each_adjacent(v) {|u| r << u}
+      each_adjacent(v) { |u| r << u }
       r
     end
 
@@ -201,7 +200,7 @@ module RGL
             g.inject(0) { |n, v| has_vertex?(v) or return false; n+1} ==
             num_vertices and begin
                                ng = 0
-                               g.each_edge {|u,v| has_edge? u,v or return false; ng += 1}
+                               g.each_edge { |u,v| has_edge? u,v or return false; ng += 1 }
                                ng == num_edges
                              end
         end
