@@ -868,7 +868,7 @@ module Laser
 
         def foreach_on_rhs(node, &blk)
           case node[0]
-          when :mrhs_add_star
+          when :mrhs_add_star, :args_add_star
             foreach_on_rhs(node[1], &blk)
             array_to_iterate = value_walk node[2]
             counter = lookup_or_create_temporary(:rescue_iterator)
@@ -890,7 +890,7 @@ module Laser
             start_block after
           when :mrhs_new_from_args
             foreach_on_rhs(node[1], &blk)
-            yield value_walk(node[2])
+            yield value_walk(node[2]) if node[2]
           when Sexp
             node.each { |val_node| yield value_walk(val_node) }
           end
