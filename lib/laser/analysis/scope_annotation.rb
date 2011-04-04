@@ -46,6 +46,26 @@ module Laser
         end
       end
       
+      add :bodystmt do |node, body, rescue_node, else_node, ensure_node|
+        node.scope = @current_scope
+        # rescue can introduce variables!
+        while rescue_node != nil
+          rescue_node.scope = @current_scope
+          # the fourth entry leads to the next rescue node. Recursive structure.
+          matchers, exception_name, rescue_body, rescue_node = rescue_node.children
+          visit matchers
+          if exception_name
+            default_visit exception_name
+            bind_variable_names([exception_name.expanded_identifier])
+            p @current_scope.locals
+          end
+          visit rescue_body
+        end
+        visit body
+        visit else_node
+        visit ensure_node
+      end
+      
       # any block *at all*: check for arguments, create a new scope with those arguments.
       add :method_add_block do |node, callnode, blocknode|
         default_visit callnode

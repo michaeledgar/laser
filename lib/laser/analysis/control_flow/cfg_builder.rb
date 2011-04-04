@@ -10,6 +10,10 @@ module Laser
           @sexp = sexp
           @graph = @enter = @exit = nil
           @temporary_counter = 0
+          @temporary_table = Hash.new do |hash, keys|
+            @temporary_counter += 1
+            hash[keys] = Bindings::TemporaryBinding.new("%t#{@temporary_counter}", nil)
+          end
         end
         
         def build
@@ -110,6 +114,9 @@ module Laser
               # we have to run it (maybe), even if we hate them.
               lhs, op, rhs = node.children
               binary_instruct_novalue(lhs, op, rhs)
+            when :ifop
+              cond, if_true, if_false = node.children
+              ternary_instruct_novalue(cond, if_true, if_false)
             when :unary
               op, receiver = node.children
               receiver = value_walk(receiver)
@@ -175,7 +182,7 @@ module Laser
             when :aref
               issue_call_novalue node
             when :var_ref
-              if node.binding.nil?
+              if node.binding.nil? && node[1].type != :@kw
                 call_instruct_novalue(node.scope.lookup('self'), node.expanded_identifier)
               end
             when :command
@@ -343,6 +350,9 @@ module Laser
             when :binary
               lhs, op, rhs = node.children
               binary_instruct(lhs, op, rhs)
+            when :ifop
+              cond, if_true, if_false = node.children
+              ternary_instruct(cond, if_true, if_false)
             when :unary
               op, receiver = node.children
               receiver = value_walk(receiver)
@@ -351,8 +361,11 @@ module Laser
               variable_instruct(node)
             when :var_ref
               if node.binding
-              then variable_instruct(node)
-              else issue_call node
+                variable_instruct(node)
+              elsif node[1].type == :@kw
+                const_instruct(node.constant_value)
+              else
+                issue_call node
               end
             when :call
               issue_call node
@@ -583,8 +596,8 @@ module Laser
         end
         
         # Terminates the current block with a jump to the target block.
-        def uncond_instruct(target)
-          add_instruction(:jump, target.name)
+        def uncond_instruct(target, opts = {:jump_instruct => true})
+          add_instruction(:jump, target.name) if opts[:jump_instruct]
           @graph.add_edge(@current_block, target)
           start_block target
         end
@@ -776,7 +789,7 @@ module Laser
           end
         end
 
-        def rescue_instruct(node, result, rescue_body, ensure_block)
+        def rescue_instruct(node, enclosing_body_result, rescue_body, ensure_block)
           rescue_target = create_block
           start_block rescue_target
           while rescue_body
@@ -792,18 +805,19 @@ module Laser
               cond_instruct(result, handler_block, failure_block)
               start_block failure_block
             end
-
+            failure_block = @current_block
+            
             # Build the handler block.
             start_block handler_block
             # Assign to $! if there is a requested name for the exception
             if exception_name
-              t1 = create_temporary
-              exception_value = copy_instruct(t1, node.scope.lookup('$!'))
+              temp = lookup_or_create_temporary(:var, node.scope.lookup('$!'))
+              copy_instruct(temp, node.scope.lookup('$!'))
               copy_instruct(exception_name.scope.lookup(exception_name.expanded_identifier),
-                            exception_value)
+                            temp)
             end
             body_result = walk_body handler_body
-            copy_instruct(result, body_result)
+            copy_instruct(enclosing_body_result, body_result)
             uncond_instruct ensure_block
             
             # Back to failure.
@@ -829,14 +843,14 @@ module Laser
 
         # Creates a temporary, assigns it a constant value, and returns it.
         def const_instruct(val)
-          result = create_temporary
-          add_instruction(:assign, result, val)
+          result = lookup_or_create_temporary(:const, val)
+          copy_instruct result, val
           result
         end
         
         def self_instruct(scope)
-          result = create_temporary
-          add_instruction(:assign, result, scope.lookup('self'))
+          result = lookup_or_create_temporary(:self, scope.lookup('self'))
+          copy_instruct result, scope.lookup('self')
           result
         end
         
@@ -848,14 +862,32 @@ module Laser
         # Computes the RHS and assigns it to the LHS, returning the RHS result.
         def assign_instruct(lhs, rhs)
           result = value_walk rhs
-          add_instruction(:assign, lhs, result)
+          copy_instruct lhs, result
           result
         end
 
         def foreach_on_rhs(node, &blk)
           case node[0]
           when :mrhs_add_star
-            # TODO(rhs with stars!)
+            foreach_on_rhs(node[1], &blk)
+            array_to_iterate = value_walk node[2]
+            counter = lookup_or_create_temporary(:rescue_iterator)
+            copy_instruct(counter, 0)
+            max = call_instruct(array_to_iterate, :size)
+            
+            loop_start_block, check_block, after = create_blocks 3
+            
+            uncond_instruct loop_start_block
+            current_val = call_instruct(array_to_iterate, :[], counter)
+            cond_instruct(current_val, check_block, after)
+            
+            start_block(check_block)
+            yield current_val
+            next_counter = call_instruct(counter, :+, 1)
+            copy_instruct(counter, next_counter)
+            uncond_instruct loop_start_block
+            
+            start_block after
           when :mrhs_new_from_args
             foreach_on_rhs(node[1], &blk)
             yield value_walk(node[2])
@@ -866,7 +898,7 @@ module Laser
 
         #TODO(adgar): RAISES HERE!
         def rb_check_convert_type(value, klass, method)
-          result = create_temporary
+          result = lookup_or_create_temporary(:convert, value, klass, method)
           if_klass_block, if_not_klass_block, after = create_blocks 3
           
           comparison_result = call_instruct(klass, :===, value)
@@ -892,7 +924,7 @@ module Laser
         # body: Sexp
         # returns: (TemporaryBinding, BasicBlock)
         def call_block_instruct(args, body)
-          result = create_temporary
+          result = lookup_or_create_temporary(:block, args, body)
           body_block = create_block
           add_instruction :lambda, result, args, body_block.name
           [result, body_block]
@@ -1039,7 +1071,7 @@ module Laser
 
         # Computes a splatting node (:args_add_star)
         def compute_varargs(args)
-          result = create_temporary
+          result = lookup_or_create_temporary(:compute_varargs, args)
           if args[1][0] == :args_add_star || args[1].children.any?
             prefix = if args[1][0] == :args_add_star
                      then compute_varargs(args[1])
@@ -1061,7 +1093,7 @@ module Laser
         def call_instruct_novalue(receiver, method, *args)
           add_instruction(:call, nil, receiver, method, *args)
           @graph.add_abnormal_edge(@current_block, current_rescue)
-          uncond_instruct create_block
+          uncond_instruct create_block, :jump_instruct => false
         end
         
         # Adds a generic method call instruction.
@@ -1069,7 +1101,7 @@ module Laser
           result = create_temporary
           add_instruction(:call, result, receiver, method, *args)
           @graph.add_abnormal_edge(@current_block, current_rescue)
-          uncond_instruct create_block
+          uncond_instruct create_block, :jump_instruct => false
           result
         end
         
@@ -1077,7 +1109,7 @@ module Laser
         def call_vararg_instruct_novalue(receiver, method, args, block)
           add_instruction(:call_vararg, nil, receiver, method, args, block)
           @graph.add_abnormal_edge(@current_block, current_rescue)
-          uncond_instruct create_block
+          uncond_instruct create_block, :jump_instruct => false
         end
         
         # Adds a generic method call instruction.
@@ -1085,7 +1117,7 @@ module Laser
           result = create_temporary
           add_instruction(:call_vararg, result, receiver, method, args, block)
           @graph.add_abnormal_edge(@current_block, current_rescue)
-          uncond_instruct create_block
+          uncond_instruct create_block, :jump_instruct => false
           result
         end
 
@@ -1115,9 +1147,9 @@ module Laser
 
         # Looks up the value of a variable and assigns it to a new temporary
         def variable_instruct(var_ref)
-          result = create_temporary
+          result = lookup_or_create_temporary(:var, var_ref.binding)
           var_ref = var_ref.binding unless Bindings::GenericBinding === var_ref
-          add_instruction(:assign, result, var_ref)
+          copy_instruct result, var_ref
           result
         end
         
@@ -1143,6 +1175,47 @@ module Laser
           lhs_result = value_walk lhs
           rhs_result = value_walk rhs
           call_instruct(lhs_result, op, rhs_result)
+        end
+        
+        def ternary_instruct_novalue(cond, if_true, if_false)
+          if_true_block, if_false_block, after = create_blocks 3
+          cond_result = value_walk cond
+          cond_instruct(cond_result, if_true_block, if_false_block)
+          
+          start_block if_true_block
+          novalue_walk if_true
+          uncond_instruct(after)
+          
+          start_block if_false_block
+          novalue_walk if_false
+          uncond_instruct(after)
+
+          start_block after
+        end
+        
+        def ternary_instruct(cond, if_true, if_false)
+          if_true_block, if_false_block, after = create_blocks 3
+          cond_result = value_walk cond
+          cond_instruct(cond_result, if_true_block, if_false_block)
+          
+          start_block if_true_block
+          if_true_result = value_walk if_true
+          
+          start_block if_false_block
+          if_false_result = value_walk if_false
+          
+          result = lookup_or_create_temporary(:ternary, cond_result, if_true_result, if_false_result)
+          
+          start_block if_true_block
+          copy_instruct(result, if_true_result)
+          uncond_instruct(after)
+          
+          start_block if_false_block
+          copy_instruct(result, if_false_result)
+          uncond_instruct(after)
+          
+          start_block after
+          result
         end
         
         # Runs the list of operations in body while the condition is true.
@@ -1235,19 +1308,19 @@ module Laser
         # Performs an OR operation, with short circuiting that must save
         # the result of the operation.
         def or_instruct(lhs, rhs)
-          result = create_temporary
           true_block, false_block, after = create_blocks 3
 
           lhs_result = value_walk lhs
           cond_instruct(lhs_result, true_block, false_block)
           
-          start_block(true_block)
-          copy_instruct(result, lhs_result)
-          uncond_instruct(after)
-          
           start_block(false_block)
           rhs_result = value_walk rhs
+          result = lookup_or_create_temporary(:or_short_circuit, lhs_result, rhs_result)
           copy_instruct(result, rhs_result)
+          uncond_instruct(after)
+          
+          start_block(true_block)
+          copy_instruct(result, lhs_result)
           uncond_instruct(after)
           
           start_block(after)
@@ -1271,7 +1344,6 @@ module Laser
         # Performs an AND operation, with short circuiting, that must save
         # the result of the operation.
         def and_instruct(lhs, rhs)
-          result = create_temporary
           true_block, false_block, after = create_blocks 3
 
           lhs_result = value_walk lhs
@@ -1279,6 +1351,7 @@ module Laser
           
           start_block(true_block)
           rhs_result = value_walk rhs
+          result = lookup_or_create_temporary(:and_short_circuit, lhs_result, rhs_result)
           copy_instruct(result, rhs_result)
           uncond_instruct(after)
           
@@ -1451,11 +1524,8 @@ module Laser
         # Takes a set of nodes, finds their values, and builds a temporary holding
         # the array containing them.
         def build_array_instruct(components)
-          temp = call_instruct(ClassRegistry['Array'].binding, :new)
-          components.each do |node|
-            call_instruct_novalue(temp, :<<, value_walk(node))
-          end
-          temp
+          args = components.map { |arg| value_walk(arg) }
+          call_instruct(ClassRegistry['Array'].binding, :[], *args)
         end
         
         # Returns the name of the current temporary.
@@ -1467,6 +1537,10 @@ module Laser
         def create_temporary
           @temporary_counter += 1
           Bindings::TemporaryBinding.new(current_temporary, nil)
+        end
+        
+        def lookup_or_create_temporary(*keys)
+          @temporary_table[keys]
         end
         
         # Adds a simple instruction to the current basic block.
@@ -1492,12 +1566,14 @@ module Laser
         end
       end
       
-      Instruction = DelegateClass(Array)
-      Instruction.class_eval do
+      class Instruction < BasicObject
         attr_reader :node
         def initialize(body, opts={})
-          super(body)
+          @body = body
           @node = opts[:node]
+        end
+        def method_missing(meth, *args, &blk)
+          @body.send(meth, *args, &blk)
         end
       end
     end

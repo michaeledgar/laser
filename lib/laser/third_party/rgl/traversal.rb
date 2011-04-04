@@ -10,7 +10,7 @@
 # in a slightly modified fashion (especially for the RGL::DFSIterator).
 
 require 'laser/third_party/rgl/base'
-require 'stream'
+require 'laser/third_party/stream'
 
 module RGL
 
