@@ -84,4 +84,8 @@ module Laser
       super("Dead Code #{ast_node.source_begin[0]}:#{ast_node.source_begin[1]}", ast_node)
     end
   end
+  
+  class UnusedVariableWarning < Laser::Error
+    severity WARNING
+  end
 end

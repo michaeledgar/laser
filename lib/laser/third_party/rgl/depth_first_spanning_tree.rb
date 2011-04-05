@@ -13,6 +13,7 @@ module RGL
     # Computes the depth first spanning tree of the CFG, and
     # also attaches the depth-first ordering to the basic blocks
     # in the CFG.
+    # O(|V| + |E|), just like DFS.
     def depth_first_spanning_tree(start_node)
       raise ArgumentError unless vertices.include?(start_node)
       tree = DirectedAdjacencyGraph.new
@@ -23,6 +24,7 @@ module RGL
     end
     
     # builds the dfst from the start node.
+    # O(|V| + |E|), just like DFS.
     def build_dfst(tree, node, visited)
       visited << node
       self.each_adjacent(node) do |other|

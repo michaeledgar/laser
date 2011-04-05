@@ -39,8 +39,8 @@ module RGL
 
       # doms is IDOM. All outward edges connect an IDom to its dominee.
       d_tree = self.class.new
-      vertices.each { |b| d_tree.add_vertex(b.dup.clear_edges) }
-      doms.each { |src, dest| d_tree.add_edge(src, dest) }
+      (vertices - [enter, exit]).each { |b| d_tree.add_vertex(b.dup.clear_edges) }
+      doms.each { |src, dest| d_tree.add_edge(src, dest) unless src == enter && dest == enter }
       d_tree
     end
 
@@ -64,6 +64,28 @@ module RGL
         end
         result
       end
+    end
+    
+    # Computes DF^+: the iterated dominance frontier of a set of blocks.
+    # Used in SSA conversion.
+    def iterated_dominance_frontier(set)
+      #pp set
+      worklist = Set.new(set)
+      result = Set.new(set)
+      frontier = dominance_frontier(dominator_tree)
+
+      #pp frontier
+
+      until worklist.empty?
+        block = worklist.pop
+        frontier[block].each do |candidate|
+          unless result.include?(candidate)
+            result << candidate
+            worklist << candidate
+          end
+        end
+      end
+      result
     end
 
    private

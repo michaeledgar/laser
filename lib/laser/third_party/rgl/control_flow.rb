@@ -93,6 +93,10 @@ module RGL
       vertices.include?(u)
     end
     
+    def has_edge?(u, v)
+      self[u].successors.include?(v)
+    end
+    
     # Returns an array of vertices in this graph. O(V).
     def to_a
       vertices.to_a

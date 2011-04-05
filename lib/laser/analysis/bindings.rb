@@ -5,7 +5,7 @@ module Laser
       # class, value (if constant!), and a variety of other details.
       class GenericBinding
         include Comparable
-        attr_accessor :name, :annotated_type
+        attr_accessor :name, :annotated_type, :inferred_type
         attr_reader :value
 
         def initialize(name, value)
@@ -15,7 +15,7 @@ module Laser
         end
         
         def expr_type
-          annotated_type || Types::ClassType.new(@value.klass.path, :covariant)
+          annotated_type || inferred_type || Types::ClassType.new(@value.klass.path, :covariant)
         end
       
         def bind!(value)
@@ -71,6 +71,9 @@ module Laser
       end
       
       class TemporaryBinding < GenericBinding
+        def non_ssa_name
+          name.rpartition('#').first
+        end
       end
       
       class InstanceVariableBinding < GenericBinding

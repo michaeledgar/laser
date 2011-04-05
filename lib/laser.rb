@@ -11,6 +11,7 @@ require 'treetop'
 $:.unshift(File.expand_path(File.dirname(__FILE__)))
 require 'laser/third_party/trollop'
 require 'laser/third_party/stream'
+require 'laser/third_party/axiom_of_choice'
 require 'laser/third_party/rgl/dot'  # KILLME
 require 'laser/third_party/rgl/bidirectional'
 require 'laser/third_party/rgl/depth_first_spanning_tree'

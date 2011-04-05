@@ -13,6 +13,8 @@ module Laser
           @predecessors = ::Set.new
         end
 
+        # Duplicates the block, but *not* the instructions, as that's likely
+        # just a waste of memory.
         def dup
           result = BasicBlock.new(name)
           result.instructions = instructions
@@ -21,6 +23,7 @@ module Laser
           result
         end
         
+        # Removes all edges from this block.
         def clear_edges
           @successors.clear
           @predecessors.clear
@@ -47,6 +50,17 @@ module Laser
           name.hash
         end
 
+        def variables
+          ::Set.new(instructions.map(&:explicit_targets).inject(:|))
+        end
+        
+        # Gets all SSA Phi nodes that are in the block.
+        def phi_nodes
+          instructions.select { |ins| :phi == ins[0] }
+        end
+
+        # Formats the block all pretty-like for Graphviz. Horrible formatting for
+        # stdout.
         def to_s
           " | #{name} | \\n" + instructions.map do |ins|
             opcode = ins.first.to_s
@@ -60,6 +74,7 @@ module Laser
           end.join('\\n')
         end
 
+        # Proxies all other methods to the instruction list.
         def method_missing(meth, *args, &blk)
           @instructions.send(meth, *args, &blk)
         end

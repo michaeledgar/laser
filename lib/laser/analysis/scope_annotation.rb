@@ -57,7 +57,6 @@ module Laser
           if exception_name
             default_visit exception_name
             bind_variable_names([exception_name.expanded_identifier])
-            p @current_scope.locals
           end
           visit rescue_body
         end

@@ -105,6 +105,7 @@ module Laser
                   temp_result = call_instruct(current_val, op, rhs_value, :block => false)
                   call_instruct_novalue(receiver, "#{method_name}=".to_sym, temp_result, :block => false)
                 end
+              # TODO(adgar): aref_field
               else
                 result = binary_instruct(lhs, op, rhs)
                 copy_instruct(lhs.binding, result)
@@ -165,7 +166,7 @@ module Laser
               
                 start_block all_fail
               end
-              if body.type == :else
+              if body && body.type == :else
                 walk_body_novalue body[1]
               end
               uncond_instruct after
@@ -342,6 +343,7 @@ module Laser
                   call_instruct_novalue(receiver, "#{method_name}=".to_sym, temp_result, :block => false)
                   temp_result
                 end
+              # TODO(adgar): aref_field
               else
                 result = binary_instruct(lhs, op, rhs)
                 copy_instruct(lhs.binding, result)
@@ -421,6 +423,7 @@ module Laser
                   arg_bindings = [lhs.binding]
                   call_method_with_block(receiver_value, :each, [], arg_bindings, body)
                 end
+              # TODO(adgar): aref_field
               else
                 # TODO(adgar): multiple assign
               end
@@ -532,6 +535,7 @@ module Laser
         end
         
        private
+
         def initialize_graph
           @graph = ControlFlowGraph.new
           @graph.root = @sexp
@@ -878,10 +882,11 @@ module Laser
             loop_start_block, check_block, after = create_blocks 3
             
             uncond_instruct loop_start_block
-            current_val = call_instruct(array_to_iterate, :[], counter)
-            cond_instruct(current_val, check_block, after)
+            cond_result = call_instruct(counter, :<, max)
+            cond_instruct(cond_result, check_block, after)
             
             start_block(check_block)
+            current_val = call_instruct(array_to_iterate, :[], counter)
             yield current_val
             next_counter = call_instruct(counter, :+, 1)
             copy_instruct(counter, next_counter)
@@ -1034,9 +1039,10 @@ module Laser
           args = [] if args.nil?
           if args[0] == :args_add_star
             arg_array = compute_varargs(args)
+            call_instruct_novalue(arg_array, :<<, value_walk(val))
             call_vararg_instruct_novalue(receiver, :[]=, arg_array, :block => false)
           else
-            arg_temps = args.map { |arg| value_walk arg }
+            arg_temps = (args + [val]).map { |arg| value_walk arg }
             call_instruct_novalue(receiver, :[]=, *arg_temps, :block => false)
           end
         end
@@ -1092,57 +1098,64 @@ module Laser
         # Adds a no-value call instruction (it discards the return value).
         def call_instruct_novalue(receiver, method, *args)
           add_instruction(:call, nil, receiver, method, *args)
-          @graph.add_abnormal_edge(@current_block, current_rescue)
-          uncond_instruct create_block, :jump_instruct => false
+          add_potential_raise_edge
         end
         
         # Adds a generic method call instruction.
         def call_instruct(receiver, method, *args)
           result = create_temporary
           add_instruction(:call, result, receiver, method, *args)
-          @graph.add_abnormal_edge(@current_block, current_rescue)
-          uncond_instruct create_block, :jump_instruct => false
+          add_potential_raise_edge
           result
         end
         
         # Adds a no-value call instruction (it discards the return value).
         def call_vararg_instruct_novalue(receiver, method, args, block)
           add_instruction(:call_vararg, nil, receiver, method, args, block)
-          @graph.add_abnormal_edge(@current_block, current_rescue)
-          uncond_instruct create_block, :jump_instruct => false
+          add_potential_raise_edge
         end
         
         # Adds a generic method call instruction.
         def call_vararg_instruct(receiver, method, args, block)
           result = create_temporary
           add_instruction(:call_vararg, result, receiver, method, args, block)
-          @graph.add_abnormal_edge(@current_block, current_rescue)
-          uncond_instruct create_block, :jump_instruct => false
+          add_potential_raise_edge
           result
         end
 
         # Adds a no-value super instruction (it discards the return value).
         def super_instruct_novalue(*args)
           add_instruction(:super, nil, *args)
+          add_potential_raise_edge
         end
         
         # Adds a generic method super instruction.
         def super_instruct(*args)
           result = create_temporary
           add_instruction(:super, result, *args)
+          add_potential_raise_edge
           result
         end
         
         # Adds a no-value super instruction (it discards the return value).
         def super_vararg_instruct_novalue(args, block)
           add_instruction(:super_vararg, nil, args, block)
+          add_potential_raise_edge
         end
         
         # Adds a generic method super instruction.
         def super_vararg_instruct(args, block)
           result = create_temporary
           add_instruction(:super_vararg, result, args, block)
+          add_potential_raise_edge
           result
+        end
+
+        # Adds an edge from the current block to the current rescue target,
+        # while creating a new block for the "natural" exit.
+        def add_potential_raise_edge
+          @graph.add_abnormal_edge(@current_block, current_rescue)
+          uncond_instruct create_block, :jump_instruct => false
         end
 
         # Looks up the value of a variable and assigns it to a new temporary
@@ -1326,7 +1339,7 @@ module Laser
           start_block(after)
           result
         end
-        
+
         # Performs an OR operation, with short circuiting, that ignores
         # whatever return value results.
         def or_instruct_novalue(lhs, rhs)
@@ -1340,7 +1353,7 @@ module Laser
           uncond_instruct(after)
           start_block(after)
         end
-        
+
         # Performs an AND operation, with short circuiting, that must save
         # the result of the operation.
         def and_instruct(lhs, rhs)
@@ -1362,7 +1375,7 @@ module Laser
           start_block(after)
           result
         end
-        
+
         # Performs an AND operation, with short circuiting, that ignores
         # whatever return value results.
         def and_instruct_novalue(lhs, rhs)
@@ -1563,17 +1576,6 @@ module Laser
         # Sets the current block to be the given block.
         def start_block(block)
           @current_block = block
-        end
-      end
-      
-      class Instruction < BasicObject
-        attr_reader :node
-        def initialize(body, opts={})
-          @body = body
-          @node = opts[:node]
-        end
-        def method_missing(meth, *args, &blk)
-          @body.send(meth, *args, &blk)
         end
       end
     end
