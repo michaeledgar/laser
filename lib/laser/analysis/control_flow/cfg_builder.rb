@@ -83,7 +83,7 @@ module Laser
                 rhs_val = value_walk rhs
                 call_instruct(receiver, "#{method_name}=".to_sym, rhs_val, block: false, value: false)
               when :aref_field
-                generic_aref_instruct_novalue(value_walk(lhs[1]), lhs[2][1], rhs)
+                generic_aref_instruct(value_walk(lhs[1]), lhs[2][1], rhs, value: false)
               when :const_path_field
                 lhs, rhs = node.children
                 receiver, const = lhs.children
@@ -238,23 +238,23 @@ module Laser
               case node[1].type
               when :super
                 arg_node = arg_node[1] if arg_node.type == :args_add_block
-                call_method_with_block_novalue(
+                call_method_with_block(
                     receiver, method_call.method_name, arg_node,
-                    block_arg_bindings, body_sexp)
+                    block_arg_bindings, body_sexp, value: false)
               when :zsuper
-                call_zsuper_with_block_novalue(node[1], block_arg_bindings, body_sexp)
+                call_zsuper_with_block(node[1], block_arg_bindings, body_sexp, value: false)
               else
-                call_method_with_block_novalue(
-                    receiver, method_call.method_name, arg_node, block_arg_bindings, body_sexp)
+                call_method_with_block(
+                    receiver, method_call.method_name, arg_node, block_arg_bindings, body_sexp, value: false)
               end
             when :super
               args = node[1]
               args = args[1] if args.type == :arg_paren
               _, args, block = args
-              generic_super_instruct_novalue(args, block)
+              generic_super_instruct(args, block, value: false)
             when :zsuper
               # TODO(adgar): blocks in args & style
-              invoke_super_with_block_novalue(*compute_zsuper_arguments(node), false)
+              invoke_super_with_block(*compute_zsuper_arguments(node), false, value: false)
             when :for
               lhs, receiver, body = node.children
               receiver_value = value_walk receiver
@@ -266,7 +266,7 @@ module Laser
                 else
                   # just get the value
                   arg_bindings = [lhs.binding]
-                  call_method_with_block_novalue(receiver_value, :each, [], arg_bindings, body)
+                  call_method_with_block(receiver_value, :each, [], arg_bindings, body, value: false)
                 end
               else
                 # TODO(adgar): multiple assign
@@ -334,7 +334,7 @@ module Laser
                 rhs_val = value_walk rhs
                 call_instruct(receiver, "#{method_name}=".to_sym, rhs_val, block: false, value: true)
               when :aref_field
-                generic_aref_instruct(value_walk(lhs[1]), lhs[2][1], rhs)
+                generic_aref_instruct(value_walk(lhs[1]), lhs[2][1], rhs, value: true)
               when :const_path_field
                 lhs, rhs = node.children
                 receiver, const = lhs.children
@@ -454,23 +454,23 @@ module Laser
                 arg_node = arg_node[1] if arg_node.type == :args_add_block
                 call_method_with_block(
                     receiver, method_call.method_name, arg_node,
-                    Signature.arg_list_for_arglist(node[2][1][1]), node[2][2])
+                    Signature.arg_list_for_arglist(node[2][1][1]), node[2][2], value: true)
               when :zsuper
                 call_zsuper_with_block(node[1], 
-                    Signature.arg_list_for_arglist(node[2][1][1]), node[2][2])
+                    Signature.arg_list_for_arglist(node[2][1][1]), node[2][2], value: true)
               else
                 call_method_with_block(
                     receiver, method_call.method_name, arg_node,
-                    Signature.arg_list_for_arglist(node[2][1][1]), node[2][2])
+                    Signature.arg_list_for_arglist(node[2][1][1]), node[2][2], value: true)
               end
             when :super
               args = node[1]
               args = args[1] if args.type == :arg_paren
               _, args, block = args
-              generic_super_instruct(args, block)
+              generic_super_instruct(args, block, value: true)
             when :zsuper
               # TODO(adgar): blocks in args & style
-              invoke_super_with_block(*compute_zsuper_arguments(node), false)
+              invoke_super_with_block(*compute_zsuper_arguments(node), false, value: true)
             when :for
               lhs, receiver, body = node.children
               receiver_value = value_walk receiver
@@ -482,7 +482,7 @@ module Laser
                 else
                   # just get the value
                   arg_bindings = [lhs.binding]
-                  call_method_with_block(receiver_value, :each, [], arg_bindings, body)
+                  call_method_with_block(receiver_value, :each, [], arg_bindings, body, value: true)
                 end
               # TODO(adgar): aref_field
               else
@@ -690,43 +690,26 @@ module Laser
           result
         end
 
-        def call_zsuper_with_block_novalue(node, block_arg_bindings, block_sexp)
+        def call_zsuper_with_block(node, block_arg_bindings, block_sexp, opts={})
+          opts = {value: true, raise: true}.merge(opts)
           call_with_explicit_block(block_arg_bindings, block_sexp) do |body_block, after|
-            invoke_super_with_block_novalue *compute_zsuper_arguments(node), body_block.name
+            invoke_super_with_block *compute_zsuper_arguments(node), body_block.name, opts
           end
         end
 
-        def call_zsuper_with_block(node, block_arg_bindings, block_sexp)
+        def call_method_with_block(receiver, method, args, block_arg_bindings, block_sexp, opts={})
+          opts = {value: true, raise: true}.merge(opts)
           call_with_explicit_block(block_arg_bindings, block_sexp) do |body_block, after|
-            invoke_super_with_block *compute_zsuper_arguments(node), body_block.name
+            generic_call_instruct receiver, method, args, body_block.name, opts
           end
         end
         
-        def call_method_with_block_novalue(receiver, method, args, block_arg_bindings, block_sexp)
-          call_with_explicit_block(block_arg_bindings, block_sexp) do |body_block, after|
-            generic_call_instruct receiver, method, args, body_block.name, value: false
-          end
-        end
-
-        def call_method_with_block(receiver, method, args, block_arg_bindings, block_sexp)
-          call_with_explicit_block(block_arg_bindings, block_sexp) do |body_block, after|
-            generic_call_instruct receiver, method, args, body_block.name, value: true
-          end
-        end
-        
-        def invoke_super_with_block(args, is_vararg, body_block)
+        def invoke_super_with_block(args, is_vararg, body_block, opts={})
+          opts = {value: true, raise: true}.merge(opts)
           # TODO(adgar): blocks in args & style
           if is_vararg
-          then super_vararg_instruct(args, :block => body_block)
-          else super_instruct(*args, :block => body_block)
-          end
-        end
-        
-        def invoke_super_with_block_novalue(args, is_vararg, body_block)
-          # TODO(adgar): blocks in args & style
-          if is_vararg
-          then super_vararg_instruct_novalue(args, :block => body_block)
-          else super_instruct(*args, :block => body_block, value: false)
+          then super_vararg_instruct(args, {:block => body_block}, opts)
+          else super_instruct(*args, {:block => body_block}, opts)
           end
         end
         
@@ -1260,27 +1243,14 @@ module Laser
         # issue a super instruction. This will involve computing the arguments,
         # potentially issuing a vararg super (if splats are used). The return
         # value is captured and returned to the superer of this method.
-        def generic_super_instruct(args, block)
+        def generic_super_instruct(args, block, opts={})
+          opts = {value: true, raise: true}.merge(opts)
           if args[0] == :args_add_star
             arg_array = compute_varargs(args)
-            super_vararg_instruct(arg_array, :block => block)
+            super_vararg_instruct(arg_array, {:block => block}, opts)
           else
             arg_temps = args.map { |arg| value_walk arg }
-            super_instruct(*arg_temps, :block => block)
-          end
-        end
-
-        # Given a receiver, a method, a method_add_arg node, and a block value,
-        # issue a super instruction. This will involve computing the arguments,
-        # potentially issuing a vararg super (if splats are used). The return
-        # value is not captured.
-        def generic_super_instruct_novalue(args, block)
-          if args[0] == :args_add_star
-            arg_array = compute_varargs(args)
-            super_vararg_instruct_novalue(arg_array, :block => block)
-          else
-            arg_temps = args.map { |arg| value_walk arg }
-            super_instruct(*arg_temps, :block => block, value: false)
+            super_instruct(*arg_temps, {:block => block}, opts)
           end
         end
 
@@ -1288,31 +1258,16 @@ module Laser
         # issue a call instruction. This will involve computing the arguments,
         # potentially issuing a vararg call (if splats are used). The return
         # value is captured and returned to the caller of this method.
-        def generic_aref_instruct(receiver, args, val)
+        def generic_aref_instruct(receiver, args, val, opts={})
+          opts = {value: true, raise: true}.merge(opts)
           args = [] if args.nil?
           if args[0] == :args_add_star
             arg_array = compute_varargs(args)
             call_instruct(arg_array, :<<, value_walk(val), value: false)
-            call_vararg_instruct(receiver, :[]=, arg_array, false, value: true)
+            call_vararg_instruct(receiver, :[]=, arg_array, false, opts)
           else
             arg_temps = (args + [val]).map { |arg| value_walk arg }
-            call_instruct(receiver, :[]=, *arg_temps, block: false, value: true)
-          end
-        end
-        
-        # Given a receiver, a method, a method_add_arg node, and a block value,
-        # issue a call instruction. This will involve computing the arguments,
-        # potentially issuing a vararg call (if splats are used). The return
-        # value is not captured.
-        def generic_aref_instruct_novalue(receiver, args, val)
-          args = [] if args.nil?
-          if args[0] == :args_add_star
-            arg_array = compute_varargs(args)
-            call_instruct(arg_array, :<<, value_walk(val), value: false)
-            call_vararg_instruct(receiver, :[]=, arg_array, false, value: false)
-          else
-            arg_temps = (args + [val]).map { |arg| value_walk arg }
-            call_instruct(receiver, :[]=, *arg_temps, block: false, value: false)
+            call_instruct(receiver, :[]=, *arg_temps, {block: false}, opts)
           end
         end
 
@@ -1393,17 +1348,12 @@ module Laser
           result
         end
         
-        # Adds a no-value super instruction (it discards the return value).
-        def super_vararg_instruct_novalue(args, block)
-          add_instruction(:super_vararg, nil, args, block)
-          add_potential_raise_edge
-        end
-        
         # Adds a generic method super instruction.
-        def super_vararg_instruct(args, block)
-          result = create_temporary
+        def super_vararg_instruct(args, block, opts={})
+          opts = {raise: true, value: true}.merge(opts)
+          result = create_result_if_needed opts
           add_instruction(:super_vararg, result, args, block)
-          add_potential_raise_edge
+          add_potential_raise_edge if opts[:raise]
           result
         end
 
