@@ -35,6 +35,11 @@ module Laser
         singleton_class.add_signature!(signature)
       end
       
+      def inspect
+        return 'main' if self == Scope::GlobalScope.self_ptr
+        super
+      end
+      
       def singleton_class
         return @singleton_class if @singleton_class
         new_scope = ClosedScope.new(self.scope, nil)

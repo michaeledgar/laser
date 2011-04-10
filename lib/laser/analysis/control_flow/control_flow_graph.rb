@@ -57,11 +57,11 @@ module Laser
           remove_edge src, dest
         end
         
-        # Dead code discovery first. Just warnings.
+        # Runs full analysis on the CFG. Puts it in SSA then searches for warnings.
         def analyze
           static_single_assignment_form
-          perform_dead_code_discovery
           add_unused_variable_warnings
+          perform_dead_code_discovery
         end
         
         def all_errors
