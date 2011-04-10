@@ -148,6 +148,23 @@ module Laser
             yield_instruct_with_arg(node, opts)
           when :yield0
             yield_instruct(nil, opts)
+          when :return
+            return_instruct node
+            const_instruct(nil) if opts[:value]
+          when :return0
+            return0_instruct
+            const_instruct(nil) if opts[:value]
+          when :break
+            break_instruct(node[1])
+            const_instruct(nil) if opts[:value]
+          when :next
+            next_instruct(node[1])
+            const_instruct(nil) if opts[:value]
+          when :redo
+            redo_instruct
+            const_instruct(nil) if opts[:value]
+          when :void_stmt
+            const_instruct(nil) if opts[:value]
           when :program
             uncond_instruct create_block
             walk_body node[1], value: false
@@ -252,16 +269,6 @@ module Laser
                 walk_body body[1], value: false
               end
               uncond_instruct after
-            when :return
-              return_instruct node
-            when :return0
-              return0_instruct
-            when :break
-              break_instruct(node[1])
-            when :next
-              next_instruct(node[1])
-            when :redo
-              redo_instruct
             when :var_ref
               if node.binding.nil? && node[1].type != :@kw
                 call_instruct(node.scope.lookup('self'), node.expanded_identifier, value: false)
@@ -461,23 +468,6 @@ module Laser
               
               start_block after
               result
-            when :return
-              return_instruct node
-              const_instruct(nil)
-            when :return0
-              return0_instruct
-              const_instruct(nil)
-            when :break
-              break_instruct(node[1])
-              const_instruct(nil)
-            when :next
-              next_instruct(node[1])
-              const_instruct(nil)
-            when :redo
-              redo_instruct
-              const_instruct(nil)
-            when :void_stmt
-              const_instruct(nil)
             when :@CHAR, :@tstring_content, :@int, :@float, :@regexp_end, :symbol,
                  :@label, :symbol_literal
               const_instruct(node.constant_value)
