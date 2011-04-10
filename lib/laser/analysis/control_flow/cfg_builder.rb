@@ -47,6 +47,11 @@ module Laser
           @current_node = old_node
         end
         
+        # Walks the node differently based on whether the value is needed.
+        def walk_node(node, value_needed)
+          value_needed ? value_walk(node) : novalue_walk(node)
+        end
+        
         # Walks the node expecting that the expression's return value will be discarded.
         # Since everything is an expression in Ruby, knowing when to ignore return
         # values is nice.
@@ -142,7 +147,7 @@ module Laser
               binary_instruct(lhs, op, rhs, value: false)
             when :ifop
               cond, if_true, if_false = node.children
-              ternary_instruct_novalue(cond, if_true, if_false)
+              ternary_instruct(cond, if_true, if_false, value: false)
             when :unary
               op, receiver = node.children
               receiver = value_walk(receiver)
@@ -407,7 +412,7 @@ module Laser
               binary_instruct(lhs, op, rhs, value: true)
             when :ifop
               cond, if_true, if_false = node.children
-              ternary_instruct(cond, if_true, if_false)
+              ternary_instruct(cond, if_true, if_false, value: true)
             when :unary
               op, receiver = node.children
               receiver = value_walk(receiver)
@@ -748,25 +753,11 @@ module Laser
         
         # Performs a no-arg return.
         def return0_instruct
-          add_instruction(:return, nil)
-          uncond_instruct @current_return
-          start_block create_block
+          return_uncond_jump_instruct(nil)
         end
         
         def return_instruct(node)
-          args = node[1][1]
-          if args[0] == :args_add_star
-            # if there's a splat, always return an actual array object of all the arguments.
-            result = compute_varargs(args)
-          elsif args.size > 1
-            # if there's more than 1 argument, but no splats, then we just pack
-            # them into an array and return that array.
-            arg_temps = args.map { |arg| value_walk arg }
-            result = call_instruct(ClassRegistry['Array'].binding, :[], *arg_temps, value: true, raise: false)
-          else
-            # Otherwise, just 1 simple argument: return it.
-            result = value_walk args[0]
-          end
+          result = evaluate_args_into_array node[1][1]
           return_uncond_jump_instruct result
         end
         
@@ -789,20 +780,25 @@ module Laser
         
         def yield_instruct_with_arg(node, opts={})
           opts = {raise: true, value: true}.merge(opts)
-          args = node[1][1]
+          result = evaluate_args_into_array node[1][1]
+          yield_instruct result, opts
+        end
+        
+        # Takes an argument node and evaluates it into an array. used by
+        # return and yield, as they always pass along 1 argument.
+        def evaluate_args_into_array(args)
           if args[0] == :args_add_star
             # if there's a splat, always return an actual array object of all the arguments.
-            result = compute_varargs(args)
+            compute_varargs(args)
           elsif args.size > 1
             # if there's more than 1 argument, but no splats, then we just pack
             # them into an array and return that array.
             arg_temps = args.map { |arg| value_walk arg }
-            result = call_instruct(ClassRegistry['Array'].binding, :[], *arg_temps, value: true, raise: false)
+            call_instruct(ClassRegistry['Array'].binding, :[], *arg_temps, value: true, raise: false)
           else
             # Otherwise, just 1 simple argument: return it.
-            result = value_walk args[0]
+            value_walk args[0]
           end
-          yield_instruct result, opts
         end
         
         attr_reader :current_break, :current_next, :current_redo, :current_return, :current_rescue
@@ -1361,41 +1357,29 @@ module Laser
           call_instruct(lhs_result, op, rhs_result, opts)
         end
         
-        def ternary_instruct_novalue(cond, if_true, if_false)
+        def ternary_instruct(cond, if_true, if_false, opts={})
+          opts = {value: true}.merge(opts)
           if_true_block, if_false_block, after = create_blocks 3
           cond_result = value_walk cond
           cond_instruct(cond_result, if_true_block, if_false_block)
           
           start_block if_true_block
-          novalue_walk if_true
-          uncond_instruct(after)
+          if_true_result = walk_node if_true, opts[:value]
           
           start_block if_false_block
-          novalue_walk if_false
-          uncond_instruct(after)
-
-          start_block after
-        end
-        
-        def ternary_instruct(cond, if_true, if_false)
-          if_true_block, if_false_block, after = create_blocks 3
-          cond_result = value_walk cond
-          cond_instruct(cond_result, if_true_block, if_false_block)
+          if_false_result = walk_node if_false, opts[:value]
+          
+          # generate temporary if necessary
+          result = opts[:value] ? 
+                   lookup_or_create_temporary(:ternary, cond_result, if_true_result, if_false_result) :
+                   nil
           
           start_block if_true_block
-          if_true_result = value_walk if_true
-          
-          start_block if_false_block
-          if_false_result = value_walk if_false
-          
-          result = lookup_or_create_temporary(:ternary, cond_result, if_true_result, if_false_result)
-          
-          start_block if_true_block
-          copy_instruct(result, if_true_result)
+          copy_instruct(result, if_true_result) if opts[:value]
           uncond_instruct(after)
           
           start_block if_false_block
-          copy_instruct(result, if_false_result)
+          copy_instruct(result, if_false_result) if opts[:value]
           uncond_instruct(after)
           
           start_block after
