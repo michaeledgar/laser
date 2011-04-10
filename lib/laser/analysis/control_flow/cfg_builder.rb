@@ -57,7 +57,7 @@ module Laser
               # Do nothing.
             when :program
               uncond_instruct create_block
-              walk_body_novalue node[1]
+              walk_body node[1], value: false
             when :bodystmt
               bodystmt_walk node
             when :begin
@@ -132,14 +132,14 @@ module Laser
                 end
               # TODO(adgar): aref_field
               else
-                result = binary_instruct(lhs, op, rhs)
+                result = binary_instruct(lhs, op, rhs, value: true)
                 copy_instruct(lhs.binding, result)
               end
             when :binary
               # If someone makes an overloaded operator that mutates something....
               # we have to run it (maybe), even if we hate them.
               lhs, op, rhs = node.children
-              binary_instruct_novalue(lhs, op, rhs)
+              binary_instruct(lhs, op, rhs, value: false)
             when :ifop
               cond, if_true, if_false = node.children
               ternary_instruct_novalue(cond, if_true, if_false)
@@ -149,16 +149,16 @@ module Laser
               call_instruct(receiver, op, value: false)
             when :while
               condition, body = node.children
-              while_instruct_novalue(condition, body)
+              while_instruct(condition, body, value: false)
             when :while_mod
               condition, body_stmt = node.children
-              while_instruct_novalue(condition, [body_stmt])
+              while_instruct(condition, [body_stmt], value: false)
             when :until
               condition, body = node.children
-              until_instruct_novalue(condition, body)
+              until_instruct(condition, body, value: false)
             when :until_mod
               condition, body_stmt = node.children
-              until_instruct_novalue(condition, [body_stmt])
+              until_instruct(condition, [body_stmt], value: false)
             when :if
               if_instruct_novalue(node)
             when :unless
@@ -186,13 +186,13 @@ module Laser
                 all_fail = @current_block
 
                 start_block when_body_block
-                walk_body_novalue when_body
+                walk_body when_body, value: false
                 uncond_instruct after
               
                 start_block all_fail
               end
               if body && body.type == :else
-                walk_body_novalue body[1]
+                walk_body body[1], value: false
               end
               uncond_instruct after
             when :return
@@ -200,9 +200,9 @@ module Laser
             when :return0
               return0_instruct
             when :yield
-              yield_instruct_with_arg_novalue(node)
+              yield_instruct_with_arg(node, value: false)
             when :yield0
-              yield_instruct_novalue
+              yield_instruct(nil, value: false)
             when :break
               break_instruct(node[1])
             when :next
@@ -308,13 +308,13 @@ module Laser
             case node.type
             when :program
               uncond_instruct create_block
-              walk_body_novalue node[1]
+              walk_body node[1], value: false
             when :bodystmt
               bodystmt_walk node
             when :begin
               value_walk node[1]
             when :paren
-              walk_body node[1]
+              walk_body node[1], value: true
             when :class
               class_name, superclass, body = node.children
               class_instruct(node.scope, class_name, superclass, body, value: true)
@@ -398,13 +398,13 @@ module Laser
                 end
               # TODO(adgar): aref_field
               else
-                result = binary_instruct(lhs, op, rhs)
+                result = binary_instruct(lhs, op, rhs, value: true)
                 copy_instruct(lhs.binding, result)
                 result
               end
             when :binary
               lhs, op, rhs = node.children
-              binary_instruct(lhs, op, rhs)
+              binary_instruct(lhs, op, rhs, value: true)
             when :ifop
               cond, if_true, if_false = node.children
               ternary_instruct(cond, if_true, if_false)
@@ -490,16 +490,16 @@ module Laser
               end
             when :while
               condition, body = node.children
-              while_instruct(condition, body)
+              while_instruct(condition, body, value: true)
             when :while_mod
               condition, body_stmt = node.children
-              while_instruct(condition, [body_stmt])
+              while_instruct(condition, [body_stmt], value: true)
             when :until
               condition, body = node.children
-              until_instruct(condition, body)
+              until_instruct(condition, body, value: true)
             when :until_mod
               condition, body_stmt = node.children
-              until_instruct(condition, [body_stmt])
+              until_instruct(condition, [body_stmt], value: true)
             when :if
               if_instruct(node)
             when :unless
@@ -528,7 +528,7 @@ module Laser
                 all_fail = @current_block
 
                 start_block when_body_block
-                when_body_result = walk_body when_body
+                when_body_result = walk_body when_body, value: true
                 copy_instruct(result, when_body_result)
                 uncond_instruct after
               
@@ -538,7 +538,7 @@ module Laser
                 copy_instruct(result, nil)
                 uncond_instruct after
               elsif body.type == :else
-                else_body_result = walk_body body[1]
+                else_body_result = walk_body body[1], value: true
                 copy_instruct(result, else_body_result)
                 uncond_instruct after
               end
@@ -552,9 +552,9 @@ module Laser
               return0_instruct
               const_instruct(nil)
             when :yield
-              yield_instruct_with_arg(node)
+              yield_instruct_with_arg(node, value: true)
             when :yield0
-              yield_instruct
+              yield_instruct(nil, value: true)
             when :break
               break_instruct(node[1])
               const_instruct(nil)
@@ -573,7 +573,7 @@ module Laser
               content_nodes = node[1].children
               build_string_instruct(content_nodes)
             when :string_embexpr
-              final = walk_body node[1]
+              final = walk_body node[1], value: true
               call_instruct(final, :to_s, value: true)
             when :xstring_literal
               body = build_string_instruct(node[1])
@@ -620,7 +620,7 @@ module Laser
             next nil unless current
             new_block = create_block
             start_block new_block
-            walk_body_novalue redirect
+            walk_body redirect, value: false
             uncond_instruct current
             new_block
           end.delete_if { |k, v| v.nil? }
@@ -649,19 +649,18 @@ module Laser
         # Walks over a series of statements, ignoring the return value of
         # everything except the last statement. Stores the result of the
         # last statement in the result parameter.
-        def walk_body(body)
-          body[0..-2].each { |elt| novalue_walk(elt) }
-          if body.any?
-            value_walk(body.last)
+        def walk_body(body, opts={})
+          opts = {value: true}.merge(opts)
+          if opts[:value]
+            body[0..-2].each { |elt| novalue_walk(elt) }
+            if body.any?
+              value_walk(body.last)
+            else
+              const_instruct(nil)
+            end
           else
-            const_instruct(nil)
+            body.each { |node| novalue_walk node }
           end
-        end
-        
-        # Walks the series of statements with no regard for any of their
-        # return values.
-        def walk_body_novalue(body)
-          body.each { |node| novalue_walk node }
         end
         
         def raise_instruct(arg)
@@ -724,7 +723,7 @@ module Laser
         # scope
         def walk_block_body(body_block, body, after)
           start_block body_block
-          body_result = walk_body body
+          body_result = walk_body body, value: true
           add_instruction(:resume, body_result)
           @graph.add_abnormal_edge(@current_block, current_rescue)
           cond_instruct(nil, body_block, after, :branch_instruct => false)
@@ -780,21 +779,16 @@ module Laser
         
         # Performs a yield of the given value, capturing the return
         # value.
-        def yield_instruct(arg=nil)
-          result = create_temporary
+        def yield_instruct(arg=nil, opts={})
+          opts = {raise: true, value: true}.merge(opts)
+          result = create_result_if_needed opts
           add_instruction(:yield, result, arg)
-          add_potential_raise_edge
+          add_potential_raise_edge if opts[:raise]
           result
         end
         
-        # Performs a yield of the given value, ignoring any return
-        # value.
-        def yield_instruct_novalue(arg=nil)
-          add_instruction(:yield, nil, arg)
-          add_potential_raise_edge
-        end
-        
-        def yield_instruct_with_arg(node)
+        def yield_instruct_with_arg(node, opts={})
+          opts = {raise: true, value: true}.merge(opts)
           args = node[1][1]
           if args[0] == :args_add_star
             # if there's a splat, always return an actual array object of all the arguments.
@@ -808,25 +802,7 @@ module Laser
             # Otherwise, just 1 simple argument: return it.
             result = value_walk args[0]
           end
-          yield_instruct result
-        end
-        
-        def yield_instruct_with_arg_novalue(node)
-          args = node[1][1]
-          if args[0] == :args_add_star
-            # if there's a splat, always return an actual array object of all the arguments.
-            result = compute_varargs(args)
-          elsif args.size > 1
-            # if there's more than 1 argument, but no splats, then we just pack
-            # them into an array and return that array.
-            arg_temps = args.map { |arg| value_walk arg }
-            result = call_instruct(ClassRegistry['Array'].binding, :new, value: true, raise: false)
-            arg_temps.each { |arg| call_instruct(arg_array, :<<, arg, value: false) }
-          else
-            # Otherwise, just 1 simple argument: return it.
-            result = value_walk args[0]
-          end
-          yield_instruct_novalue result
+          yield_instruct result, opts
         end
         
         attr_reader :current_break, :current_next, :current_redo, :current_return, :current_rescue
@@ -869,7 +845,7 @@ module Laser
               walk_body_with_rescue_target(result, body, body_block, rescue_target)
             end
             uncond_instruct ensure_block
-            walk_body_novalue(ensure_body[1])
+            walk_body(ensure_body[1], value: false)
             uncond_instruct after
           else
             # Generate the body with redirects to the ensure block, so no jumps get away without
@@ -894,7 +870,7 @@ module Laser
         def walk_body_with_rescue_target(result, body, body_block, rescue_target)
           with_jump_targets(:rescue => rescue_target) do
             start_block body_block
-            body_result = walk_body body
+            body_result = walk_body body, value: true
             copy_instruct(result, body_result)
           end
         end
@@ -926,7 +902,7 @@ module Laser
               copy_instruct(exception_name.scope.lookup(exception_name.expanded_identifier),
                             temp)
             end
-            body_result = walk_body handler_body
+            body_result = walk_body handler_body, value: true
             copy_instruct(enclosing_body_result, body_result)
             uncond_instruct ensure_block
             
@@ -946,7 +922,7 @@ module Laser
             else_block = create_block
             uncond_instruct else_block
             start_block else_block
-            walk_body_novalue else_body[1]
+            walk_body else_body[1], value: false
           end
           raise_instruct Scope::GlobalScope.lookup('$!')
         end
@@ -1372,28 +1348,17 @@ module Laser
           result
         end
         
-        def binary_instruct_novalue(lhs, op, rhs)
+        def binary_instruct(lhs, op, rhs, opts={})
+          opts = {value: true}.merge(opts)
           if op == :or || op == :"||"
-            return or_instruct_novalue(lhs, rhs)
+            return or_instruct(lhs, rhs, opts)
           elsif op == :and || op == :"&&"
-            return and_instruct_novalue(lhs, rhs)
+            return and_instruct(lhs, rhs, opts)
           end
 
           lhs_result = value_walk lhs
           rhs_result = value_walk rhs
-          call_instruct(lhs_result, op, rhs_result, value: false)
-        end
-        
-        def binary_instruct(lhs, op, rhs)
-          if op == :or || op == :"||"
-            return or_instruct(lhs, rhs)
-          elsif op == :and || op == :"&&"
-            return and_instruct(lhs, rhs)
-          end
-
-          lhs_result = value_walk lhs
-          rhs_result = value_walk rhs
-          call_instruct(lhs_result, op, rhs_result, value: true)
+          call_instruct(lhs_result, op, rhs_result, opts)
         end
         
         def ternary_instruct_novalue(cond, if_true, if_false)
@@ -1438,28 +1403,9 @@ module Laser
         end
         
         # Runs the list of operations in body while the condition is true.
-        def while_instruct_novalue(condition, body)
-          body_block, after_block, precond_block = create_blocks 3
-
-          with_jump_targets(:break => after_block, :redo => body_block, :next => precond_block) do
-            uncond_instruct precond_block
-            start_block precond_block
-            
-            cond_result = value_walk condition
-            cond_instruct(cond_result, body_block, after_block)
-
-            start_block body_block
-            walk_body_novalue body
-            cond_result = value_walk condition
-            cond_instruct(cond_result, body_block, after_block)
-          end
-          
-          start_block after_block
-        end
-        
-        # Runs the list of operations in body while the condition is true.
         # Then returns nil.
-        def while_instruct(condition, body)
+        def while_instruct(condition, body, opts={})
+          opts = {value: true}.merge(opts)
           body_block, after_block, precond_block = create_blocks 3
 
           with_jump_targets(:break => after_block, :redo => body_block, :next => precond_block) do
@@ -1470,40 +1416,19 @@ module Laser
             cond_instruct(cond_result, body_block, after_block)
 
             start_block body_block
-          
-            walk_body_novalue body
+            walk_body body, value: false
             cond_result = value_walk condition
             cond_instruct(cond_result, body_block, after_block)
           end
           
           start_block after_block
-          const_instruct(nil)
-        end
-        
-        # Runs the list of operations in body until the condition is true.
-        def until_instruct_novalue(condition, body)
-          body_block, after_block, precond_block = create_blocks 3
-
-          with_jump_targets(:break => after_block, :redo => body_block, :next => precond_block) do
-            uncond_instruct precond_block
-            start_block precond_block
-            
-            cond_result = value_walk condition
-            cond_instruct(cond_result, after_block, body_block)
-
-            start_block body_block
-          
-            walk_body_novalue body
-            cond_result = value_walk condition
-            cond_instruct(cond_result, after_block, body_block)
-          end
-          
-          start_block after_block
+          const_instruct(nil) if opts[:value]
         end
         
         # Runs the list of operations in body until the condition is true.
         # Then returns nil.
-        def until_instruct(condition, body)
+        def until_instruct(condition, body, opts={})
+          opts = {value: true}.merge(opts)
           body_block, after_block, precond_block = create_blocks 3
 
           with_jump_targets(:break => after_block, :redo => body_block, :next => precond_block) do
@@ -1515,85 +1440,83 @@ module Laser
 
             start_block body_block
           
-            walk_body_novalue body
+            walk_body body, value: false
             cond_result = value_walk condition
             cond_instruct(cond_result, after_block, body_block)
           end
           
           start_block after_block
-          const_instruct(nil)
+          const_instruct(nil) if opts[:value]
         end
         
         # Performs an OR operation, with short circuiting that must save
         # the result of the operation.
-        def or_instruct(lhs, rhs)
-          true_block, false_block, after = create_blocks 3
+        def or_instruct(lhs, rhs, opts={})
+          opts = {value: true}.merge(opts)
+          if opts[:value]
+            true_block, false_block, after = create_blocks 3
 
-          lhs_result = value_walk lhs
-          cond_instruct(lhs_result, true_block, false_block)
+            lhs_result = value_walk lhs
+            cond_instruct(lhs_result, true_block, false_block)
           
-          start_block(false_block)
-          rhs_result = value_walk rhs
-          result = lookup_or_create_temporary(:or_short_circuit, lhs_result, rhs_result)
-          copy_instruct(result, rhs_result)
-          uncond_instruct(after)
+            start_block(false_block)
+            rhs_result = value_walk rhs
+            result = lookup_or_create_temporary(:or_short_circuit, lhs_result, rhs_result)
+            copy_instruct(result, rhs_result)
+            uncond_instruct(after)
           
-          start_block(true_block)
-          copy_instruct(result, lhs_result)
-          uncond_instruct(after)
+            start_block(true_block)
+            copy_instruct(result, lhs_result)
+            uncond_instruct(after)
           
-          start_block(after)
-          result
-        end
+            start_block(after)
+            result
+          else
+            false_block, after = create_blocks 2
 
-        # Performs an OR operation, with short circuiting, that ignores
-        # whatever return value results.
-        def or_instruct_novalue(lhs, rhs)
-          false_block, after = create_blocks 2
+            lhs_result = value_walk lhs
+            cond_instruct(lhs_result, after, false_block)
 
-          lhs_result = value_walk lhs
-          cond_instruct(lhs_result, after, false_block)
-          
-          start_block(false_block)
-          novalue_walk rhs
-          uncond_instruct(after)
-          start_block(after)
+            start_block(false_block)
+            novalue_walk rhs
+            uncond_instruct(after)
+            start_block(after)
+          end
         end
 
         # Performs an AND operation, with short circuiting, that must save
         # the result of the operation.
-        def and_instruct(lhs, rhs)
-          true_block, false_block, after = create_blocks 3
+        def and_instruct(lhs, rhs, opts={})
+          opts = {value: true}.merge(opts)
+          if opts[:value]
+            true_block, false_block, after = create_blocks 3
 
-          lhs_result = value_walk lhs
-          cond_instruct(lhs_result, true_block, false_block)
+            lhs_result = value_walk lhs
+            cond_instruct(lhs_result, true_block, false_block)
           
-          start_block(true_block)
-          rhs_result = value_walk rhs
-          result = lookup_or_create_temporary(:and_short_circuit, lhs_result, rhs_result)
-          copy_instruct(result, rhs_result)
-          uncond_instruct(after)
+            start_block(true_block)
+            rhs_result = value_walk rhs
+            result = lookup_or_create_temporary(:and_short_circuit, lhs_result, rhs_result)
+            copy_instruct(result, rhs_result)
+            uncond_instruct(after)
           
-          start_block(false_block)
-          copy_instruct(result, lhs_result)
-          uncond_instruct(after)
+            start_block(false_block)
+            copy_instruct(result, lhs_result)
+            uncond_instruct(after)
 
-          start_block(after)
-          result
-        end
+            start_block(after)
+            result
+          else
+            true_block, after = create_blocks 2
 
-        # Performs an AND operation, with short circuiting, that ignores
-        # whatever return value results.
-        def and_instruct_novalue(lhs, rhs)
-          true_block, after = create_blocks 2
+            lhs_result = value_walk lhs
+            cond_instruct(lhs_result, true_block, after)
 
-          lhs_result = value_walk lhs
-          cond_instruct(lhs_result, true_block, after)
-
-          start_block(true_block)
-          novalue_walk rhs
-          uncond_instruct(after)
-          start_block(after)
+            start_block(true_block)
+            novalue_walk rhs
+            uncond_instruct(after)
+            start_block(after)
+          end
         end
 
         # Performs a value-capturing if instruction, with unlimited else-ifs
@@ -1623,7 +1546,7 @@ module Laser
             
             start_block true_block
             body = [body] if is_mod
-            body_result = walk_body body
+            body_result = walk_body body, value: true
             copy_instruct(result, body_result)
             uncond_instruct(after)
             
@@ -1665,7 +1588,7 @@ module Laser
             
             start_block true_block
             body = [body] if is_mod
-            walk_body_novalue body
+            walk_body body, value: false
             uncond_instruct(after)
             
             start_block next_block
@@ -1686,13 +1609,13 @@ module Laser
           cond_instruct(cond_result, next_block, true_block)
           
           start_block true_block
-          body_result = walk_body body
+          body_result = walk_body body, value: true
           copy_instruct(result, body_result)
           uncond_instruct(after)
 
           start_block next_block
           body_result = if else_block
-                        then walk_body else_block[1]
+                        then walk_body else_block[1], value: true
                         else const_instruct nil
                         end
           copy_instruct result, body_result
@@ -1716,7 +1639,7 @@ module Laser
           cond_instruct(cond_result, next_block, true_block)
           
           start_block true_block
-          walk_body_novalue body
+          walk_body body, value: false
           uncond_instruct(after)
           
           if else_block
