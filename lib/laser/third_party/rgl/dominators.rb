@@ -55,8 +55,9 @@ module RGL
         if b.predecessors.size >= 2
           b.predecessors.each do |p|
             b_dominator = dominator_tree[b].successors.first
+            break unless b_dominator
             runner = p
-            while runner != b_dominator
+            while runner && runner != b_dominator
               result[runner] << b
               runner = dominator_tree[runner].successors.first
             end

@@ -5,14 +5,9 @@ module Laser
   module SexpAnalysis
     module ControlFlow
       class ControlFlowGraph < RGL::ControlFlowGraph
-        EDGE_NORMAL = 0
-        EDGE_ABNORMAL = 1 << 0
-        EDGE_IMPOSSIBLE = 1 << 1
-
         attr_accessor :root
         attr_reader :edge_flags
         def initialize(*args)
-          @edge_flags = Hash.new { |hash, key| hash[key] = EDGE_NORMAL }
           @uses = Hash.new { |hash, temp| hash[temp] = Set.new }
           @definition = {}
           @name_stack = Hash.new { |hash, temp| hash[temp] = [] }
@@ -41,20 +36,6 @@ module Laser
         
         def dotty(params = {'shape' => 'box'})
           super
-        end
-        
-        def add_abnormal_edge(src, dest)
-          @edge_flags[[src.name, dest.name]] |= EDGE_ABNORMAL
-          add_edge src, dest
-        end
-        
-        def is_abnormal?(src, dest)
-          (@edge_flags[[src.name, dest.name]] & EDGE_ABNORMAL) > 0
-        end
-        
-        def remove_abnormal_edge(src, dest)
-          @edge_flags[[src.name, dest.name]] &= ~EDGE_ABNORMAL
-          remove_edge src, dest
         end
         
         # Runs full analysis on the CFG. Puts it in SSA then searches for warnings.
@@ -142,7 +123,7 @@ module Laser
         def find_live_visited(current, visit, live)
           visit << current
           current.successors.each do |block|
-            if live.include?(block)
+            if live.include?(block) && !visit.include?(block)
               find_live_visited(block, visit, live)
             end
           end
@@ -164,14 +145,11 @@ module Laser
           # result_graph is a semi-deep copy
           calculate_live
           @globals.each do |temp|
-            p "SSA for #{temp.name}"
             set = @definition_blocks[temp] | Set[enter]
-            puts "DF+(#{set.map(&:name)}) = #{iterated_dominance_frontier(set).map(&:name)}"
-            puts "Live(#{temp.name}) = #{@live[temp].map(&:name)}"
             iterated_dominance_frontier(set).each do |block|
               if @live[temp].include?(block)
                 n = block.predecessors.size
-                block.unshift([:phi, temp, *([temp] * n)])
+                block.unshift(Instruction.new([:phi, temp, *([temp] * n)]))
               end
             end
           end
@@ -289,13 +267,17 @@ module Laser
         # Adds unused variable warnings to all nodes which define a variable
         # that is not used.
         def add_unused_variable_warnings
-          unused_variables.each do |temp|
+          unused_variables.reject { |var| var.start_with?('%') }.each do |temp|
+            # TODO(adgar): KILLMESOON
+            next unless @definition[temp]
             node = @definition[temp].node
             node.add_error(
                 UnusedVariableWarning.new("Variable defined but not used: #{temp.rpartition('#').first}", node))
           end
         end
         
+        # Gets the set of unused variables. After SSA transformation, any
+        # variable with uses
         def unused_variables
           all_variables - @uses.keys.select { |temp| @uses[temp].any? }
         end

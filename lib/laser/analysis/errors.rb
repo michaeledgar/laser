@@ -30,6 +30,10 @@ module Laser
           other.ast_node == self.ast_node && self.severity == other.severity
     end
     
+    def line_number
+      ast_node.source_begin[0]
+    end
+    
     def inspect
       "#<#{self.class}: #{message} (#{ast_node.file_name}:#{ast_node.source_begin[0]})>"
     end

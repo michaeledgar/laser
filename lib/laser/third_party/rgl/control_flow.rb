@@ -7,12 +7,17 @@ module RGL
   # while re-using a lot of code, are needlessly algorithmically insufficient.
   # (#empty is O(|V|)!)
   class ControlFlowGraph    
+    EDGE_NORMAL = 0
+    EDGE_ABNORMAL = 1 << 0
+    EDGE_FAKE = 1 << 1
+
     include Enumerable
     include MutableGraph
     attr_reader :enter, :exit
     attr_reader :vertices
     
     def initialize
+      @edge_flags = Hash.new { |hash, key| hash[key] = EDGE_NORMAL }
       @enter = Laser::SexpAnalysis::ControlFlow::TerminalBasicBlock.new('Enter')
       @exit = Laser::SexpAnalysis::ControlFlow::TerminalBasicBlock.new('Exit')
       @vertices = Set[@enter, @exit]
@@ -53,11 +58,20 @@ module RGL
     end
     
     # Adds the edge to the graph. O(1) amortized.
-    def add_edge(u, v)
+    def add_edge(u, v, flags = EDGE_NORMAL)
+      @edge_flags[[u.name, v.name]] |= flags
       self[u].successors << v
       self[v].predecessors << u
     end
+
+    def is_abnormal?(src, dest)
+      (@edge_flags[[src.name, dest.name]] & EDGE_ABNORMAL) > 0
+    end
     
+    def is_fake?(src, dest)
+      (@edge_flags[[src.name, dest.name]] & EDGE_FAKE) > 0
+    end
+
     # Removes the vertex from the graph. O(E) amortized.
     def remove_vertex(u)
       looked_up = self[u]
@@ -75,6 +89,7 @@ module RGL
       looked_up_u, looked_up_v = @vertex_lookup[u], @vertex_lookup[v]
       looked_up_u.successors.delete(looked_up_v)
       looked_up_v.predecessors.delete(looked_up_u)
+      @edge_flags.delete([u.name, v.name])
     end
     
     # Counts the number of vertices. O(1).

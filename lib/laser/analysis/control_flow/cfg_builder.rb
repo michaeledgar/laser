@@ -168,6 +168,18 @@ module Laser
           when :program
             uncond_instruct create_block
             walk_body node[1], value: false
+          when :dot2
+            start, stop = node.children
+            start_val = walk_node(start, value: true)
+            stop_val = walk_node(stop, value: true)
+            true_val = const_instruct(true)
+            call_instruct(ClassRegistry['Range'].binding, :new, start_val, stop_val, true_val, opts)
+          when :dot3
+            start, stop = node.children
+            start_val = walk_node(start, value: true)
+            stop_val = walk_node(stop, value: true)
+            false_val = const_instruct(false)
+            call_instruct(ClassRegistry['Range'].binding, :new, start_val, stop_val, false_val, opts)
           else
             opts[:value] ? value_walk(node) : novalue_walk(node)
           end
@@ -567,7 +579,7 @@ module Laser
         
         def raise_instruct(arg)
           add_instruction(:raise, arg)
-          @graph.add_abnormal_edge(@current_block, current_rescue)
+          @graph.add_edge(@current_block, current_rescue, RGL::ControlFlowGraph::EDGE_ABNORMAL)
           start_block current_rescue
         end
         
@@ -627,7 +639,7 @@ module Laser
           start_block body_block
           body_result = walk_body body, value: true
           add_instruction(:resume, body_result)
-          @graph.add_abnormal_edge(@current_block, current_rescue)
+          @graph.add_edge(@current_block, current_rescue, RGL::ControlFlowGraph::EDGE_ABNORMAL)
           cond_instruct(nil, body_block, after, :branch_instruct => false)
         end
 
@@ -662,6 +674,7 @@ module Laser
           add_instruction(:return, result)
           uncond_instruct @current_return
           start_block create_block
+          add_fake_edge @graph.enter, @current_block
           result
         end
         
@@ -674,13 +687,13 @@ module Laser
           add_potential_raise_edge if opts[:raise]
           result
         end
-        
+
         def yield_instruct_with_arg(node, opts={})
           opts = {raise: true, value: true}.merge(opts)
           result = evaluate_args_into_array node[1][1]
           yield_instruct result, opts
         end
-        
+
         # Takes an argument node and evaluates it into an array. used by
         # return and yield, as they always pass along 1 argument.
         def evaluate_args_into_array(args)
@@ -704,17 +717,21 @@ module Laser
         def break_instruct(args)
           uncond_instruct @current_break
           start_block create_block
+          add_fake_edge @graph.enter, @current_block
         end
         
         # TODO(adgar): ARGUMENTS
         def next_instruct(args)
           uncond_instruct @current_next
           start_block create_block
+          add_fake_edge @graph.enter, @current_block
         end
 
         def redo_instruct
+          add_fake_edge @current_block, @graph.exit
           uncond_instruct @current_redo
           start_block create_block
+          add_fake_edge @graph.enter, @current_block
         end
 
         # Walks a body statement.
@@ -1229,7 +1246,7 @@ module Laser
         # Adds an edge from the current block to the current rescue target,
         # while creating a new block for the "natural" exit.
         def add_potential_raise_edge
-          @graph.add_abnormal_edge(@current_block, current_rescue)
+          @graph.add_edge(@current_block, current_rescue, RGL::ControlFlowGraph::EDGE_ABNORMAL)
           uncond_instruct create_block, :jump_instruct => false
         end
 
@@ -1590,6 +1607,10 @@ module Laser
         def create_result_if_needed(opts)
           value = opts.delete(:value)
           value ? create_temporary : nil
+        end
+        
+        def add_fake_edge(from, to)
+          @graph.add_edge(from, to, RGL::ControlFlowGraph::EDGE_FAKE)
         end
         
         # Returns the name of the current temporary.

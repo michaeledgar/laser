@@ -28,7 +28,7 @@ module RGL
     def build_dfst(tree, node, visited)
       visited << node
       self.each_adjacent(node) do |other|
-        unless visited.include?(other)
+        if !visited.include?(other) && !is_fake?(node, other)
           tree.add_edge(node, other)
           build_dfst(tree, other, visited)
         end

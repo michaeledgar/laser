@@ -33,15 +33,18 @@ module RGL
       end
       each_edge do |u,v|
         if respond_to?(:is_abnormal?)
-          color = is_abnormal?(u, v) ? '#ff0000' : 'black'
+          color = is_abnormal?(u, v) ? 'red' : is_fake?(u, v) ? '#bbbbbb' : 'black'
+          style = is_fake?(u, v) ? 'dashed' : 'solid'
         else
           color = 'black'
+          style = 'solid'
         end
         graph << edge_class.new('from'     => u.to_s,
                                 'to'       => v.to_s,
                                 'fontsize' => fontsize,
                                 'fontname' => fontname,
-                                'color'    => color)
+                                'color'    => color,
+                                'style'    => style)
       end
       graph
     end

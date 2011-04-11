@@ -9,6 +9,10 @@ module Laser
           @node = opts[:node]
         end
 
+        def class
+          Instruction
+        end
+
         # Gets all bindings that are explicitly set in this instruction (no aliasing
         # concerns)
         def explicit_targets
