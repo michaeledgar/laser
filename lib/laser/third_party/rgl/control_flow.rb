@@ -10,6 +10,7 @@ module RGL
     EDGE_NORMAL = 0
     EDGE_ABNORMAL = 1 << 0
     EDGE_FAKE = 1 << 1
+    EDGE_EXECUTABLE = 1 << 2
 
     include Enumerable
     include MutableGraph
@@ -70,6 +71,18 @@ module RGL
     
     def is_fake?(src, dest)
       (@edge_flags[[src.name, dest.name]] & EDGE_FAKE) > 0
+    end
+    
+    def is_executable?(src, dest)
+      (@edge_flags[[src.name, dest.name]] & EDGE_EXECUTABLE) > 0
+    end
+    
+    def add_flag(src, dest, flag)
+      @edge_flags[[src.name, dest.name]] |= flag
+    end
+    
+    def remove_flag(src, dest, flag)
+      @edge_flags[[src.name, dest.name]] &= ~flag
     end
 
     # Removes the vertex from the graph. O(E) amortized.

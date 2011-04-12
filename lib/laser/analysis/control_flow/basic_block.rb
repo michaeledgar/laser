@@ -58,6 +58,10 @@ module Laser
         def phi_nodes
           instructions.select { |ins| :phi == ins[0] }
         end
+        
+        def natural_instructions
+          instructions.reject { |ins| :phi == ins[0] }
+        end
 
         # Formats the block all pretty-like for Graphviz. Horrible formatting for
         # stdout.

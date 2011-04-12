@@ -45,3 +45,36 @@ RSpec::Matchers.define :have_error do |klass|
     "Expected to not find any errors of class #{klass.name}"
   end
 end
+
+RSpec::Matchers.define :have_constant do |name|
+  chain :with_value do |value|
+    @value = value
+  end
+  
+  match do |graph|
+    graph.analyze
+    key = graph.constants.keys.find { |var| var.non_ssa_name == name }
+    @constant = key
+    @constant && (@constant.value == @value)
+  end
+  
+  failure_message_for_should do |graph|
+    if !@constant
+      "Expected variable '#{name}' to be inferred as a constant, but it was not."
+    elsif @constant.value != @value
+      "Expected variable '#{name}' to have value #{@value}, but it was #{@constant.value}."
+    else
+      "UNEXPECTED FAILURE?!"
+    end
+  end
+  
+  failure_message_for_should_not do |graph|
+    if @constant && @constant.value == @value
+      "Expected variable '#{name}' to not have value #{@value}, but it was #{@constant.value}."
+    elsif @constant
+      "Expected variable '#{name}' to not be inferred as a constant, but it was."
+    else
+      "UNEXPECTED FAILURE?!"
+    end
+  end
+end

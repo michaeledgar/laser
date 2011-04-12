@@ -72,7 +72,7 @@ EOF
       g.should have_error(Laser::UnusedVariableWarning).on_line(4).with_message(/\b c \b/x)
     end
 
-    it 'should find a more complex unused variable' do
+    it 'should find a more complex unused variable showing off ssa' do
       g = cfg_method <<-EOF
 def foo(x)
   z = gets * 10
@@ -85,6 +85,53 @@ def foo(x)
 end
 EOF
       g.should have_error(Laser::UnusedVariableWarning).on_line(4).with_message(/\b y \b/x)
+    end
+  end
+  
+  describe 'constant propagation' do
+    it 'should propagate simple constants along linear code' do
+      g = cfg_method <<-EOF
+def foo(x)
+  z = 1024
+  y = z
+  w = y
+end
+EOF
+      g.should have_constant('w').with_value(1024)
+      # key = g.constants.keys.find { |var| var.non_ssa_name == 'w' }
+      # g.constants[key].should == 1024
+    end
+    
+    it 'should propagate when the same variable is assigned to the same constant in branches' do
+      g = cfg_method <<-EOF
+def foo(x)
+  if gets.size > 0
+    y = 20
+  else
+    y = 20
+  end
+  z = y
+end
+EOF
+      g.should have_constant('z').with_value(20)
+      #key = g.constants.keys.find { |var| var.non_ssa_name == 'z' }
+      #g.constants[key].should == 20
+    end
+    
+    it 'should not propagate when the same variable is assigned to distinct constants in branches' do
+      g = cfg_method <<-EOF
+def foo(x)
+  if gets.size > 0
+    y = 20
+  else
+    y = 30
+  end
+  z = y
+end
+EOF
+      g.should_not have_constant('z')
+      # key = g.constants.keys.find { |var| var.non_ssa_name == 'z' }
+      # key.should be nil
     end
   end
 end

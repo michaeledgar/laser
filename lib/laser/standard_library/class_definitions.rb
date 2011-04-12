@@ -77,6 +77,8 @@ require 'numbers'
 require '_thread'
 
 class Range
+  def initialize(start, stop, inclusive=true)
+  end
 end
 class Proc
 end

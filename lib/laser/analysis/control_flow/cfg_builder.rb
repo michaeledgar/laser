@@ -211,7 +211,7 @@ module Laser
                 const_name_val = const_instruct(const.expanded_identifier)
                 rhs_val = walk_node(rhs, value: true)
                 # never raises!
-                call_instruct_novalue_noraise(receiver_val, :const_set, const_name_val, rhs_val, value: false)
+                call_instruct(receiver_val, :const_set, const_name_val, rhs_val, value: false, raise: false)
               else
                 # calculate LHS
                 assign_instruct(lhs.binding, rhs)
@@ -325,7 +325,7 @@ module Laser
               pairs = node[1]
               key_value_paired = pairs.map {|a, b| [walk_node(a, value: true), walk_node(b, value: true)] }.flatten
               receiver = Scope::GlobalScope.lookup('Hash')
-              call_instruct(receiver, :[], *key_value_paired, {block: false}, value: false, raise: false)
+              call_instruct(receiver, :[], *key_value_paired, block: false, value: false, raise: false)
             else
               raise ArgumentError.new("Unknown AST node type #{node.type.inspect}")
             end
@@ -621,8 +621,8 @@ module Laser
           opts = {value: true, raise: true}.merge(opts)
           # TODO(adgar): blocks in args & style
           if is_vararg
-          then super_vararg_instruct(args, {:block => body_block}, opts)
-          else super_instruct(*args, {:block => body_block}, opts)
+          then super_vararg_instruct(args, {:block => body_block}.merge(opts))
+          else super_instruct(*args, {:block => body_block}.merge(opts))
           end
         end
         
@@ -704,7 +704,8 @@ module Laser
             # if there's more than 1 argument, but no splats, then we just pack
             # them into an array and return that array.
             arg_temps = args.map { |arg| walk_node arg, value: true }
-            call_instruct(ClassRegistry['Array'].binding, :[], *arg_temps, value: true, raise: false)
+            result = call_instruct(ClassRegistry['Array'].binding, :[], *arg_temps,
+                                   value: true, raise: false)
           else
             # Otherwise, just 1 simple argument: return it.
             walk_node args[0], value: true
@@ -1121,7 +1122,7 @@ module Laser
             call_vararg_instruct(receiver, method, arg_array, block, opts)
           else
             arg_temps = args.map { |arg| walk_node(arg, value: true) }
-            call_instruct(receiver, method, *arg_temps, {:block => block}, opts)
+            call_instruct(receiver, method, *arg_temps, {block: block}.merge(opts))
           end
         end
 
@@ -1133,10 +1134,10 @@ module Laser
           opts = {value: true, raise: true}.merge(opts)
           if args[0] == :args_add_star
             arg_array = compute_varargs(args)
-            super_vararg_instruct(arg_array, {:block => block}, opts)
+            super_vararg_instruct(arg_array, {block: block}.merge(opts))
           else
             arg_temps = args.map { |arg| walk_node(arg, value: true) }
-            super_instruct(*arg_temps, {:block => block}, opts)
+            super_instruct(*arg_temps, {block: block}.merge(opts))
           end
         end
 
@@ -1153,7 +1154,7 @@ module Laser
             call_vararg_instruct(receiver, :[]=, arg_array, false, opts)
           else
             arg_temps = (args + [val]).map { |arg| walk_node(arg, value: true) }
-            call_instruct(receiver, :[]=, *arg_temps, {block: false}, opts)
+            call_instruct(receiver, :[]=, *arg_temps, {block: false}.merge(opts))
           end
         end
 
@@ -1630,7 +1631,8 @@ module Laser
         
         # Adds a simple instruction to the current basic block.
         def add_instruction(*args)
-          @current_block << Instruction.new(args, :node => @current_node)
+          @current_block << Instruction.new(args, node: @current_node,
+                                                  block: @current_block)
         end
         
         # Creates the given number of blocks.
