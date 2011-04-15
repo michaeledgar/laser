@@ -24,8 +24,11 @@ module Laser
       # positional_list: Array<Sexp>
       # return: Array<Bindings::ArgumentBinding>
       def parse_positionals(positional_list)
-        positional_list.map do |tag, name, lex|
-          Bindings::ArgumentBinding.new(name, LaserObject.new, :positional)
+        positional_list.map do |node|
+          tag, name, lex = node
+          result = Bindings::ArgumentBinding.new(name, LaserObject.new, :positional)
+          result.ast_node = node
+          result
         end
       end
       
@@ -35,8 +38,11 @@ module Laser
       # current_arg_hash: (Symbol => Argument)
       # optionals: Array<Sexp>
       def parse_optionals(optionals)
-        optionals.map do |id, default_value|
-          Bindings::ArgumentBinding.new(id.children.first, LaserObject.new, :optional, default_value)
+        optionals.map do |node|
+          id, default_value = node
+          result = Bindings::ArgumentBinding.new(id.children.first, LaserObject.new, :optional, default_value)
+          result.ast_node = node
+          result
         end
       end
       
@@ -45,7 +51,9 @@ module Laser
       #
       # rest_arg: Sexp
       def parse_rest_arg(rest_arg)
-        Bindings::ArgumentBinding.new(rest_arg[1][1], LaserObject.new(ClassRegistry['Array']), :rest)
+        result = Bindings::ArgumentBinding.new(rest_arg[1][1], LaserObject.new(ClassRegistry['Array']), :rest)
+        result.ast_node = rest_arg
+        result
       end
       
       # Parses the block argument of an argument list Sexp and adds it to
@@ -53,7 +61,9 @@ module Laser
       #
       # block_arg: Sexp
       def parse_block_arg(block_arg)
-        Bindings::ArgumentBinding.new(block_arg[1][1], LaserObject.new(ClassRegistry['Proc']), :block)
+        result = Bindings::ArgumentBinding.new(block_arg[1][1], LaserObject.new(ClassRegistry['Proc']), :block)
+        result.ast_node = block_arg
+        result
       end
     end
     

@@ -43,18 +43,15 @@ module Laser
             temp.inferred_type = nil
           end
           @formals.each do |formal|
-            formal.bind! VARYING
-            formal.inferred_type = Types::TOP
+            temporary = @formal_map[formal]
+            temporary.bind! VARYING
+            temporary.inferred_type = Types::TOP
           end
           vertices.each do |block|
             block.successors.each do |succ|
               remove_flag(block, succ, ControlFlowGraph::EDGE_EXECUTABLE)
             end
           end
-          # In morgan, he says to mark all operations with unpredictable
-          # results as producing VARYING results. However, due to lack of
-          # type information, that's... hard to do. So, we'll take the
-          # constant factor hit.
         end
         private :initialize_constant_propagation
 

@@ -11,8 +11,10 @@ def cfg(input)
   graph
 end
 def cfg_method(input)
+  method_tree = annotate_all(input)
+  body = method_tree.find_type(:bodystmt)
   cfg_builder = ControlFlow::GraphBuilder.new(
-      annotate_all(input).deep_find { |node| node.type == :bodystmt })
+      body, body.scope.method.signatures.first.arguments)
   graph = cfg_builder.build
   graph.analyze
   graph

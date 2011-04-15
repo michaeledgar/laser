@@ -49,6 +49,10 @@ module Laser
         @file_source.lines.to_a
       end
 
+      def find_type(type)
+        deep_find { |node| node.type == type }
+      end
+
       # Same as #find for Enumerable, only recursively. Useful for "jumping"
       # past useless parser nodes.
       def deep_find

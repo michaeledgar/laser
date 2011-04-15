@@ -16,7 +16,22 @@ module Laser
               end
             end
           end
+          ssa_name_formals
           rename_for_ssa(enter, dominator_tree)
+          self
+        end
+        
+        def ssa_name_formals
+          @formal_map = {}
+          @formals.each do |formal|
+            initial_formal = new_ssa_name(formal)
+            @name_stack[formal].push(initial_formal)
+            @formal_map[formal] = initial_formal  # store very first binding
+            @definition[initial_formal] =
+              Instruction.new([:param, initial_formal, formal], 
+                              :node => formal.ast_node, :block => @enter)
+            ssa_name_for(formal).inferred_type = formal.expr_type
+          end
         end
         
        private
@@ -55,8 +70,9 @@ module Laser
           block.successors.each do |succ|
             j = succ.predecessors.to_a.index(block)
             succ.phi_nodes.each do |phi_node|
-              phi_node[j + 2] = ssa_name_for(phi_node[j + 2])
-              @uses[ssa_name_for(phi_node[j + 2])] << phi_node
+              replacement = ssa_name_for(phi_node[j + 2])
+              phi_node[j + 2] = replacement
+              @uses[replacement] << phi_node
             end
           end
           # Recurse to dominated blocks
