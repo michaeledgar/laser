@@ -295,6 +295,9 @@ module Laser
         receiver = implicit_receiver
 
         new_method, method_locals = build_new_method(receiver, name, arglist, body)
+        if node.comment && node.comment.annotation_map
+          new_method.pure = (node.comment.attribute('pure') == 'true')
+        end
         new_scope = ClosedScope.new(@current_scope, nil, {}, method_locals)
         
         if LaserModule === receiver

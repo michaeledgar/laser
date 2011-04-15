@@ -31,7 +31,7 @@ module Laser
   
         # Gets all bindings that are operands in this instruction
         def operands
-          ::Set.new(self[operand_range].select { |x| Bindings::GenericBinding === x})
+          self[operand_range].select { |x| Bindings::GenericBinding === x}
         end
         
         # Replaces the operands with a new list. Used by SSA renaming.

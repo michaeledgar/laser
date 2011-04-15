@@ -6,12 +6,16 @@ def annotate_all(body)
 end
 def cfg(input)
   cfg_builder = ControlFlow::GraphBuilder.new(annotate_all(input))
-  cfg_builder.build
+  graph = cfg_builder.build
+  graph.analyze
+  graph
 end
 def cfg_method(input)
   cfg_builder = ControlFlow::GraphBuilder.new(
       annotate_all(input).deep_find { |node| node.type == :bodystmt })
-  cfg_builder.build
+  graph = cfg_builder.build
+  graph.analyze
+  graph
 end
 
 describe ControlFlow::ControlFlowGraph do  
@@ -98,8 +102,6 @@ def foo(x)
 end
 EOF
       g.should have_constant('w').with_value(1024)
-      # key = g.constants.keys.find { |var| var.non_ssa_name == 'w' }
-      # g.constants[key].should == 1024
     end
     
     it 'should propagate when the same variable is assigned to the same constant in branches' do
@@ -114,8 +116,6 @@ def foo(x)
 end
 EOF
       g.should have_constant('z').with_value(20)
-      #key = g.constants.keys.find { |var| var.non_ssa_name == 'z' }
-      #g.constants[key].should == 20
     end
     
     it 'should not propagate when the same variable is assigned to distinct constants in branches' do
@@ -130,8 +130,91 @@ def foo(x)
 end
 EOF
       g.should_not have_constant('z')
-      # key = g.constants.keys.find { |var| var.non_ssa_name == 'z' }
-      # key.should be nil
+    end
+    
+    it 'should ignore branches on false' do
+      g = cfg_method <<-EOF
+def foo(x)
+  if false
+    y = 40
+  else
+    y = 30
+  end
+  z = y
+end
+EOF
+      g.should have_constant('z').with_value(30)
+    end
+
+    it 'should ignore else branches on true' do
+      g = cfg_method <<-EOF
+def foo(x)
+  if true
+    y = 40
+  else
+    y = 30
+  end
+  z = y
+end
+EOF
+      g.should have_constant('z').with_value(40)
+    end
+    
+    it 'should ignore branches on constant variables' do
+      g = cfg_method <<-EOF
+def foo(x)
+  a = true ? 30 : false
+  if a
+    y = 40
+  else
+    y = 30
+  end
+  z = y
+end
+EOF
+      g.should have_constant('z').with_value(40)
+    end
+    
+    it 'should ignore branches on fixnum equality' do
+      g = cfg_method <<-EOF
+def foo(x)
+  a = true ? 30 : false
+  if a == 30
+    y = 40
+  else
+    y = 30
+  end
+  z = y
+end
+EOF
+      g.should have_constant('z').with_value(40)
+    end
+    
+    it 'should calculate complex arithmetic' do
+      g = cfg_method <<-EOF
+def foo(x)
+  a = 3 * (1 << 3)
+  b = a ** a
+  c = b - a
+end
+EOF
+      g.should have_constant('c').with_value(1333735776850284124449081472843752)
+    end
+    
+    it 'should calculate 0 * varying = 0' do
+      g = cfg_method <<-EOF
+def foo(x)
+  if gets.size > 0
+    a = 5
+  else
+    a = 10
+  end
+  b = 0 * a
+  c = a * 0
+end
+EOF
+      g.should have_constant('b').with_value(0)
+      g.should have_constant('c').with_value(0)
     end
   end
 end

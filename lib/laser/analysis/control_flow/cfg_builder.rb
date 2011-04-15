@@ -6,8 +6,9 @@ module Laser
       class GraphBuilder
         attr_reader :graph, :enter, :exit, :temporary_counter, :current_block, :sexp
         
-        def initialize(sexp)
+        def initialize(sexp, formals=[])
           @sexp = sexp
+          @formals = formals
           @graph = @enter = @exit = nil
           @temporary_counter = 0
           @temporary_table = Hash.new do |hash, keys|
@@ -420,7 +421,7 @@ module Laser
               if node.binding
                 variable_instruct(node)
               elsif node[1].type == :@kw
-                const_instruct(node.constant_value)
+                const_instruct(node.constant_value.raw_object)
               else
                 issue_call node, value: true
               end
@@ -516,7 +517,7 @@ module Laser
        private
 
         def initialize_graph
-          @graph = ControlFlowGraph.new
+          @graph = ControlFlowGraph.new(@formals)
           @graph.root = @sexp
           @block_counter = 0
           @enter = @graph.enter

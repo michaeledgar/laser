@@ -265,6 +265,12 @@ describe 'the automatically analyzed Ruby Standard Library' do
       @class.superclass.should == ClassRegistry['Integer']
     end
     
+    describe '#==' do
+      it 'should be pure' do
+        @class.instance_methods['=='].pure.should be true
+      end
+    end
+    
     it_should_behave_like 'a class'
   end
 

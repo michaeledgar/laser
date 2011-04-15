@@ -63,6 +63,10 @@ module Laser
           instructions.reject { |ins| :phi == ins[0] }
         end
 
+        def fall_through_block?
+          instructions.empty? || instructions.last.type == :call
+        end
+
         # Formats the block all pretty-like for Graphviz. Horrible formatting for
         # stdout.
         def to_s

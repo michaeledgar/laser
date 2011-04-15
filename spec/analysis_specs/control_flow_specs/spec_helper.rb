@@ -14,8 +14,6 @@ RSpec::Matchers.define :have_error do |klass|
   end
   
   match do |graph|
-    graph.analyze
-    
     graph.all_errors.any? do |err|
       @matches_class = err.is_a?(klass)
       @matches_line = !@line || err.line_number == @line
@@ -52,7 +50,6 @@ RSpec::Matchers.define :have_constant do |name|
   end
   
   match do |graph|
-    graph.analyze
     key = graph.constants.keys.find { |var| var.non_ssa_name == name }
     @constant = key
     @constant && (@constant.value == @value)

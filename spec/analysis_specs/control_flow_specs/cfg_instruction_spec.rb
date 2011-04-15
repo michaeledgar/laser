@@ -65,47 +65,47 @@ describe ControlFlow::Instruction do
 
     it 'should return a set with the returned value for a return node' do
       ControlFlow::Instruction.new([:return, @temp]).
-          operands.should == ::Set[@temp]
+          operands.should == [@temp]
     end
 
     it 'should return an empty set for a jump node' do
       ControlFlow::Instruction.new([:jump, 'B1']).
-          operands.should == ::Set[]
+          operands.should == []
     end
 
     it 'should return a set with the branched-on value for a branch node' do
       ControlFlow::Instruction.new([:branch, @temp, 'b2', 'b3']).
-          operands.should == ::Set[@temp]
+          operands.should == [@temp]
     end
     
     it 'should return the value temporary for an assign instruction' do
       ControlFlow::Instruction.new([:assign, @temp, @ary]).
-          operands.should == ::Set[@ary]
+          operands.should == [@ary]
     end
 
     it 'should return the receiver and arguments for a call instruction' do
       ControlFlow::Instruction.new([:call, @call_target, @temp, 'to_i', @temp_2, :block => false]).
-          operands.should == ::Set[@temp, @temp_2]
+          operands.should == [@temp, @temp_2]
     end
     
     it 'should return the receiver and arguments for a call_vararg instruction' do
       ControlFlow::Instruction.new([:call_vararg, @call_target, @temp, 'to_i', @ary, :block => false]).
-          operands.should == ::Set[@temp, @ary]
+          operands.should == [@temp, @ary]
     end
 
     it 'should return the arguments for a super instruction' do
       ControlFlow::Instruction.new([:super, @call_target, @temp_2, :block => false]).
-          operands.should == ::Set[@temp_2]
+          operands.should == [@temp_2]
     end
     
     it 'should return the arguments for a super_vararg instruction' do
       ControlFlow::Instruction.new([:super_vararg, @call_target, @ary, :block => false]).
-          operands.should == ::Set[@ary]
+          operands.should == [@ary]
     end
     
     it 'should return the empty set for a lambda instruction' do
       ControlFlow::Instruction.new([:lambda, @temp, 'B2']).
-          operands.should == ::Set[]
+          operands.should == []
     end
   end
 end

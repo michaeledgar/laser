@@ -9,6 +9,7 @@ module Laser
 
         UNDEFINED = Object.new
         VARYING = Object.new
+        INAPPLICABLE = Object.new
         # Only public method: mutably turns the CFG into a constant-propagated
         # one. Each binding will have a value assigned to it afterward: either
         # the constant, as a Ruby object (or a proxy to one), UNDEFINED, or VARYING.
@@ -76,7 +77,7 @@ module Laser
               constant_propagation_for_instruction(
                   instruction, blocklist, worklist)
             end
-            if block.instructions.empty?
+            if block.fall_through_block?
               block.successors.each do |succ|
                 constant_propagation_consider_edge block, succ, blocklist
               end
@@ -110,9 +111,10 @@ module Laser
           executable_successors = case instruction[1].value
                                   when VARYING then block.successors
                                   when UNDEFINED then []
-                                  when nil, false then vertex_with_name(instruction[3])
-                                  else vertex_with_name(instruction[2])
+                                  when nil, false then [vertex_with_name(instruction[3])]
+                                  else [vertex_with_name(instruction[2])]
                                   end
+
           executable_successors.each do |succ|
             constant_propagation_consider_edge block, succ, blocklist
           end
@@ -148,19 +150,25 @@ module Laser
               end
             end
           when :call
-            target, receiver, method, *args = instruction[1..-1]
+            target, receiver, method_name, *args = instruction[1..-1]
             return false if target.nil?
             opts = Hash === args.last ? args.pop : {}
             components = [receiver, *args]
-            # TODO(adgar): ENCODE ALGEBRA
-            if components.any? { |arg| arg.value == VARYING }
+            if (result = apply_special_arithmetic_case(receiver, method_name, *args)) &&
+               result != INAPPLICABLE
+              changed = (target.value != result)
+              if changed
+                target.bind! result
+                target.inferred_type = Types::ClassType.new(result.class.name, :invariant)
+              end
+            elsif components.any? { |arg| arg.value == UNDEFINED }
+              changed = false  # cannot evaluate unless all args and receiver are constant
+            elsif components.any? { |arg| arg.value == VARYING }
               changed = (target.value != VARYING)
               if changed
                 target.bind! VARYING
                 target.inferred_type = Types::TOP
               end
-            elsif components.any? { |arg| arg.value == UNDEFINED }
-              changed = false  # cannot evaluate unless all args and receiver are constant
             else
               # all components constant.
               changed = (target.value == UNDEFINED)  # varying impossible here
@@ -168,9 +176,9 @@ module Laser
               if changed && (!opts || !opts[:block]) # && method.is_pure
                 # check purity
                 type = receiver.expr_type
-                method = type.matching_methods(method).first
+                method = type.matching_methods(method_name).first
                 if method && method.pure
-                  result = receiver.value.send(method, *args.map(&:value))
+                  result = receiver.value.send(method_name, *args.map(&:value))
                   target.bind!(result)
                   target.inferred_type = Types::ClassType.new(result.class.name, :invariant)
                 else
@@ -224,6 +232,26 @@ module Laser
           changed
         end
         
+        # TODO(adgar): Add typechecking. Forealz.
+        def apply_special_arithmetic_case(receiver, method_name, *args)
+          if method_name == :*
+            # 0 * n == 0
+            # n * 0 == 0
+            if (receiver.value == 0 && args.first.value != UNDEFINED) ||
+               (receiver.value != UNDEFINED && args.first.value == 0)
+              return 0
+            end
+          elsif method_name == :**
+            # n ** 0 == 1
+            if args.first.value == 0 && receiver.value != UNDEFINED
+              return 1
+            # 0 ** n == 0, n != 0
+            elsif receiver.value == 0 && args.first.value != UNDEFINED
+              return 0
+            end
+          end
+          INAPPLICABLE
+        end
       end  # ConstantPropagation
     end  # ControlFlow
   end  # SexpAnalysis
