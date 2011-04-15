@@ -234,8 +234,10 @@ module Laser
           if method_name == :*
             # 0 * n == 0
             # n * 0 == 0
-            if (receiver.value == 0 && args.first.value != UNDEFINED) ||
-               (receiver.value != UNDEFINED && args.first.value == 0)
+            if (receiver.value == 0 && args.first.value != UNDEFINED &&
+                Types.subtype?(args.first.inferred_type, Types::ClassType.new('Numeric', :covariant))) ||
+               (receiver.value != UNDEFINED && args.first.value == 0 &&
+                Types.subtype?(receiver.inferred_type, Types::ClassType.new('Numeric', :covariant)))
               return 0
             end
           elsif method_name == :**

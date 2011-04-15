@@ -1,6 +1,11 @@
 require 'set'
 module Laser
   module Types
+    # Subtype relation. Extremely important. Don't mess it up.
+    def self.subtype?(sub, top)
+      sub.possible_classes.subset?(top.possible_classes)
+    end
+    
     class Base
       extend ActsAsStruct
       
@@ -28,6 +33,10 @@ module Laser
       
       def signature
         {member_types: member_types}
+      end
+      
+      def possible_classes
+        member_types.map { |type| type.possible_classes }.inject(:|)
       end
       
       def matching_methods(name)
@@ -68,13 +77,13 @@ module Laser
       def possible_classes
         klass = SexpAnalysis::ClassRegistry[class_name]
         case variance
-        when :invariant then [klass]
+        when :invariant then ::Set[klass]
         when :covariant
           if SexpAnalysis::LaserClass === klass
-          then klass.subset
-          else klass.classes_including.map(&:subset).flatten
+          then ::Set.new klass.subset
+          else ::Set.new klass.classes_including.map(&:subset).flatten  # module
           end
-        when :contravariant then klass.superset
+        when :contravariant then ::Set.new klass.superset
         end
       end
       

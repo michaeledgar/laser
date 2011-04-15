@@ -64,6 +64,22 @@ end
 EOF
       g.should have_error(Laser::DeadCodeWarning).on_line(10)
     end
+    
+    it 'should find code that never runs due to constant propagation' do
+      g = cfg_method <<-EOF
+def foo(x)
+  y = 'hello' * 3
+  if y == 'hellohellohello'
+    puts gets
+    z = 3
+  else
+    z = 10
+  end
+  a = z
+end
+EOF
+      g.should have_error(Laser::DeadCodeWarning).on_line(7)
+    end
   end
   
   describe 'unused variable detection' do
@@ -192,7 +208,7 @@ EOF
       g.should have_constant('z').with_value(40)
     end
     
-    it 'should calculate complex arithmetic' do
+    it 'should calculate bignum arithmetic' do
       g = cfg_method <<-EOF
 def foo(x)
   a = 3 * (1 << 3)
@@ -203,7 +219,23 @@ EOF
       g.should have_constant('c').with_value(1333735776850284124449081472843752)
     end
     
-    it 'should calculate 0 * varying = 0' do
+    it 'should handle string constants' do
+      g = cfg_method <<-EOF
+def foo(x)
+  y = 'hello' * 3
+  if y == 'hellohellohello'
+    puts gets
+    z = 3
+  else
+    z = 10
+  end
+  a = z
+end
+EOF
+      g.should have_constant('a').with_value(3)
+    end
+    
+    it 'should calculate 0 * (varying numeric) = 0' do
       g = cfg_method <<-EOF
 def foo(x)
   if gets.size > 0
@@ -217,6 +249,22 @@ end
 EOF
       g.should have_constant('b').with_value(0)
       g.should have_constant('c').with_value(0)
+    end
+    
+    it 'should calculate 0 * (varying numeric | string) = varying' do
+      g = cfg_method <<-EOF
+def foo(x)
+  if gets.size > 0
+    a = 5
+  else
+    a = 'hello'
+  end
+  b = 0 * a
+  c = a * 0
+end
+EOF
+      g.should_not have_constant('b')
+      g.should_not have_constant('c')
     end
   end
 end

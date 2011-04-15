@@ -52,7 +52,12 @@ RSpec::Matchers.define :have_constant do |name|
   match do |graph|
     key = graph.constants.keys.find { |var| var.non_ssa_name == name }
     @constant = key
-    @constant && (@constant.value == @value)
+    @value ||= nil
+    if @value
+      @constant && (@constant.value == @value)
+    else
+      @constant
+    end
   end
   
   failure_message_for_should do |graph|

@@ -53,6 +53,7 @@ module Laser
         def analyze
           static_single_assignment_form
           perform_constant_propagation
+          kill_unexecuted_edges
           add_unused_variable_warnings
           perform_dead_code_discovery
         end
@@ -64,6 +65,17 @@ module Laser
         # Returns the names of all variables in the graph
         def all_variables
           vertices.map(&:variables).inject(:|)
+        end
+
+        # Marks all edges that are not executable as fake edges. That way, the
+        # postdominance of Exit is preserved, but dead code analysis will ignore
+        # them.
+        def kill_unexecuted_edges
+          each_edge do |u, v|
+            unless is_executable?(u, v)
+              add_flag(u, v, EDGE_FAKE)
+            end
+          end
         end
 
         # Dead Code Discovery: O(|V| + |E|)!
