@@ -229,15 +229,17 @@ module Laser
           changed
         end
         
+        def is_numeric?(temp)
+          Types.subtype?(temp.inferred_type, Types::ClassType.new('Numeric', :covariant))
+        end
+        
         # TODO(adgar): Add typechecking. Forealz.
         def apply_special_arithmetic_case(receiver, method_name, *args)
           if method_name == :*
             # 0 * n == 0
             # n * 0 == 0
-            if (receiver.value == 0 && args.first.value != UNDEFINED &&
-                Types.subtype?(args.first.inferred_type, Types::ClassType.new('Numeric', :covariant))) ||
-               (receiver.value != UNDEFINED && args.first.value == 0 &&
-                Types.subtype?(receiver.inferred_type, Types::ClassType.new('Numeric', :covariant)))
+            if (receiver.value == 0 && args.first.value != UNDEFINED && is_numeric?(args.first)) ||
+               (receiver.value != UNDEFINED && args.first.value == 0 && is_numeric?(receiver))
               return 0
             end
           elsif method_name == :**
