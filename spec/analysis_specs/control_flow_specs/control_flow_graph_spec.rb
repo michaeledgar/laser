@@ -241,7 +241,7 @@ def foo(x)
   if gets.size > 0
     a = 5
   else
-    a = 10
+    a = 10.11
   end
   b = 0 * a
   c = a * 0
@@ -264,6 +264,62 @@ def foo(x)
 end
 EOF
       g.should_not have_constant('b')
+      g.should_not have_constant('c')
+    end
+    
+    it 'should calculate (varying numeric) ** 0 = 1' do
+      g = cfg_method <<-EOF
+def foo(x)
+  if gets.size > 0
+    a = 5.93
+  else
+    a = 10
+  end
+  c = a ** 0
+end
+EOF
+      g.should have_constant('c').with_value(1)
+    end
+    
+    it 'should calculate (varying numeric | string) ** 0 = varying' do
+      g = cfg_method <<-EOF
+def foo(x)
+  if gets.size > 0
+    a = 5
+  else
+    a = 'hello'
+  end
+  c = a ** 0
+end
+EOF
+      g.should_not have_constant('c')
+    end
+
+    it 'should calculate 1 ** (varying numeric) = 1' do
+      g = cfg_method <<-EOF
+def foo(x)
+  if gets.size > 0
+    a = 5
+  else
+    a = 10.2
+  end
+  c = 1 ** a
+end
+EOF
+      g.should have_constant('c').with_value(1)
+    end
+
+    it 'should calculate 1 ** (varying numeric | string) = varying' do
+      g = cfg_method <<-EOF
+def foo(x)
+  if gets.size > 0
+    a = 5
+  else
+    a = 'hello'
+  end
+  c = 1 ** a
+end
+EOF
       g.should_not have_constant('c')
     end
   end

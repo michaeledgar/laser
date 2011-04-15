@@ -244,11 +244,11 @@ module Laser
             end
           elsif method_name == :**
             # n ** 0 == 1
-            if args.first.value == 0 && receiver.value != UNDEFINED
+            if args.first.value == 0 && receiver.value != UNDEFINED && is_numeric?(receiver)
               return 1
-            # 0 ** n == 0, n != 0
-            elsif receiver.value == 0 && args.first.value != UNDEFINED
-              return 0
+            # 1 ** n == 1
+            elsif receiver.value == 1 && args.first.value != UNDEFINED && is_numeric?(args.first)
+              return 1
             end
           end
           INAPPLICABLE
