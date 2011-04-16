@@ -99,7 +99,7 @@ EOF
 def foo(x)
   z = gets * 10
   if z.size > 50
-    y = z
+    y = z  # this y is used as return value
   else
     y = z * 2
     puts y
@@ -107,6 +107,43 @@ def foo(x)
 end
 EOF
       g.should have_error(Laser::UnusedVariableWarning).on_line(4).with_message(/\b y \b/x)
+    end
+    
+    it 'should see when a variable is assigned and used to compute only unused vars' do
+      g = cfg_method <<-EOF
+def foo(x)
+  z = gets * 10
+  d = z * 2
+  a = d
+  puts z
+  nil
+end
+EOF
+
+      g.should have_error(Laser::UnusedVariableWarning).on_line(3).with_message(/\b d \b/x)
+      g.should have_error(Laser::UnusedVariableWarning).on_line(4).with_message(/\b a \b/x)
+      g.should_not have_error(Laser::UnusedVariableWarning).with_message(/\b z \b/x)
+    end
+
+    it 'should ignore SSA variables assigned and used to compute only unused vars' do
+      g = cfg_method <<-EOF
+def foo(x)
+  z = gets * 10
+  if z.size > 3
+    d = z * 2
+    c = z
+  else
+    d = z * 10
+    c = 30
+  end
+  j = d
+  c
+end
+EOF
+
+      g.should have_error(Laser::UnusedVariableWarning).on_line(4).with_message(/\b d \b/x)
+      g.should have_error(Laser::UnusedVariableWarning).on_line(7).with_message(/\b d \b/x)
+      g.should have_error(Laser::UnusedVariableWarning).on_line(10).with_message(/\b j \b/x)
     end
   end
   
@@ -134,6 +171,18 @@ def foo(x)
 end
 EOF
       g.should have_constant('z').with_value(20)
+    end
+    
+    it 'should propagate manipulation of hashes' do
+      g = cfg_method <<-EOF
+def foo(x)
+  z = {a: 3, 'd' => 4.5}
+  j = z[:a]
+  arr = z.values
+end
+EOF
+      g.should have_constant('j').with_value(3)
+      g.should have_constant('arr').with_value([3, 4.5])
     end
     
     it 'should not propagate when the same variable is assigned to distinct constants in branches' do
@@ -250,7 +299,35 @@ EOF
       g.should have_constant('b').with_value(0)
       g.should have_constant('c').with_value(0)
     end
-    
+
+    it 'should calculate (varying string) * 0 = ""' do
+      g = cfg_method <<-EOF
+def foo(x)
+  if gets.size > 0
+    a = 'hello'
+  else
+    a = 'world'
+  end
+  c = a * 0
+end
+EOF
+      g.should have_constant('c').with_value('')
+    end
+
+    it 'should calculate (varying array) * 0 = []' do
+      g = cfg_method <<-EOF
+def foo(x)
+  if gets.size > 0
+    a = [1, 'hello']
+  else
+    a = [2, 'world', 'thing']
+  end
+  c = a * 0
+end
+EOF
+      g.should have_constant('c').with_value([])
+    end
+
     it 'should calculate 0 * (varying numeric | string) = varying' do
       g = cfg_method <<-EOF
 def foo(x)

@@ -316,6 +316,9 @@ module Laser
         receiver = method_self.singleton_class
 
         new_method, method_locals = build_new_method(receiver, name, arglist, body)
+        if node.comment && node.comment.annotation_map
+          new_method.pure = (node.comment.attribute('pure') == 'true')
+        end
 
         new_scope = ClosedScope.new(@current_scope, method_self, {}, method_locals)
         attach_new_method_scope(new_method, new_scope, arglist, body)

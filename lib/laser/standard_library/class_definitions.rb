@@ -82,8 +82,7 @@ class Range
 end
 class Proc
 end
-class Hash
-end
+require 'hash'
 class Symbol
 end
 class Regexp

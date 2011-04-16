@@ -7,9 +7,18 @@ module Laser
       module ConstantPropagation
         attr_reader :constants
 
-        UNDEFINED = Object.new
-        VARYING = Object.new
-        INAPPLICABLE = Object.new
+        class PlaceholderObject
+          def initialize(name)
+            @name = name
+          end
+          def inspect
+            @name
+          end
+          alias_method :to_s, :inspect
+        end
+        UNDEFINED = PlaceholderObject.new('UNDEFINED')
+        VARYING = PlaceholderObject.new('VARYING')
+        INAPPLICABLE = PlaceholderObject.new('INAPPLICABLE')
         # Only public method: mutably turns the CFG into a constant-propagated
         # one. Each binding will have a value assigned to it afterward: either
         # the constant, as a Ruby object (or a proxy to one), UNDEFINED, or VARYING.
@@ -172,10 +181,16 @@ module Laser
               # TODO(adgar): CONSTANT BLOCKS
               if changed && (!opts || !opts[:block]) # && method.is_pure
                 # check purity
-                type = receiver.expr_type
-                method = type.matching_methods(method_name).first
+                methods = instruction.possible_methods
+                # Require precise resolution
+                method = methods.size == 1 ? methods.first : nil
                 if method && method.pure
-                  result = receiver.value.send(method_name, *args.map(&:value))
+                  if Bindings::ConstantBinding === receiver  # literal here
+                    real_receiver = Object.const_get(receiver.name)
+                  else
+                    real_receiver = receiver.value
+                  end
+                  result = real_receiver.send(method_name, *args.map(&:value))
                   target.bind!(result)
                   target.inferred_type = Types::ClassType.new(result.class.name, :invariant)
                 else
@@ -230,7 +245,12 @@ module Laser
         end
         
         def is_numeric?(temp)
-          Types.subtype?(temp.inferred_type, Types::ClassType.new('Numeric', :covariant))
+          temp.value != UNDEFINED && Types.subtype?(temp.inferred_type, 
+                                              Types::ClassType.new('Numeric', :covariant))
+        end
+        
+        def uses_method?(temp, method)
+          temp.value != UNDEFINED && temp.expr_type.matching_methods(method.name) == [method]
         end
         
         # TODO(adgar): Add typechecking. Forealz.
@@ -238,16 +258,22 @@ module Laser
           if method_name == :*
             # 0 * n == 0
             # n * 0 == 0
-            if (receiver.value == 0 && args.first.value != UNDEFINED && is_numeric?(args.first)) ||
-               (receiver.value != UNDEFINED && args.first.value == 0 && is_numeric?(receiver))
+            if (receiver.value == 0 && is_numeric?(args.first)) ||
+               (args.first.value == 0 && is_numeric?(receiver))
               return 0
+            elsif (args.first.value == 0 &&
+                   uses_method?(receiver, ClassRegistry['String'].instance_methods['*']))
+              return ''
+            elsif (args.first.value == 0 &&
+                   uses_method?(receiver, ClassRegistry['Array'].instance_methods['*']))
+              return []
             end
           elsif method_name == :**
             # n ** 0 == 1
-            if args.first.value == 0 && receiver.value != UNDEFINED && is_numeric?(receiver)
+            if args.first.value == 0 && is_numeric?(receiver)
               return 1
             # 1 ** n == 1
-            elsif receiver.value == 1 && args.first.value != UNDEFINED && is_numeric?(args.first)
+            elsif receiver.value == 1 && is_numeric?(args.first)
               return 1
             end
           end

@@ -483,7 +483,7 @@ module Laser
               result
             when :@CHAR, :@tstring_content, :@int, :@float, :@regexp_end, :symbol,
                  :@label, :symbol_literal
-              const_instruct(node.constant_value)
+              const_instruct(node.constant_value.raw_object)
             when :string_literal
               content_nodes = node[1].children
               build_string_instruct(content_nodes)
@@ -495,7 +495,7 @@ module Laser
               call_instruct(node.scope.lookup('self'), :`, body, value: true)
             when :regexp_literal
               body = build_string_instruct(node[1])
-              options = const_instruct(node[2].constant_value)
+              options = const_instruct(node[2].constant_value.raw_object)
               receiver = Scope::GlobalScope.lookup('Regexp')
               call_instruct(receiver, :new, body, options, value: true)
             when :array
@@ -507,7 +507,7 @@ module Laser
               pairs = node[1].map { |_, k, v| [k, v] }
               key_value_paired = pairs.map {|a, b| [walk_node(a, value: true), walk_node(b, value: true)] }.flatten
               receiver = Scope::GlobalScope.lookup('Hash')
-              call_instruct(receiver, :[], *key_value_paired, false, value: true)
+              call_instruct(receiver, :[], *key_value_paired, block: false, value: true)
             else
               raise ArgumentError.new("Unknown AST node type #{node.type.inspect}")
             end

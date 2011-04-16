@@ -3,7 +3,7 @@ module Laser
   module SexpAnalysis
     module ControlFlow
       class Instruction < BasicObject
-        attr_reader :node, :block
+        attr_reader :node, :block, :body
         def initialize(body, opts={})
           @body = body
           @node = opts[:node]
@@ -16,6 +16,48 @@ module Laser
 
         def class
           Instruction
+        end
+
+        def ==(other)
+          @body == other.body
+        end
+
+        def method_missing(meth, *args, &blk)
+          @body.send(meth, *args, &blk)
+        end
+
+        def simulate!
+          case type
+          when :assign
+            lhs, rhs = self[1..2]
+            if Bindings::GenericBinding === rhs
+              lhs.bind! rhs.value
+              lhs.inferred_type = rhs.inferred_type
+            else
+              # literal assignment e.g. fixnum/float/string
+              lhs.bind! rhs
+              lhs.inferred_type = Types::ClassType.new(rhs.class.name, :invariant)
+            end
+          end
+        end
+
+        def require_method_call
+          unless [:call, :call_vararg, :super, :super_vararg].include?(type)
+            raise TypeError.new("#possible_methods is not defined on #{type} instructions.")
+          end
+        end
+
+        def possible_methods
+          require_method_call
+          if type == :call || type == :call_vararg
+            if Bindings::ConstantBinding === self[2]
+              [self[2].value.singleton_class.instance_methods[self[3].to_s]]
+            else
+              self[2].expr_type.matching_methods(self[3])
+            end
+          else
+            #TODO(adgar): SUPER
+          end
         end
 
         # Gets all bindings that are explicitly set in this instruction (no aliasing
@@ -55,10 +97,6 @@ module Laser
             raise ArgumentError.new("#{original_target.inspect} is not a "+
                                     "target of #{self.inspect}")
           end
-        end
-
-        def method_missing(meth, *args, &blk)
-          @body.send(meth, *args, &blk)
         end
 
        private
