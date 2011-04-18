@@ -675,7 +675,7 @@ module Laser
           add_instruction(:return, result)
           uncond_instruct @current_return
           start_block create_block
-          add_fake_edge @graph.enter, @current_block
+          #add_fake_edge @graph.enter, @current_block
           result
         end
         
@@ -719,14 +719,14 @@ module Laser
         def break_instruct(args)
           uncond_instruct @current_break
           start_block create_block
-          add_fake_edge @graph.enter, @current_block
+          #add_fake_edge @graph.enter, @current_block
         end
         
         # TODO(adgar): ARGUMENTS
         def next_instruct(args)
           uncond_instruct @current_next
           start_block create_block
-          add_fake_edge @graph.enter, @current_block
+          #add_fake_edge @graph.enter, @current_block
         end
 
         def redo_instruct

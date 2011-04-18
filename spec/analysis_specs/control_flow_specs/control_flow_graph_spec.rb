@@ -145,6 +145,28 @@ EOF
       g.should have_error(Laser::UnusedVariableWarning).on_line(7).with_message(/\b d \b/x)
       g.should have_error(Laser::UnusedVariableWarning).on_line(10).with_message(/\b j \b/x)
     end
+    
+    it 'is improved by constant propagation' do
+      g = cfg_method <<-EOF
+def foo(x)
+  z = (10 ** 5).to_s(5)
+  if z == "11200000"
+    d = z * 2
+    c = z
+  else
+    d = z * 10
+    c = 30
+  end
+  j = d
+  c
+end
+EOF
+
+      g.should have_error(Laser::UnusedVariableWarning).on_line(4).with_message(/\b d \b/x)
+      g.should have_error(Laser::UnusedVariableWarning).on_line(7).with_message(/\b d \b/x)
+      g.should have_error(Laser::UnusedVariableWarning).on_line(8).with_message(/\b c \b/x)
+      g.should have_error(Laser::UnusedVariableWarning).on_line(10).with_message(/\b j \b/x)
+    end
   end
   
   describe 'constant propagation' do

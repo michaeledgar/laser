@@ -20,7 +20,7 @@ module Laser
 
             @live[temp] &= visit
             @live[temp].each do |block|
-              block.predecessors.each do |pred|
+              block.real_predecessors.each do |pred|
                 if visit.include?(pred)
                   @live_out[pred] << temp
                 end
@@ -67,7 +67,7 @@ module Laser
           result_live = Set.new(@live_in[temp])
           until worklist.empty?
             block = worklist.pop
-            block.predecessors.each do |pred|
+            block.real_predecessors.each do |pred|
               if !@live_kill[pred].include?(temp) and !result_live.include?(pred)
                 result_live << pred
                 worklist << pred
@@ -81,7 +81,7 @@ module Laser
         # to the visit set. Used by calculate_live.
         def find_live_visited(current, visit, live)
           visit << current
-          current.successors.each do |block|
+          current.real_successors.each do |block|
             if live.include?(block) && !visit.include?(block)
               find_live_visited(block, visit, live)
             end

@@ -1,5 +1,7 @@
 require 'laser/analysis/control_flow/basic_block'
 require 'laser/analysis/control_flow/cfg_instruction'
+require 'laser/analysis/control_flow/unused_variables'
+require 'laser/analysis/control_flow/unreachability_analysis'
 require 'laser/analysis/control_flow/constant_propagation'
 require 'laser/analysis/control_flow/lifetime_analysis'
 require 'laser/analysis/control_flow/static_single_assignment'

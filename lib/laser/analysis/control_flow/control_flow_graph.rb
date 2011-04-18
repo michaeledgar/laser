@@ -8,6 +8,8 @@ module Laser
         include ConstantPropagation
         include LifetimeAnalysis
         include StaticSingleAssignment
+        include UnusedVariables
+        include UnreachabilityAnalysis
         attr_accessor :root
         attr_reader :edge_flags
 
@@ -51,11 +53,13 @@ module Laser
         
         # Runs full analysis on the CFG. Puts it in SSA then searches for warnings.
         def analyze
+          # kill obvious dead code now.
+          perform_dead_code_discovery(true)
           static_single_assignment_form
           perform_constant_propagation
           kill_unexecuted_edges
-          add_unused_variable_warnings
           perform_dead_code_discovery
+          add_unused_variable_warnings
         end
         
         def all_errors
@@ -66,6 +70,19 @@ module Laser
         def all_variables
           vertices.map(&:variables).inject(:|)
         end
+        
+        # Computes the variables reachable by DFSing the start node.
+        # This excludes variables defined in dead code.
+        def reachable_variables(block = @enter, visited = Set.new)
+          visited << block
+          block.real_successors.inject(block.variables) do |cur, succ|
+            if visited.include?(succ)
+              cur
+            else
+              cur | reachable_variables(succ, visited)
+            end
+          end
+        end
 
         # Marks all edges that are not executable as fake edges. That way, the
         # postdominance of Exit is preserved, but dead code analysis will ignore
@@ -75,101 +92,6 @@ module Laser
             unless is_executable?(u, v)
               add_flag(u, v, EDGE_FAKE)
             end
-          end
-        end
-
-        # Dead Code Discovery: O(|V| + |E|)!
-        IGNORED_DEAD_CODE_NODES = [:@ident, :@op, :void_stmt]
-        def perform_dead_code_discovery
-          dfst = depth_first_spanning_tree(self.enter)
-          # then, go over all code in dead blocks, and mark potentially dead
-          # ast nodes.
-          # O(V)
-          (vertices - dfst.vertices).each do |blk|
-            blk.each { |ins| ins.node.reachable = false unless ins[0] == :jump  }
-          end
-          # run through all reachable statements and mark those nodes, and their
-          # parents, as partially executing.
-          #
-          # at most |V| nodes will have cur.reachable = true set.
-          # at most O(V) instructions will be visited total.
-          dfst.each_vertex do |blk|
-            blk.instructions.each do |ins|
-              cur = ins.node
-              while cur
-                cur.reachable = true
-                cur = cur.parent
-              end
-            end
-          end
-          dfs_for_dead_code self.root
-        end
-        
-        # Performs a simple DFS, adding errors to any nodes that are still
-        # marked unreachable.
-        def dfs_for_dead_code(node)
-          if node.reachable
-            node.children.select { |x| Sexp === x }.reject do |child|
-              child == [] || child[0].is_a?(::Fixnum) || IGNORED_DEAD_CODE_NODES.include?(child.type)
-            end.each do |child|
-              dfs_for_dead_code(child)
-            end
-          else
-            node.add_error DeadCodeWarning.new('Dead code', node)
-          end
-        end
-        
-        # Adds unused variable warnings to all nodes which define a variable
-        # that is not used.
-        def add_unused_variable_warnings
-          unused_variables.reject { |var| var.name.start_with?('%') }.each do |temp|
-            # TODO(adgar): KILLMESOON
-            next unless @definition[temp] && @definition[temp].node
-            node = @definition[temp].node
-            node.add_error(
-                UnusedVariableWarning.new("Variable defined but not used: #{temp.non_ssa_name}", node))
-          end
-        end
-        
-        # Gets the set of unused variables. After SSA transformation, any
-        # variable with no uses need not be assigned. If the definition of
-        # that variable can be killed, then we remove that definition as a
-        # use of all its operands. This may result in further dead variables!
-        # N = number of vars
-        # O(N)
-        def unused_variables
-          initial_unused = all_variables - @uses.keys.select { |temp| @uses[temp].any? }
-          worklist = Set.new(initial_unused)
-          all_unused = Set.new
-          while worklist.any?
-            var = worklist.pop
-            all_unused << var
-            definition = @definition[var]
-            if killable_with_unused_target?(definition)
-              definition.operands.each do |op|
-                next if op.name == 'self'
-                use_set = @uses[op]
-                use_set = use_set - [definition]
-                worklist << op if use_set.empty?
-              end
-            end
-          end
-          all_unused
-        end
-        
-        def killable_with_unused_target?(insn)
-          case insn.type
-          when :assign, :phi, :lambda
-            true
-          when :call, :call_vararg
-            recv = insn[2]
-            if Bindings::ConstantBinding === insn[2]
-              true
-            else
-              insn[2].expr_type.matching_methods(insn[3].to_s).all?(&:pure)
-            end
-          else
-            false
           end
         end
       end

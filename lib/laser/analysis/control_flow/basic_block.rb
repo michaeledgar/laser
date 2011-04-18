@@ -11,6 +11,7 @@ module Laser
           @instructions = []
           @successors = ::Set.new
           @predecessors = ::Set.new
+          @edge_flags = ::Hash.new { |hash, key| hash[key] = ::RGL::ControlFlowGraph::EDGE_NORMAL }
         end
 
         # Duplicates the block, but *not* the instructions, as that's likely
@@ -22,7 +23,35 @@ module Laser
           result.predecessors = predecessors.dup
           result
         end
+
+        def has_flag?(dest, flag)
+          (@edge_flags[dest.name] & flag) > 0
+        end
+
+        def add_flag(dest, flag)
+          @edge_flags[dest.name] |= flag
+        end
+
+        def set_flag(dest, flag)
+          @edge_flags[dest.name] = flag
+        end
+
+        def remove_flag(dest, flag)
+          @edge_flags[dest.name] &= ~flag
+        end
         
+        def delete_all_flags(dest)
+          @edge_flags.delete dest.name
+        end
+
+        def real_successors
+          successors.reject { |dest| has_flag?(dest, ::RGL::ControlFlowGraph::EDGE_FAKE) }
+        end
+
+        def real_predecessors
+          predecessors.reject { |dest| dest.has_flag?(self, ::RGL::ControlFlowGraph::EDGE_FAKE) }
+        end
+
         # Removes all edges from this block.
         def clear_edges
           @successors.clear

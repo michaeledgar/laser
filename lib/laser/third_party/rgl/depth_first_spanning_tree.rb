@@ -27,8 +27,8 @@ module RGL
     # O(|V| + |E|), just like DFS.
     def build_dfst(tree, node, visited)
       visited << node
-      self.each_adjacent(node) do |other|
-        if !visited.include?(other) && !is_fake?(node, other)
+      node.real_successors.each do |other|
+        if !visited.include?(other)
           tree.add_edge(node, other)
           build_dfst(tree, other, visited)
         end

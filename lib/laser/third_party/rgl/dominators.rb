@@ -20,7 +20,7 @@ module RGL
       while changed
         changed = false
         reverse_postorder.each do |b|
-          pred = b.predecessors
+          pred = b.real_predecessors
           original = pred.find { |node| doms[node] }
           if original
             new_idom = original
@@ -52,8 +52,8 @@ module RGL
     # return: Node => Set<Node>
     def dominance_frontier(start_node = self.enter, dominator_tree)
       vertices.inject(Hash.new { |h, k| h[k] = Set.new }) do |result, b|
-        if b.predecessors.size >= 2
-          b.predecessors.each do |p|
+        if b.real_predecessors.size >= 2
+          b.real_predecessors.each do |p|
             b_dominator = dominator_tree[b].successors.first
             break unless b_dominator
             runner = p
@@ -74,7 +74,6 @@ module RGL
       worklist = Set.new(set)
       result = Set.new(set)
       frontier = dominance_frontier(dominator_tree)
-
       #pp frontier
 
       until worklist.empty?
@@ -109,7 +108,7 @@ module RGL
       visited = Set.new
       post_order_df = proc do |node|
         visited << node
-        graph.each_adjacent(node) do |successor|
+        node.real_successors.each do |successor|
           post_order_df.call(successor) unless visited.include?(successor)
         end
         result << node

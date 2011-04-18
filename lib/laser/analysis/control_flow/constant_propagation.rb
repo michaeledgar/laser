@@ -16,6 +16,7 @@ module Laser
           end
           alias_method :to_s, :inspect
         end
+
         UNDEFINED = PlaceholderObject.new('UNDEFINED')
         VARYING = PlaceholderObject.new('VARYING')
         INAPPLICABLE = PlaceholderObject.new('INAPPLICABLE')
@@ -127,7 +128,7 @@ module Laser
         end
 
         def constant_propagation_consider_edge(block, succ, blocklist)
-          if !is_executable?(block, succ)
+          if !is_executable?(block, succ) && !is_fake?(block, succ)
             add_flag(block, succ, ControlFlowGraph::EDGE_EXECUTABLE)
             blocklist << succ
           end
