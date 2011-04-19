@@ -60,6 +60,8 @@ module Kernel
   end
   def raise(msg_or_instance=nil, message='', callback=caller)
   end
+  def gets(opt_arg_1 = :__unset__, opt_arg_2 = :__unset__)
+  end
   alias fail raise
 end
 

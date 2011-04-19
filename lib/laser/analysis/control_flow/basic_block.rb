@@ -24,8 +24,12 @@ module Laser
           result
         end
 
+        def get_flags(dest)
+          @edge_flags[dest.name]
+        end
+
         def has_flag?(dest, flag)
-          (@edge_flags[dest.name] & flag) > 0
+          (get_flags(dest) & flag) > 0
         end
 
         def add_flag(dest, flag)
@@ -50,6 +54,22 @@ module Laser
 
         def real_predecessors
           predecessors.reject { |dest| dest.has_flag?(self, ::RGL::ControlFlowGraph::EDGE_FAKE) }
+        end
+        
+        def normal_successors
+          successors.select { |dest| get_flags(dest) == ::RGL::ControlFlowGraph::EDGE_NORMAL }
+        end
+
+        def normal_predecessors
+          predecessors.select { |dest| dest.get_flags(self) == ::RGL::ControlFlowGraph::EDGE_NORMAL }
+        end
+
+        def abnormal_successors
+          successors.select { |dest| has_flag?(dest, ::RGL::ControlFlowGraph::EDGE_ABNORMAL) }
+        end
+
+        def abnormal_predecessors
+          predecessors.select { |dest| dest.has_flag?(self, ::RGL::ControlFlowGraph::EDGE_ABNORMAL) }
         end
 
         # Removes all edges from this block.
@@ -93,7 +113,7 @@ module Laser
         end
 
         def fall_through_block?
-          instructions.empty? || instructions.last.type == :call
+          instructions.empty?# || instructions.last.type == :call
         end
 
         # Formats the block all pretty-like for Graphviz. Horrible formatting for
@@ -101,7 +121,11 @@ module Laser
         def to_s
           " | #{name} | \\n" + instructions.map do |ins|
             opcode = ins.first.to_s
-            args = ins[1..-1].map do |arg|
+            if ins.method_call? && ::Hash === ins.last
+            then range = 1..-2
+            else range = 1..-1
+            end
+            args = ins[range].map do |arg|
               if Bindings::GenericBinding === arg
               then arg.name
               else arg.inspect

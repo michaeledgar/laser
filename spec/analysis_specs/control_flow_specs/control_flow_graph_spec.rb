@@ -119,7 +119,6 @@ def foo(x)
   nil
 end
 EOF
-
       g.should have_error(Laser::UnusedVariableWarning).on_line(3).with_message(/\b d \b/x)
       g.should have_error(Laser::UnusedVariableWarning).on_line(4).with_message(/\b a \b/x)
       g.should_not have_error(Laser::UnusedVariableWarning).with_message(/\b z \b/x)
@@ -420,6 +419,35 @@ def foo(x)
 end
 EOF
       g.should_not have_constant('c')
+    end
+    
+    it 'should infer that assignments after a guaranteed raise do not affect CP' do
+      g = cfg_method <<-EOF
+def foo(x)
+  if gets.size > 0
+    a = 5
+  else
+    raise 'arrrrrrr'
+    a = 10.2
+  end
+  c = a
+end
+EOF
+      g.should have_constant('c').with_value(5)
+    end
+
+    it 'should infer that assignments after a guaranteed raise (by CP simulation) do not affect CP' do
+      g = cfg_method <<-EOF
+def foo(x)
+  if gets.size > 0
+    a = 5
+  else
+    a = 5 / 0
+  end
+  c = a
+end
+EOF
+      g.should have_constant('c').with_value(5)
     end
   end
 end

@@ -20,6 +20,7 @@ module Laser
         UNDEFINED = PlaceholderObject.new('UNDEFINED')
         VARYING = PlaceholderObject.new('VARYING')
         INAPPLICABLE = PlaceholderObject.new('INAPPLICABLE')
+        RAISED = PlaceholderObject.new('RAISED')
         # Only public method: mutably turns the CFG into a constant-propagated
         # one. Each binding will have a value assigned to it afterward: either
         # the constant, as a Ruby object (or a proxy to one), UNDEFINED, or VARYING.
@@ -38,6 +39,7 @@ module Laser
                   blocklist.pop, visited, blocklist, worklist)
             end
           end
+          teardown_constant_propagation
           all_variables.select do |variable|
             variable.value != VARYING && variable.value != UNDEFINED
           end.each do |constant|
@@ -48,6 +50,12 @@ module Laser
         # Initializes the variables, formals, and edges for constant propagation.
         # Morgan, p. 201
         def initialize_constant_propagation
+          # value cells for :call nodes that discard their argument.
+          @cp_private_cells = Hash.new do |h, k|
+            h[k] = Bindings::TemporaryBinding.new(k.hash.to_s, UNDEFINED)
+            h[k].inferred_type = nil
+            h[k]
+          end
           all_variables.each do |temp|
             temp.bind! UNDEFINED
             temp.inferred_type = nil
@@ -64,6 +72,15 @@ module Laser
           end
         end
         private :initialize_constant_propagation
+
+        def teardown_constant_propagation
+          @cp_private_cells.clear
+        end
+        private :teardown_constant_propagation
+
+        def cp_cell_for(instruction)
+          @cp_private_cells[instruction]
+        end
 
         # Simulates a block. As we know, phi nodes execute simultaneously
         # and immediately upon block entry, so first we check phi nodes to
@@ -94,19 +111,41 @@ module Laser
         private :constant_propagation_for_block
         
         def constant_propagation_for_instruction(instruction, blocklist, worklist)
+          block = instruction.block
           if instruction.type == :branch
             constant_propagation_for_branch(instruction, blocklist)
           elsif instruction.type == :jump
-            block = instruction.block
             succ = block.successors.first
             constant_propagation_consider_edge block, succ, blocklist
-          else
-            if constant_propagation_evaluate(instruction)
-              instruction.explicit_targets.each do |target|
-                @uses[target].each do |use|
-                  worklist.add? use
+          elsif instruction.type == :call
+            changed, raised = constant_propagation_for_call instruction
+            if changed
+              if instruction[1] && instruction[1].value != UNDEFINED
+                add_target_uses_to_worklist instruction, worklist
+              end
+              if instruction == block.last  # handle branching
+                successors = case raised
+                             when :unknown then []
+                             when :maybe then block.successors
+                             when :never then block.normal_successors
+                             when :always then block.abnormal_successors
+                             end
+                successors.each do |succ|
+                  constant_propagation_consider_edge block, succ, blocklist
                 end
               end
+            end
+          else
+            if constant_propagation_evaluate(instruction)
+              add_target_uses_to_worklist instruction, worklist
+            end
+          end
+        end
+        
+        def add_target_uses_to_worklist(instruction, worklist)
+          instruction.explicit_targets.each do |target|
+            @uses[target].each do |use|
+              worklist.add? use
             end
           end
         end
@@ -134,6 +173,80 @@ module Laser
           end
         end
 
+        def constant_propagation_for_call(instruction)
+          changed = false
+          raised = :maybe
+          target, receiver, method_name, *args = instruction[1..-1]
+          target ||= cp_cell_for(instruction)
+
+          opts = Hash === args.last ? args.pop : {}
+          components = [receiver, *args]
+          
+          special_result, special_raised = apply_special_case(receiver, method_name, *args)
+          if special_result != INAPPLICABLE
+            changed = (target.value != special_result)
+            if changed
+              target.bind! special_result
+              new_type = LaserObject === special_result ? special_result.klass.name : special_result.class.name
+              target.inferred_type = Types::ClassType.new(new_type, :invariant)
+            end
+            raised = special_raised
+          elsif components.any? { |arg| arg.value == UNDEFINED }
+            changed = false  # cannot evaluate unless all args and receiver are constant
+            raised = :unknown
+          elsif components.any? { |arg| arg.value == VARYING }
+            changed = (target.value != VARYING)
+            if changed
+              target.bind! VARYING
+              target.inferred_type = Types::TOP
+            end
+            raised = :maybe
+          else
+            # all components constant.
+            changed = (target.value == UNDEFINED)  # varying impossible here
+            # TODO(adgar): CONSTANT BLOCKS
+            if changed && (!opts || !opts[:block]) # && method.is_pure
+              # check purity
+              methods = instruction.possible_methods
+              # Require precise resolution
+              method = methods.size == 1 ? methods.first : nil
+              if methods.empty?
+                target.bind! UNDEFINED
+                target.inferred_type = Types::TOP
+                raised = :always
+                # no such method. prune successful call
+              elsif method && method.pure
+                if Bindings::ConstantBinding === receiver  # literal here
+                  real_receiver = Object.const_get(receiver.name)
+                else
+                  real_receiver = receiver.value
+                end
+                # SIMULATE PURE METHOD CALL
+                begin
+                  result = real_receiver.send(method_name, *args.map(&:value))
+                  target.bind!(result)
+                  new_type = LaserObject === result ? result.klass.name : result.class.name
+                  target.inferred_type = Types::ClassType.new(new_type, :invariant)
+                  raised = :never
+                rescue BasicObject
+                  # any exception caught - extremely unsafe code - means my
+                  # simulation *MUST NOT* raise or I will conflate user-level raises
+                  # with my own
+                  target.bind! UNDEFINED
+                  target.inferred_type = Types::TOP
+                  raised = :always
+                end
+              else
+                target.bind! VARYING
+                target.inferred_type = Types::TOP
+                raised = :maybe
+              end
+            end
+            # At this point, we should prune raise edges!
+          end
+          [changed, raised]
+        end
+
         # Evaluates the instruction, and if the constant value is lowered,
         # then return true. Otherwise, return false.
         def constant_propagation_evaluate(instruction)
@@ -155,55 +268,6 @@ module Laser
                 lhs.bind! rhs
                 lhs.inferred_type = Types::ClassType.new(rhs.class.name, :invariant)
               end
-            end
-          when :call
-            target, receiver, method_name, *args = instruction[1..-1]
-            return false if target.nil?
-            opts = Hash === args.last ? args.pop : {}
-            components = [receiver, *args]
-            if (result = apply_special_arithmetic_case(receiver, method_name, *args)) &&
-               result != INAPPLICABLE
-              changed = (target.value != result)
-              if changed
-                target.bind! result
-                target.inferred_type = Types::ClassType.new(result.class.name, :invariant)
-              end
-            elsif components.any? { |arg| arg.value == UNDEFINED }
-              changed = false  # cannot evaluate unless all args and receiver are constant
-            elsif components.any? { |arg| arg.value == VARYING }
-              changed = (target.value != VARYING)
-              if changed
-                target.bind! VARYING
-                target.inferred_type = Types::TOP
-              end
-            else
-              # all components constant.
-              changed = (target.value == UNDEFINED)  # varying impossible here
-              # TODO(adgar): CONSTANT BLOCKS
-              if changed && (!opts || !opts[:block]) # && method.is_pure
-                # check purity
-                methods = instruction.possible_methods
-                # Require precise resolution
-                method = methods.size == 1 ? methods.first : nil
-                if methods.empty?
-                  target.bind! VARYING
-                  target.inferred_type = Types::TOP
-                  # no such method. prune successful call
-                elsif method && method.pure
-                  if Bindings::ConstantBinding === receiver  # literal here
-                    real_receiver = Object.const_get(receiver.name)
-                  else
-                    real_receiver = receiver.value
-                  end
-                  result = real_receiver.send(method_name, *args.map(&:value))
-                  target.bind!(result)
-                  target.inferred_type = Types::ClassType.new(result.class.name, :invariant)
-                else
-                  target.bind! VARYING
-                  target.inferred_type = Types::TOP
-                end
-              end
-              # At this point, we should prune raise edges!
             end
           when :phi
             target, *components = instruction[1..-1]
@@ -260,30 +324,47 @@ module Laser
         end
         
         # TODO(adgar): Add typechecking. Forealz.
-        def apply_special_arithmetic_case(receiver, method_name, *args)
+        def apply_special_case(receiver, method_name, *args)
           if method_name == :*
             # 0 * n == 0
             # n * 0 == 0
             if (receiver.value == 0 && is_numeric?(args.first)) ||
                (args.first.value == 0 && is_numeric?(receiver))
-              return 0
+              return [0, :never]
             elsif (args.first.value == 0 &&
                    uses_method?(receiver, ClassRegistry['String'].instance_methods['*']))
-              return ''
+              return ['', :never]
             elsif (args.first.value == 0 &&
                    uses_method?(receiver, ClassRegistry['Array'].instance_methods['*']))
-              return []
+              return [[], :never]
             end
           elsif method_name == :**
             # n ** 0 == 1
             if args.first.value == 0 && is_numeric?(receiver)
-              return 1
+              return [1, :never]
             # 1 ** n == 1
             elsif receiver.value == 1 && is_numeric?(args.first)
-              return 1
+              return [1, :never]
+            end
+          elsif method_name == :raise
+            if uses_method?(receiver, ClassRegistry['Kernel'].instance_methods['raise'])
+              return [UNDEFINED, :always]
+            end
+          elsif receiver == ClassRegistry['Laser#Magic'].binding
+            magic_result, magic_raises = cp_magic(method_name, *args)
+            if magic_result != INAPPLICABLE
+              return [magic_result, magic_raises]
             end
           end
-          INAPPLICABLE
+          [INAPPLICABLE, :maybe]
+        end
+        
+        def cp_magic(method_name, *args)
+          case method_name
+          when :current_self
+            return [@root.scope.lookup('self').value, :never]
+          end
+          [INAPPLICABLE, :maybe]
         end
       end  # ConstantPropagation
     end  # ControlFlow

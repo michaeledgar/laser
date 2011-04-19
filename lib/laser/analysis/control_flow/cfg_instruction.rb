@@ -41,8 +41,12 @@ module Laser
           end
         end
 
+        def method_call?
+          [:call, :call_vararg, :super, :super_vararg].include?(type)
+        end
+
         def require_method_call
-          unless [:call, :call_vararg, :super, :super_vararg].include?(type)
+          unless method_call?
             raise TypeError.new("#possible_methods is not defined on #{type} instructions.")
           end
         end
@@ -52,6 +56,8 @@ module Laser
           if type == :call || type == :call_vararg
             if Bindings::ConstantBinding === self[2]
               [self[2].value.singleton_class.instance_methods[self[3].to_s]]
+            elsif LaserObject === self[2].value
+              [self[2].value.klass.instance_methods[self[3].to_s]]
             else
               self[2].expr_type.matching_methods(self[3])
             end

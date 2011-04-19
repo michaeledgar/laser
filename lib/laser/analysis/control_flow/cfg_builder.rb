@@ -35,12 +35,15 @@ module Laser
         
         def reobserve_current_exception
           cur_exception = call_instruct(ClassRegistry['Laser#Magic'].binding,
-              'current_exception', value: true, raise: false)
+              :current_exception, value: true, raise: false)
           copy_instruct(Scope::GlobalScope.lookup('$!'), cur_exception)
         end
         
         def build_formal_args
           uncond_instruct create_block
+          self_temp = call_instruct(ClassRegistry['Laser#Magic'].binding,
+              :current_self, value: true, raise: false)
+          copy_instruct(@sexp.scope.lookup('self'), self_temp)
           @final_exception = create_temporary('t#exit_exception')
           @current_rescue = create_block('UncaughtException')
           @current_yield_fail = create_block('YieldWithoutBlock')
@@ -58,7 +61,7 @@ module Laser
           
           if @sexp.type != :program
             @block_arg = call_instruct(ClassRegistry['Laser#Magic'].binding,
-                'current_block', value: true, raise: false)
+                :current_block, value: true, raise: false)
             @block_arg.name = 't#current_block'
             reobserve_current_exception
             if @formals.any?
@@ -67,7 +70,7 @@ module Laser
               end
               if @formals.any?(&:is_optional?)
                 cur_arity = call_instruct(ClassRegistry['Laser#Magic'].binding,
-                    'current_arity', value: true, raise: false)
+                    :current_arity, value: true, raise: false)
                 min_arity = @formals.count(&:is_positional?)
                 optionals = @formals.select(&:is_optional?)
                 previous_optional_block = nil
@@ -863,8 +866,9 @@ module Laser
             with_jumps_redirected(:break => ensure_body[1], :redo => ensure_body[1], :next => ensure_body[1],
                                   :return => ensure_body[1], :rescue => ensure_body[1],
                                   :yield_fail => ensure_body[1]) do
-              rescue_target = build_rescue_target(node, result, rescue_body, ensure_block, current_rescue, current_yield_fail)
-              yield_fail_target = build_rescue_target(node, result, rescue_body, ensure_block, current_yield_fail, current_yield_fail)
+              rescue_target, yield_fail_target =
+                  build_rescue_target(node, result, rescue_body, ensure_block,
+                                      current_rescue, current_yield_fail)
               walk_body_with_rescue_target(result, body, body_block, rescue_target, yield_fail_target)
             end
             uncond_instruct ensure_block
@@ -873,8 +877,9 @@ module Laser
           else
             # Generate the body with redirects to the ensure block, so no jumps get away without
             # running the ensure block
-            rescue_target = build_rescue_target(node, result, rescue_body, after, current_rescue, current_yield_fail)
-            yield_fail_target = build_rescue_target(node, result, rescue_body, after, current_yield_fail, current_yield_fail)
+            rescue_target, yield_fail_target =
+                build_rescue_target(node, result, rescue_body, after,
+                                    current_rescue, current_yield_fail)
             walk_body_with_rescue_target(result, body, body_block, rescue_target, yield_fail_target)
             uncond_instruct after
           end
@@ -886,7 +891,7 @@ module Laser
         def build_rescue_target(node, result, rescue_body, destination, rescue_fail, yield_fail_target)
           if rescue_body
           then rescue_instruct(node, result, rescue_body, destination, rescue_fail, yield_fail_target)
-          else rescue_fail
+          else [rescue_fail, yield_fail_target]
           end
         end
 
@@ -900,7 +905,8 @@ module Laser
         end
 
         def rescue_instruct(node, enclosing_body_result, rescue_body, ensure_block, rescue_fail, yield_fail)
-          rescue_target = create_block
+          rescue_target, yield_fail_target = create_blocks 2
+          catchers = [rescue_target, yield_fail_target]
           start_block rescue_target
           while rescue_body
             rhs, exception_name, handler_body, rescue_body = rescue_body.children
@@ -908,14 +914,18 @@ module Laser
 
             # for everything in rescue_body[1]
             # check if === $!, if so, go to handler_block, if not, keep checking.
-            failure_block = nil
-            foreach_on_rhs(rhs) do |temp|
-              result = call_instruct(temp, :===, node.scope.lookup('$!'), value: true)
-              failure_block = create_block
-              cond_instruct(result, handler_block, failure_block)
-              start_block failure_block
+            catchers.map! do |catcher|
+              with_current_basic_block(catcher) do
+                failure_block = nil
+                foreach_on_rhs(rhs) do |temp|
+                  result = call_instruct(temp, :===, node.scope.lookup('$!'), value: true)
+                  failure_block = create_block
+                  cond_instruct(result, handler_block, failure_block)
+                  start_block failure_block
+                end
+                @current_block
+              end
             end
-            failure_block = @current_block
             
             # Build the handler block.
             start_block handler_block
@@ -929,27 +939,26 @@ module Laser
             body_result = walk_body handler_body, value: true
             copy_instruct(enclosing_body_result, body_result)
             uncond_instruct ensure_block
-            
-            # Back to failure.
-            start_block failure_block
           end
           # All rescues failed.
           else_body = node[3]
-          rescue_else_instruct(else_body, failure_block, rescue_fail)  # else_body
-          rescue_target
+          rescue_else_instruct(else_body, catchers, [rescue_fail, yield_fail])  # else_body
+          [rescue_target, yield_fail_target]
         end
         
         # Builds a rescue-else body.
-        def rescue_else_instruct(else_body, failure_block, on_no_match_target)
-          start_block failure_block
-          if else_body
-            else_block = create_block
-            uncond_instruct else_block
-            start_block else_block
-            walk_body else_body[1], value: false
+        def rescue_else_instruct(else_body, catchers, fail_targets)
+          catchers.zip(fail_targets).each do |catcher, fail_target|
+            with_current_basic_block(catcher) do
+              if else_body
+                else_block = create_block
+                uncond_instruct else_block
+                start_block else_block
+                walk_body else_body[1], value: false
+              end
+              uncond_instruct fail_target, flags: RGL::ControlFlowGraph::EDGE_ABNORMAL
+            end
           end
-          uncond_instruct on_no_match_target, flags: RGL::ControlFlowGraph::EDGE_ABNORMAL
-          start_block on_no_match_target
         end
 
         def class_instruct(scope, class_name, superclass, body, opts={value: true})
@@ -1325,7 +1334,7 @@ module Laser
           opts = {raise: true}
           opts.merge!(args.last) if Hash === args.last
           result = create_result_if_needed opts
-          add_instruction(:call, result, receiver, method, *args)
+          add_instruction(:call, result, receiver, method.to_sym, *args)
           add_potential_raise_edge if opts[:raise]
           result
         end
@@ -1334,7 +1343,7 @@ module Laser
         def call_vararg_instruct(receiver, method, args, block, opts={})
           opts = {raise: true, value: true}.merge(opts)
           result = create_result_if_needed opts
-          add_instruction(:call_vararg, result, receiver, method, args, block)
+          add_instruction(:call_vararg, result, receiver, method.to_sym, args, block)
           add_potential_raise_edge if opts[:raise]
           result
         end
