@@ -19,8 +19,9 @@ module Laser
         
         def build
           initialize_graph
-          @current_return = @current_rescue = @exit
+          @current_return = @exit
           @current_node = @sexp
+          build_formal_args
           result = walk_node @sexp, value: true
           if @sexp.type == :program
             uncond_instruct @current_return
@@ -32,6 +33,78 @@ module Laser
           @graph
         end
         
+        def reobserve_current_exception
+          cur_exception = call_instruct(ClassRegistry['Laser#Magic'].binding,
+              'current_exception', value: true, raise: false)
+          copy_instruct(Scope::GlobalScope.lookup('$!'), cur_exception)
+        end
+        
+        def build_formal_args
+          uncond_instruct create_block
+          @final_exception = create_temporary('t#exit_exception')
+          @current_rescue = create_block('UncaughtException')
+          @current_yield_fail = create_block('YieldWithoutBlock')
+          joined = create_block('Failure')
+          with_current_basic_block(@current_rescue) do
+            uncond_instruct joined, flags: RGL::ControlFlowGraph::EDGE_ABNORMAL
+          end
+          with_current_basic_block(@current_yield_fail) do
+            uncond_instruct joined, flags: RGL::ControlFlowGraph::EDGE_ABNORMAL
+          end
+          with_current_basic_block(joined) do
+            copy_instruct(@final_exception, Scope::GlobalScope.lookup('$!'))
+            uncond_instruct @exit, flags: RGL::ControlFlowGraph::EDGE_ABNORMAL
+          end
+          
+          if @sexp.type != :program
+            @block_arg = call_instruct(ClassRegistry['Laser#Magic'].binding,
+                'current_block', value: true, raise: false)
+            @block_arg.name = 't#current_block'
+            reobserve_current_exception
+            if @formals.any?
+              if @formals.last.is_block?
+                copy_instruct(@formals.last, @block_arg)
+              end
+              if @formals.any?(&:is_optional?)
+                cur_arity = call_instruct(ClassRegistry['Laser#Magic'].binding,
+                    'current_arity', value: true, raise: false)
+                min_arity = @formals.count(&:is_positional?)
+                optionals = @formals.select(&:is_optional?)
+                previous_optional_block = nil
+                optionals.each_with_index do |argument, index|
+                  max_arity_indicating_missing = const_instruct(index + min_arity)
+                  has_arg, no_arg = create_blocks 2
+                  if previous_optional_block
+                    with_current_basic_block(previous_optional_block) do
+                      uncond_instruct no_arg
+                    end
+                  end
+                  cond_result = call_instruct(cur_arity, :<, max_arity_indicating_missing,
+                                              value: true, raise: false)
+                  cond_instruct cond_result, no_arg, has_arg
+                  
+                  start_block no_arg
+                  arg_value = walk_node(argument.default_value_sexp, value: true)
+                  copy_instruct(argument, arg_value)
+                  previous_optional_block = @current_block
+                  
+                  start_block has_arg
+                end
+                
+                optionals_done = create_block
+                uncond_instruct optionals_done
+
+                with_current_basic_block(previous_optional_block) do
+                  uncond_instruct optionals_done
+                end
+                
+                start_block optionals_done
+              end
+            end
+          end
+          # First, set the block arg if there is an explicit block argument.
+        end
+        
         def prune_totally_useless_blocks(graph)
           vertices = graph.to_a
           vertices.each do |vertex|
@@ -39,6 +112,16 @@ module Laser
               graph.remove_vertex(vertex)
             end
           end
+        end
+        
+        # yields with the current basic block set to the provided basic block.
+        # useful for quickly adding an edge without directly touching the
+        # graph object.
+        def with_current_basic_block(basic_block)
+          old_block, @current_block = @current_block, basic_block
+          yield
+        ensure
+          @current_block = old_block
         end
         
         def with_current_node(node)
@@ -103,7 +186,8 @@ module Laser
           when :const_path_ref
             lhs, const = node.children
             lhs_value = walk_node lhs, value: true
-            call_instruct(lhs_value, :const_get, const.expanded_identifier, opts)
+            ident = const_instruct(const.expanded_identifier)
+            call_instruct(lhs_value, :const_get, ident, opts)
           when :call
             issue_call node, opts
           when :command
@@ -283,7 +367,11 @@ module Laser
               end
               uncond_instruct after
             when :var_ref
-              if node.binding.nil? && node[1].type != :@kw
+              if node[1].type == :@const
+                ident = const_instruct(node.expanded_identifier)
+                call_instruct(ClassRegistry['Object'].binding,
+                    :const_get, ident, value: false)
+              elsif node.binding.nil? && node[1].type != :@kw
                 call_instruct(node.scope.lookup('self'), node.expanded_identifier, value: false)
               end
             when :for
@@ -418,7 +506,11 @@ module Laser
             when :var_field
               variable_instruct(node)
             when :var_ref
-              if node.binding
+              if node[1].type == :@const
+                ident = const_instruct(node.expanded_identifier)
+                call_instruct(ClassRegistry['Object'].binding,
+                    :const_get, ident, value: true)
+              elsif node.binding
                 variable_instruct(node)
               elsif node[1].type == :@kw
                 const_instruct(node.constant_value.raw_object)
@@ -427,8 +519,9 @@ module Laser
               end
             when :top_const_ref
               const = node[1]
-              call_instruct(ClassRegistry['Object'].binding, :const_get,
-                            const.expanded_identifier, value: true)
+              ident = const_instruct(const.expanded_identifier)
+              call_instruct(ClassRegistry['Object'].binding,
+                  :const_get, ident, value: true)
             when :for
               lhs, receiver, body = node.children
               receiver_value = walk_node receiver, value: true
@@ -548,17 +641,18 @@ module Laser
         # require temporary specification in a stack-like fashion during CFG construction,
         # I use the call stack to simulate the explicit one suggested by Morgan.
         def with_jump_targets(targets={})
-          old_break, old_next, old_redo, old_return, old_rescue =
-              @current_break, @current_next, @current_redo, @current_return, @current_rescue
+          old_break, old_next, old_redo, old_return, old_rescue, old_yield_fail =
+              @current_break, @current_next, @current_redo, @current_return, @current_rescue, @current_yield_fail
           @current_break = targets[:break] if targets.has_key?(:break)
           @current_next = targets[:next] if targets.has_key?(:next)
           @current_redo = targets[:redo] if targets.has_key?(:redo)
           @current_return = targets[:return] if targets.has_key?(:return)
           @current_rescue = targets[:rescue] if targets.has_key?(:rescue)
+          @current_yield_fail = targets[:yield_fail] if targets.has_key?(:yield_fail)
           yield
         ensure
-          @current_break, @current_next, @current_redo, @current_return, @current_rescue =
-              old_break, old_next, old_redo, old_return, old_rescue
+          @current_break, @current_next, @current_redo, @current_return, @current_rescue, @current_yield_fail =
+              old_break, old_next, old_redo, old_return, old_rescue, old_yield_fail
         end
         
         # Walks over a series of statements, ignoring the return value of
@@ -578,15 +672,18 @@ module Laser
           end
         end
         
-        def raise_instruct(arg)
-          add_instruction(:raise, arg)
-          @graph.add_edge(@current_block, current_rescue, RGL::ControlFlowGraph::EDGE_ABNORMAL)
-          start_block current_rescue
+        def raise_instruct(arg, opts)
+          target = opts[:target]
+          copy_instruct(Scope::GlobalScope.lookup('$!'), arg)
+          uncond_instruct target, flags: RGL::ControlFlowGraph::EDGE_ABNORMAL
+          start_block target
         end
         
-        def raise_instance_of_instruct(klass)
-          instance = call_instruct(klass, :new, value: true, raise: false)
-          raise_instruct instance
+        def raise_instance_of_instruct(klass, *args)
+          opts = {target: current_rescue}
+          opts.merge!(args.pop) if Hash === args.last
+          instance = call_instruct(klass, :new, *args, value: true, raise: false)
+          raise_instruct instance, opts
         end
         
         # TODO(adgar): Cleanup on Aisle 6.
@@ -645,9 +742,10 @@ module Laser
         end
 
         # Terminates the current block with a jump to the target block.
-        def uncond_instruct(target, opts = {:jump_instruct => true})
+        def uncond_instruct(target, opts = {})
+          opts = {:jump_instruct => true, :flags => RGL::ControlFlowGraph::EDGE_NORMAL}.merge(opts)
           add_instruction(:jump, target.name) if opts[:jump_instruct]
-          @graph.add_edge(@current_block, target)
+          @graph.add_edge(@current_block, target, opts[:flags])
           start_block target
         end
         
@@ -675,7 +773,6 @@ module Laser
           add_instruction(:return, result)
           uncond_instruct @current_return
           start_block create_block
-          #add_fake_edge @graph.enter, @current_block
           result
         end
         
@@ -683,9 +780,22 @@ module Laser
         # value.
         def yield_instruct(arg=nil, opts={})
           opts = {raise: true, value: true}.merge(opts)
-          result = create_result_if_needed opts
-          add_instruction(:yield, result, arg)
-          add_potential_raise_edge if opts[:raise]
+          # this is: if @block_arg; @block_arg.call(args)
+          #          else raise LocalJumpError.new(...)
+          if_block, no_block = create_blocks 2
+          cond_instruct(@block_arg, if_block, no_block)
+          
+          start_block no_block
+          message = const_instruct('no block given (yield)')
+          file_name = const_instruct(@current_node.file_name)
+          line_number = const_instruct(@current_node.line_number || 0)
+          raise_instance_of_instruct(
+              ClassRegistry['LocalJumpError'].binding, message, file_name, line_number,
+              target: current_yield_fail)
+          
+          start_block if_block
+          result = call_instruct(@block_arg, :call, arg, opts)
+
           result
         end
 
@@ -713,20 +823,19 @@ module Laser
           end
         end
         
-        attr_reader :current_break, :current_next, :current_redo, :current_return, :current_rescue
+        attr_reader :current_break, :current_next, :current_redo
+        attr_reader :current_return, :current_rescue, :current_yield_fail
         
         # TODO(adgar): ARGUMENTS
         def break_instruct(args)
           uncond_instruct @current_break
           start_block create_block
-          #add_fake_edge @graph.enter, @current_block
         end
         
         # TODO(adgar): ARGUMENTS
         def next_instruct(args)
           uncond_instruct @current_next
           start_block create_block
-          #add_fake_edge @graph.enter, @current_block
         end
 
         def redo_instruct
@@ -752,9 +861,11 @@ module Laser
             # Generate the body with redirects to the ensure block, so no jumps get away without
             # running the ensure block
             with_jumps_redirected(:break => ensure_body[1], :redo => ensure_body[1], :next => ensure_body[1],
-                                  :return => ensure_body[1], :rescue => ensure_body[1]) do
-              rescue_target = build_rescue_target(node, result, rescue_body, ensure_block)
-              walk_body_with_rescue_target(result, body, body_block, rescue_target)
+                                  :return => ensure_body[1], :rescue => ensure_body[1],
+                                  :yield_fail => ensure_body[1]) do
+              rescue_target = build_rescue_target(node, result, rescue_body, ensure_block, current_rescue, current_yield_fail)
+              yield_fail_target = build_rescue_target(node, result, rescue_body, ensure_block, current_yield_fail, current_yield_fail)
+              walk_body_with_rescue_target(result, body, body_block, rescue_target, yield_fail_target)
             end
             uncond_instruct ensure_block
             walk_body(ensure_body[1], value: false)
@@ -762,8 +873,9 @@ module Laser
           else
             # Generate the body with redirects to the ensure block, so no jumps get away without
             # running the ensure block
-            rescue_target = build_rescue_target(node, result, rescue_body, after)
-            walk_body_with_rescue_target(result, body, body_block, rescue_target)
+            rescue_target = build_rescue_target(node, result, rescue_body, after, current_rescue, current_yield_fail)
+            yield_fail_target = build_rescue_target(node, result, rescue_body, after, current_yield_fail, current_yield_fail)
+            walk_body_with_rescue_target(result, body, body_block, rescue_target, yield_fail_target)
             uncond_instruct after
           end
           result
@@ -771,23 +883,23 @@ module Laser
 
         # Builds the rescue block(s) for the given rescue_body, if there is one,
         # and returns the block to jump to when an exception is raised.
-        def build_rescue_target(node, result, rescue_body, destination)
+        def build_rescue_target(node, result, rescue_body, destination, rescue_fail, yield_fail_target)
           if rescue_body
-          then rescue_instruct(node, result, rescue_body, destination)
-          else current_rescue
+          then rescue_instruct(node, result, rescue_body, destination, rescue_fail, yield_fail_target)
+          else rescue_fail
           end
         end
 
         # Walks the body of code with its result copied and its rescue target set.
-        def walk_body_with_rescue_target(result, body, body_block, rescue_target)
-          with_jump_targets(:rescue => rescue_target) do
+        def walk_body_with_rescue_target(result, body, body_block, rescue_target, yield_fail_target)
+          with_jump_targets(:rescue => rescue_target, :yield_fail => yield_fail_target) do
             start_block body_block
             body_result = walk_body body, value: true
             copy_instruct(result, body_result)
           end
         end
 
-        def rescue_instruct(node, enclosing_body_result, rescue_body, ensure_block)
+        def rescue_instruct(node, enclosing_body_result, rescue_body, ensure_block, rescue_fail, yield_fail)
           rescue_target = create_block
           start_block rescue_target
           while rescue_body
@@ -823,12 +935,12 @@ module Laser
           end
           # All rescues failed.
           else_body = node[3]
-          rescue_else_instruct(else_body, @current_block)  # else_body
+          rescue_else_instruct(else_body, failure_block, rescue_fail)  # else_body
           rescue_target
         end
         
         # Builds a rescue-else body.
-        def rescue_else_instruct(else_body, failure_block)
+        def rescue_else_instruct(else_body, failure_block, on_no_match_target)
           start_block failure_block
           if else_body
             else_block = create_block
@@ -836,7 +948,8 @@ module Laser
             start_block else_block
             walk_body else_body[1], value: false
           end
-          raise_instruct Scope::GlobalScope.lookup('$!')
+          uncond_instruct on_no_match_target, flags: RGL::ControlFlowGraph::EDGE_ABNORMAL
+          start_block on_no_match_target
         end
 
         def class_instruct(scope, class_name, superclass, body, opts={value: true})
@@ -1248,8 +1361,13 @@ module Laser
         # Adds an edge from the current block to the current rescue target,
         # while creating a new block for the "natural" exit.
         def add_potential_raise_edge
-          @graph.add_edge(@current_block, current_rescue, RGL::ControlFlowGraph::EDGE_ABNORMAL)
-          uncond_instruct create_block, :jump_instruct => false
+          fail_block = create_block
+          @graph.add_edge(@current_block, fail_block, RGL::ControlFlowGraph::EDGE_ABNORMAL)
+          with_current_basic_block(fail_block) do
+            reobserve_current_exception
+            uncond_instruct current_rescue, flags: RGL::ControlFlowGraph::EDGE_ABNORMAL
+          end
+          uncond_instruct create_block, jump_instruct: false
         end
 
         # Looks up the value of a variable and assigns it to a new temporary
@@ -1594,7 +1712,7 @@ module Laser
           temp = const_instruct('')
           components.each do |node|
             as_string = walk_node node, value: true
-            temp = call_instruct(temp, :concat, as_string, value: true, raise: false)
+            temp = call_instruct(temp, :+, as_string, value: true, raise: false)
           end
           temp
         end
@@ -1621,9 +1739,12 @@ module Laser
         end
 
         # Creates a temporary variable with an unused name.
-        def create_temporary
-          @temporary_counter += 1
-          Bindings::TemporaryBinding.new(current_temporary, nil)
+        def create_temporary(name = nil)
+          unless name
+            @temporary_counter += 1
+            name = current_temporary
+          end
+          Bindings::TemporaryBinding.new(name, nil)
         end
         
         def lookup_or_create_temporary(*keys)

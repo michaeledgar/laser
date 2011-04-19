@@ -48,6 +48,17 @@ module Laser
         raise new_exception
       end
       
+      def self.bootstrap_magic
+        class_class = ClassRegistry['Class']
+        magic_class = LaserSingletonClass.new(
+            class_class, Scope::GlobalScope, 'Laser#Magic', 'Laser#Magic')
+        magic_class.add_instance_method!(LaserMethod.new('implicit_block') do |method|
+            method.add_signature!(Signature.new('implicit_block', [],
+            Types::UnionType.new([Types::ClassType.new('Proc', :invariant),
+                                  Types::ClassType.new('NilClass', :invariant)])))
+        end)
+      end
+      
       # Before we analyze any code, we need to create classes for all the
       # literals that are in Ruby. Otherwise, when we see those literals,
       # if we haven't yet created the class they are an instance of, shit

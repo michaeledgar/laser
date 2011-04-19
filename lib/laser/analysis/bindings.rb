@@ -91,6 +91,15 @@ module Laser
           @kind = kind
           @default_value_sexp = default_value
         end
+        def is_positional?
+          :positional == @kind
+        end
+        def is_optional?
+          :optional == @kind
+        end
+        def is_block?
+          :block == @kind
+        end
       end
     end
   end

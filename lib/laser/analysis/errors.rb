@@ -31,7 +31,7 @@ module Laser
     end
     
     def line_number
-      ast_node.source_begin[0]
+      ast_node.line_number
     end
     
     def inspect

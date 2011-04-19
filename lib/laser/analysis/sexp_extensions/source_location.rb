@@ -2,6 +2,10 @@ module Laser::SexpAnalysis
   module SexpExtensions
     module SourceLocation
       
+      def line_number
+        source_begin && source_begin[0]
+      end
+      
       # Calculates, with some lossiness, the start position of the current node
       # in the original text. This will sometimes fail, as the AST does not include
       # sufficient information in many cases to determine where a node lies. We

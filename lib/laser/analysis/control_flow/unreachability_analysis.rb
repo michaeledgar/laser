@@ -11,7 +11,7 @@ module Laser
           # ast nodes.
           # O(V)
           (vertices - dfst.vertices).each do |blk|
-            blk.each { |ins| ins.node.reachable = false unless ins[0] == :jump  }
+            blk.each { |ins| ins.node.reachable = false if ins.node  }
           end
 
           # run through all reachable statements and mark those nodes, and their

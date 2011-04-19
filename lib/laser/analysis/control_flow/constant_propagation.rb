@@ -185,7 +185,11 @@ module Laser
                 methods = instruction.possible_methods
                 # Require precise resolution
                 method = methods.size == 1 ? methods.first : nil
-                if method && method.pure
+                if methods.empty?
+                  target.bind! VARYING
+                  target.inferred_type = Types::TOP
+                  # no such method. prune successful call
+                elsif method && method.pure
                   if Bindings::ConstantBinding === receiver  # literal here
                     real_receiver = Object.const_get(receiver.name)
                   else
@@ -199,6 +203,7 @@ module Laser
                   target.inferred_type = Types::TOP
                 end
               end
+              # At this point, we should prune raise edges!
             end
           when :phi
             target, *components = instruction[1..-1]
@@ -233,7 +238,7 @@ module Laser
               target.bind! VARYING
               target.inferred_type = Types::ClassType.new('Proc', :invariant)
             end
-          when :call_vararg, :super, :super_vararg, :yield
+          when :call_vararg, :super, :super_vararg
             target = instruction[1]
             return false if target.nil?
             changed = (target.value != VARYING)  # assume closure on non-constant here

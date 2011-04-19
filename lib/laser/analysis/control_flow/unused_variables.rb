@@ -72,6 +72,8 @@ module Laser
             recv = insn[2]
             if Bindings::ConstantBinding === insn[2]
               true
+            elsif insn[2].value == ConstantPropagation::UNDEFINED
+              true
             else
               insn[2].expr_type.matching_methods(insn[3].to_s).all?(&:pure)
             end
