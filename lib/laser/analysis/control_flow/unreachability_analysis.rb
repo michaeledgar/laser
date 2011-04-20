@@ -4,13 +4,19 @@ module Laser
       module UnreachabilityAnalysis
         # Dead Code Discovery: O(|V| + |E|)!
         IGNORED_DEAD_CODE_NODES = [:@ident, :@op, :void_stmt]
+        def unreachable_vertices(dfst = depth_first_spanning_tree(self.enter))
+          vertices - dfst.vertices
+        end
+        
         def perform_dead_code_discovery(delete_dead=false)
           dfst = depth_first_spanning_tree(self.enter)
+
+          dead_verts = unreachable_vertices(dfst)
 
           # then, go over all code in dead blocks, and mark potentially dead
           # ast nodes.
           # O(V)
-          (vertices - dfst.vertices).each do |blk|
+          dead_verts.each do |blk|
             blk.each { |ins| ins.node.reachable = false if ins.node  }
           end
 
@@ -29,7 +35,7 @@ module Laser
             end
           end
           dfs_for_dead_code self.root
-          (vertices - dfst.vertices).each { |block| remove_vertex block } if delete_dead
+          dead_verts.each { |block| remove_vertex block } if delete_dead
         end
 
         # Performs a simple DFS, adding errors to any nodes that are still

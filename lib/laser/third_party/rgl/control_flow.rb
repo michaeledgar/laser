@@ -7,18 +7,17 @@ module RGL
   # while re-using a lot of code, are needlessly algorithmically insufficient.
   # (#empty is O(|V|)!)
   class ControlFlowGraph    
-    EDGE_NORMAL = 0
-    EDGE_ABNORMAL = 1 << 0
-    EDGE_FAKE = 1 << 1
-    EDGE_EXECUTABLE = 1 << 2
+    EDGE_NORMAL = 1 << 0
+    EDGE_ABNORMAL = 1 << 1
+    EDGE_FAKE = 1 << 2
+    EDGE_EXECUTABLE = 1 << 3
 
     include Enumerable
     include MutableGraph
     attr_reader :enter, :exit
-    attr_reader :vertices
+    attr_reader :vertices, :vertex_lookup
     
     def initialize
-      #@edge_flags = Hash.new { |hash, key| hash[key] = EDGE_NORMAL }
       @enter = Laser::SexpAnalysis::ControlFlow::TerminalBasicBlock.new('Enter')
       @exit = Laser::SexpAnalysis::ControlFlow::TerminalBasicBlock.new('Exit')
       @vertices = Set[@enter, @exit]
@@ -26,7 +25,11 @@ module RGL
     end
     
     def [](key)
-      @vertex_lookup[key.name]
+      vertex_with_name(key.name)
+    end
+    
+    def vertex_with_name(key)
+      @vertex_lookup[key]
     end
 
     # Gets all the edges. O(E).
@@ -95,22 +98,23 @@ module RGL
     def remove_vertex(u)
       looked_up = self[u]
       looked_up.successors.each do |succ|
-        self[succ].predecessors.delete looked_up
+        self[succ].remove_predecessor looked_up
         self[looked_up].delete_all_flags succ
       end
       looked_up.predecessors.each do |pred|
-        self[pred].successors.delete looked_up
+        self[pred].remove_successor looked_up
         self[pred].delete_all_flags looked_up
       end
+      @vertex_lookup.delete looked_up.name
       vertices.delete looked_up
     end
     
     # Removes the edge from the graph. O(1) amortized.
     def remove_edge(u, v)
-      looked_up_u, looked_up_v = @vertex_lookup[u], @vertex_lookup[v]
-      looked_up_u.successors.delete(looked_up_v)
-      looked_up_v.predecessors.delete(looked_up_u)
-      u.delete_all_flags(v)
+      looked_up_u, looked_up_v = self[u], self[v]
+      looked_up_u.remove_successor looked_up_v
+      looked_up_v.remove_predecessor looked_up_u
+      u.delete_all_flags(looked_up_v)
       #@edge_flags.delete([u.name, v.name])
     end
     

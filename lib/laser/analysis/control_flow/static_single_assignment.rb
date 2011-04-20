@@ -31,7 +31,7 @@ module Laser
         
         # Sets up SSA to handle the formal arguments
         def ssa_name_formals
-          @formal_map = {}
+          @formal_map.clear
           self_binding = @root.scope.lookup('self')
           @name_stack[self_binding].push(self_binding)
           @formal_map[self_binding] = self_binding
@@ -86,7 +86,7 @@ module Laser
             end
           end
           # Recurse to dominated blocks
-          dom_tree.vertex_with_name(block.name).real_predecessors.each do |pred|
+          dom_tree[block].real_predecessors.each do |pred|
             rename_for_ssa(pred, dom_tree)
           end
           # Update all targets with the current definition

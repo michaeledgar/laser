@@ -24,8 +24,9 @@ module Laser
         # Only public method: mutably turns the CFG into a constant-propagated
         # one. Each binding will have a value assigned to it afterward: either
         # the constant, as a Ruby object (or a proxy to one), UNDEFINED, or VARYING.
-        def perform_constant_propagation
-          initialize_constant_propagation
+        def perform_constant_propagation(opts={})
+          opts = {:fixed_methods => {}}.merge(opts)
+          initialize_constant_propagation(opts)
           visited = Set.new
           worklist = Set.new
           blocklist = Set[self.enter]
@@ -49,7 +50,8 @@ module Laser
 
         # Initializes the variables, formals, and edges for constant propagation.
         # Morgan, p. 201
-        def initialize_constant_propagation
+        def initialize_constant_propagation(opts)
+          @constants.clear
           # value cells for :call nodes that discard their argument.
           @cp_private_cells = Hash.new do |h, k|
             h[k] = Bindings::TemporaryBinding.new(k.hash.to_s, UNDEFINED)
@@ -67,9 +69,10 @@ module Laser
           end
           vertices.each do |block|
             block.successors.each do |succ|
-              remove_flag(block, succ, ControlFlowGraph::EDGE_EXECUTABLE)
+              block.remove_flag(succ, ControlFlowGraph::EDGE_EXECUTABLE)
             end
           end
+          @_cp_fixed_methods = opts[:fixed_methods]
         end
         private :initialize_constant_propagation
 
@@ -109,7 +112,7 @@ module Laser
           end
         end
         private :constant_propagation_for_block
-        
+
         def constant_propagation_for_instruction(instruction, blocklist, worklist)
           block = instruction.block
           if instruction.type == :branch
@@ -141,7 +144,7 @@ module Laser
             end
           end
         end
-        
+
         def add_target_uses_to_worklist(instruction, worklist)
           instruction.explicit_targets.each do |target|
             @uses[target].each do |use|
@@ -181,7 +184,6 @@ module Laser
 
           opts = Hash === args.last ? args.pop : {}
           components = [receiver, *args]
-          
           special_result, special_raised = apply_special_case(receiver, method_name, *args)
           if special_result != INAPPLICABLE
             changed = (target.value != special_result)
@@ -215,6 +217,12 @@ module Laser
                 target.inferred_type = Types::TOP
                 raised = :always
                 # no such method. prune successful call
+              elsif method && (@_cp_fixed_methods.has_key?(method))
+                result = @_cp_fixed_methods[method]
+                target.bind! result
+                new_type = LaserObject === result ? result.klass.name : result.class.name
+                target.inferred_type = Types::ClassType.new(new_type, :invariant)
+                raised = :never
               elsif method && method.pure
                 if Bindings::ConstantBinding === receiver  # literal here
                   real_receiver = Object.const_get(receiver.name)

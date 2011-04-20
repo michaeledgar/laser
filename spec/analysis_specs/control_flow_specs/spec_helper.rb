@@ -80,3 +80,24 @@ RSpec::Matchers.define :have_constant do |name|
     end
   end
 end
+
+
+include Laser::SexpAnalysis
+def annotate_all(body)
+  Annotations.annotate_inputs([['(stdin)', body]]).first[1]
+end
+def cfg(input)
+  cfg_builder = ControlFlow::GraphBuilder.new(annotate_all(input))
+  graph = cfg_builder.build
+  graph.analyze
+  graph
+end
+def cfg_method(input)
+  method_tree = annotate_all(input)
+  body = method_tree.find_type(:bodystmt)
+  cfg_builder = ControlFlow::GraphBuilder.new(
+      body, body.scope.method.signatures.first.arguments)
+  graph = cfg_builder.build
+  graph.analyze
+  graph
+end

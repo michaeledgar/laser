@@ -1,25 +1,5 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 
-include Laser::SexpAnalysis
-def annotate_all(body)
-  Annotations.annotate_inputs([['(stdin)', body]]).first[1]
-end
-def cfg(input)
-  cfg_builder = ControlFlow::GraphBuilder.new(annotate_all(input))
-  graph = cfg_builder.build
-  graph.analyze
-  graph
-end
-def cfg_method(input)
-  method_tree = annotate_all(input)
-  body = method_tree.find_type(:bodystmt)
-  cfg_builder = ControlFlow::GraphBuilder.new(
-      body, body.scope.method.signatures.first.arguments)
-  graph = cfg_builder.build
-  graph.analyze
-  graph
-end
-
 describe ControlFlow::ControlFlowGraph do  
   describe 'unreachable code discovery' do
     it 'should find code that follows explicit return' do
@@ -449,5 +429,70 @@ end
 EOF
       g.should have_constant('c').with_value(5)
     end
+  end
+
+  describe 'yield-type inference' do
+    it 'should recognize non-yielding methods' do
+      g = cfg_method <<-EOF
+def foo(x)
+  y = gets() * 2
+  z = y
+  c = z * z
+end
+EOF
+      g.yield_type.should be :ignored
+    end
+
+    it 'should recognize non-yielding methods via CP' do
+      g = cfg_method <<-EOF
+def foo(x)
+  x = 2 ** 16
+  if x == 65536
+    puts x
+  else
+    yield
+  end
+end
+EOF
+      g.yield_type.should be :ignored
+    end
+
+    it 'should recognize simple required-yield methods' do
+      g = cfg_method <<-EOF
+def tap
+  yield self
+  self
+end
+EOF
+      g.yield_type.should be :required
+    end
+
+    it 'denotes the method required when a branch is unprovable' do
+      g = cfg_method <<-EOF
+def one
+  if gets.size < 0
+    yield
+  else
+    1
+  end
+end
+EOF
+      g.yield_type.should be :required
+    end
+
+    it 'denotes the method optional when yield is guarded by block_given?' do
+      g = cfg_method <<-EOF
+def one
+  if block_given?
+    yield 1
+  else
+    1
+  end
+end
+EOF
+      g.yield_type.should be :optional
+    end
+    
+    pending 'denotes the method optional when yield is guarded by a guaranteed rescue'
   end
 end

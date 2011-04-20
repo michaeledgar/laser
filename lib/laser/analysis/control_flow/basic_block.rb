@@ -23,6 +23,17 @@ module Laser
           result.predecessors = predecessors.dup
           result
         end
+        
+        def duplicate_for_graph_copy(temp_lookup, insn_lookup)
+          result = BasicBlock.new(name)
+          result.instructions = instructions.map do |insn|
+            copy = insn.deep_dup(temp_lookup, block: result)
+            insn_lookup[insn] = copy
+            copy
+          end
+          # successors/predecessors will be inserted by graph copy.
+          result
+        end
 
         def get_flags(dest)
           @edge_flags[dest.name]
@@ -90,10 +101,6 @@ module Laser
         def !=(other)
           !(self == other)
         end
-        
-        def equal?(other)
-          name == other.name
-        end
 
         def hash
           name.hash
@@ -114,6 +121,25 @@ module Laser
 
         def fall_through_block?
           instructions.empty?# || instructions.last.type == :call
+        end
+
+        def remove_successor(u)
+          successors.delete u
+        end
+
+        def remove_predecessor(u)
+          last_insn = u.instructions.last
+          if last_insn.type == :branch
+            which_to_keep = last_insn[3] == self.name ? last_insn[2] : last_insn[3]
+            last_insn.body.replace([:jump, which_to_keep])
+          end
+          # must update phi nodes.
+          which_phi_arg = predecessors.to_a.index(u) + 2
+          phi_nodes.each do |node|
+            node.delete_at(which_phi_arg)
+            instructions.delete node if node.size <= 3
+          end
+          predecessors.delete u
         end
 
         # Formats the block all pretty-like for Graphviz. Horrible formatting for

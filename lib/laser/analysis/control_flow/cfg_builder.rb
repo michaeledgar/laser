@@ -29,7 +29,7 @@ module Laser
             return_uncond_jump_instruct result
           end
           
-          prune_totally_useless_blocks(@graph)
+          @graph.prune_totally_useless_blocks
           @graph
         end
         
@@ -45,9 +45,9 @@ module Laser
               :current_self, value: true, raise: false)
           copy_instruct(@sexp.scope.lookup('self'), self_temp)
           @final_exception = create_temporary('t#exit_exception')
-          @current_rescue = create_block('UncaughtException')
-          @current_yield_fail = create_block('YieldWithoutBlock')
-          joined = create_block('Failure')
+          @current_rescue = create_block(ControlFlowGraph::EXCEPTION_POSTDOMINATOR_NAME)
+          @current_yield_fail = create_block(ControlFlowGraph::YIELD_POSTDOMINATOR_NAME)
+          joined = create_block(ControlFlowGraph::FAILURE_POSTDOMINATOR_NAME)
           with_current_basic_block(@current_rescue) do
             uncond_instruct joined, flags: RGL::ControlFlowGraph::EDGE_ABNORMAL
           end
@@ -106,15 +106,6 @@ module Laser
             end
           end
           # First, set the block arg if there is an explicit block argument.
-        end
-        
-        def prune_totally_useless_blocks(graph)
-          vertices = graph.to_a
-          vertices.each do |vertex|
-            if vertex.instructions.empty? && graph.degree(vertex).zero?
-              graph.remove_vertex(vertex)
-            end
-          end
         end
         
         # yields with the current basic block set to the provided basic block.
@@ -782,6 +773,7 @@ module Laser
         # Performs a yield of the given value, capturing the return
         # value.
         def yield_instruct(arg=nil, opts={})
+          call_args = arg ? [arg] : []
           opts = {raise: true, value: true}.merge(opts)
           # this is: if @block_arg; @block_arg.call(args)
           #          else raise LocalJumpError.new(...)
@@ -797,7 +789,7 @@ module Laser
               target: current_yield_fail)
           
           start_block if_block
-          result = call_instruct(@block_arg, :call, arg, opts)
+          result = call_instruct(@block_arg, :call, *call_args, opts)
 
           result
         end

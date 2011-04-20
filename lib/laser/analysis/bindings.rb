@@ -14,6 +14,20 @@ module Laser
           bind!(value)
         end
         
+        def deep_dup
+          result = self.class.new(@name, @value)
+          result.initialize_dup_deep(self)
+          result
+        end
+
+        # like initialize_dup, but manually called and deep copy.
+        def initialize_dup_deep(other)
+          @annotated_type = other.annotated_type.dup if other.annotated_type
+          @inferred_type = other.inferred_type.dup if other.inferred_type
+          @ast_node = other.ast_node # immutable
+          self
+        end
+        
         def expr_type
           annotated_type || inferred_type || Types::ClassType.new(@value.klass.path, :covariant)
         end
@@ -91,6 +105,12 @@ module Laser
           @kind = kind
           @default_value_sexp = default_value
         end
+        
+        def deep_dup
+          result = self.class.new(@name, @value, @kind, @default_value_sexp)
+          result.initialize_dup_deep(self)
+        end
+
         def is_positional?
           :positional == @kind
         end

@@ -62,6 +62,8 @@ module Kernel
   end
   def gets(opt_arg_1 = :__unset__, opt_arg_2 = :__unset__)
   end
+  def block_given?
+  end
   alias fail raise
 end
 

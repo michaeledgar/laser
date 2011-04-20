@@ -22,6 +22,20 @@ module Laser
           @body == other.body
         end
 
+        def deep_dup(temp_lookup, opts={})
+          new_body = @body[1..-1].map do |arg|
+            case arg
+            when Bindings::ConstantBinding then arg
+            when Bindings::GenericBinding then temp_lookup[arg]
+            else arg.dup rescue arg
+            end
+          end
+          
+          new_body.unshift(self[0])  # self[0] always symbol
+          new_opts = {node: @node, block: @block}.merge(opts)
+          self.class.new(new_body, new_opts)
+        end
+
         def method_missing(meth, *args, &blk)
           @body.send(meth, *args, &blk)
         end

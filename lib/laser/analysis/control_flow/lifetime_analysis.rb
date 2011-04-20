@@ -10,7 +10,7 @@ module Laser
           setup_lifetime
           visit = Set.new
           @live_out = Hash.new { |hash, key| hash[key] = Set.new }
-          @live = Hash.new { |hash, key| hash[key] = Set.new }
+          @live.clear
           @globals.each do |temp|
             @live[temp] = live_worklist(temp)
             visit.clear
