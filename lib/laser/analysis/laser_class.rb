@@ -468,6 +468,8 @@ module Laser
       attr_reader :name
       attr_accessor :body_ast, :owner, :signatures, :arity
       attr_accessor_with_default :pure, false
+      attr_accessor_with_default :raises, []
+      attr_accessor_with_default :raise_type, :maybe
 
       # Gets the laser method with the given class and name. Convenience for
       # debugging/quick access.

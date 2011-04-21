@@ -79,7 +79,7 @@ EOF
   describe '#annotation_map' do
     it 'should extract annotations and convert them to a hash keyed by name' do
       map = @annotated_comment.annotation_map.to_a
-      parts = map.map { |name, note| [name, note.name, note.type] }
+      parts = map.map { |name, note| [name, note[0].name, note[0].type] }
       parts.should == [
         ['config', 'config', Types::ClassType.new('AmpConfig', :covariant)],
         ['path', 'path', Types::ClassType.new('String', :invariant)],

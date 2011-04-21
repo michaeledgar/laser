@@ -295,9 +295,7 @@ module Laser
         receiver = implicit_receiver
 
         new_method, method_locals = build_new_method(receiver, name, arglist, body)
-        if node.comment && node.comment.annotation_map
-          new_method.pure = (node.comment.attribute('pure') == 'true')
-        end
+        annotate_method(new_method, node)
         new_scope = ClosedScope.new(@current_scope, nil, {}, method_locals)
         
         if LaserModule === receiver
@@ -316,9 +314,7 @@ module Laser
         receiver = method_self.singleton_class
 
         new_method, method_locals = build_new_method(receiver, name, arglist, body)
-        if node.comment && node.comment.annotation_map
-          new_method.pure = (node.comment.attribute('pure') == 'true')
-        end
+        annotate_method(new_method, node)
 
         new_scope = ClosedScope.new(@current_scope, method_self, {}, method_locals)
         attach_new_method_scope(new_method, new_scope, arglist, body)
@@ -360,6 +356,33 @@ module Laser
       # returns: String => Argument
       def extract_signature_locals(new_signature)
         Hash[new_signature.arguments.map { |arg| [arg.name, arg] }]
+      end
+      
+      def annotate_method(new_method, node)
+        if node.comment && (annotations = node.comment.annotation_map)
+          if annotations['pure'].any?
+            annotations['pure'].each { |note| new_method.pure = note.literal if note.literal? }
+          end
+          if annotations['raises'].any?
+            literals, types = annotations['raises'].partition { |x| x.literal? }
+            literals.map(&:literal).each do |literal|
+              if !literal
+                new_method.raises.clear
+                new_method.raise_type = :never
+              elsif ::Symbol === literal
+                new_method.raise_type = literal
+              end
+            end
+            if types.any?
+              new_method.raises.clear
+              types.each { |note| new_method.raises << note.type }
+            end
+          else
+            new_method.raises = [Types::TOP]
+          end
+        else
+          new_method.raises = [Types::TOP]
+        end
       end
       
       # Handles keyword aliases: alias keyword uses the lexical value of self
@@ -434,9 +457,9 @@ module Laser
       end
       
       def attach_type_annotations(names, annotation_map)
-        names.select { |name| annotation_map[name] }.each do |name|
+        names.select { |name| annotation_map[name].any? }.each do |name|
           binding = @current_scope.lookup name
-          binding.annotated_type = annotation_map[name].type
+          binding.annotated_type = annotation_map[name].first.type
         end
       end
       

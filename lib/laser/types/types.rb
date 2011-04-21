@@ -64,14 +64,15 @@ module Laser
     
     class ClassType < Base
       acts_as_struct :class_name, :variance
-      
       def inspect
         "#<Class: #{class_name} variance: #{variance}>"
       end
       
       def matching_methods(name)
+        @results_mm ||= {}
+        return @results_mm[name] if @results_mm[name]
         name = name.to_s
-        possible_classes.map { |klass| klass.instance_methods[name] }.compact.uniq
+        @results_mm[name] = possible_classes.map { |klass| klass.instance_methods[name] }.compact.uniq
       end
       
       def possible_classes
@@ -91,7 +92,7 @@ module Laser
         {class_name: class_name, variance: variance}
       end
     end
-    TOP = ClassType.new('Object', :covariant)
+    TOP = ClassType.new('BasicObject', :covariant)
 
     class GenericType < Base
       acts_as_struct :base_type, :subtypes

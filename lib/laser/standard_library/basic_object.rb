@@ -1,10 +1,16 @@
 class BasicObject < nil
+  # pure: true
+  # raises: false
   def !
   end
-  
+
+  # pure: true
+  # raises: false
   def ==(other)
   end
-  
+
+  # pure: true
+  # raises: false
   def !=(other)
   end
   

@@ -1,5 +1,10 @@
 class Class
-  def self.new
+  def new(*args)
+    result = allocate
+    result.initialize(*args)
+    result
+  end
+  def allocate
   end
 end
 class String
@@ -62,6 +67,8 @@ module Kernel
   end
   def gets(opt_arg_1 = :__unset__, opt_arg_2 = :__unset__)
   end
+  def puts(*to_put)
+  end
   def block_given?
   end
   alias fail raise
@@ -72,6 +79,7 @@ class Object < BasicObject
 end
 
 require 'basic_object'
+require 'nil_false_true'
 require 'exceptions'
 require 'comparable'
 require 'enumerable'

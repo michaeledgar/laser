@@ -202,7 +202,11 @@ module Laser
               target.bind! VARYING
               target.inferred_type = Types::TOP
             end
-            raised = :maybe
+            if components.all? { |arg| arg.value != UNDEFINED }
+              raised = raiseability_for_instruction(instruction)
+            else
+              raised = :maybe
+            end
           else
             # all components constant.
             changed = (target.value == UNDEFINED)  # varying impossible here
@@ -247,12 +251,24 @@ module Laser
               else
                 target.bind! VARYING
                 target.inferred_type = Types::TOP
-                raised = :maybe
+                raised = raiseability_for_instruction(instruction)
               end
             end
             # At this point, we should prune raise edges!
           end
           [changed, raised]
+        end
+        
+        def raiseability_for_instruction(instruction)
+          p instruction
+          methods = instruction.possible_methods
+          if methods.all? { |meth| meth.raises.empty? }
+            raised = :never
+          else
+            raise_types = methods.map(&:raise_type).uniq
+            raised = raise_types.size == 1 ? raise_types.first : :maybe
+          end
+          raised
         end
 
         # Evaluates the instruction, and if the constant value is lowered,

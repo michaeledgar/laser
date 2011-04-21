@@ -146,7 +146,7 @@ module Laser
       # Returns the MethodCall wrapping up all the method call information about this
       # node.
       #
-      # raise: TypeError
+      # raises: TypeError
       # return: MethodCall
       def method_call
         unless is_method_call?

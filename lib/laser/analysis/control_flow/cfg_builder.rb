@@ -16,9 +16,10 @@ module Laser
             hash[keys] = Bindings::TemporaryBinding.new("%t#{@temporary_counter}", nil)
           end
         end
-        
+
         def build
           initialize_graph
+          @namespace_stack = []
           @current_return = @exit
           @current_node = @sexp
           build_formal_args
@@ -32,13 +33,32 @@ module Laser
           @graph.prune_totally_useless_blocks
           @graph
         end
+
+        def push_namespace(class_or_mod)
+          @namespace_stack.push class_or_mod
+        end
+
+        def current_namespace
+          @namespace_stack.last
+        end
+
+        def pop_namespace
+          @namespace_stack.pop
+        end
         
+        def with_namespace(namespace)
+          push_namespace namespace
+          yield
+        ensure
+          pop_namespace
+        end
+
         def reobserve_current_exception
           cur_exception = call_instruct(ClassRegistry['Laser#Magic'].binding,
               :current_exception, value: true, raise: false)
           copy_instruct(Scope::GlobalScope.lookup('$!'), cur_exception)
         end
-        
+
         def build_formal_args
           uncond_instruct create_block
           self_temp = call_instruct(ClassRegistry['Laser#Magic'].binding,
@@ -1030,7 +1050,10 @@ module Laser
           uncond_instruct after_exists_check
 
           start_block after_exists_check
-          module_eval_instruct(the_class_holder, body, opts)
+          # use this namespace!
+          with_namespace the_class_holder do
+            module_eval_instruct(the_class_holder, body, opts)
+          end
         end
         
         def module_instruct(scope, module_name, body, opts={value: true})
@@ -1084,7 +1107,9 @@ module Laser
           uncond_instruct after_exists_check
 
           start_block after_exists_check
-          module_eval_instruct(the_module_holder, body, opts)
+          with_namespace the_module_holder do
+            module_eval_instruct(the_module_holder, body, opts)
+          end
         end
 
         def singleton_class_instruct(receiver, body, opts={value: false})
@@ -1099,7 +1124,9 @@ module Laser
 
           start_block has_singleton
           singleton = call_instruct(receiver_val, :singleton_class, value: true, raise: false)
-          module_eval_instruct(singleton, body, opts)
+          with_namespace singleton do
+            module_eval_instruct(singleton, body, opts)
+          end
         end
 
         # Runs the block as a module evaluation by the given receiver. When

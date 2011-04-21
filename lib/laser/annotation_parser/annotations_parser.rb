@@ -16,7 +16,37 @@ module Laser
 
       include GeneralPurpose
 
-      module NamedAnnotation0
+      def _nt_named_annotation
+        start_index = index
+        if node_cache[:named_annotation].has_key?(index)
+          cached = node_cache[:named_annotation][index]
+          if cached
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            @index = cached.interval.end
+          end
+          return cached
+        end
+
+        i0 = index
+        r1 = _nt_named_type_annotation
+        if r1
+          r0 = r1
+        else
+          r2 = _nt_named_literal_annotation
+          if r2
+            r0 = r2
+          else
+            @index = i0
+            r0 = nil
+          end
+        end
+
+        node_cache[:named_annotation][start_index] = r0
+
+        r0
+      end
+
+      module NamedTypeAnnotation0
         def annotation_name
           elements[1]
         end
@@ -27,20 +57,32 @@ module Laser
 
       end
 
-      module NamedAnnotation1
+      module NamedTypeAnnotation1
+        def literal?
+          false
+        end
+
+        def literal
+          raise TypeError.new('This annotation is not a literal. Call #literal? first.')
+        end
+
+        def type?
+          true
+        end
+
         def type
           super.type
         end
-        
+      
         def name
           annotation_name.text_value
         end
       end
 
-      def _nt_named_annotation
+      def _nt_named_type_annotation
         start_index = index
-        if node_cache[:named_annotation].has_key?(index)
-          cached = node_cache[:named_annotation][index]
+        if node_cache[:named_type_annotation].has_key?(index)
+          cached = node_cache[:named_type_annotation][index]
           if cached
             cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
@@ -106,14 +148,252 @@ module Laser
         end
         if s0.last
           r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
-          r0.extend(NamedAnnotation0)
-          r0.extend(NamedAnnotation1)
+          r0.extend(NamedTypeAnnotation0)
+          r0.extend(NamedTypeAnnotation1)
         else
           @index = i0
           r0 = nil
         end
 
-        node_cache[:named_annotation][start_index] = r0
+        node_cache[:named_type_annotation][start_index] = r0
+
+        r0
+      end
+
+      module NamedLiteralAnnotation0
+        def annotation_name
+          elements[1]
+        end
+
+        def literal
+          elements[4]
+        end
+
+      end
+
+      module NamedLiteralAnnotation1
+        def literal?
+          true
+        end
+        
+        def literal
+          super.literal
+        end
+
+        def type?
+          false
+        end
+
+        def type
+          raise TypeError.new('This annotation is not a type. Call #type? first.')
+        end
+
+        def name
+          annotation_name.text_value
+        end
+      end
+
+      def _nt_named_literal_annotation
+        start_index = index
+        if node_cache[:named_literal_annotation].has_key?(index)
+          cached = node_cache[:named_literal_annotation][index]
+          if cached
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            @index = cached.interval.end
+          end
+          return cached
+        end
+
+        i0, s0 = index, []
+        s1, i1 = [], index
+        loop do
+          r2 = _nt_space
+          if r2
+            s1 << r2
+          else
+            break
+          end
+        end
+        r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
+        s0 << r1
+        if r1
+          r3 = _nt_annotation_name
+          s0 << r3
+          if r3
+            if has_terminal?(':', false, index)
+              r4 = instantiate_node(SyntaxNode,input, index...(index + 1))
+              @index += 1
+            else
+              terminal_parse_failure(':')
+              r4 = nil
+            end
+            s0 << r4
+            if r4
+              s5, i5 = [], index
+              loop do
+                r6 = _nt_space
+                if r6
+                  s5 << r6
+                else
+                  break
+                end
+              end
+              r5 = instantiate_node(SyntaxNode,input, i5...index, s5)
+              s0 << r5
+              if r5
+                r7 = _nt_literal
+                s0 << r7
+                if r7
+                  s8, i8 = [], index
+                  loop do
+                    r9 = _nt_space
+                    if r9
+                      s8 << r9
+                    else
+                      break
+                    end
+                  end
+                  r8 = instantiate_node(SyntaxNode,input, i8...index, s8)
+                  s0 << r8
+                end
+              end
+            end
+          end
+        end
+        if s0.last
+          r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
+          r0.extend(NamedLiteralAnnotation0)
+          r0.extend(NamedLiteralAnnotation1)
+        else
+          @index = i0
+          r0 = nil
+        end
+
+        node_cache[:named_literal_annotation][start_index] = r0
+
+        r0
+      end
+
+      module Literal0
+
+        def literal
+          false
+        end
+      end
+
+      module Literal1
+        def literal
+          true
+        end
+      end
+
+      module Literal2
+        def literal
+          nil
+        end
+      end
+
+      module Literal3
+        def literal
+          text_value.to_sym
+        end
+      end
+
+      def _nt_literal
+        start_index = index
+        if node_cache[:literal].has_key?(index)
+          cached = node_cache[:literal][index]
+          if cached
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            @index = cached.interval.end
+          end
+          return cached
+        end
+
+        i0 = index
+        if has_terminal?('false', false, index)
+          r1 = instantiate_node(SyntaxNode,input, index...(index + 5))
+          r1.extend(Literal0)
+          @index += 5
+        else
+          terminal_parse_failure('false')
+          r1 = nil
+        end
+        if r1
+          r0 = r1
+        else
+          if has_terminal?('true', false, index)
+            r2 = instantiate_node(SyntaxNode,input, index...(index + 4))
+            r2.extend(Literal1)
+            @index += 4
+          else
+            terminal_parse_failure('true')
+            r2 = nil
+          end
+          if r2
+            r0 = r2
+          else
+            if has_terminal?('nil', false, index)
+              r3 = instantiate_node(SyntaxNode,input, index...(index + 3))
+              r3.extend(Literal2)
+              @index += 3
+            else
+              terminal_parse_failure('nil')
+              r3 = nil
+            end
+            if r3
+              r0 = r3
+            else
+              i4 = index
+              if has_terminal?('never', false, index)
+                r5 = instantiate_node(SyntaxNode,input, index...(index + 5))
+                @index += 5
+              else
+                terminal_parse_failure('never')
+                r5 = nil
+              end
+              if r5
+                r4 = r5
+                r4.extend(Literal3)
+              else
+                if has_terminal?('maybe', false, index)
+                  r6 = instantiate_node(SyntaxNode,input, index...(index + 5))
+                  @index += 5
+                else
+                  terminal_parse_failure('maybe')
+                  r6 = nil
+                end
+                if r6
+                  r4 = r6
+                  r4.extend(Literal3)
+                else
+                  if has_terminal?('always', false, index)
+                    r7 = instantiate_node(SyntaxNode,input, index...(index + 6))
+                    @index += 6
+                  else
+                    terminal_parse_failure('always')
+                    r7 = nil
+                  end
+                  if r7
+                    r4 = r7
+                    r4.extend(Literal3)
+                  else
+                    @index = i4
+                    r4 = nil
+                  end
+                end
+              end
+              if r4
+                r0 = r4
+              else
+                @index = i0
+                r0 = nil
+              end
+            end
+          end
+        end
+
+        node_cache[:literal][start_index] = r0
 
         r0
       end

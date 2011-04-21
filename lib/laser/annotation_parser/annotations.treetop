@@ -6,13 +6,73 @@ module Laser
       include GeneralPurpose
       
       rule named_annotation
+        named_type_annotation / named_literal_annotation
+      end
+
+      rule named_type_annotation
         space* annotation_name ':' space* type space* {
+          def literal?
+            false
+          end
+
+          def literal
+            raise TypeError.new('This annotation is not a literal. Call #literal? first.')
+          end
+
+          def type?
+            true
+          end
+
           def type
             super.type
           end
-          
+        
           def name
             annotation_name.text_value
+          end
+        }
+      end
+      
+      rule named_literal_annotation
+        space* annotation_name ':' space* literal space* {
+          def literal?
+            true
+          end
+          
+          def literal
+            super.literal
+          end
+
+          def type?
+            false
+          end
+
+          def type
+            raise TypeError.new('This annotation is not a type. Call #type? first.')
+          end
+
+          def name
+            annotation_name.text_value
+          end
+        }
+      end
+      
+      rule literal
+        'false' { 
+          def literal
+            false
+          end
+        } / 'true' {
+          def literal
+            true
+          end
+        } / 'nil' {
+          def literal
+            nil
+          end
+        } / ('never' / 'maybe' / 'always') {
+          def literal
+            text_value.to_sym
           end
         }
       end

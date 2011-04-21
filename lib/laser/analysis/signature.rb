@@ -26,7 +26,7 @@ module Laser
       def parse_positionals(positional_list)
         positional_list.map do |node|
           tag, name, lex = node
-          result = Bindings::ArgumentBinding.new(name, LaserObject.new, :positional)
+          result = Bindings::ArgumentBinding.new(name, LaserObject.new(ClassRegistry['BasicObject']), :positional)
           result.ast_node = node
           result
         end
@@ -40,7 +40,7 @@ module Laser
       def parse_optionals(optionals)
         optionals.map do |node|
           id, default_value = node
-          result = Bindings::ArgumentBinding.new(id.children.first, LaserObject.new, :optional, default_value)
+          result = Bindings::ArgumentBinding.new(id.children.first, LaserObject.new(ClassRegistry['BasicObject']), :optional, default_value)
           result.ast_node = node
           result
         end

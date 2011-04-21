@@ -70,8 +70,8 @@ describe Types do
     end
   end
   describe Types::TOP do
-    it 'should be equal to a covariant Object instance' do
-      Types::TOP.should == Types::ClassType.new('Object', :covariant)
+    it 'should be equal to a covariant BasicObject instance' do
+      Types::TOP.should == Types::ClassType.new('BasicObject', :covariant)
     end
   end
   describe Types::ClassType do

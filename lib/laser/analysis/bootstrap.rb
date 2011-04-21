@@ -50,12 +50,20 @@ module Laser
       
       def self.bootstrap_magic
         class_class = ClassRegistry['Class']
-        magic_class = LaserSingletonClass.new(
-            class_class, Scope::GlobalScope, 'Laser#Magic', 'Laser#Magic')
-        magic_class.add_instance_method!(LaserMethod.new('implicit_block') do |method|
-            method.add_signature!(Signature.new('implicit_block', [],
+        magic_class = LaserClass.new(
+            class_class, Scope::GlobalScope, 'Laser#Magic')
+        magic_class.singleton_class.add_instance_method!(LaserMethod.new('current_block') do |method|
+            method.add_signature!(Signature.new('current_block', [],
             Types::UnionType.new([Types::ClassType.new('Proc', :invariant),
                                   Types::ClassType.new('NilClass', :invariant)])))
+        end)
+        magic_class.singleton_class.add_instance_method!(LaserMethod.new('current_exception') do |method|
+            method.add_signature!(Signature.new('current_exception', [],
+            Types::ClassType.new('BasicObject', :covariant)))
+        end)
+        magic_class.singleton_class.add_instance_method!(LaserMethod.new('current_self') do |method|
+            method.add_signature!(Signature.new('current_self', [],
+            Types::ClassType.new('BasicObject', :covariant)))
         end)
       end
       
@@ -66,9 +74,9 @@ module Laser
       def self.bootstrap_literals
         global = Scope::GlobalScope
         class_class = ClassRegistry['Class']
-        true_class = LaserSingletonClass.new(class_class, Scope::GlobalScope, 'TrueClass', 'true')
-        false_class = LaserSingletonClass.new(class_class, Scope::GlobalScope, 'FalseClass', 'false')
-        nil_class = LaserSingletonClass.new(class_class, Scope::GlobalScope, 'NilClass', 'nil')
+        true_class = LaserSingletonClass.new(class_class, ClosedScope.new(Scope::GlobalScope, nil), 'TrueClass', 'true')
+        false_class = LaserSingletonClass.new(class_class, ClosedScope.new(Scope::GlobalScope, nil), 'FalseClass', 'false')
+        nil_class = LaserSingletonClass.new(class_class, ClosedScope.new(Scope::GlobalScope, nil), 'NilClass', 'nil')
 
         global.add_binding!(
             Bindings::KeywordBinding.new('true', true_class.get_instance))

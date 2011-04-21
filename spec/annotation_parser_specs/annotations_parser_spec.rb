@@ -53,5 +53,37 @@ describe Parsers::AnnotationParser do
           [Types::ClassType.new('Symbol', :covariant),
            Types::ClassType.new('Integer', :covariant)])
     end
+
+    it 'should return false for #literal?' do
+      result = @parser.parse('foo: Symbol => Integer')
+      result.should_not be_literal
+    end
+    
+    it 'should return true for #type?' do
+      result = @parser.parse('foo:  Symbol => Integer')
+      result.should be_type
+    end
+  end
+  
+  describe 'named literal annotations' do
+    it 'should provide a name string' do
+      result = @parser.parse('foo: nil')
+      result.name.should == 'foo'
+    end
+    
+    it 'should parse the literal' do
+      result = @parser.parse('foo: nil')
+      result.literal.should == nil
+    end
+    
+    it 'should return true for #literal?' do
+      result = @parser.parse('foo: nil')
+      result.should be_literal
+    end
+    
+    it 'should return false for #type?' do
+      result = @parser.parse('foo: nil')
+      result.should_not be_type
+    end
   end
 end
