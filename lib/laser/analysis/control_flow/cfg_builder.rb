@@ -5,6 +5,7 @@ module Laser
       # derived from Robert Morgan's "Building an Optimizing Compiler".
       class GraphBuilder
         attr_reader :graph, :enter, :exit, :temporary_counter, :current_block, :sexp
+        attr_reader :self_register
         
         def initialize(sexp, formals=[])
           @sexp = sexp
@@ -19,9 +20,11 @@ module Laser
 
         def build
           initialize_graph
-          @namespace_stack = []
+          @namespace_stack = [ClassRegistry['Object'].binding]
+          @self_stack = []
           @current_return = @exit
           @current_node = @sexp
+          @self_register = Bindings::TemporaryBinding.new('self', nil)
           build_formal_args
           result = walk_node @sexp, value: true
           if @sexp.type == :program
@@ -52,6 +55,32 @@ module Laser
         ensure
           pop_namespace
         end
+        
+        def push_self(obj)
+          copy_instruct(@self_register, obj)
+          @self_stack.push obj
+        end
+
+        def current_self
+          @self_stack.last
+        end
+
+        def pop_self
+          @self_stack.pop
+          copy_instruct(@self_register, current_self)
+        end
+        
+        def with_self(obj)
+          push_self obj
+          yield
+        ensure
+          pop_self
+        end
+
+        def query_self
+          call_instruct(ClassRegistry['Laser#Magic'].binding,
+              :current_self, value: true, raise: false)
+        end
 
         def reobserve_current_exception
           cur_exception = call_instruct(ClassRegistry['Laser#Magic'].binding,
@@ -61,9 +90,11 @@ module Laser
 
         def build_formal_args
           uncond_instruct create_block
-          self_temp = call_instruct(ClassRegistry['Laser#Magic'].binding,
-              :current_self, value: true, raise: false)
-          copy_instruct(@sexp.scope.lookup('self'), self_temp)
+          if @sexp.type == :program
+            push_self(Scope::GlobalScope.self_ptr)
+          else
+            push_self(query_self)
+          end
           @final_exception = create_temporary('t#exit_exception')
           @current_rescue = create_block(ControlFlowGraph::EXCEPTION_POSTDOMINATOR_NAME)
           @current_yield_fail = create_block(ControlFlowGraph::YIELD_POSTDOMINATOR_NAME)
@@ -159,6 +190,24 @@ module Laser
           when :sclass
             receiver, body = node.children
             singleton_class_instruct receiver, body, opts
+          when :def
+            name, args, body = node.children
+            name = const_instruct(name.expanded_identifier.to_sym)
+            parsed_args = Signature.arg_list_for_arglist(args)
+            def_instruct(current_namespace, name, parsed_args, body, opts)
+          when :defs
+            recv, _, name, args, body = node.children
+            name = const_instruct(name.expanded_identifier)
+            receiver = walk_node(recv, value: true)
+            singleton = call_instruct(receiver, :singleton_class, value: true)
+            parsed_args = Signature.arg_list_for_arglist(args)
+            def_instruct(singleton, name, parsed_args, body, opts)
+          when :alias
+            lhs, rhs = node.children
+            lhs_val = const_instruct(lhs[1].expanded_identifier.to_sym)
+            rhs_val = const_instruct(rhs[1].expanded_identifier.to_sym)
+            call_instruct(current_namespace, :alias_method, lhs_val, rhs_val,
+                          value: false, ignore_privacy: true)
           when :begin
             walk_node node[1], opts
           when :paren
@@ -232,6 +281,7 @@ module Laser
             when :zsuper
               call_zsuper_with_block(node[1], block_arg_bindings, body_sexp, opts)
             else
+              opts = opts.merge(ignore_privacy: true) if method_call.implicit_receiver?
               call_method_with_block(
                   receiver, method_call.method_name, arg_node, block_arg_bindings, body_sexp, opts)
             end
@@ -383,10 +433,10 @@ module Laser
             when :var_ref
               if node[1].type == :@const
                 ident = const_instruct(node.expanded_identifier)
-                call_instruct(ClassRegistry['Object'].binding,
+                call_instruct(current_namespace,
                     :const_get, ident, value: false)
               elsif node.binding.nil? && node[1].type != :@kw
-                call_instruct(node.scope.lookup('self'), node.expanded_identifier, value: false)
+                call_instruct(self_register, node.expanded_identifier, value: false, ignore_privacy: true)
               end
             when :for
               lhs, receiver, body = node.children
@@ -416,7 +466,7 @@ module Laser
               end
             when :xstring_literal
               body = build_string_instruct(node[1])
-              call_instruct(node.scope.lookup('self'), :`, body, value: false)
+              call_instruct(self_register, :`, body, value: false)
             when :regexp_literal
               node[1].each { |part| walk_node node, value: false }
             when :array
@@ -522,8 +572,8 @@ module Laser
             when :var_ref
               if node[1].type == :@const
                 ident = const_instruct(node.expanded_identifier)
-                call_instruct(ClassRegistry['Object'].binding,
-                    :const_get, ident, value: true)
+                call_instruct(current_namespace,
+                    :const_get, ident, value: true, ignore_privacy: true)
               elsif node.binding
                 variable_instruct(node)
               elsif node[1].type == :@kw
@@ -599,7 +649,7 @@ module Laser
               call_instruct(final, :to_s, value: true)
             when :xstring_literal
               body = build_string_instruct(node[1])
-              call_instruct(node.scope.lookup('self'), :`, body, value: true)
+              call_instruct(self_register, :`, body, value: true)
             when :regexp_literal
               body = build_string_instruct(node[1])
               options = const_instruct(node[2].constant_value.raw_object)
@@ -707,7 +757,8 @@ module Laser
         # caller's operations which have the possibility of invoking the block.
         def call_with_explicit_block(block_arg_bindings, block_sexp)
           after = create_block
-          body_value, body_block = call_block_instruct block_arg_bindings, block_sexp
+          body_value = call_block_instruct block_arg_bindings, block_sexp
+          body_block = create_block
           result = yield(body_block, after)
           block_funcall_branch_instruct(body_block, after)
           walk_block_body body_block, block_sexp, after
@@ -976,25 +1027,10 @@ module Laser
         def class_instruct(scope, class_name, superclass, body, opts={value: true})
           # first: calculate receiver to perform a check if
           # the class already exists
-          self_val = self_instruct(scope)
           the_class_holder = create_temporary
           case class_name.type
           when :const_ref
-            receiver_val = lookup_or_create_temporary(:class_module_receiver, self_val)
-
-            cond_result = call_instruct(self_val, :equal?, Scope::GlobalScope.self_ptr, value: true, raise: false)
-            is_top_level, not_top_level, after = create_blocks 3
-            cond_instruct(cond_result, is_top_level, not_top_level)
-            
-            start_block is_top_level
-            copy_instruct(receiver_val, ClassRegistry['Object'].binding)
-            uncond_instruct after
-            
-            start_block not_top_level
-            copy_instruct(receiver_val, self_val)
-            uncond_instruct after
-            
-            start_block after
+            receiver_val = current_namespace
             actual_name = const_instruct(class_name.expanded_identifier)
           when :const_path_ref
             receiver_val = walk_node(class_name[1], value: true)
@@ -1006,7 +1042,7 @@ module Laser
             superclass_val = walk_node(superclass, value: true)
           else
             superclass_val = lookup_or_create_temporary(:var, '::Object')
-            copy_instruct(superclass_val, ClassRegistry['Object'].binding)
+            copy_instruct(superclass_val, ClassRegistry['Object'])
           end
           
           already_exists = call_instruct(receiver_val, :const_defined?, actual_name, value: true, raise: false)
@@ -1059,25 +1095,10 @@ module Laser
         def module_instruct(scope, module_name, body, opts={value: true})
           # first: calculate receiver to perform a check if
           # the class already exists
-          self_val = self_instruct(scope)
           the_module_holder = create_temporary
           case module_name.type
           when :const_ref
-            receiver_val = lookup_or_create_temporary(:class_module_receiver, self_val)
-
-            cond_result = call_instruct(self_val, :equal?, Scope::GlobalScope.self_ptr, value: true, raise: false)
-            is_top_level, not_top_level, after = create_blocks 3
-            cond_instruct(cond_result, is_top_level, not_top_level)
-
-            start_block is_top_level
-            copy_instruct(receiver_val, ClassRegistry['Object'].binding)
-            uncond_instruct after
-
-            start_block not_top_level
-            copy_instruct(receiver_val, self_val)
-            uncond_instruct after
-
-            start_block after
+            receiver_val = current_namespace
             actual_name = const_instruct(module_name.expanded_identifier)
           when :const_path_ref
             receiver_val = walk_node(module_name[1], value: true)
@@ -1135,15 +1156,17 @@ module Laser
         #
         # TODO(adgar): figure out resume...
         def module_eval_instruct(receiver, body, opts = {value: false})
-          module_eval_block = create_block
-          call_instruct(receiver, :module_eval, :block => module_eval_block, value: false)
-          uncond_instruct(module_eval_block, :jump_instruct => false)
-          
-          result = walk_node body, opts
+          with_self(receiver) do
+            result = walk_node body, opts
+          end
+        end
 
-          add_instruction(:resume)
-          uncond_instruct(create_block, :jump_instruct => false)
-          result
+        # Defines a method on the current lexically-enclosing class/module.
+        def def_instruct(receiver, name, args, body, opts = {})
+          opts = {value: false}.merge(opts)
+          block = create_block_temporary(args, body)
+          call_instruct(receiver, 'define_method', name, block, :raise => false)
+          const_instruct(nil) if opts[:value]
         end
 
         # Creates a temporary, assigns it a constant value, and returns it.
@@ -1154,9 +1177,7 @@ module Laser
         end
         
         def self_instruct(scope = nil)
-          result = lookup_or_create_temporary(:self, scope.lookup('self'))
-          copy_instruct result, scope.lookup('self')
-          result
+          @self_register
         end
         
         # Copies one register to another.
@@ -1230,15 +1251,13 @@ module Laser
         # body: Sexp
         # returns: (TemporaryBinding, BasicBlock)
         def call_block_instruct(args, body)
-          result = lookup_or_create_temporary(:block, args, body)
-          body_block = create_block
-          add_instruction :lambda, result, args, body_block.name
-          [result, body_block]
+          create_block_temporary(args, body)
         end
         
         def issue_call(node, opts={})
           opts = {value: true}.merge(opts)
           method_call = node.method_call
+          opts = opts.merge(ignore_privacy: true) if method_call.implicit_receiver?
           receiver = receiver_instruct node
           generic_call_instruct(receiver, method_call.method_name,
               method_call.arg_node, method_call.arguments.block_arg, opts)
@@ -1353,7 +1372,8 @@ module Laser
           opts = {raise: true}
           opts.merge!(args.last) if Hash === args.last
           result = create_result_if_needed opts
-          add_instruction(:call, result, receiver, method.to_sym, *args)
+          call_opts = { ignore_privacy: opts[:ignore_privacy] }
+          add_instruction_with_opts(:call, result, receiver, method.to_sym, *args, call_opts)
           add_potential_raise_edge if opts[:raise]
           result
         end
@@ -1400,6 +1420,7 @@ module Laser
 
         # Looks up the value of a variable and assigns it to a new temporary
         def variable_instruct(var_ref)
+          return self_register if var_ref.expanded_identifier == 'self'
           result = lookup_or_create_temporary(:var, var_ref.binding)
           var_ref = var_ref.binding unless Bindings::GenericBinding === var_ref
           copy_instruct result, var_ref
@@ -1762,8 +1783,8 @@ module Laser
         end
         
         # Returns the name of the current temporary.
-        def current_temporary
-          "%t#{@temporary_counter}"
+        def current_temporary(prefix='t')
+          "%#{prefix}#{@temporary_counter}"
         end
 
         # Creates a temporary variable with an unused name.
@@ -1775,6 +1796,15 @@ module Laser
           Bindings::TemporaryBinding.new(name, nil)
         end
         
+        # Creates a block temporary variable with an unused name.
+        def create_block_temporary(args, body)
+          @temporary_counter += 1
+          name = current_temporary('B-')
+          binding = Bindings::BlockBinding.new(name, nil, body)
+          add_instruction(:lambda, binding, args)
+          binding
+        end
+        
         def lookup_or_create_temporary(*keys)
           @temporary_table[keys]
         end
@@ -1783,6 +1813,13 @@ module Laser
         def add_instruction(*args)
           @current_block << Instruction.new(args, node: @current_node,
                                                   block: @current_block)
+        end
+
+        # Adds a simple instruction to the current basic block.
+        def add_instruction_with_opts(*args, opts)
+          opts = {node: @current_node, block: @current_block}.merge(opts)
+          i = Instruction.new(args, opts)
+          @current_block << Instruction.new(args, opts)
         end
         
         # Creates the given number of blocks.

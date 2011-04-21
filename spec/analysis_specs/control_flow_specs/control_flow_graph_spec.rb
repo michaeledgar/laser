@@ -495,4 +495,47 @@ EOF
     
     pending 'denotes the method optional when yield is guarded by a guaranteed rescue'
   end
+
+  describe 'raise-type inference' do
+    it 'should recognize simple methods that raise no exceptions due to constants' do
+      g = cfg_method <<-EOF
+def foo(x)
+  p('hello' * 2)
+  p self.singleton_class
+end
+EOF
+      g.raise_type.should be :never
+    end
+
+    it 'should recognize simple methods that unconditionally raise' do
+      g = cfg_method <<-EOF
+def foo(x)
+  raise SomeError.new(x)
+end
+EOF
+      g.raise_type.should be :always
+    end
+
+    it 'should recognize simple methods that might raise' do
+      g = cfg_method <<-EOF
+def foo(x)
+  if x > 2  # may raise
+    'hi'
+  else
+    'there'
+  end
+end
+EOF
+      g.raise_type.should be :maybe
+    end
+
+    it 'should recognize when private methods are called' do
+      g = cfg_method <<-EOF
+def foo(x)
+  String.alias_method(:bar, :<<)
+end
+EOF
+      g.raise_type.should be :always
+    end
+  end
 end

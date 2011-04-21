@@ -8,16 +8,13 @@ module Laser
           without_yield = dup
           with_yield = dup
           
-          magic_method_to_fix = ClassRegistry['Laser#Magic'].instance_methods['current_block']
           kernel_method_to_fix = ClassRegistry['Kernel'].instance_methods['block_given?']
           
           without_yield.perform_constant_propagation(
-              fixed_methods: {magic_method_to_fix => nil, kernel_method_to_fix => false})
-          without_yield.kill_unexecuted_edges(true)  # be ruthless
-          without_yield.unreachable_vertices.each { |block| without_yield.remove_vertex block }
+              fixed_methods: {kernel_method_to_fix => false})
 
-          with_yield.kill_unexecuted_edges(true)  # be ruthless
-          with_yield.unreachable_vertices.each { |block| with_yield.remove_vertex block }
+          without_yield.prune_unexecuted_blocks
+          with_yield.prune_unexecuted_blocks
 
           ever_yields = !!with_yield.vertex_with_name(ControlFlowGraph::YIELD_POSTDOMINATOR_NAME)
           # shortcut that ignores the possibility of foolish

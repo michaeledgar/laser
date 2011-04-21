@@ -32,6 +32,20 @@ class << self
   end
 end
 class Module
+  # pure: true
+  # raises: never
+  def name
+  end
+  def ===(other)
+  end
+  def define_method(name, body=nil)
+  end
+  def const_set(sym, val)
+  end
+  def const_defined?(sym, inherit=true)
+  end
+  def const_get(sym, inherit=true)
+  end
   def private(*args)
   end
   private :private
@@ -52,23 +66,36 @@ class Module
   end
   def module_function(*args)
   end
+  def alias_method(to, from)
+  end
 end
 module Kernel
+  # pure: true
+  # raises: never
+  def singleton_class
+  end
+  # pure: true
+  # raises: never
+  def class
+  end
  private
   def require(path)
   end
+  # raises: never
   def p(*args)
   end
   def eval(string, bndg = nil, filename = nil, lineno = nil)
   end
   def autoload(sym, path)
   end
+  # raises: always
   def raise(msg_or_instance=nil, message='', callback=caller)
   end
   def gets(opt_arg_1 = :__unset__, opt_arg_2 = :__unset__)
   end
   def puts(*to_put)
   end
+  # raises: never
   def block_given?
   end
   alias fail raise

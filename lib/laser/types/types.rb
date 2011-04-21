@@ -38,7 +38,12 @@ module Laser
       def possible_classes
         member_types.map { |type| type.possible_classes }.inject(:|)
       end
-      
+
+      def public_matching_methods(name)
+        name = name.to_s
+        member_types.map { |type| type.public_matching_methods(name) }.flatten
+      end
+
       def matching_methods(name)
         name = name.to_s
         member_types.map { |type| type.matching_methods(name) }.flatten
@@ -68,11 +73,16 @@ module Laser
         "#<Class: #{class_name} variance: #{variance}>"
       end
       
-      def matching_methods(name)
-        @results_mm ||= {}
-        return @results_mm[name] if @results_mm[name]
+      def public_matching_methods(name)
         name = name.to_s
-        @results_mm[name] = possible_classes.map { |klass| klass.instance_methods[name] }.compact.uniq
+        possible_classes.map do |klass|
+          klass.instance_methods[name] if klass.visibility_table[name] == :public
+        end.compact.uniq
+      end
+      
+      def matching_methods(name)
+        name = name.to_s
+        possible_classes.map { |klass| klass.instance_methods[name] }.compact.uniq
       end
       
       def possible_classes

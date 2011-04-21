@@ -6,6 +6,15 @@ module Laser
       def initialize(node)
         @node = node
       end
+
+      IMPLICITS = [:fcall, :command, :command_call, :var_ref]
+      def implicit_receiver?
+        case node.type
+        when :call, :aref, :unary, :binary, :super, :zsuper then false
+        when :fcall, :command, :command_call, :var_ref then node[1].expanded_identifier
+        when :method_add_block, :method_add_arg then node[1].method_call.implicit_receiver?
+        end
+      end
       
       # Calculates the name of the method this method call represents.
       #

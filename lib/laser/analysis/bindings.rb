@@ -60,6 +60,18 @@ module Laser
         end
       end
 
+      class BlockBinding < GenericBinding
+        attr_reader :block
+        def initialize(name, value, block)
+          super(name, value)
+          @block = block
+        end
+        
+        def expr_type
+          Types::ClassType.new('Proc', :invariant)
+        end
+      end
+
       class KeywordBinding < GenericBinding
         private :bind!
       end

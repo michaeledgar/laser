@@ -3,11 +3,14 @@ module Laser
   module SexpAnalysis
     module ControlFlow
       class Instruction < BasicObject
-        attr_reader :node, :block, :body
+        attr_reader :node, :block, :body, :ignore_privacy
+        attr_accessor :raise_type
         def initialize(body, opts={})
           @body = body
           @node = opts[:node]
           @block = opts[:block]
+          @raise_type = :unknown
+          @ignore_privacy = opts[:ignore_privacy]
         end
 
         def type
@@ -32,7 +35,7 @@ module Laser
           end
           
           new_body.unshift(self[0])  # self[0] always symbol
-          new_opts = {node: @node, block: @block}.merge(opts)
+          new_opts = {node: @node, block: @block, ignore_privacy: @ignore_privacy}.merge(opts)
           self.class.new(new_body, new_opts)
         end
 
@@ -62,6 +65,21 @@ module Laser
         def require_method_call
           unless method_call?
             raise TypeError.new("#possible_methods is not defined on #{type} instructions.")
+          end
+        end
+
+        def possible_public_methods
+          require_method_call
+          if type == :call || type == :call_vararg
+            if Bindings::ConstantBinding === self[2]
+              [self[2].value.singleton_class.public_instance_methods[self[3].to_s]].compact
+            elsif LaserObject === self[2].value
+              [self[2].value.klass.public_instance_methods[self[3].to_s]].compact
+            else
+              self[2].expr_type.public_matching_methods(self[3])
+            end
+          else
+            #TODO(adgar): SUPER
           end
         end
 

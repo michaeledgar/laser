@@ -115,27 +115,33 @@ module Laser
 
         def constant_propagation_for_instruction(instruction, blocklist, worklist)
           block = instruction.block
-          if instruction.type == :branch
+          case instruction.type
+          when :branch
             constant_propagation_for_branch(instruction, blocklist)
-          elsif instruction.type == :jump
-            succ = block.successors.first
+          when :jump
+            succ = block.real_successors.first
             constant_propagation_consider_edge block, succ, blocklist
-          elsif instruction.type == :call
+          when :resume
+            block.successors.each do |succ|
+              constant_propagation_consider_edge block, succ, blocklist
+            end
+          when :call
             changed, raised = constant_propagation_for_call instruction
             if changed
               if instruction[1] && instruction[1].value != UNDEFINED
                 add_target_uses_to_worklist instruction, worklist
               end
-              if instruction == block.last  # handle branching
-                successors = case raised
-                             when :unknown then []
-                             when :maybe then block.successors
-                             when :never then block.normal_successors
-                             when :always then block.abnormal_successors
-                             end
-                successors.each do |succ|
-                  constant_propagation_consider_edge block, succ, blocklist
-                end
+            end
+            if raised != instruction.raise_type && instruction == block.last
+              instruction.raise_type = raised
+              successors = case raised
+                           when :unknown then []
+                           when :maybe then block.successors
+                           when :never then block.normal_successors
+                           when :always then block.abnormal_successors
+                           end
+              successors.each do |succ|
+                constant_propagation_consider_edge block, succ, blocklist
               end
             end
           else
@@ -178,7 +184,7 @@ module Laser
 
         def constant_propagation_for_call(instruction)
           changed = false
-          raised = :maybe
+          raised = instruction.raise_type
           target, receiver, method_name, *args = instruction[1..-1]
           target ||= cp_cell_for(instruction)
 
@@ -240,8 +246,8 @@ module Laser
                   new_type = LaserObject === result ? result.klass.name : result.class.name
                   target.inferred_type = Types::ClassType.new(new_type, :invariant)
                   raised = :never
-                rescue BasicObject
-                  # any exception caught - extremely unsafe code - means my
+                rescue BasicObject => err
+                  # any exception caught - this is an extremely unsafe rescue handler - means my
                   # simulation *MUST NOT* raise or I will conflate user-level raises
                   # with my own
                   target.bind! UNDEFINED
@@ -260,15 +266,34 @@ module Laser
         end
         
         def raiseability_for_instruction(instruction)
-          p instruction
           methods = instruction.possible_methods
-          if methods.all? { |meth| meth.raises.empty? }
-            raised = :never
+          unless methods.empty?
+            if instruction.ignore_privacy
+              fails_privacy = :never
+            else
+              public_methods = instruction.possible_public_methods
+              if public_methods.size.zero?
+                fails_privacy = :always
+              elsif public_methods.size != methods.size
+                fails_privacy = :maybe
+              else
+                fails_privacy = :never
+              end
+            end
+          end
+          if methods.empty?
+            raised = :always
           else
             raise_types = methods.map(&:raise_type).uniq
             raised = raise_types.size == 1 ? raise_types.first : :maybe
           end
-          raised
+          if fails_privacy == :never
+            raised
+          elsif fails_privacy == :maybe
+            raised == :always ? raised : fails_privacy
+          else
+            :always
+          end
         end
 
         # Evaluates the instruction, and if the constant value is lowered,

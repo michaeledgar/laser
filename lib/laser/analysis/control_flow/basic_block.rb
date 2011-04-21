@@ -68,11 +68,11 @@ module Laser
         end
         
         def normal_successors
-          successors.select { |dest| get_flags(dest) == ::RGL::ControlFlowGraph::EDGE_NORMAL }
+          successors.reject { |dest| has_flag?(dest, ::RGL::ControlFlowGraph::EDGE_ABNORMAL) }
         end
 
         def normal_predecessors
-          predecessors.select { |dest| dest.get_flags(self) == ::RGL::ControlFlowGraph::EDGE_NORMAL }
+          predecessors.reject { |dest| dest.has_flag?(self, ::RGL::ControlFlowGraph::EDGE_ABNORMAL) }
         end
 
         def abnormal_successors
@@ -137,7 +137,9 @@ module Laser
           which_phi_arg = predecessors.to_a.index(u) + 2
           phi_nodes.each do |node|
             node.delete_at(which_phi_arg)
-            instructions.delete node if node.size <= 3
+            if node.size == 3
+              node.replace([:assign, node[1], node[2]])
+            end
           end
           predecessors.delete u
         end

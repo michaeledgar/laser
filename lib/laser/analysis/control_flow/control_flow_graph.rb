@@ -11,6 +11,7 @@ module Laser
         include UnusedVariables
         include UnreachabilityAnalysis
         include YieldProperties
+        include RaiseProperties
         
         YIELD_POSTDOMINATOR_NAME = 'YieldWithoutBlock'
         EXCEPTION_POSTDOMINATOR_NAME = 'UncaughtException'
@@ -18,7 +19,7 @@ module Laser
 
         attr_accessor :root
         attr_reader :formals, :uses, :definition, :constants, :live, :globals, :formal_map
-        attr_reader :yield_type
+        attr_reader :yield_type, :raise_type
         # postdominator blocks for: all non-failed-yield exceptions, yield-failing
         # exceptions, and all failure types.
         
@@ -39,6 +40,7 @@ module Laser
           @formal_map = {}
           @yield_type = :required
           @yield_arity = Set.new([Arity::ANY])
+          @raise_type = :maybe
           super()
         end
         
@@ -94,7 +96,7 @@ module Laser
             @definition[temp_lookup[temp]] = insn_lookup[def_insn]
           end
           source.uses.each do |temp, insns|
-            @uses[temp_lookup[temp]] = insns.map { |insn| insn_lookup[insn] }
+            @uses[temp_lookup[temp]] = Set.new(insns.map { |insn| insn_lookup[insn] })
           end
           source.globals.each do |global|
             @globals.add temp_lookup[global]
@@ -104,7 +106,7 @@ module Laser
             @constants[temp_lookup[temp]] = value
           end
           source.live.each do |temp, blocks|
-            @live[temp_lookup[temp]] = blocks.map { |block| block_lookup[block] }
+            @live[temp_lookup[temp]] = Set.new(blocks.map { |block| block_lookup[block] })
           end
           # Tiny hope this speeds anything up
           temp_lookup.clear
@@ -139,10 +141,13 @@ module Laser
           perform_constant_propagation
           kill_unexecuted_edges
           prune_totally_useless_blocks
-          find_yield_properties if @root.type != :program
-          
+
           perform_dead_code_discovery
           add_unused_variable_warnings
+          # Don't need these anymore
+          prune_unexecuted_blocks
+          find_yield_properties if @root.type != :program
+          find_raise_properties
         end
         
         def all_errors
@@ -190,13 +195,23 @@ module Laser
           end
         end
 
+        def prune_unexecuted_blocks
+          kill_unexecuted_edges(true)  # be ruthless
+          unreachable_vertices.each do |block|
+            block.instructions.each do |insn|
+              insn.operands.each { |op| @uses[op] -= ::Set[insn] }
+            end
+            remove_vertex block
+          end
+        end
+
         # Marks all edges that are not executable as fake edges. That way, the
         # postdominance of Exit is preserved, but dead code analysis will ignore
         # them.
         def kill_unexecuted_edges(remove=false)
           killable = Set.new
           each_edge do |u, v|
-            unless is_executable?(u, v)
+            if !(is_executable?(u, v) || is_fake?(u, v))
               killable << [u, v]
             end
           end

@@ -40,6 +40,8 @@ module Laser
         super
       end
       
+      alias path name
+      
       def singleton_class
         return @singleton_class if @singleton_class
         new_scope = ClosedScope.new(self.scope, nil)
@@ -100,7 +102,7 @@ module Laser
                      full_path="#{klass.path}:Anonymous:#{object_id.to_s(16)}")
         super(klass, scope, full_path.split('::').last)
         full_path = submodule_path(full_path) if scope && scope.parent
-        validate_module_path!(full_path)
+        validate_module_path!(full_path) unless LaserSingletonClass === self
         
         @path = full_path
         @instance_methods = {}
@@ -175,6 +177,12 @@ module Laser
         @visibility_table[new] = @visibility_table[old]
       end
 
+      def public_instance_methods
+        methods = instance_methods
+        table = visibility_table
+        methods.select { |name, _| table[name] == :public }
+      end
+
       def instance_methods(include_superclass = true)
         if include_superclass && @superclass
         then @superclass.instance_methods.merge(@instance_methods)
@@ -238,6 +246,24 @@ module Laser
       
       def included_modules
         ancestors.select { |mod| LaserModuleCopy === mod }
+      end
+      
+      def const_get(constant, inherit=true)
+        if inherit
+          scope.lookup(constant)
+        else
+          constants[constant] or raise ScopeLookupFailure.new(self.scope, constant)
+        end
+      end
+      
+      def const_defined?(constant, inherit=true)
+        if inherit
+          scope.lookup(constant)
+        else
+          constants[constant]
+        end
+      rescue
+        false
       end
       
       # Directly translated from MRI's C implementation in class.c:650

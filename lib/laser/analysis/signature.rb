@@ -7,8 +7,9 @@ module Laser
       # @param Sexp arglist
       # @return Symbol => Argument
       def arg_list_for_arglist(arglist)
-        arg_list = []
+        arglist = arglist.deep_find { |node| node.type == :params }
         positional_1, optionals, rest_arg, positional_2, block_arg = arglist.children
+        arg_list = []
 
         arg_list.concat parse_positionals(positional_1) if positional_1
         arg_list.concat parse_optionals(optionals) if optionals
@@ -81,7 +82,6 @@ module Laser
 
       def self.for_definition_sexp(name, arglist, body)
         arg_hash = {}
-        arglist = arglist.deep_find { |node| node.type == :params }
         new_signature = Signature.new(name, arg_list_for_arglist(arglist), Types::TOP)
       end
 
