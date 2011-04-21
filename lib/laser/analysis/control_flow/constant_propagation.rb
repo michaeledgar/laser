@@ -395,10 +395,6 @@ module Laser
             elsif receiver.value == 1 && is_numeric?(args.first)
               return [1, :never]
             end
-          elsif method_name == :raise
-            if uses_method?(receiver, ClassRegistry['Kernel'].instance_methods['raise'])
-              return [UNDEFINED, :always]
-            end
           elsif receiver == ClassRegistry['Laser#Magic'].binding
             magic_result, magic_raises = cp_magic(method_name, *args)
             if magic_result != INAPPLICABLE
