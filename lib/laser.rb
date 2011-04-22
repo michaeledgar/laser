@@ -20,6 +20,7 @@ require 'laser/support/inheritable_attributes'
 require 'laser/support/acts_as_struct'
 require 'laser/support/module_extensions'
 require 'laser/support/object_regex'
+require 'laser/support/frequency'
 require 'laser/analysis/errors'
 require 'laser/analysis/lexical_analysis'
 

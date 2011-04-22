@@ -516,6 +516,15 @@ EOF
       g.raise_type.should be :always
     end
 
+    it 'should recognize raiseability via aliases' do
+      g = cfg_method <<-EOF
+def foo(x)
+  fail SomeError.new(x)
+end
+EOF
+      g.raise_type.should be :always
+    end
+
     it 'should recognize simple methods that might raise' do
       g = cfg_method <<-EOF
 def foo(x)
