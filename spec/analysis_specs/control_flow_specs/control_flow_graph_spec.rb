@@ -504,7 +504,7 @@ def foo(x)
   p self.singleton_class
 end
 EOF
-      g.raise_type.should be :never
+      g.raise_type.should be Frequency::NEVER
     end
 
     it 'should recognize simple methods that unconditionally raise' do
@@ -513,7 +513,7 @@ def foo(x)
   raise SomeError.new(x)
 end
 EOF
-      g.raise_type.should be :always
+      g.raise_type.should be Frequency::ALWAYS
     end
 
     it 'should recognize raiseability via aliases' do
@@ -522,7 +522,7 @@ def foo(x)
   fail SomeError.new(x)
 end
 EOF
-      g.raise_type.should be :always
+      g.raise_type.should be Frequency::ALWAYS
     end
 
     it 'should recognize simple methods that might raise' do
@@ -535,7 +535,7 @@ def foo(x)
   end
 end
 EOF
-      g.raise_type.should be :maybe
+      g.raise_type.should be Frequency::MAYBE
     end
 
     it 'should recognize when private methods are called' do
@@ -544,7 +544,7 @@ def foo(x)
   String.alias_method(:bar, :<<)
 end
 EOF
-      g.raise_type.should be :always
+      g.raise_type.should be Frequency::ALWAYS
     end
   end
 end

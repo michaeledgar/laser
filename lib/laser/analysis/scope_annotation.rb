@@ -368,9 +368,9 @@ module Laser
             literals.map(&:literal).each do |literal|
               if !literal
                 new_method.raises.clear
-                new_method.raise_type = :never
+                new_method.raise_type = Frequency::NEVER
               elsif ::Symbol === literal
-                new_method.raise_type = literal
+                new_method.raise_type = Frequency[literal]
               end
             end
             if types.any?

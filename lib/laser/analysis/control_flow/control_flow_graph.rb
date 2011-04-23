@@ -40,7 +40,7 @@ module Laser
           @formal_map = {}
           @yield_type = :required
           @yield_arity = Set.new([Arity::ANY])
-          @raise_type = :maybe
+          @raise_type = Frequency::MAYBE
           super()
         end
         

@@ -136,9 +136,9 @@ module Laser
               instruction.raise_type = raised
               successors = case raised
                            when :unknown then []
-                           when :maybe then block.successors
-                           when :never then block.normal_successors
-                           when :always then block.abnormal_successors
+                           when Frequency::MAYBE then block.successors
+                           when Frequency::NEVER then block.normal_successors
+                           when Frequency::ALWAYS then block.abnormal_successors
                            end
               successors.each do |succ|
                 constant_propagation_consider_edge block, succ, blocklist
@@ -211,7 +211,7 @@ module Laser
             if components.all? { |arg| arg.value != UNDEFINED }
               raised = raiseability_for_instruction(instruction)
             else
-              raised = :maybe
+              raised = Frequency::MAYBE
             end
           else
             # all components constant.
@@ -225,14 +225,14 @@ module Laser
               if methods.empty?
                 target.bind! UNDEFINED
                 target.inferred_type = Types::TOP
-                raised = :always
+                raised = Frequency::ALWAYS
                 # no such method. prune successful call
               elsif method && (@_cp_fixed_methods.has_key?(method))
                 result = @_cp_fixed_methods[method]
                 target.bind! result
                 new_type = LaserObject === result ? result.klass.name : result.class.name
                 target.inferred_type = Types::ClassType.new(new_type, :invariant)
-                raised = :never
+                raised = Frequency::NEVER
               elsif method && method.pure
                 if Bindings::ConstantBinding === receiver  # literal here
                   real_receiver = Object.const_get(receiver.name)
@@ -245,14 +245,14 @@ module Laser
                   target.bind!(result)
                   new_type = LaserObject === result ? result.klass.name : result.class.name
                   target.inferred_type = Types::ClassType.new(new_type, :invariant)
-                  raised = :never
+                  raised = Frequency::NEVER
                 rescue BasicObject => err
                   # any exception caught - this is an extremely unsafe rescue handler - means my
                   # simulation *MUST NOT* raise or I will conflate user-level raises
                   # with my own
                   target.bind! UNDEFINED
                   target.inferred_type = Types::TOP
-                  raised = :always
+                  raised = Frequency::ALWAYS
                 end
               else
                 target.bind! VARYING
@@ -267,33 +267,19 @@ module Laser
         
         def raiseability_for_instruction(instruction)
           methods = instruction.possible_methods
-          unless methods.empty?
-            if instruction.ignore_privacy
-              fails_privacy = :never
+          fails_privacy = Frequency::NEVER
+          if methods.size > 0 && !instruction.ignore_privacy
+            public_methods = instruction.possible_public_methods
+            if public_methods.size.zero?
+              fails_privacy = Frequency::ALWAYS
+            elsif public_methods.size != methods.size
+              fails_privacy = Frequency::MAYBE
             else
-              public_methods = instruction.possible_public_methods
-              if public_methods.size.zero?
-                fails_privacy = :always
-              elsif public_methods.size != methods.size
-                fails_privacy = :maybe
-              else
-                fails_privacy = :never
-              end
+              fails_privacy = Frequency::NEVER
             end
           end
-          if methods.empty?
-            raised = :always
-          else
-            raise_types = methods.map(&:raise_type).uniq
-            raised = raise_types.size == 1 ? raise_types.first : :maybe
-          end
-          if fails_privacy == :never
-            raised
-          elsif fails_privacy == :maybe
-            raised == :always ? raised : fails_privacy
-          else
-            :always
-          end
+          raised = methods.empty? ? Frequency::ALWAYS : methods.map(&:raise_type).max
+          [fails_privacy, raised].max
         end
 
         # Evaluates the instruction, and if the constant value is lowered,
@@ -379,21 +365,21 @@ module Laser
             # n * 0 == 0
             if (receiver.value == 0 && is_numeric?(args.first)) ||
                (args.first.value == 0 && is_numeric?(receiver))
-              return [0, :never]
+              return [0, Frequency::NEVER]
             elsif (args.first.value == 0 &&
                    uses_method?(receiver, ClassRegistry['String'].instance_methods['*']))
-              return ['', :never]
+              return ['', Frequency::NEVER]
             elsif (args.first.value == 0 &&
                    uses_method?(receiver, ClassRegistry['Array'].instance_methods['*']))
-              return [[], :never]
+              return [[], Frequency::NEVER]
             end
           elsif method_name == :**
             # n ** 0 == 1
             if args.first.value == 0 && is_numeric?(receiver)
-              return [1, :never]
+              return [1, Frequency::NEVER]
             # 1 ** n == 1
             elsif receiver.value == 1 && is_numeric?(args.first)
-              return [1, :never]
+              return [1, Frequency::NEVER]
             end
           elsif receiver == ClassRegistry['Laser#Magic'].binding
             magic_result, magic_raises = cp_magic(method_name, *args)
@@ -401,15 +387,15 @@ module Laser
               return [magic_result, magic_raises]
             end
           end
-          [INAPPLICABLE, :maybe]
+          [INAPPLICABLE, Frequency::MAYBE]
         end
         
         def cp_magic(method_name, *args)
           case method_name
           when :current_self
-            return [@root.scope.lookup('self').value, :never]
+            return [@root.scope.lookup('self').value, Frequency::NEVER]
           end
-          [INAPPLICABLE, :maybe]
+          [INAPPLICABLE, Frequency::MAYBE]
         end
       end  # ConstantPropagation
     end  # ControlFlow
