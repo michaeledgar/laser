@@ -213,6 +213,7 @@ class Array
   def shuffle!
   end
   # pure: true
+  # raise: false
   def size
   end
   # pure: true
@@ -237,9 +238,11 @@ class Array
   def take_while
   end
   # pure: true
+  # raise: false
   def to_a
   end
   # pure: true
+  # raise: false
   def to_ary
   end
   # pure: true

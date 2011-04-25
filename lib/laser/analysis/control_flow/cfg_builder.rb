@@ -1246,9 +1246,10 @@ module Laser
                     value: true, raise: false)
               end
             # a, b, c = foo
+            # no star on RHS means implicit conversion: to_ary.
             elsif Sexp === lhs[0] && rhs.type != :mrhs_new_from_args
               rhs_val = walk_node(rhs, value: true)
-              rhs_array = rb_check_convert_type(rhs_val, ClassRegistry['Array'].binding, :to_a)
+              rhs_array = rb_ary_to_ary(rhs_val)
               lhs.each_with_index do |node, idx|
                 assigned_val = call_instruct(rhs_array, :[], const_instruct(idx),
                     value: true, raise: false)
@@ -1263,6 +1264,7 @@ module Laser
           # also easy/precise
           elsif lhs.type == :mlhs_add_star && rhs.type != :mrhs_add_star
             # RHS = single_val | :mrhs_new_from_args
+            # single_val not handled yet.
             rhs_arr = Sexp === rhs[0] ? [rhs[0]] : (rhs[1] + [rhs[2]])
             
             # Calculate pre-star, star, and post-star bindings and boundaries
@@ -1271,7 +1273,7 @@ module Laser
             post_star = lhs[3] || []
             
             star_start = pre_star.size
-            star_end   = rhs_arr.size - post_star.size
+            star_end   = [star_start, rhs_arr.size - post_star.size].max
             star_range = star_start...star_end
 
             # all RHS are ALWAYS consumed. But if the star is unnamed, star values can be
@@ -1287,7 +1289,7 @@ module Laser
 
             # do pre-star nodes
             pre_star.each_with_index do |lhs_node, idx|
-              single_assign_instruct(lhs_node, rhs_vals[idx])
+              single_assign_instruct(lhs_node, rhs_vals[idx] || const_instruct(nil))
             end
             # do star assignment if star_node != nil
             if star_node
@@ -1298,7 +1300,7 @@ module Laser
             end
             # do post-star nodes
             post_star.each_with_index do |lhs_node, idx|
-              single_assign_instruct(lhs_node, rhs_vals[star_end + idx])
+              single_assign_instruct(lhs_node, rhs_vals[star_end + idx] || const_instruct(nil))
             end
             if opts[:value]
               call_instruct(ClassRegistry['Array'].binding, :[], *rhs_vals,
@@ -1347,6 +1349,30 @@ module Laser
           end
         end
 
+        # Implicit conversion protocol to an array.
+        def rb_ary_to_ary(value)
+          result = lookup_or_create_temporary(:ary_to_ary, value)
+          try_conv = rb_check_convert_type(value, ClassRegistry['Array'].binding, :to_ary)
+          
+          if_conv_succ, if_conv_fail, after = create_blocks 3
+          cond_instruct(try_conv, if_conv_succ, if_conv_fail)
+          
+          with_current_basic_block(if_conv_succ) do
+            copy_instruct(result, try_conv)
+            uncond_instruct after
+          end
+          
+          with_current_basic_block(if_conv_fail) do
+            new_result = call_instruct(ClassRegistry['Array'].binding, :[], value,
+                value: true, raise: false)
+            copy_instruct(result, new_result)
+            uncond_instruct after
+          end
+          
+          start_block after
+          result
+        end
+
         #TODO(adgar): RAISES HERE!
         def rb_check_convert_type(value, klass, method)
           result = lookup_or_create_temporary(:convert, value, klass, method)
@@ -1355,14 +1381,17 @@ module Laser
           comparison_result = call_instruct(klass, :===, value, value: true)
           cond_instruct(comparison_result, if_klass_block, if_not_klass_block)
           
-          start_block if_not_klass_block
-          conversion_result = call_instruct(value, method, value: true)
-          copy_instruct result, conversion_result
-          uncond_instruct after
+          with_current_basic_block(if_not_klass_block) do
+            # TODO(adgar): if method does not exist, return nil.
+            conversion_result = call_instruct(value, method, value: true)
+            copy_instruct result, conversion_result
+            uncond_instruct after
+          end
           
-          start_block if_klass_block
-          copy_instruct(result, value)
-          uncond_instruct after
+          with_current_basic_block(if_klass_block) do
+            copy_instruct(result, value)
+            uncond_instruct after
+          end
           
           start_block after
           result

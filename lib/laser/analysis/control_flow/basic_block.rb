@@ -58,6 +58,14 @@ module Laser
         def delete_all_flags(dest)
           @edge_flags.delete dest.name
         end
+        
+        def is_fake?(dest)
+          has_flag?(dest, ::RGL::ControlFlowGraph::EDGE_FAKE)
+        end
+        
+        def is_executable?(dest)
+          has_flag?(dest, ::RGL::ControlFlowGraph::EDGE_EXECUTABLE)
+        end
 
         def real_successors
           successors.reject { |dest| has_flag?(dest, ::RGL::ControlFlowGraph::EDGE_FAKE) }

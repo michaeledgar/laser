@@ -34,7 +34,7 @@ module RGL
       each_edge do |u,v|
         if respond_to?(:is_abnormal?)
           color = is_abnormal?(u, v) ? 'red' : is_fake?(u, v) ? '#bbbbbb' : 'black'
-          style = is_fake?(u, v) ? 'dashed' : 'solid'
+          style = (is_fake?(u, v) || !is_executable?(u, v)) ? 'dashed' : 'solid'
         else
           color = 'black'
           style = 'solid'

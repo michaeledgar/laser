@@ -99,7 +99,7 @@ module Laser
           pre_values = values[0, @pre_star.size]
           splat_count = [0, values.size - @pre_star.size - @post_star.size].max
           splat_values = values[@pre_star.size, splat_count]
-          post_values = values[@pre_star.size + splat_count..-1]
+          post_values = values[@pre_star.size + splat_count..-1] || []
 
           pre_pairs = @pre_star.zip(pre_values).map do |elt, val|
             elt.assignment_pairs(val)

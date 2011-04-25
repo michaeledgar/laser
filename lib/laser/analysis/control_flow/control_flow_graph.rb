@@ -138,14 +138,15 @@ module Laser
           # kill obvious dead code now.
           perform_dead_code_discovery(true)
           static_single_assignment_form
+          
           perform_constant_propagation
           kill_unexecuted_edges
           prune_totally_useless_blocks
-
           perform_dead_code_discovery
           add_unused_variable_warnings
           # Don't need these anymore
           prune_unexecuted_blocks
+
           find_yield_properties if @root.type != :program
           find_raise_properties
         end
