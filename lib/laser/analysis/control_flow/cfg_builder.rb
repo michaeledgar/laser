@@ -178,159 +178,167 @@ module Laser
         
         # Walks the node differently based on whether the value is needed.
         def walk_node(node, opts={})
-          case node.type
-          when :bodystmt
-            bodystmt_walk node
-          when :class
-            class_name, superclass, body = node.children
-            class_instruct(node.scope, class_name, superclass, body, opts)
-          when :module
-            module_name, body = node.children
-            module_instruct(node.scope, module_name, body, opts)
-          when :sclass
-            receiver, body = node.children
-            singleton_class_instruct receiver, body, opts
-          when :def
-            name, args, body = node.children
-            name = const_instruct(name.expanded_identifier.to_sym)
-            parsed_args = Signature.arg_list_for_arglist(args)
-            def_instruct(current_namespace, name, parsed_args, body, opts)
-          when :defs
-            recv, _, name, args, body = node.children
-            name = const_instruct(name.expanded_identifier)
-            receiver = walk_node(recv, value: true)
-            singleton = call_instruct(receiver, :singleton_class, value: true)
-            parsed_args = Signature.arg_list_for_arglist(args)
-            def_instruct(singleton, name, parsed_args, body, opts)
-          when :alias
-            lhs, rhs = node.children
-            lhs_val = const_instruct(lhs[1].expanded_identifier.to_sym)
-            rhs_val = const_instruct(rhs[1].expanded_identifier.to_sym)
-            call_instruct(current_namespace, :alias_method, lhs_val, rhs_val,
-                          value: false, ignore_privacy: true)
-          when :begin
-            walk_node node[1], opts
-          when :paren
-            walk_body node[1], opts
-          when :while
-            condition, body = node.children
-            while_instruct(condition, body, opts)
-          when :while_mod
-            condition, body_stmt = node.children
-            while_instruct(condition, [body_stmt], opts)
-          when :until
-            condition, body = node.children
-            until_instruct(condition, body, opts)
-          when :until_mod
-            condition, body_stmt = node.children
-            until_instruct(condition, [body_stmt], opts)
-          when :if
-            if_instruct(node, false, opts)
-          when :unless
-            condition, body, else_block = node.children
-            unless_instruct(condition, body, else_block, opts)
-          when :if_mod
-            if_instruct(node, true, opts)
-          when :unless_mod
-            condition, body = node.children
-            unless_instruct(condition, [body], nil, opts)
-          when :unary
-            op, receiver = node.children
-            receiver = walk_node(receiver, value: true)
-            call_instruct(receiver, op, opts)
-          when :binary
-            # If someone makes an overloaded operator that mutates something....
-            # we have to run it (maybe), even if we hate them.
-            lhs, op, rhs = node.children
-            binary_instruct(lhs, op, rhs, opts)
-          when :ifop
-            cond, if_true, if_false = node.children
-            ternary_instruct(cond, if_true, if_false, opts)
-          when :const_path_ref
-            lhs, const = node.children
-            lhs_value = walk_node lhs, value: true
-            ident = const_instruct(const.expanded_identifier)
-            call_instruct(lhs_value, :const_get, ident, opts)
-          when :call
-            issue_call node, opts
-          when :command
-            issue_call node, opts
-          when :command_call
-            issue_call node, opts
-          when :aref
-            issue_call node, opts
-          when :method_add_arg
-            issue_call node, opts
-          when :method_add_block
-            # need: the receiver, the method name, the arguments, and the block body
-            method_call = node.method_call
-            receiver = if method_call.receiver_node
-                       then walk_node(method_call.receiver_node, value: true)
-                       else self_instruct(node[2][2].scope)
-                       end
-            arg_node = method_call.arg_node
-            arg_node = arg_node[1] if arg_node && arg_node.type == :arg_paren
-            block_arg_bindings = node[2][1] ? Signature.arg_list_for_arglist(node[2][1][1]) : []
-            body_sexp = node[2][2]
-            case node[1].type
+          with_current_node(node) do
+            case node.type
+            when :bodystmt
+              bodystmt_walk node
+            when :class
+              class_name, superclass, body = node.children
+              class_instruct(node.scope, class_name, superclass, body, opts)
+            when :module
+              module_name, body = node.children
+              module_instruct(node.scope, module_name, body, opts)
+            when :sclass
+              receiver, body = node.children
+              singleton_class_instruct receiver, body, opts
+            when :def
+              name, args, body = node.children
+              name = const_instruct(name.expanded_identifier.to_sym)
+              parsed_args = Signature.arg_list_for_arglist(args)
+              def_instruct(current_namespace, name, parsed_args, body, opts)
+            when :defs
+              recv, _, name, args, body = node.children
+              name = const_instruct(name.expanded_identifier)
+              receiver = walk_node(recv, value: true)
+              singleton = call_instruct(receiver, :singleton_class, value: true)
+              parsed_args = Signature.arg_list_for_arglist(args)
+              def_instruct(singleton, name, parsed_args, body, opts)
+            when :alias
+              lhs, rhs = node.children
+              lhs_val = const_instruct(lhs[1].expanded_identifier.to_sym)
+              rhs_val = const_instruct(rhs[1].expanded_identifier.to_sym)
+              call_instruct(current_namespace, :alias_method, lhs_val, rhs_val,
+                            value: false, ignore_privacy: true)
+            when :assign
+              lhs, rhs = node.children
+              single_assign_instruct(lhs, rhs, opts)
+            when :massign
+              lhs, rhs = node.children
+              multiple_assign_instruct(lhs, rhs, opts)
+            when :begin
+              walk_node node[1], opts
+            when :paren
+              walk_body node[1], opts
+            when :while
+              condition, body = node.children
+              while_instruct(condition, body, opts)
+            when :while_mod
+              condition, body_stmt = node.children
+              while_instruct(condition, [body_stmt], opts)
+            when :until
+              condition, body = node.children
+              until_instruct(condition, body, opts)
+            when :until_mod
+              condition, body_stmt = node.children
+              until_instruct(condition, [body_stmt], opts)
+            when :if
+              if_instruct(node, false, opts)
+            when :unless
+              condition, body, else_block = node.children
+              unless_instruct(condition, body, else_block, opts)
+            when :if_mod
+              if_instruct(node, true, opts)
+            when :unless_mod
+              condition, body = node.children
+              unless_instruct(condition, [body], nil, opts)
+            when :unary
+              op, receiver = node.children
+              receiver = walk_node(receiver, value: true)
+              call_instruct(receiver, op, opts)
+            when :binary
+              # If someone makes an overloaded operator that mutates something....
+              # we have to run it (maybe), even if we hate them.
+              lhs, op, rhs = node.children
+              binary_instruct(lhs, op, rhs, opts)
+            when :ifop
+              cond, if_true, if_false = node.children
+              ternary_instruct(cond, if_true, if_false, opts)
+            when :const_path_ref
+              lhs, const = node.children
+              lhs_value = walk_node lhs, value: true
+              ident = const_instruct(const.expanded_identifier)
+              call_instruct(lhs_value, :const_get, ident, opts)
+            when :call
+              issue_call node, opts
+            when :command
+              issue_call node, opts
+            when :command_call
+              issue_call node, opts
+            when :aref
+              issue_call node, opts
+            when :method_add_arg
+              issue_call node, opts
+            when :method_add_block
+              # need: the receiver, the method name, the arguments, and the block body
+              method_call = node.method_call
+              receiver = if method_call.receiver_node
+                         then walk_node(method_call.receiver_node, value: true)
+                         else self_instruct(node[2][2].scope)
+                         end
+              arg_node = method_call.arg_node
+              arg_node = arg_node[1] if arg_node && arg_node.type == :arg_paren
+              block_arg_bindings = node[2][1] ? Signature.arg_list_for_arglist(node[2][1][1]) : []
+              body_sexp = node[2][2]
+              case node[1].type
+              when :super
+                arg_node = arg_node[1] if arg_node.type == :args_add_block
+                call_method_with_block(
+                    receiver, method_call.method_name, arg_node,
+                    block_arg_bindings, body_sexp, opts)
+              when :zsuper
+                call_zsuper_with_block(node[1], block_arg_bindings, body_sexp, opts)
+              else
+                opts = opts.merge(ignore_privacy: true) if method_call.implicit_receiver?
+                call_method_with_block(
+                    receiver, method_call.method_name, arg_node, block_arg_bindings, body_sexp, opts)
+              end
             when :super
-              arg_node = arg_node[1] if arg_node.type == :args_add_block
-              call_method_with_block(
-                  receiver, method_call.method_name, arg_node,
-                  block_arg_bindings, body_sexp, opts)
+              args = node[1]
+              args = args[1] if args.type == :arg_paren
+              _, args, block = args
+              generic_super_instruct(args, block, opts)
             when :zsuper
-              call_zsuper_with_block(node[1], block_arg_bindings, body_sexp, opts)
+              # TODO(adgar): blocks in args & style
+              invoke_super_with_block(*compute_zsuper_arguments(node), false, opts)
+            when :yield
+              yield_instruct_with_arg(node, opts)
+            when :yield0
+              yield_instruct(nil, opts)
+            when :return
+              return_instruct node
+              const_instruct(nil) if opts[:value]
+            when :return0
+              return0_instruct
+              const_instruct(nil) if opts[:value]
+            when :break
+              break_instruct(node[1])
+              const_instruct(nil) if opts[:value]
+            when :next
+              next_instruct(node[1])
+              const_instruct(nil) if opts[:value]
+            when :redo
+              redo_instruct
+              const_instruct(nil) if opts[:value]
+            when :void_stmt
+              const_instruct(nil) if opts[:value]
+            when :program
+              uncond_instruct create_block
+              walk_body node[1], value: false
+            when :dot2
+              start, stop = node.children
+              start_val = walk_node(start, value: true)
+              stop_val = walk_node(stop, value: true)
+              true_val = const_instruct(true)
+              call_instruct(ClassRegistry['Range'].binding, :new, start_val, stop_val, true_val, opts)
+            when :dot3
+              start, stop = node.children
+              start_val = walk_node(start, value: true)
+              stop_val = walk_node(stop, value: true)
+              false_val = const_instruct(false)
+              call_instruct(ClassRegistry['Range'].binding, :new, start_val, stop_val, false_val, opts)
             else
-              opts = opts.merge(ignore_privacy: true) if method_call.implicit_receiver?
-              call_method_with_block(
-                  receiver, method_call.method_name, arg_node, block_arg_bindings, body_sexp, opts)
+              opts[:value] ? value_walk(node) : novalue_walk(node)
             end
-          when :super
-            args = node[1]
-            args = args[1] if args.type == :arg_paren
-            _, args, block = args
-            generic_super_instruct(args, block, opts)
-          when :zsuper
-            # TODO(adgar): blocks in args & style
-            invoke_super_with_block(*compute_zsuper_arguments(node), false, opts)
-          when :yield
-            yield_instruct_with_arg(node, opts)
-          when :yield0
-            yield_instruct(nil, opts)
-          when :return
-            return_instruct node
-            const_instruct(nil) if opts[:value]
-          when :return0
-            return0_instruct
-            const_instruct(nil) if opts[:value]
-          when :break
-            break_instruct(node[1])
-            const_instruct(nil) if opts[:value]
-          when :next
-            next_instruct(node[1])
-            const_instruct(nil) if opts[:value]
-          when :redo
-            redo_instruct
-            const_instruct(nil) if opts[:value]
-          when :void_stmt
-            const_instruct(nil) if opts[:value]
-          when :program
-            uncond_instruct create_block
-            walk_body node[1], value: false
-          when :dot2
-            start, stop = node.children
-            start_val = walk_node(start, value: true)
-            stop_val = walk_node(stop, value: true)
-            true_val = const_instruct(true)
-            call_instruct(ClassRegistry['Range'].binding, :new, start_val, stop_val, true_val, opts)
-          when :dot3
-            start, stop = node.children
-            start_val = walk_node(start, value: true)
-            stop_val = walk_node(stop, value: true)
-            false_val = const_instruct(false)
-            call_instruct(ClassRegistry['Range'].binding, :new, start_val, stop_val, false_val, opts)
-          else
-            opts[:value] ? value_walk(node) : novalue_walk(node)
           end
         end
         
@@ -342,29 +350,9 @@ module Laser
             case node.type
             when :void_stmt
               # Do nothing.
-            when :assign
+            when :massign
               lhs, rhs = node.children
-              case lhs.type
-              when :field
-                # In 1.9.2, receiver is evaulated first, then the arguments
-                receiver = walk_node lhs[1], value: true
-                method_name = lhs[3].expanded_identifier
-                rhs_val = walk_node rhs, value: true
-                call_instruct(receiver, "#{method_name}=".to_sym, rhs_val, block: false, value: false)
-              when :aref_field
-                generic_aref_instruct(walk_node(lhs[1], value: true), lhs[2][1], rhs, value: false)
-              when :const_path_field
-                lhs, rhs = node.children
-                receiver, const = lhs.children
-                receiver_val = walk_node(receiver, value: true)
-                const_name_val = const_instruct(const.expanded_identifier)
-                rhs_val = walk_node(rhs, value: true)
-                # never raises!
-                call_instruct(receiver_val, :const_set, const_name_val, rhs_val, value: false, raise: false)
-              else
-                # calculate LHS
-                assign_instruct(lhs.binding, rhs)
-              end
+              multiple_assign_instruct(lhs, rhs, value: false)
             when :opassign
               lhs, op, rhs = node.children
               op = op.expanded_identifier[0..-2].to_sym
@@ -489,29 +477,6 @@ module Laser
         def value_walk(node)
           with_current_node(node) do
             case node.type
-            when :assign
-              lhs, rhs = node.children
-              case lhs.type
-              when :field
-                # In 1.9.2, receiver is evaulated first, then the arguments
-                receiver = walk_node lhs[1], value: true
-                method_name = lhs[3].expanded_identifier
-                rhs_val = walk_node rhs, value: true
-                call_instruct(receiver, "#{method_name}=".to_sym, rhs_val, block: false, value: true)
-              when :aref_field
-                generic_aref_instruct(walk_node(lhs[1], value: true), lhs[2][1], rhs, value: true)
-              when :const_path_field
-                lhs, rhs = node.children
-                receiver, const = lhs.children
-                receiver_val = walk_node(receiver, value: true)
-                const_name_val = const_instruct(const.expanded_identifier)
-                rhs_val = walk_node(rhs, value: true)
-                # never raises!
-                call_instruct_novalue_noraise(receiver_val, :const_set, const_name_val, rhs_val, value: false)
-                rhs_val
-              else
-                assign_instruct(lhs.binding, rhs)
-              end
             when :opassign
               lhs, op, rhs = node.children
               op = op.expanded_identifier[0..-2].to_sym
@@ -1185,11 +1150,112 @@ module Laser
           add_instruction(:assign, lhs, rhs)
         end
         
-        # Computes the RHS and assigns it to the LHS, returning the RHS result.
-        def assign_instruct(lhs, rhs)
-          result = walk_node rhs, value: true
-          copy_instruct lhs, result
-          result
+        def evaluate_if_needed(node, opts={})
+          if Bindings::GenericBinding === node
+            node
+          else
+            walk_node(node, opts)
+          end
+        end
+        
+        # Does a single assignment between an LHS node and an RHS node, both unevaluated.
+        # This can be used by massign calls! In fact, it's very important to structure
+        # this code to handle such cases.
+        def single_assign_instruct(lhs, rhs, opts={})
+          opts = {value: true}.merge(opts)
+          case lhs.type
+          when :field
+            # In 1.9.2, receiver is evaulated first, then the arguments
+            receiver = walk_node lhs[1], value: true
+            method_name = lhs[3].expanded_identifier
+            rhs_val = evaluate_if_needed(rhs, value: true)
+            call_instruct(receiver, "#{method_name}=".to_sym, rhs_val, {block: false}.merge(opts))
+            rhs_val
+          when :aref_field
+            generic_aref_instruct(walk_node(lhs[1], value: true), lhs[2][1], rhs, opts)
+          when :const_path_field
+            receiver, const = lhs.children
+            receiver_val = walk_node(receiver, value: true)
+            const_name_val = const_instruct(const.expanded_identifier)
+            rhs_val = evaluate_if_needed(rhs, value: true)
+            # never raises!
+            call_instruct(receiver_val, :const_set, const_name_val, rhs_val, value: false, raise: false)
+            rhs_val
+          when :mlhs_paren
+            # rhs may or may not be evaluated, and we're okay with that
+            multiple_assign_instruct(lhs[1], rhs, opts)
+          else
+            if Bindings::GenericBinding === rhs
+              rhs_val = rhs
+            elsif rhs.type == :mrhs_new_from_args
+              rhs = rhs[1] + [rhs[2]]  # i assume some parser silliness does this
+              result_temps = rhs.map { |node| walk_node(node, value: true) }
+              rhs_val = call_instruct(ClassRegistry['Array'].binding, :[],
+                  *result_temps, value: true, raise: false)
+            else
+              rhs_val = walk_node rhs, value: true
+            end
+            
+            lhs.binding = lhs.scope.lookup(lhs.expanded_identifier) unless lhs.binding
+            copy_instruct lhs.binding, rhs_val
+            rhs_val
+          end
+        end
+
+        # Expands a multiple-assignment as optimally as possible. Without any
+        # splats, will expand to sequential assignments.
+        def multiple_assign_instruct(lhs, rhs, opts={})
+          # a, b = c, d, e
+          if lhs.type != :mlhs_add_star && rhs.type != :mrhs_add_star
+            # a, b = c, d, e
+            # tries to generate maximally efficient code: computes
+            # precise assignments to improve analysis.
+            if Sexp === lhs[0] && rhs.type == :mrhs_new_from_args
+              rhs = rhs[1] + [rhs[2]]  # i assume some parser silliness does this
+              # pair them up. Enumerable#zip in 1.9.2 doesn't support unmatched lengths
+              pairs = (0...[lhs.size, rhs.size].max).map do |idx|
+                need_temp = opts[:value] || (lhs[idx] && rhs[idx])
+                { lhs: lhs[idx], rhs: rhs[idx], need_temp: need_temp }
+              end
+              # compute the rhs node
+              pairs_with_vals = pairs.map do |hash|
+                # only walk rhs if it exists
+                result = hash[:rhs] && walk_node(hash[:rhs], value: hash[:need_temp])
+                hash.merge(value: result)
+              end
+              # perform necessary assignments
+              pairs_with_vals.each do |hash|
+                if hash[:lhs]
+                  hash[:value] ||= const_instruct(nil)
+                  new_value = hash[:value]
+                  single_assign_instruct(hash[:lhs], new_value, value: false)
+                end
+              end
+              # if we need the value, we need to return all the RHS in an array.
+              if opts[:value]
+                result_temps = pairs_with_vals.map { |hash| hash[:value] }
+                call_instruct(ClassRegistry['Array'].binding, :[], *result_temps, value: true, raise: false)
+              end
+            # a, b, c = foo
+            elsif Sexp === lhs[0] && rhs.type != :mrhs_new_from_args
+              
+            else
+              raise ArgumentError.new("Unexpected non-starred massign node:\n" +
+                                      "  lhs = #{lhs.inspect}\n  rhs = #{rhs.inspect}")
+            end
+          # a, *b, c = 1, 2, 3, 4, 5
+          elsif lhs.type == :mlhs_add_star && rhs.type != :mrhs_add_star
+            
+          # a, b, c = 1, *foo
+          elsif lhs.type != :mlhs_add_star && rhs.type == :mrhs_add_star
+            
+          # a, *b, c = d, *e
+          elsif lhs.type == :mlhs_add_star && rhs.type == :mrhs_add_star
+            
+          else
+            raise ArgumentError.new("Unexpected :massign node:\n  " +
+                                    "lhs = #{lhs.inspect}\n  rhs = #{rhs.inspect}")
+          end
         end
 
         def foreach_on_rhs(node, &blk)

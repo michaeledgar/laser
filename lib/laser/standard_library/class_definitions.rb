@@ -78,6 +78,10 @@ module Kernel
   # raises: never
   def class
   end
+  # pure: true
+  # raises: never
+  def inspect
+  end
  private
   def require(path)
   end

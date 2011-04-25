@@ -84,4 +84,16 @@ EOF
     g.should have_error(Laser::UnusedVariableWarning).on_line(8).with_message(/\b c \b/x)
     g.should have_error(Laser::UnusedVariableWarning).on_line(10).with_message(/\b j \b/x)
   end
+  
+  it 'recognizes unused variables introduced through multiple assignment' do
+    g = cfg_method <<-EOF
+def foo(x)
+y = gets() * 2
+z, i = y, 3
+c = z * z
+end
+EOF
+    g.should have_error(Laser::UnusedVariableWarning).on_line(3).with_message(/\b i \b/x)
+    g.should have_error(Laser::UnusedVariableWarning).on_line(4).with_message(/\b c \b/x)
+  end
 end

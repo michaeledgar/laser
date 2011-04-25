@@ -85,7 +85,11 @@ module Laser
   class DeadCodeWarning < Laser::Error
     severity MAJOR_WARNING
     def initialize(message, ast_node)
-      super("Dead Code #{ast_node.source_begin[0]}:#{ast_node.source_begin[1]}", ast_node)
+      if ast_node.source_begin
+        super("Dead Code #{ast_node.source_begin[0]}:#{ast_node.source_begin[1]}", ast_node)
+      else
+        super("Dead Code", ast_node)
+      end
     end
   end
   

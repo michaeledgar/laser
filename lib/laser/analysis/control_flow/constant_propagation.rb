@@ -301,7 +301,8 @@ module Laser
               changed = (lhs.value != rhs)
               if changed
                 lhs.bind! rhs
-                lhs.inferred_type = Types::ClassType.new(rhs.class.name, :invariant)
+                new_type = LaserObject === rhs ? rhs.klass.name : rhs.class.name
+                lhs.inferred_type = Types::ClassType.new(new_type, :invariant)
               end
             end
           when :phi
