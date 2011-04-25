@@ -1238,12 +1238,19 @@ module Laser
               end
             # a, b, c = foo
             elsif Sexp === lhs[0] && rhs.type != :mrhs_new_from_args
-              
+              rhs_val = walk_node(rhs, value: true)
+              rhs_array = rb_check_convert_type(rhs_val, ClassRegistry['Array'].binding, :to_a)
+              lhs.each_with_index do |node, idx|
+                assigned_val = call_instruct(rhs_array, :[], const_instruct(idx), value: true, raise: false)
+                single_assign_instruct(node, assigned_val)
+              end
+              rhs_array
             else
               raise ArgumentError.new("Unexpected non-starred massign node:\n" +
                                       "  lhs = #{lhs.inspect}\n  rhs = #{rhs.inspect}")
             end
           # a, *b, c = 1, 2, 3, 4, 5
+          # also easy/precise
           elsif lhs.type == :mlhs_add_star && rhs.type != :mrhs_add_star
             
           # a, b, c = 1, *foo

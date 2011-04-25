@@ -31,6 +31,29 @@ end
 EOF
     g.should have_constant('a').with_value([1, 1024, 3])
   end
+
+  it 'should infer constants due to semantics of N-to-1 parallel assignment' do
+    g = cfg_method <<-EOF
+def foo(x)
+  a, b, c = [1, 2, 3]
+end
+EOF
+    g.should have_constant('a').with_value(1)
+    g.should have_constant('b').with_value(2)
+    g.should have_constant('c').with_value(3)
+  end
+
+  it 'should infer constants due to semantics of mismatched N-to-1 parallel assignment and Array indexing' do
+    g = cfg_method <<-EOF
+def foo(x)
+  a, b, c, d = [1, 2, 3]
+end
+EOF
+    g.should have_constant('a').with_value(1)
+    g.should have_constant('b').with_value(2)
+    g.should have_constant('c').with_value(3)
+    g.should have_constant('d').with_value(nil)
+  end
   
   it 'should propagate when the same variable is assigned to the same constant in branches' do
     g = cfg_method <<-EOF

@@ -36,6 +36,8 @@ class Module
   # raises: never
   def name
   end
+  # pure: true
+  # raises: never
   def ===(other)
   end
   def define_method(name, body=nil)
