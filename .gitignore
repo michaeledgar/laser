@@ -25,3 +25,7 @@ pkg
 Gemfile.lock
 Guardfile
 .rvmrc
+
+## DEBUGGING
+graph.png
+graph.dot
