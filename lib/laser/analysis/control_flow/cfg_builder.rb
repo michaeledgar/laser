@@ -461,7 +461,11 @@ module Laser
               receiver = Scope::GlobalScope.lookup('Array')
               generic_call_instruct(receiver, :[], node[1], false, value: false)
             when :hash
-              walk_node node[1], value: true
+              if node[1]
+                walk_node node[1], value: false
+              else
+                const_instruct({}, value: false)
+              end
             when :assoclist_from_args, :bare_assoc_hash
               pairs = node[1]
               key_value_paired = pairs.map {|a, b| [walk_node(a, value: true), walk_node(b, value: true)] }.flatten
@@ -624,7 +628,11 @@ module Laser
               receiver = Scope::GlobalScope.lookup('Array')
               generic_call_instruct(receiver, :[], node[1], false, value: true)
             when :hash
-              walk_node node[1], value: true
+              if node[1]
+                walk_node node[1], value: true
+              else
+                const_instruct({})
+              end
             when :assoclist_from_args, :bare_assoc_hash
               pairs = node[1].map { |_, k, v| [k, v] }
               key_value_paired = pairs.map {|a, b| [walk_node(a, value: true), walk_node(b, value: true)] }.flatten
@@ -1234,14 +1242,16 @@ module Laser
               # if we need the value, we need to return all the RHS in an array.
               if opts[:value]
                 result_temps = pairs_with_vals.map { |hash| hash[:value] }
-                call_instruct(ClassRegistry['Array'].binding, :[], *result_temps, value: true, raise: false)
+                call_instruct(ClassRegistry['Array'].binding, :[], *result_temps,
+                    value: true, raise: false)
               end
             # a, b, c = foo
             elsif Sexp === lhs[0] && rhs.type != :mrhs_new_from_args
               rhs_val = walk_node(rhs, value: true)
               rhs_array = rb_check_convert_type(rhs_val, ClassRegistry['Array'].binding, :to_a)
               lhs.each_with_index do |node, idx|
-                assigned_val = call_instruct(rhs_array, :[], const_instruct(idx), value: true, raise: false)
+                assigned_val = call_instruct(rhs_array, :[], const_instruct(idx),
+                    value: true, raise: false)
                 single_assign_instruct(node, assigned_val)
               end
               rhs_array
@@ -1252,7 +1262,48 @@ module Laser
           # a, *b, c = 1, 2, 3, 4, 5
           # also easy/precise
           elsif lhs.type == :mlhs_add_star && rhs.type != :mrhs_add_star
+            # RHS = single_val | :mrhs_new_from_args
+            rhs_arr = Sexp === rhs[0] ? [rhs[0]] : (rhs[1] + [rhs[2]])
             
+            # Calculate pre-star, star, and post-star bindings and boundaries
+            pre_star  = lhs[1]  # [], if empty
+            star_node = lhs[2]  # could be nil
+            post_star = lhs[3] || []
+            
+            star_start = pre_star.size
+            star_end   = rhs_arr.size - post_star.size
+            star_range = star_start...star_end
+
+            # all RHS are ALWAYS consumed. But if the star is unnamed, star values can be
+            # discarded.
+            rhs_vals = rhs_arr.map.with_index do |node, idx|
+              if !opts[:value] && star_node.nil? && star_range.include?(idx)
+                walk_node(node, value: false)
+                nil
+              else
+                walk_node(node, value: true)
+              end
+            end
+
+            # do pre-star nodes
+            pre_star.each_with_index do |lhs_node, idx|
+              single_assign_instruct(lhs_node, rhs_vals[idx])
+            end
+            # do star assignment if star_node != nil
+            if star_node
+              star_parts = rhs_vals[star_range]
+              star_arr = call_instruct(ClassRegistry['Array'].binding, :[], *star_parts,
+                  value: true, raise: false)
+              single_assign_instruct star_node, star_arr
+            end
+            # do post-star nodes
+            post_star.each_with_index do |lhs_node, idx|
+              single_assign_instruct(lhs_node, rhs_vals[star_end + idx])
+            end
+            if opts[:value]
+              call_instruct(ClassRegistry['Array'].binding, :[], *rhs_vals,
+                  value: true, raise: false)
+            end
           # a, b, c = 1, *foo
           elsif lhs.type != :mlhs_add_star && rhs.type == :mrhs_add_star
             
@@ -1387,7 +1438,7 @@ module Laser
             call_instruct(arg_array, :<<, walk_node(val, value: true), value: false)
             call_vararg_instruct(receiver, :[]=, arg_array, false, opts)
           else
-            arg_temps = (args + [val]).map { |arg| walk_node(arg, value: true) }
+            arg_temps = (args + [val]).map { |arg| evaluate_if_needed(arg, value: true) }
             call_instruct(receiver, :[]=, *arg_temps, {block: false}.merge(opts))
           end
         end

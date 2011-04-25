@@ -58,7 +58,11 @@ module Laser
         when :mlhs_paren
           @elements = [LHSExpression.new(@node[1])]
         when :mlhs_add_star
-          @elements = [LHSExpression.new(@node[1]), LHSExpression.new(@node[2])]
+          if @node[2]
+            @elements = [LHSExpression.new(@node[1]), LHSExpression.new(@node[2])]
+          else
+            @elements = [LHSExpression.new(@node[1])]
+          end
           @elements << LHSExpression.new(@node[3]) if @node[3]
           @pre_star = wrap_as_lhs(@node[1])
           @post_star = @node[3] && wrap_as_lhs(@node[3]) || []
@@ -100,7 +104,7 @@ module Laser
           pre_pairs = @pre_star.zip(pre_values).map do |elt, val|
             elt.assignment_pairs(val)
           end.inject(&:concat) || []
-          star_pair = @star.assignment_pairs(splat_values)
+          star_pair = @star ? @star.assignment_pairs(splat_values) : []
           post_pairs = @post_star.zip(post_values).map do |elt, val|
             elt.assignment_pairs(val)
           end.inject(&:concat) || []
