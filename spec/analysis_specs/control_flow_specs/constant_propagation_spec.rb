@@ -32,6 +32,15 @@ EOF
     g.should have_constant('a').with_value([1, 1024, 3])
   end
 
+  it 'should infer constants due to semantics of 1-to-N parallel assignment with splats' do
+    g = cfg_method <<-EOF
+def foo(x)
+  a = 1, (2 ** 10), 3, *(1..3), 'hi', :a
+end
+EOF
+    g.should have_constant('a').with_value([1, 1024, 3, 1, 2, 3, 'hi', :a])
+  end
+
   it 'should infer constants due to semantics of N-to-1 parallel assignment' do
     g = cfg_method <<-EOF
 def foo(x)

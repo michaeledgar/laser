@@ -122,7 +122,17 @@ require 'numbers'
 require '_thread'
 
 class Range
-  def initialize(start, stop, inclusive=true)
+  # this is here because early in testing Class#new wasn't smart about purity.
+  # pure: true
+  def self.new(start, stop, exclusive=false)
+  end
+  
+  # pure: true
+  def initialize(start, stop, exclusive=false)
+  end
+  
+  # pure: true
+  def to_a
   end
 end
 class Proc

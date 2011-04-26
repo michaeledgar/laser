@@ -335,13 +335,13 @@ module Laser
             when :program
               uncond_instruct create_block
               walk_body node[1], value: false
-            when :dot2
+            when :dot3
               start, stop = node.children
               start_val = walk_node(start, value: true)
               stop_val = walk_node(stop, value: true)
               true_val = const_instruct(true)
               call_instruct(ClassRegistry['Range'].binding, :new, start_val, stop_val, true_val, opts)
-            when :dot3
+            when :dot2
               start, stop = node.children
               start_val = walk_node(start, value: true)
               stop_val = walk_node(stop, value: true)
@@ -1204,11 +1204,10 @@ module Laser
           else
             if Bindings::GenericBinding === rhs
               rhs_val = rhs
-            elsif rhs.type == :mrhs_new_from_args
-              rhs = rhs[1] + [rhs[2]]  # i assume some parser silliness does this
-              result_temps = rhs.map { |node| walk_node(node, value: true) }
-              rhs_val = call_instruct(ClassRegistry['Array'].binding, :[],
-                  *result_temps, value: true, raise: false)
+            elsif rhs.type == :mrhs_new_from_args || rhs.type == :args_add_star ||
+                  rhs.type == :mrhs_add_star
+              fixed, varying = compute_fixed_and_varying_rhs(rhs)
+              rhs_val = combine_fixed_and_varying(fixed, varying)
             else
               rhs_val = walk_node rhs, value: true
             end
@@ -1350,12 +1349,7 @@ module Laser
             fixed, varying = compute_fixed_and_varying_rhs(rhs)
             # inefficient: ignore fixed stuff
             # TODO(adgar): optimize this
-            if fixed.empty?
-              rhs_array = varying
-            else
-              fixed_ary = call_instruct(ClassRegistry['Array'].binding, :[], *fixed, value: true, raise: false)
-              rhs_array = call_instruct(fixed_ary, :+, varying, value: true, raise: false)
-            end
+            rhs_array = combine_fixed_and_varying(fixed, varying)
             assign_splat_mlhs_to_varying(lhs[1], lhs[2], lhs[3] || [], rhs_array)
           else
             raise ArgumentError.new("Unexpected :massign node:\n  " +
@@ -1457,6 +1451,21 @@ module Laser
             varying = nil
           end
           [fixed, varying]
+        end
+
+        # Combines an array of fixed temporaries and an array temporary that contains
+        # an unknown number of temporaries.
+        def combine_fixed_and_varying(fixed, varying)
+          if fixed.empty?
+            varying || const_instruct([])
+          else
+            fixed_ary = call_instruct(ClassRegistry['Array'].binding, :[], *fixed, value: true, raise: false)
+            if varying
+              call_instruct(fixed_ary, :+, varying, value: true, raise: false)
+            else
+              fixed_ary
+            end
+          end
         end
 
         def foreach_on_rhs(node, &blk)
