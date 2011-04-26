@@ -1277,63 +1277,7 @@ module Laser
             rhs_val = walk_node(rhs, value: true)
             rhs_array = rb_ary_to_ary(rhs_val)
             
-            # Calculate pre-star, star, and post-star bindings and boundaries
-            pre_star  = lhs[1]  # [], if empty
-            star_node = lhs[2]  # could be nil
-            post_star = lhs[3] || []
-            
-            # pre-star is easy: how they are extracted is deterministic
-            pre_star.each_with_index do |lhs_node, idx|
-              assigned_val = call_instruct(rhs_array, :[], const_instruct(idx),
-                  value: true, raise: false)
-              single_assign_instruct(lhs_node, assigned_val)
-            end
-            
-            # next, extract star_node. run-time version of below
-            star_start = const_instruct(pre_star.size)
-            fixed_size = const_instruct(pre_star.size + post_star.size)
-            # calculate star_end at runtime without loops
-            rhs_arr_size = call_instruct(rhs_array, :size,
-                value: true, raise: false)
-            star_size = call_instruct(rhs_arr_size, :-, fixed_size,
-                value: true, raise: false)
-            
-            after = create_block
-
-            if_nonempty = build_block_with_jump(after) do
-              if star_node
-                star_subarray = call_instruct(rhs_array, :[], star_start, star_size,
-                    value: true, raise: false)
-                single_assign_instruct(star_node, star_subarray)
-              end
-              if post_star.any?
-                post_star_start = call_instruct(star_start, :+, star_size,
-                    value: true, raise: false)
-                post_star_array = call_instruct(rhs_array, :[], post_star_start,
-                    const_instruct(post_star.size), value: true, raise: false)
-                post_star.each_with_index do |lhs_node, idx|
-                  assigned_val = call_instruct(post_star_array, :[], const_instruct(idx),
-                      value: true, raise: false)
-                  single_assign_instruct(lhs_node, assigned_val)
-                end
-              end
-            end
-            
-            if_empty = build_block_with_jump(after) do
-              single_assign_instruct(star_node, const_instruct([])) if star_node
-              post_star.each_with_index do |lhs_node, idx|
-                assigned_val = call_instruct(rhs_array, :[], const_instruct(pre_star.size + idx),
-                    value: true, raise: false)
-                single_assign_instruct(lhs_node, assigned_val)
-              end
-            end
-            
-            cond_value = call_instruct(star_size, :>, const_instruct(0),
-                value: true, raise: false)
-            cond_instruct(cond_value, if_nonempty, if_empty)
-
-            start_block after
-            rhs_array
+            assign_splat_mlhs_to_varying(lhs[1], lhs[2], lhs[3] || [], rhs_array)
           # a, *b, c = 1, 2, 3, 4, 5
           # also easy/precise
           elsif lhs.type == :mlhs_add_star && !rhs_has_star
@@ -1402,11 +1346,76 @@ module Laser
             result
           # a, *b, c = d, *e
           elsif lhs.type == :mlhs_add_star && rhs_has_star
-            
+            # Calculate pre-star, star, and post-star bindings and boundaries
+            fixed, varying = compute_fixed_and_varying_rhs(rhs)
+            # inefficient: ignore fixed stuff
+            # TODO(adgar): optimize this
+            if fixed.empty?
+              rhs_array = varying
+            else
+              fixed_ary = call_instruct(ClassRegistry['Array'].binding, :[], *fixed, value: true, raise: false)
+              rhs_array = call_instruct(fixed_ary, :+, varying, value: true, raise: false)
+            end
+            assign_splat_mlhs_to_varying(lhs[1], lhs[2], lhs[3] || [], rhs_array)
           else
             raise ArgumentError.new("Unexpected :massign node:\n  " +
                                     "lhs = #{lhs.inspect}\n  rhs = #{rhs.inspect}")
           end
+        end
+        
+        def assign_splat_mlhs_to_varying(pre_star, star_node, post_star, rhs_array)
+          # pre-star is easy: how they are extracted is deterministic
+          pre_star.each_with_index do |lhs_node, idx|
+            assigned_val = call_instruct(rhs_array, :[], const_instruct(idx),
+                value: true, raise: false)
+            single_assign_instruct(lhs_node, assigned_val)
+          end
+          
+          # next, extract star_node. run-time version of below
+          star_start = const_instruct(pre_star.size)
+          fixed_size = const_instruct(pre_star.size + post_star.size)
+          # calculate star_end at runtime without loops
+          rhs_arr_size = call_instruct(rhs_array, :size,
+              value: true, raise: false)
+          star_size = call_instruct(rhs_arr_size, :-, fixed_size,
+              value: true, raise: false)
+          
+          after = create_block
+
+          if_nonempty = build_block_with_jump(after) do
+            if star_node
+              star_subarray = call_instruct(rhs_array, :[], star_start, star_size,
+                  value: true, raise: false)
+              single_assign_instruct(star_node, star_subarray)
+            end
+            if post_star.any?
+              post_star_start = call_instruct(star_start, :+, star_size,
+                  value: true, raise: false)
+              post_star_array = call_instruct(rhs_array, :[], post_star_start,
+                  const_instruct(post_star.size), value: true, raise: false)
+              post_star.each_with_index do |lhs_node, idx|
+                assigned_val = call_instruct(post_star_array, :[], const_instruct(idx),
+                    value: true, raise: false)
+                single_assign_instruct(lhs_node, assigned_val)
+              end
+            end
+          end
+          
+          if_empty = build_block_with_jump(after) do
+            single_assign_instruct(star_node, const_instruct([])) if star_node
+            post_star.each_with_index do |lhs_node, idx|
+              assigned_val = call_instruct(rhs_array, :[], const_instruct(pre_star.size + idx),
+                  value: true, raise: false)
+              single_assign_instruct(lhs_node, assigned_val)
+            end
+          end
+          
+          cond_value = call_instruct(star_size, :>, const_instruct(0),
+              value: true, raise: false)
+          cond_instruct(cond_value, if_nonempty, if_empty)
+
+          start_block after
+          rhs_array
         end
         
         # Computes the fixed portion of the RHS, and the varying portion of the
