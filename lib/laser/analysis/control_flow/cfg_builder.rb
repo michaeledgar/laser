@@ -159,6 +159,17 @@ module Laser
           # First, set the block arg if there is an explicit block argument.
         end
         
+        # Creates a new block that jumps to the given target upon completion.
+        # Very useful for building branches.
+        def build_block_with_jump(target = nil)
+          new_block = create_block
+          with_current_basic_block(new_block) do
+            yield
+            uncond_instruct target if target
+          end
+          new_block
+        end
+        
         # yields with the current basic block set to the provided basic block.
         # useful for quickly adding an edge without directly touching the
         # graph object.
@@ -663,11 +674,9 @@ module Laser
           new_targets = targets.merge(targets) do |key, redirect|
             current = send("current_#{key}")
             next nil unless current
-            new_block = create_block
-            start_block new_block
-            walk_body redirect, value: false
-            uncond_instruct current
-            new_block
+            build_block_with_jump(current) do
+              walk_body redirect, value: false
+            end
           end.delete_if { |k, v| v.nil? }
           with_jump_targets(new_targets) do
             yield
@@ -1213,8 +1222,9 @@ module Laser
         # Expands a multiple-assignment as optimally as possible. Without any
         # splats, will expand to sequential assignments.
         def multiple_assign_instruct(lhs, rhs, opts={})
+          rhs_has_star = rhs.find_type(:mrhs_add_star)
           # a, b = c, d, e
-          if lhs.type != :mlhs_add_star && rhs.type != :mrhs_add_star
+          if lhs.type != :mlhs_add_star && !rhs_has_star
             # a, b = c, d, e
             # tries to generate maximally efficient code: computes
             # precise assignments to improve analysis.
@@ -1260,12 +1270,76 @@ module Laser
               raise ArgumentError.new("Unexpected non-starred massign node:\n" +
                                       "  lhs = #{lhs.inspect}\n  rhs = #{rhs.inspect}")
             end
+          # a, *b, c = [1, 2, 3]
+          # implicit #to_ary
+          elsif lhs.type == :mlhs_add_star && !rhs_has_star && rhs.type != :mrhs_new_from_args
+            # calculate RHS: array of unknown length
+            rhs_val = walk_node(rhs, value: true)
+            rhs_array = rb_ary_to_ary(rhs_val)
+            
+            # Calculate pre-star, star, and post-star bindings and boundaries
+            pre_star  = lhs[1]  # [], if empty
+            star_node = lhs[2]  # could be nil
+            post_star = lhs[3] || []
+            
+            # pre-star is easy: how they are extracted is deterministic
+            pre_star.each_with_index do |lhs_node, idx|
+              assigned_val = call_instruct(rhs_array, :[], const_instruct(idx),
+                  value: true, raise: false)
+              single_assign_instruct(lhs_node, assigned_val)
+            end
+            
+            # next, extract star_node. run-time version of below
+            star_start = const_instruct(pre_star.size)
+            fixed_size = const_instruct(pre_star.size + post_star.size)
+            # calculate star_end at runtime without loops
+            rhs_arr_size = call_instruct(rhs_array, :size,
+                value: true, raise: false)
+            star_size = call_instruct(rhs_arr_size, :-, fixed_size,
+                value: true, raise: false)
+            
+            after = create_block
+
+            if_nonempty = build_block_with_jump(after) do
+              if star_node
+                star_subarray = call_instruct(rhs_array, :[], star_start, star_size,
+                    value: true, raise: false)
+                single_assign_instruct(star_node, star_subarray)
+              end
+              if post_star.any?
+                post_star_start = call_instruct(star_start, :+, star_size,
+                    value: true, raise: false)
+                post_star_array = call_instruct(rhs_array, :[], post_star_start,
+                    const_instruct(post_star.size), value: true, raise: false)
+                post_star.each_with_index do |lhs_node, idx|
+                  assigned_val = call_instruct(post_star_array, :[], const_instruct(idx),
+                      value: true, raise: false)
+                  single_assign_instruct(lhs_node, assigned_val)
+                end
+              end
+            end
+            
+            if_empty = build_block_with_jump(after) do
+              single_assign_instruct(star_node, const_instruct([])) if star_node
+              post_star.each_with_index do |lhs_node, idx|
+                assigned_val = call_instruct(rhs_array, :[], const_instruct(pre_star.size + idx),
+                    value: true, raise: false)
+                single_assign_instruct(lhs_node, assigned_val)
+              end
+            end
+            
+            cond_value = call_instruct(star_size, :>, const_instruct(0),
+                value: true, raise: false)
+            cond_instruct(cond_value, if_nonempty, if_empty)
+
+            start_block after
+            rhs_array
           # a, *b, c = 1, 2, 3, 4, 5
           # also easy/precise
-          elsif lhs.type == :mlhs_add_star && rhs.type != :mrhs_add_star
-            # RHS = single_val | :mrhs_new_from_args
+          elsif lhs.type == :mlhs_add_star && !rhs_has_star
+            # RHS = :mrhs_new_from_args
             # single_val not handled yet.
-            rhs_arr = Sexp === rhs[0] ? [rhs[0]] : (rhs[1] + [rhs[2]])
+            rhs_arr = rhs[1] + [rhs[2]]
             
             # Calculate pre-star, star, and post-star bindings and boundaries
             pre_star  = lhs[1]  # [], if empty
@@ -1307,10 +1381,10 @@ module Laser
                   value: true, raise: false)
             end
           # a, b, c = 1, *foo
-          elsif lhs.type != :mlhs_add_star && rhs.type == :mrhs_add_star
+          elsif lhs.type != :mlhs_add_star && rhs_has_star
             
           # a, *b, c = d, *e
-          elsif lhs.type == :mlhs_add_star && rhs.type == :mrhs_add_star
+          elsif lhs.type == :mlhs_add_star && rhs_has_star
             
           else
             raise ArgumentError.new("Unexpected :massign node:\n  " +
@@ -1327,19 +1401,19 @@ module Laser
             copy_instruct(counter, 0)
             max = call_instruct(array_to_iterate, :size, value: true, raise: false)
             
-            loop_start_block, check_block, after = create_blocks 3
+            loop_start_block, after = create_blocks 2
             
             uncond_instruct loop_start_block
             cond_result = call_instruct(counter, :<, max, value: true, raise: false)
+            
+            check_block = build_block_with_jump(loop_start_block) do
+              current_val = call_instruct(array_to_iterate, :[], counter, value: true, raise: false)
+              yield current_val
+              next_counter = call_instruct(counter, :+, 1, value: true, raise: false)
+              copy_instruct(counter, next_counter)
+            end
+            
             cond_instruct(cond_result, check_block, after)
-            
-            start_block(check_block)
-            current_val = call_instruct(array_to_iterate, :[], counter, value: true, raise: false)
-            yield current_val
-            next_counter = call_instruct(counter, :+, 1, value: true, raise: false)
-            copy_instruct(counter, next_counter)
-            uncond_instruct loop_start_block
-            
             start_block after
           when :mrhs_new_from_args
             foreach_on_rhs(node[1], &blk)
@@ -1354,20 +1428,17 @@ module Laser
           result = lookup_or_create_temporary(:ary_to_ary, value)
           try_conv = rb_check_convert_type(value, ClassRegistry['Array'].binding, :to_ary)
           
-          if_conv_succ, if_conv_fail, after = create_blocks 3
-          cond_instruct(try_conv, if_conv_succ, if_conv_fail)
-          
-          with_current_basic_block(if_conv_succ) do
+          after = create_block
+          if_conv_succ = build_block_with_jump(after) do
             copy_instruct(result, try_conv)
-            uncond_instruct after
           end
-          
-          with_current_basic_block(if_conv_fail) do
+          if_conv_fail = build_block_with_jump(after) do
             new_result = call_instruct(ClassRegistry['Array'].binding, :[], value,
                 value: true, raise: false)
             copy_instruct(result, new_result)
-            uncond_instruct after
           end
+          
+          cond_instruct(try_conv, if_conv_succ, if_conv_fail)
           
           start_block after
           result
@@ -1376,22 +1447,20 @@ module Laser
         #TODO(adgar): RAISES HERE!
         def rb_check_convert_type(value, klass, method)
           result = lookup_or_create_temporary(:convert, value, klass, method)
-          if_klass_block, if_not_klass_block, after = create_blocks 3
+          after = create_block
           
           comparison_result = call_instruct(klass, :===, value, value: true)
-          cond_instruct(comparison_result, if_klass_block, if_not_klass_block)
           
-          with_current_basic_block(if_not_klass_block) do
+          if_not_klass_block = build_block_with_jump(after) do
             # TODO(adgar): if method does not exist, return nil.
             conversion_result = call_instruct(value, method, value: true)
             copy_instruct result, conversion_result
-            uncond_instruct after
+          end
+          if_klass_block = build_block_with_jump(after) do
+            copy_instruct(result, value)
           end
           
-          with_current_basic_block(if_klass_block) do
-            copy_instruct(result, value)
-            uncond_instruct after
-          end
+          cond_instruct(comparison_result, if_klass_block, if_not_klass_block)
           
           start_block after
           result
@@ -1683,20 +1752,20 @@ module Laser
 
         # Performs a short-circuit OR operation while retaining the resulting value.
         def or_instruct_value(lhs, rhs)
-          true_block, false_block, after = create_blocks 3
+          after = create_block
 
           lhs_result = walk_node lhs, value: true
+          
+          false_block = build_block_with_jump(after) do
+            rhs_result = walk_node rhs, value: true
+            result = lookup_or_create_temporary(:or_short_circuit, lhs_result, rhs_result)
+            copy_instruct(result, rhs_result)
+          end
+          true_block = build_block_with_jump(after) do
+            copy_instruct(result, lhs_result)
+          end
+          
           cond_instruct(lhs_result, true_block, false_block)
-        
-          start_block(false_block)
-          rhs_result = walk_node rhs, value: true
-          result = lookup_or_create_temporary(:or_short_circuit, lhs_result, rhs_result)
-          copy_instruct(result, rhs_result)
-          uncond_instruct(after)
-        
-          start_block(true_block)
-          copy_instruct(result, lhs_result)
-          uncond_instruct(after)
         
           start_block(after)
           result
@@ -1704,14 +1773,15 @@ module Laser
 
         # Performs a short-circuit OR operation while discarding the resulting value.
         def or_instruct_novalue(lhs, rhs)
-          false_block, after = create_blocks 2
+          after = create_block
 
           lhs_result = walk_node lhs, value: true
+
+          false_block = build_block_with_jump(after) do
+            walk_node rhs, value: false
+          end
           cond_instruct(lhs_result, after, false_block)
 
-          start_block(false_block)
-          walk_node rhs, value: false
-          uncond_instruct(after)
           start_block(after)
         end
 
@@ -1727,20 +1797,19 @@ module Laser
         
         # Performs a short-circuit AND operation while retaining the resulting value.
         def and_instruct_value(lhs, rhs)
-          true_block, false_block, after = create_blocks 3
+          after = create_block
 
           lhs_result = walk_node lhs, value: true
+          
+          true_block = build_block_with_jump(after) do
+            rhs_result = walk_node rhs, value: true
+            result = lookup_or_create_temporary(:and_short_circuit, lhs_result, rhs_result)
+            copy_instruct(result, rhs_result)
+          end
+          false_block = build_block_with_jump(after) do
+            copy_instruct(result, lhs_result)
+          end
           cond_instruct(lhs_result, true_block, false_block)
-        
-          start_block(true_block)
-          rhs_result = walk_node rhs, value: true
-          result = lookup_or_create_temporary(:and_short_circuit, lhs_result, rhs_result)
-          copy_instruct(result, rhs_result)
-          uncond_instruct(after)
-        
-          start_block(false_block)
-          copy_instruct(result, lhs_result)
-          uncond_instruct(after)
 
           start_block(after)
           result
@@ -1748,14 +1817,14 @@ module Laser
         
         # Performs a short-circuit AND operation while discarding the resulting value.
         def and_instruct_novalue(lhs, rhs)
-          true_block, after = create_blocks 2
+          after = create_block
 
           lhs_result = walk_node lhs, value: true
-          cond_instruct(lhs_result, true_block, after)
 
-          start_block(true_block)
-          walk_node rhs, value: false
-          uncond_instruct(after)
+          true_block = build_block_with_jump(after) do
+            walk_node rhs, value: false
+          end
+          cond_instruct(lhs_result, true_block, after)
           start_block(after)
         end
 
@@ -1859,23 +1928,24 @@ module Laser
         # else_block: Sexp | NilClass
         def unless_instruct_value(condition, body, else_block)
           result = create_temporary
-          after, true_block, next_block = create_blocks 3
+          after = create_block
 
           cond_result = walk_node condition, value: true
-          cond_instruct(cond_result, next_block, true_block)
-          
-          start_block true_block
-          body_result = walk_body body, value: true
-          copy_instruct(result, body_result)
-          uncond_instruct(after)
 
-          start_block next_block
-          body_result = if else_block
-                        then walk_body else_block[1], value: true
-                        else const_instruct nil
-                        end
-          copy_instruct result, body_result
-          uncond_instruct(after)
+          true_block = build_block_with_jump(after) do
+            body_result = walk_body body, value: true
+            copy_instruct(result, body_result)
+          end
+
+          next_block = build_block_with_jump(after) do
+            body_result = if else_block
+                          then walk_body else_block[1], value: true
+                          else const_instruct nil
+                          end
+            copy_instruct result, body_result
+          end
+
+          cond_instruct(cond_result, next_block, true_block)
 
           start_block after
           result

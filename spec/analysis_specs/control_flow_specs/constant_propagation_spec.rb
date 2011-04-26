@@ -100,6 +100,62 @@ EOF
     g.should have_constant('d').with_value([])
   end
   
+  context 'with implicitly-splatted single RHS' do
+    it 'should infer constants with LHS star and no RHS star' do
+      g = cfg_method <<-EOF
+def foo(x)
+  a, *b, d = [1, 2, 3, 4]
+  x = a
+  y = b
+  z = d
+end
+EOF
+      g.should have_constant('x').with_value(1)
+      g.should have_constant('y').with_value([2, 3])
+      g.should have_constant('z').with_value(4)
+    end
+
+    it 'should infer constants with discarded LHS star and no RHS star' do
+      g = cfg_method <<-EOF
+def foo(x)
+  a, *, d = [1, 2, 3, :a, 'hi', {}, 4]
+  x = a
+  y = d
+end
+EOF
+      g.should have_constant('x').with_value(1)
+      g.should have_constant('y').with_value(4)
+    end
+
+    it 'should infer constants with LHS star and no RHS star and mismatched sizes' do
+      g = cfg_method <<-EOF
+def foo(x)
+  a, *b, d, e = [1, 2]
+  rest = b
+  x = d
+  y = e
+end
+EOF
+      g.should have_constant('a').with_value(1)
+      g.should have_constant('rest').with_value([])
+      g.should have_constant('x').with_value(2)
+      g.should have_constant('y').with_value(nil)
+    end
+
+    it 'should infer constants with LHS star and no RHS star and mismatched sizes: part two' do
+      g = cfg_method <<-EOF
+def foo(x)
+  a, b, c, *d = [1, 2]
+  rest = d
+end
+EOF
+      g.should have_constant('a').with_value(1)
+      g.should have_constant('b').with_value(2)
+      g.should have_constant('c').with_value(nil)
+      g.should have_constant('rest').with_value([])
+    end
+  end
+  
   it 'should propagate when the same variable is assigned to the same constant in branches' do
     g = cfg_method <<-EOF
 def foo(x)

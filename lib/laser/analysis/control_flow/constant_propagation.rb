@@ -40,7 +40,6 @@ module Laser
                   blocklist.pop, visited, blocklist, worklist)
             end
           end
-          undo_unexecuted_instructions
           teardown_constant_propagation
           @constants = find_remaining_constants
         end
@@ -84,73 +83,6 @@ module Laser
           @_cp_fixed_methods = opts[:fixed_methods]
         end
 
-        # Some instructions will be considered by CP above despite 
-        def undo_unexecuted_instructions
-          visited = Set.new
-          worklist = Set.new
-          blocklist = Set.new  # since every block has already visited, this is useless.
-          dfs_for_unexecuted_blocks(@enter, visited, worklist)
-          while worklist.any?
-            constant_propagation_for_instruction(
-                worklist.pop, blocklist, worklist)
-          end
-        end
-        
-        def dfs_for_unexecuted_blocks(block, visited, worklist)
-          unless visited.include? block
-            visited << block
-            still_valid, unexecuted = block.successors.partition { |dest| block.is_executable?(dest) }
-            # if unexecuted.size > 0
-            #   # turn branch into jump
-            #   final_insn = block.instructions.last
-            #   if final_insn.type == :branch
-            #     old_target = final_insn[1]
-            #     @uses[old_target] -= ::Set[final_insn]
-            #     final_insn.replace([:jump, still_valid.first.name])
-            #   end
-            # end
-            unexecuted.each { |undo| undo_unexecuted_block(undo, visited, worklist) }
-            still_valid.each { |valid| dfs_for_unexecuted_blocks(valid, visited, worklist) }
-          end
-        end
-        
-        def undo_unexecuted_block(block, visited, worklist)
-          unless visited.include?(block)
-            visited << block
-            block.instructions.each do |insn|
-              insn.operands.each { |op| @uses[op] -= ::Set[insn] }
-              insn.explicit_targets.each do |target|
-                undo_target_assignment(target, worklist, true)
-              end
-            end
-            
-            # move un-executed-ness to the successors
-            block.successors.each do |succ|
-              block.remove_flag(succ, ControlFlowGraph::EDGE_EXECUTABLE)
-              if !succ.predecessors.any? { |pred| pred.is_executable?(succ) }
-                undo_unexecuted_block(succ, visited, worklist)
-              end
-            end
-          end
-        end
-        
-        # Undoes an assignment to an instruction, and propagates that change
-        # to the rest of the graph.
-        def undo_target_assignment(target, worklist, phi_only=false)
-          if target.value != UNDEFINED
-            target.bind!(UNDEFINED)
-            target.inferred_type = Types::TOP
-            # force re-evaluation of dependent instructions
-            @uses[target].each do |use_insn|
-              next unless use_insn.type == :phi if phi_only
-              worklist << use_insn
-              use_insn.explicit_targets.each do |use_target|
-                undo_target_assignment(use_target, worklist)
-              end
-            end
-          end
-        end
-
         def teardown_constant_propagation
           @cp_private_cells.clear
         end
@@ -188,6 +120,7 @@ module Laser
         private :constant_propagation_for_block
 
         def constant_propagation_for_instruction(instruction, blocklist, worklist)
+          return if instruction.type != :phi && instruction.block.executed_predecessors.empty?
           block = instruction.block
           case instruction.type
           when :branch
@@ -238,7 +171,7 @@ module Laser
         def constant_propagation_for_branch(instruction, blocklist)
           block = instruction.block
           executable_successors = case instruction[1].value
-                                  when VARYING then block.successors
+                                  when VARYING then block.real_successors
                                   when UNDEFINED then []
                                   when nil, false then [vertex_with_name(instruction[3])]
                                   else [vertex_with_name(instruction[2])]

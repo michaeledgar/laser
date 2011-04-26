@@ -59,6 +59,7 @@ module Laser
         ([self] + all_subtrees.to_a).each do |node|
           return node if yield(node)
         end
+        nil
       end
   
       def all_subtrees

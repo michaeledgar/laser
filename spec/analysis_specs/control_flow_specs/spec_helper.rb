@@ -50,13 +50,15 @@ RSpec::Matchers.define :have_constant do |name|
   end
   
   match do |graph|
-    key = graph.constants.keys.find { |var| var.non_ssa_name == name }
-    @constant = key
-    @value ||= nil
-    if @value
-      @constant && (@constant.value == @value)
-    else
-      @constant
+    graph.constants.keys.find do |var|
+      next unless var.non_ssa_name == name
+      @constant = var
+      @value ||= nil
+      if @value
+        @constant && (@constant.value == @value)
+      else
+        @constant
+      end
     end
   end
   

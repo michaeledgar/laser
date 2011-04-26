@@ -91,6 +91,22 @@ module Laser
           predecessors.select { |dest| dest.has_flag?(self, ::RGL::ControlFlowGraph::EDGE_ABNORMAL) }
         end
 
+        def executed_successors
+          successors.select { |dest| has_flag?(dest, ::RGL::ControlFlowGraph::EDGE_EXECUTABLE) }
+        end
+
+        def executed_predecessors
+          predecessors.select { |dest| dest.has_flag?(self, ::RGL::ControlFlowGraph::EDGE_EXECUTABLE) }
+        end
+
+        def unexecuted_successors
+          successors.reject { |dest| has_flag?(dest, ::RGL::ControlFlowGraph::EDGE_EXECUTABLE) }
+        end
+
+        def unexecuted_predecessors
+          predecessors.reject { |dest| dest.has_flag?(self, ::RGL::ControlFlowGraph::EDGE_EXECUTABLE) }
+        end
+
         # Removes all edges from this block.
         def clear_edges
           @successors.clear
