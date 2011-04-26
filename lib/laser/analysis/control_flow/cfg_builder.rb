@@ -1222,7 +1222,7 @@ module Laser
         # Expands a multiple-assignment as optimally as possible. Without any
         # splats, will expand to sequential assignments.
         def multiple_assign_instruct(lhs, rhs, opts={})
-          rhs_has_star = rhs.find_type(:mrhs_add_star)
+          rhs_has_star = rhs.find_type(:mrhs_add_star) || rhs.find_type(:args_add_star)
           # a, b = c, d, e
           if lhs.type != :mlhs_add_star && !rhs_has_star
             # a, b = c, d, e
@@ -1382,7 +1382,24 @@ module Laser
             end
           # a, b, c = 1, *foo
           elsif lhs.type != :mlhs_add_star && rhs_has_star
-            
+            # for building the final array
+            lhs_size = lhs.size
+            fixed, varying = compute_fixed_and_varying_rhs(rhs)
+            fixed[0...lhs_size].each_with_index do |val, idx|
+              single_assign_instruct(lhs[idx], val)
+            end
+            fixed_size = fixed.size
+            fixed_size.upto(lhs_size - 1) do |idx|
+              looked_up = call_instruct(varying, :[], const_instruct(idx - fixed_size), value: true, raise: false)
+              single_assign_instruct(lhs[idx], looked_up)
+            end
+            if fixed.empty?
+              result = varying
+            else
+              fixed_as_arr = call_instruct(ClassRegistry['Array'].binding, :[], *fixed, value: true, raise: false)
+              result = call_instruct(fixed_as_arr, :+, varying, value: true, raise: false)
+            end
+            result
           # a, *b, c = d, *e
           elsif lhs.type == :mlhs_add_star && rhs_has_star
             
@@ -1390,6 +1407,47 @@ module Laser
             raise ArgumentError.new("Unexpected :massign node:\n  " +
                                     "lhs = #{lhs.inspect}\n  rhs = #{rhs.inspect}")
           end
+        end
+        
+        # Computes the fixed portion of the RHS, and the varying portion of the
+        # RHS. The fixed portion will be an array of temporaries, the varying
+        # portion will be an array temporary.
+        def compute_fixed_and_varying_rhs(node)
+          case node[0]
+          when :mrhs_add_star, :args_add_star
+            pre_star, star = node[1], node[2]
+            post_star = node[3..-1]
+            # pre_star could have more stars!
+            fixed, varying = compute_fixed_and_varying_rhs(pre_star)
+            # varying had better be []
+            star_pre_conv = walk_node(star, value: true)
+            star_vals = rb_check_convert_type(star_pre_conv, ClassRegistry['Array'].binding, :to_a)
+            # if we had varying parts, then we append the star, otherwise, the star IS
+            # the varying part
+            if varying
+              varying = call_instruct(varying, :+, star_vals, value: true, raise: false)
+            else
+              varying = star_vals
+            end
+            # if we have a post-star section, append to varying
+            if post_star && !post_star.empty?
+              post_star_vals = build_array_instruct(post_star)
+              varying = call_instruct(varying, :+, post_star_vals, value: true, raise: false)
+            end
+          when :mrhs_new_from_args
+            # random spare node when mrhs is just used for fixed rhs
+            fixed, varying = compute_fixed_and_varying_rhs(node[1])
+            if node[2]
+              if varying.nil?
+              then fixed << walk_node(node[2], value: true)
+              else varying = call_instruct(varying, :+, build_array_instruct([node[2]]), value: true, raise: false)
+              end
+            end
+          when Sexp, NilClass
+            fixed = node.map { |val| walk_node(val, value: true) }
+            varying = nil
+          end
+          [fixed, varying]
         end
 
         def foreach_on_rhs(node, &blk)

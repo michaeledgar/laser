@@ -227,7 +227,11 @@ module Laser
         when Array
           @elements = wrap_as_rhs(@node)
         when :mrhs_new_from_args
-          @elements = [RHSExpression.new(@node[1]), RHSExpression.new(@node[2])]
+          if @node[2]
+            @elements = [RHSExpression.new(@node[1]), RHSExpression.new(@node[2])]
+          else
+            @elements = [RHSExpression.new(@node[1])]
+          end
         when :args_add_star, :mrhs_add_star
           @elements = [RHSExpression.new(@node[1]), StarRHSExpression.new(@node[2]), *wrap_as_rhs(@node[3..-1])]
         end

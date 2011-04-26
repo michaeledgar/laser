@@ -138,7 +138,6 @@ module Laser
           # kill obvious dead code now.
           perform_dead_code_discovery(true)
           static_single_assignment_form
-          
           perform_constant_propagation
           kill_unexecuted_edges
           prune_totally_useless_blocks

@@ -155,6 +155,22 @@ EOF
       g.should have_constant('rest').with_value([])
     end
   end
+
+  it 'should infer constants with an RHS star' do
+    g = cfg_method <<-EOF
+def foo(x)
+  a, b, c, d, e, f, g, h = *[2, 3, 4], :a, *[5], *['hi'], 9, 10
+end
+EOF
+    g.should have_constant('a').with_value(2)
+    g.should have_constant('b').with_value(3)
+    g.should have_constant('c').with_value(4)
+    g.should have_constant('d').with_value(:a)
+    g.should have_constant('e').with_value(5)
+    g.should have_constant('f').with_value('hi')
+    g.should have_constant('g').with_value(9)
+    g.should have_constant('h').with_value(10)
+  end
   
   it 'should propagate when the same variable is assigned to the same constant in branches' do
     g = cfg_method <<-EOF
