@@ -8,6 +8,7 @@ end
 # Dependencies
 require 'ripper'
 require 'treetop'
+require 'ripper-plus'
 $:.unshift(File.expand_path(File.dirname(__FILE__)))
 require 'laser/third_party/trollop'
 require 'laser/third_party/stream'

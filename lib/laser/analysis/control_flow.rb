@@ -9,3 +9,15 @@ require 'laser/analysis/control_flow/yield_properties'
 require 'laser/analysis/control_flow/raise_properties'
 require 'laser/analysis/control_flow/cfg_builder'
 require 'laser/analysis/control_flow/control_flow_graph'
+
+module Laser
+  module SexpAnalysis
+    module ControlFlow
+      def self.perform_cfg_analysis(tree, text)
+        graph = GraphBuilder.new(tree).build
+        graph.analyze
+        graph
+      end
+    end
+  end
+end

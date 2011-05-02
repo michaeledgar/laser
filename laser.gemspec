@@ -9,8 +9,7 @@ Gem::Specification.new do |s|
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Michael Edgar"]
-  s.date = %q{2011-03-27}
-  s.default_executable = %q{laser}
+  s.date = %q{2011-05-02}
   s.description = %q{Laser is an advanced static analysis tool for Ruby.}
   s.email = %q{michael.j.edgar@dartmouth.edu}
   s.executables = ["laser"]
@@ -59,7 +58,15 @@ Gem::Specification.new do |s|
     "lib/laser/analysis/control_flow.rb",
     "lib/laser/analysis/control_flow/basic_block.rb",
     "lib/laser/analysis/control_flow/cfg_builder.rb",
+    "lib/laser/analysis/control_flow/cfg_instruction.rb",
+    "lib/laser/analysis/control_flow/constant_propagation.rb",
     "lib/laser/analysis/control_flow/control_flow_graph.rb",
+    "lib/laser/analysis/control_flow/lifetime_analysis.rb",
+    "lib/laser/analysis/control_flow/raise_properties.rb",
+    "lib/laser/analysis/control_flow/static_single_assignment.rb",
+    "lib/laser/analysis/control_flow/unreachability_analysis.rb",
+    "lib/laser/analysis/control_flow/unused_variables.rb",
+    "lib/laser/analysis/control_flow/yield_properties.rb",
     "lib/laser/analysis/errors.rb",
     "lib/laser/analysis/laser_class.rb",
     "lib/laser/analysis/lexical_analysis.rb",
@@ -107,22 +114,29 @@ Gem::Specification.new do |s|
     "lib/laser/standard_library/exceptions.rb",
     "lib/laser/standard_library/fixnum.rb",
     "lib/laser/standard_library/float.rb",
+    "lib/laser/standard_library/hash.rb",
     "lib/laser/standard_library/integer.rb",
+    "lib/laser/standard_library/laser_magic.rb",
+    "lib/laser/standard_library/nil_false_true.rb",
     "lib/laser/standard_library/numbers.rb",
     "lib/laser/standard_library/set.rb",
     "lib/laser/standard_library/string.rb",
     "lib/laser/standard_library/stringio.rb",
     "lib/laser/standard_library/tsort.rb",
     "lib/laser/support/acts_as_struct.rb",
+    "lib/laser/support/frequency.rb",
     "lib/laser/support/inheritable_attributes.rb",
     "lib/laser/support/module_extensions.rb",
     "lib/laser/support/object_regex.rb",
+    "lib/laser/third_party/axiom_of_choice.rb",
     "lib/laser/third_party/rgl/adjacency.rb",
     "lib/laser/third_party/rgl/base.rb",
     "lib/laser/third_party/rgl/bidirectional.rb",
     "lib/laser/third_party/rgl/condensation.rb",
     "lib/laser/third_party/rgl/connected_components.rb",
+    "lib/laser/third_party/rgl/control_flow.rb",
     "lib/laser/third_party/rgl/depth_first_spanning_tree.rb",
+    "lib/laser/third_party/rgl/dominators.rb",
     "lib/laser/third_party/rgl/dot.rb",
     "lib/laser/third_party/rgl/graphxml.rb",
     "lib/laser/third_party/rgl/implicit.rb",
@@ -156,9 +170,14 @@ Gem::Specification.new do |s|
     "spec/analysis_specs/assignment_expression_spec.rb",
     "spec/analysis_specs/bindings_spec.rb",
     "spec/analysis_specs/comment_spec.rb",
-    "spec/analysis_specs/control_flow_specs/cfg_builder_spec.rb",
+    "spec/analysis_specs/control_flow_specs/cfg_instruction_spec.rb",
+    "spec/analysis_specs/control_flow_specs/constant_propagation_spec.rb",
     "spec/analysis_specs/control_flow_specs/control_flow_graph_spec.rb",
+    "spec/analysis_specs/control_flow_specs/raise_properties_spec.rb",
     "spec/analysis_specs/control_flow_specs/spec_helper.rb",
+    "spec/analysis_specs/control_flow_specs/unreachability_analysis_spec.rb",
+    "spec/analysis_specs/control_flow_specs/unused_variable_spec.rb",
+    "spec/analysis_specs/control_flow_specs/yield_properties_spec.rb",
     "spec/analysis_specs/error_spec.rb",
     "spec/analysis_specs/laser_class_spec.rb",
     "spec/analysis_specs/lexical_analysis_spec.rb",
@@ -192,6 +211,7 @@ Gem::Specification.new do |s|
     "spec/standard_library/spec_helper.rb",
     "spec/standard_library/standard_library_spec.rb",
     "spec/support_specs/acts_as_struct_spec.rb",
+    "spec/support_specs/frequency_spec.rb",
     "spec/support_specs/module_extensions_spec.rb",
     "spec/support_specs/spec_helper.rb",
     "spec/type_specs/spec_helper.rb",
@@ -298,7 +318,7 @@ Gem::Specification.new do |s|
   ]
   s.homepage = %q{http://github.com/michaeledgar/laser}
   s.require_paths = ["lib"]
-  s.rubygems_version = %q{1.6.1}
+  s.rubygems_version = %q{1.7.2}
   s.summary = %q{Analysis and linting tool for Ruby.}
   s.test_files = [
     "spec/analysis_specs/annotations_spec.rb",
@@ -310,9 +330,14 @@ Gem::Specification.new do |s|
     "spec/analysis_specs/assignment_expression_spec.rb",
     "spec/analysis_specs/bindings_spec.rb",
     "spec/analysis_specs/comment_spec.rb",
-    "spec/analysis_specs/control_flow_specs/cfg_builder_spec.rb",
+    "spec/analysis_specs/control_flow_specs/cfg_instruction_spec.rb",
+    "spec/analysis_specs/control_flow_specs/constant_propagation_spec.rb",
     "spec/analysis_specs/control_flow_specs/control_flow_graph_spec.rb",
+    "spec/analysis_specs/control_flow_specs/raise_properties_spec.rb",
     "spec/analysis_specs/control_flow_specs/spec_helper.rb",
+    "spec/analysis_specs/control_flow_specs/unreachability_analysis_spec.rb",
+    "spec/analysis_specs/control_flow_specs/unused_variable_spec.rb",
+    "spec/analysis_specs/control_flow_specs/yield_properties_spec.rb",
     "spec/analysis_specs/error_spec.rb",
     "spec/analysis_specs/laser_class_spec.rb",
     "spec/analysis_specs/lexical_analysis_spec.rb",
@@ -346,6 +371,7 @@ Gem::Specification.new do |s|
     "spec/standard_library/spec_helper.rb",
     "spec/standard_library/standard_library_spec.rb",
     "spec/support_specs/acts_as_struct_spec.rb",
+    "spec/support_specs/frequency_spec.rb",
     "spec/support_specs/module_extensions_spec.rb",
     "spec/support_specs/spec_helper.rb",
     "spec/type_specs/spec_helper.rb",
@@ -416,7 +442,24 @@ Gem::Specification.new do |s|
       s.add_development_dependency(%q<simplecov-gem-adapter>, [">= 1.0.0"])
       s.add_development_dependency(%q<guard>, [">= 0"])
       s.add_development_dependency(%q<guard-rspec>, [">= 0"])
+      s.add_development_dependency(%q<rspec>, ["~> 2.3"])
+      s.add_development_dependency(%q<yard>, [">= 0"])
+      s.add_development_dependency(%q<cucumber>, [">= 0.10.0"])
+      s.add_development_dependency(%q<metric_fu>, [">= 2.0.1"])
+      s.add_development_dependency(%q<simplecov>, [">= 0.3.9"])
+      s.add_development_dependency(%q<simplecov-gem-adapter>, [">= 1.0.0"])
+      s.add_development_dependency(%q<guard>, [">= 0"])
+      s.add_development_dependency(%q<guard-rspec>, [">= 0"])
+      s.add_development_dependency(%q<rspec>, ["~> 2.3"])
+      s.add_development_dependency(%q<yard>, [">= 0"])
+      s.add_development_dependency(%q<cucumber>, [">= 0.10.0"])
+      s.add_development_dependency(%q<metric_fu>, [">= 2.0.1"])
+      s.add_development_dependency(%q<simplecov>, [">= 0.3.9"])
+      s.add_development_dependency(%q<simplecov-gem-adapter>, [">= 1.0.0"])
+      s.add_development_dependency(%q<guard>, [">= 0"])
+      s.add_development_dependency(%q<guard-rspec>, [">= 0"])
       s.add_runtime_dependency(%q<treetop>, ["~> 1.4"])
+      s.add_runtime_dependency(%q<ripper-plus>, [">= 1.1.0.pre2"])
       s.add_development_dependency(%q<rspec>, ["~> 2.3"])
       s.add_development_dependency(%q<yard>, [">= 0"])
       s.add_development_dependency(%q<cucumber>, [">= 0.10.0"])
@@ -457,7 +500,24 @@ Gem::Specification.new do |s|
       s.add_dependency(%q<simplecov-gem-adapter>, [">= 1.0.0"])
       s.add_dependency(%q<guard>, [">= 0"])
       s.add_dependency(%q<guard-rspec>, [">= 0"])
+      s.add_dependency(%q<rspec>, ["~> 2.3"])
+      s.add_dependency(%q<yard>, [">= 0"])
+      s.add_dependency(%q<cucumber>, [">= 0.10.0"])
+      s.add_dependency(%q<metric_fu>, [">= 2.0.1"])
+      s.add_dependency(%q<simplecov>, [">= 0.3.9"])
+      s.add_dependency(%q<simplecov-gem-adapter>, [">= 1.0.0"])
+      s.add_dependency(%q<guard>, [">= 0"])
+      s.add_dependency(%q<guard-rspec>, [">= 0"])
+      s.add_dependency(%q<rspec>, ["~> 2.3"])
+      s.add_dependency(%q<yard>, [">= 0"])
+      s.add_dependency(%q<cucumber>, [">= 0.10.0"])
+      s.add_dependency(%q<metric_fu>, [">= 2.0.1"])
+      s.add_dependency(%q<simplecov>, [">= 0.3.9"])
+      s.add_dependency(%q<simplecov-gem-adapter>, [">= 1.0.0"])
+      s.add_dependency(%q<guard>, [">= 0"])
+      s.add_dependency(%q<guard-rspec>, [">= 0"])
       s.add_dependency(%q<treetop>, ["~> 1.4"])
+      s.add_dependency(%q<ripper-plus>, [">= 1.1.0.pre2"])
       s.add_dependency(%q<rspec>, ["~> 2.3"])
       s.add_dependency(%q<yard>, [">= 0"])
       s.add_dependency(%q<cucumber>, [">= 0.10.0"])
@@ -499,7 +559,24 @@ Gem::Specification.new do |s|
     s.add_dependency(%q<simplecov-gem-adapter>, [">= 1.0.0"])
     s.add_dependency(%q<guard>, [">= 0"])
     s.add_dependency(%q<guard-rspec>, [">= 0"])
+    s.add_dependency(%q<rspec>, ["~> 2.3"])
+    s.add_dependency(%q<yard>, [">= 0"])
+    s.add_dependency(%q<cucumber>, [">= 0.10.0"])
+    s.add_dependency(%q<metric_fu>, [">= 2.0.1"])
+    s.add_dependency(%q<simplecov>, [">= 0.3.9"])
+    s.add_dependency(%q<simplecov-gem-adapter>, [">= 1.0.0"])
+    s.add_dependency(%q<guard>, [">= 0"])
+    s.add_dependency(%q<guard-rspec>, [">= 0"])
+    s.add_dependency(%q<rspec>, ["~> 2.3"])
+    s.add_dependency(%q<yard>, [">= 0"])
+    s.add_dependency(%q<cucumber>, [">= 0.10.0"])
+    s.add_dependency(%q<metric_fu>, [">= 2.0.1"])
+    s.add_dependency(%q<simplecov>, [">= 0.3.9"])
+    s.add_dependency(%q<simplecov-gem-adapter>, [">= 1.0.0"])
+    s.add_dependency(%q<guard>, [">= 0"])
+    s.add_dependency(%q<guard-rspec>, [">= 0"])
     s.add_dependency(%q<treetop>, ["~> 1.4"])
+    s.add_dependency(%q<ripper-plus>, [">= 1.1.0.pre2"])
     s.add_dependency(%q<rspec>, ["~> 2.3"])
     s.add_dependency(%q<yard>, [">= 0"])
     s.add_dependency(%q<cucumber>, [">= 0.10.0"])
