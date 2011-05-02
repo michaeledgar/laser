@@ -7,10 +7,11 @@ module Laser
         attr_reader :graph, :enter, :exit, :temporary_counter, :current_block, :sexp
         attr_reader :self_register
         
-        def initialize(sexp, formals=[])
+        def initialize(sexp, formals=[], scope=Scope::GlobalScope)
           @sexp = sexp
           @formals = formals
           @graph = @enter = @exit = nil
+          @scope_stack = [scope]
           @temporary_counter = 0
           @temporary_table = Hash.new do |hash, keys|
             @temporary_counter += 1
@@ -24,7 +25,7 @@ module Laser
           @self_stack = []
           @current_return = @exit
           @current_node = @sexp
-          @self_register = Bindings::TemporaryBinding.new('self', nil)
+          @self_register = Bindings::TemporaryBinding.new('self', current_scope.self_ptr)
           build_formal_args
           result = walk_node @sexp, value: true
           if @sexp.type == :program
@@ -54,6 +55,25 @@ module Laser
           yield
         ensure
           pop_namespace
+        end
+        
+        def push_scope(scope)
+          @scope_stack.push scope
+        end
+
+        def current_scope
+          @scope_stack.last
+        end
+
+        def pop_scope
+          @scope_stack.pop
+        end
+        
+        def with_scope(scope)
+          push_scope scope
+          yield
+        ensure
+          pop_scope
         end
         
         def push_self(obj)
@@ -88,13 +108,7 @@ module Laser
           copy_instruct(Scope::GlobalScope.lookup('$!'), cur_exception)
         end
 
-        def build_formal_args
-          uncond_instruct create_block
-          if @sexp.type == :program
-            push_self(Scope::GlobalScope.self_ptr)
-          else
-            push_self(query_self)
-          end
+        def build_exception_blocks
           @final_exception = create_temporary('t#exit_exception')
           @current_rescue = create_block(ControlFlowGraph::EXCEPTION_POSTDOMINATOR_NAME)
           @current_yield_fail = create_block(ControlFlowGraph::YIELD_POSTDOMINATOR_NAME)
@@ -109,8 +123,19 @@ module Laser
             copy_instruct(@final_exception, Scope::GlobalScope.lookup('$!'))
             uncond_instruct @exit, flags: RGL::ControlFlowGraph::EDGE_ABNORMAL
           end
-          
+        end
+
+        def build_formal_args
+          uncond_instruct create_block
+          if @sexp.type == :program
+            push_self(Scope::GlobalScope.self_ptr)
+          else
+            push_self(query_self)
+          end
+          build_exception_blocks
           if @sexp.type != :program
+            push_scope(Scope::ClosedScope.new(current_scope, current_self))
+            @formals.each { |formal| current_scope.add_binding!(formal) }
             @block_arg = call_instruct(ClassRegistry['Laser#Magic'].binding,
                 :current_block, value: true, raise: false)
             @block_arg.name = 't#current_block'
@@ -182,6 +207,7 @@ module Laser
         
         def with_current_node(node)
           old_node, @current_node = @current_node, node
+          @current_node.scope = current_scope
           yield
         ensure
           @current_node = old_node
@@ -393,7 +419,7 @@ module Laser
               # TODO(adgar): aref_field
               else
                 result = binary_instruct(lhs, op, rhs, value: true)
-                copy_instruct(lhs.binding, result)
+                single_assign_instruct(lhs, result)
               end
             when :case
               after = create_block
@@ -426,8 +452,6 @@ module Laser
                 ident = const_instruct(node.expanded_identifier)
                 call_instruct(current_namespace,
                     :const_get, ident, value: false)
-              elsif node.binding.nil? && node[1].type != :@kw
-                call_instruct(self_register, node.expanded_identifier, value: false, ignore_privacy: true)
               end
             when :for
               lhs, receiver, body = node.children
@@ -536,7 +560,7 @@ module Laser
               # TODO(adgar): aref_field
               else
                 result = binary_instruct(lhs, op, rhs, value: true)
-                copy_instruct(lhs.binding, result)
+                single_assign_instruct(lhs, result)
                 result
               end
             when :var_field
@@ -546,12 +570,10 @@ module Laser
                 ident = const_instruct(node.expanded_identifier)
                 call_instruct(current_namespace,
                     :const_get, ident, value: true, ignore_privacy: true)
-              elsif node.binding
+              elsif node[1].type == :@ident || node[1].expanded_identifier == 'self'
                 variable_instruct(node)
               elsif node[1].type == :@kw
                 const_instruct(node.constant_value.raw_object)
-              else
-                issue_call node, value: true
               end
             when :top_const_ref
               const = node[1]
@@ -1110,11 +1132,15 @@ module Laser
         def singleton_class_instruct(receiver, body, opts={value: false})
           receiver_val = walk_node receiver, value: true
 
-          is_fixnum, has_singleton = create_blocks 2
+          maybe_symbol, no_singleton, has_singleton = create_blocks 2
           cond_result = call_instruct(ClassRegistry['Fixnum'].binding, :===, receiver_val, value: true)
-          cond_instruct(cond_result, is_fixnum, has_singleton)
+          cond_instruct(cond_result, no_singleton, maybe_symbol)
 
-          start_block is_fixnum
+          start_block maybe_symbol
+          cond_result = call_instruct(ClassRegistry['Symbol'].binding, :===, receiver_val, value: true)
+          cond_instruct(cond_result, no_singleton, has_singleton)
+          
+          start_block no_singleton
           raise_instance_of_instruct ClassRegistry['TypeError'].binding
 
           start_block has_singleton
@@ -1204,7 +1230,8 @@ module Laser
               rhs_val = walk_node rhs, value: true
             end
             
-            lhs.binding = lhs.scope.lookup(lhs.expanded_identifier) unless lhs.binding
+            var_name = lhs.expanded_identifier
+            lhs.binding = current_scope.lookup_or_create_local(var_name)
             copy_instruct lhs.binding, rhs_val
             rhs_val
           end
@@ -1711,9 +1738,9 @@ module Laser
         # Looks up the value of a variable and assigns it to a new temporary
         def variable_instruct(var_ref)
           return self_register if var_ref.expanded_identifier == 'self'
-          result = lookup_or_create_temporary(:var, var_ref.binding)
-          var_ref = var_ref.binding unless Bindings::GenericBinding === var_ref
-          copy_instruct result, var_ref
+          binding = current_scope.lookup_or_create_local(var_ref.expanded_identifier)
+          result = lookup_or_create_temporary(:var, binding)
+          copy_instruct result, binding
           result
         end
         

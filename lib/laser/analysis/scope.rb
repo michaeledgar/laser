@@ -49,6 +49,14 @@ module Laser
         self_ptr.path
       end
 
+      def lookup_or_create_local(var_name)
+        lookup_local(var_name)
+      rescue ScopeLookupFailure
+        binding = Bindings::LocalVariableBinding.new(var_name, nil)
+        add_binding!(binding)
+        binding
+      end
+
       # Proper variable lookup. The old ones were hacks.
       def lookup(str)
         if str[0,2] == '::'

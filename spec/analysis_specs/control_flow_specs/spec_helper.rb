@@ -85,20 +85,25 @@ end
 
 
 include Laser::SexpAnalysis
-def annotate_all(body)
-  Annotations.annotate_inputs([['(stdin)', body]]).first[1]
+def annotate_all_cfg(body)
+  inputs = [['(stdin)', body]]
+  inputs.map! do |filename, text|
+    [filename, text, Sexp.new(RipperPlus.sexp(text), filename, text)]
+  end
+  Annotations.apply_inherited_attributes(inputs)
+  inputs[0][2]
 end
 def cfg(input)
-  cfg_builder = ControlFlow::GraphBuilder.new(annotate_all(input))
+  cfg_builder = ControlFlow::GraphBuilder.new(annotate_all_cfg(input))
   graph = cfg_builder.build
   graph.analyze
   graph
 end
 def cfg_method(input)
-  method_tree = annotate_all(input)
+  method_tree = annotate_all_cfg(input)
   body = method_tree.find_type(:bodystmt)
   cfg_builder = ControlFlow::GraphBuilder.new(
-      body, body.scope.method.signatures.first.arguments)
+      body, Signature.arg_list_for_arglist(body.prev))
   graph = cfg_builder.build
   graph.analyze
   graph

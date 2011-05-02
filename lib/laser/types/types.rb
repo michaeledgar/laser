@@ -102,7 +102,12 @@ module Laser
         {class_name: class_name, variance: variance}
       end
     end
+
     TOP = ClassType.new('BasicObject', :covariant)
+    STRING = ClassType.new('String', :invariant)
+    FIXNUM = ClassType.new('Fixnum', :invariant)
+    ARRAY = ClassType.new('Array', :invariant)
+    HASH = ClassType.new('Hash', :invariant)
 
     class GenericType < Base
       acts_as_struct :base_type, :subtypes

@@ -59,6 +59,7 @@ else
 end
 end
 EOF
+    g.dotty
     g.yield_type.should be :optional
   end
   
