@@ -7,7 +7,7 @@ class Laser::SexpErrorWarning < Laser::FileWarning
   setting_accessor :error
 
   def line_number
-    ast_node.line_number
+    error.ast_node.line_number
   end
   
   def severity

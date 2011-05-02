@@ -139,7 +139,7 @@ module Laser
       end
       
       def is_method_call?
-        [:command, :method_add_arg, :method_add_block, :var_ref, :call,
+        [:command, :method_add_arg, :method_add_block, :zcall, :var_ref, :call,
          :fcall, :command_call, :binary, :unary, :super, :zsuper, :aref].include?(type) &&
             !(type == :var_ref && (binding || self[1].type == :@kw))
       end

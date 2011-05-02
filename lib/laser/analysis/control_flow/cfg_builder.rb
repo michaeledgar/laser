@@ -269,15 +269,7 @@ module Laser
               lhs_value = walk_node lhs, value: true
               ident = const_instruct(const.expanded_identifier)
               call_instruct(lhs_value, :const_get, ident, opts)
-            when :call
-              issue_call node, opts
-            when :command
-              issue_call node, opts
-            when :command_call
-              issue_call node, opts
-            when :aref
-              issue_call node, opts
-            when :method_add_arg
+            when :call, :command, :command_call, :aref, :method_add_arg, :zcall
               issue_call node, opts
             when :method_add_block
               # need: the receiver, the method name, the arguments, and the block body

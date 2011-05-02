@@ -144,7 +144,7 @@ describe Sexp do
          tree = annotate_all(input)
          tree.all_errors.should be_empty
 
-         foobar_call = tree.deep_find { |node| node.type == :var_ref && node.expanded_identifier == 'foobar' }
+         foobar_call = tree.deep_find { |node| node.type == :zcall }
          foobar_call.should_not be_nil
          foobar_call.method_estimate.should == [ClassRegistry['A700'].instance_methods['foobar']]
        end
@@ -152,7 +152,7 @@ describe Sexp do
        it 'should raise an error when there is no method to resolve to' do
          input = 'class A701; def printall(x); foobar; end; def foobaz(); end; end'
          tree = annotate_all(input)
-         tree.deep_find { |node| node.type == :var_ref && node.expanded_identifier == 'foobar' }.
+         tree.deep_find { |node| node.type == :zcall }.
               method_estimate.should == []
          tree.all_errors.should_not be_empty
          tree.all_errors.size.should == 1
@@ -166,8 +166,7 @@ describe Sexp do
          tree = annotate_all(input)
          tree.all_errors.should be_empty
 
-         foobar_call = tree.deep_find { |node| node.type == :var_ref && node.binding.nil? &&
-                                               node.expanded_identifier == 'foobar' }
+         foobar_call = tree.deep_find { |node| node.type == :zcall }
          foobar_call.should_not be_nil
          foobar_call.method_estimate.should ==
              [ClassRegistry['A702'].instance_methods['foobar'],
@@ -179,8 +178,7 @@ describe Sexp do
        it 'should throw an error if an implementation is found, but has mismatched arity' do
          input = 'class A706; def printall(x); foobar; end; def foobar(x, y=x); end; end'
          tree = annotate_all(input)
-         foobar_call = tree.deep_find { |node| node.type == :var_ref && node.binding.nil? &&
-                                               node.expanded_identifier == 'foobar' }
+         foobar_call = tree.deep_find { |node| node.type == :zcall }
          foobar_call.method_estimate.should == []
          tree.all_errors.should_not be_empty
          tree.all_errors.size.should == 1
@@ -225,7 +223,7 @@ describe Sexp do
        end
 
        it 'should raise an error if the method cannot be found on any type' do
-         input = 'x.hiybbprqag(2,3)'
+         input = 'gets().hiybbprqag(2,3)'
          tree = annotate_all(input)
          tree.deep_find { |node| node.type == :call }.method_estimate.should == []
          tree.all_errors.should_not be_empty

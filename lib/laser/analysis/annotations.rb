@@ -9,7 +9,7 @@ module Laser
       # Performs full analysis on the given inputs.
       def self.annotate_inputs(inputs)
         inputs.map! do |filename, text|
-          [filename, text, Sexp.new(Ripper.sexp(text), filename, text)]
+          [filename, text, Sexp.new(RipperPlus.sexp(text), filename, text)]
         end
         apply_inherited_attributes(inputs)
         perform_load_time_analysis(inputs)

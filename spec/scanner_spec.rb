@@ -11,44 +11,44 @@ describe Scanner do
 
   describe '#scan' do
     it 'takes an input and gathers warnings about it' do
-      warnings = @scanner.scan('a + b ', '(stdin)')
+      warnings = @scanner.scan('1 + 2 ', '(stdin)')
       warnings.size.should == 1
       warnings[0].should be_a(ExtraWhitespaceWarning)
     end
 
     it "ignores warnings specified in the line's comments by class name" do
-      warnings = @scanner.scan('1 +b  # laser: ignore OperatorSpacing')
+      warnings = @scanner.scan('1 +2  # laser: ignore OperatorSpacing')
       warnings.size.should == 0
     end
 
     it "ignores warnings specified in the line's comments by short name" do
-      warnings = @scanner.scan("1 +b  # laser: ignore #{OperatorSpacing.short_name}")
+      warnings = @scanner.scan("1 +2  # laser: ignore #{OperatorSpacing.short_name}")
       warnings.size.should == 0
     end
 
     it "ignores multiple warnings that are marked in the line's comments" do
       warnings = @scanner.scan(
-          '1 +b; c + d  # laser: ignore OperatorSpacing SemicolonWarning')
+          '1 +2; 3 + 4  # laser: ignore OperatorSpacing SemicolonWarning')
       warnings.size.should == 0
     end
 
     it "ignores multiple warnings in the line's comments as short name" do
       warnings = @scanner.scan(
-          "1 +b; c + d  # laser: ignore #{OperatorSpacing.short_name} #{SemicolonWarning.short_name}")
+          "1 +2; 3 + 4  # laser: ignore #{OperatorSpacing.short_name} #{SemicolonWarning.short_name}")
       warnings.size.should == 0
     end
 
     it 'fixes the input and writes it to :output_file' do
-      warnings = @fix_scanner.scan('a + b ', '(stdin)')
+      warnings = @fix_scanner.scan('1 + 2 ', '(stdin)')
       warnings.size.should == 1
       warnings[0].should be_a(ExtraWhitespaceWarning)
-      @fix_scanner_stdout.string.should == "a + b"
+      @fix_scanner_stdout.string.should == "1 + 2"
     end
 
     it 'fixes multiple errors on one line' do
-      warnings = @fix_scanner.scan('1 +b ', '(stdin)')
+      warnings = @fix_scanner.scan('1 +2 ', '(stdin)')
       warnings.size.should == 2
-      @fix_scanner_stdout.string.should == "1 + b"
+      @fix_scanner_stdout.string.should == "1 + 2"
     end
 
     it 'fixes multiline inputs' do
