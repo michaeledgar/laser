@@ -112,7 +112,7 @@ module Laser
         superclass = extract_superclass(superclass_node, new_class_name)
 
         new_scope = lookup_or_create_class(temp_cur_scope, new_class_name, superclass, node)
-        if new_scope.self_ptr.klass != ClassRegistry['Class']
+        unless new_scope.self_ptr.klass.ancestors.include?(ClassRegistry['Class'])
           node.errors << ReopenedModuleAsClassError.new("Opened module #{new_scope.self_ptr.name} as a class.", node)
         end
         with_visibility(:public) do
@@ -172,7 +172,8 @@ module Laser
           end
           new_scope
         end
-        if result.self_ptr.klass == ClassRegistry['Class'] && superclass != result.self_ptr.superclass
+        if result.self_ptr.klass.ancestors.include?(ClassRegistry['Class']) &&
+           superclass != result.self_ptr.superclass
           super_path = result.self_ptr.superclass ? result.self_ptr.superclass.path : 'nil'
           new_super_path = superclass ? superclass.path : 'nil'
           raise SuperclassMismatchError.new(
@@ -358,10 +359,13 @@ module Laser
         Hash[new_signature.arguments.map { |arg| [arg.name, arg] }]
       end
       
+      BOOLEAN_ANNOTATIONS = %w(special pure builtin predictable mutation)
       def annotate_method(new_method, node)
         if node.comment && (annotations = node.comment.annotation_map)
-          if annotations['pure'].any?
-            annotations['pure'].each { |note| new_method.pure = note.literal if note.literal? }
+          BOOLEAN_ANNOTATIONS.each do |note_name|
+            annotations[note_name].each do |note|
+              new_method.send("#{note_name}=", note.literal) if note.literal?
+            end
           end
           if annotations['raises'].any?
             literals, types = annotations['raises'].partition { |x| x.literal? }

@@ -12,6 +12,7 @@ module Laser
         include UnreachabilityAnalysis
         include YieldProperties
         include RaiseProperties
+        include Simulation
         
         YIELD_POSTDOMINATOR_NAME = 'YieldWithoutBlock'
         EXCEPTION_POSTDOMINATOR_NAME = 'UncaughtException'
@@ -138,7 +139,11 @@ module Laser
           # kill obvious dead code now.
           perform_dead_code_discovery(true)
           static_single_assignment_form
-          perform_constant_propagation
+          if @root.type == :program
+            simulate([], :mutation => true)
+          else
+            perform_constant_propagation
+          end
           kill_unexecuted_edges
           prune_totally_useless_blocks
           perform_dead_code_discovery
@@ -157,6 +162,10 @@ module Laser
         # Returns the names of all variables in the graph
         def all_variables
           vertices.map(&:variables).inject(:|)
+        end
+        
+        def var_named(name)
+          all_variables.find { |x| x.name.start_with?(name) }
         end
 
         def yield_fail_postdominator

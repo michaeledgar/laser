@@ -1,26 +1,26 @@
 module Laser
   module SexpAnalysis
     module ControlFlow
+      class PlaceholderObject
+        def initialize(name)
+          @name = name
+        end
+        def inspect
+          @name
+        end
+        alias_method :to_s, :inspect
+      end
+      UNDEFINED = PlaceholderObject.new('UNDEFINED')
+      VARYING = PlaceholderObject.new('VARYING')
+      INAPPLICABLE = PlaceholderObject.new('INAPPLICABLE')
+      RAISED = PlaceholderObject.new('RAISED')
+
       # Sparse Conditional Constant Propagation: Wegman and Zadeck
       # Love those IBMers
       # Using Morgan's implementation though.
       module ConstantPropagation
         attr_reader :constants
 
-        class PlaceholderObject
-          def initialize(name)
-            @name = name
-          end
-          def inspect
-            @name
-          end
-          alias_method :to_s, :inspect
-        end
-
-        UNDEFINED = PlaceholderObject.new('UNDEFINED')
-        VARYING = PlaceholderObject.new('VARYING')
-        INAPPLICABLE = PlaceholderObject.new('INAPPLICABLE')
-        RAISED = PlaceholderObject.new('RAISED')
         # Only public method: mutably turns the CFG into a constant-propagated
         # one. Each binding will have a value assigned to it afterward: either
         # the constant, as a Ruby object (or a proxy to one), UNDEFINED, or VARYING.

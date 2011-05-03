@@ -108,6 +108,7 @@ module Laser
         @instance_methods = {}
         @instance_variables = {}
         @visibility_table = {}
+        @constant_table = {}
         @scope = scope
         @methods = {}
         @superclass ||= nil
@@ -248,24 +249,6 @@ module Laser
         ancestors.select { |mod| LaserModuleCopy === mod }
       end
       
-      def const_get(constant, inherit=true)
-        if inherit
-          scope.lookup(constant)
-        else
-          constants[constant] or raise ScopeLookupFailure.new(self.scope, constant)
-        end
-      end
-      
-      def const_defined?(constant, inherit=true)
-        if inherit
-          scope.lookup(constant)
-        else
-          constants[constant]
-        end
-      rescue
-        false
-      end
-      
       # Directly translated from MRI's C implementation in class.c:650
       def include_module(mod)
         if mod.klass == ClassRegistry['Class']
@@ -311,6 +294,29 @@ module Laser
       def inspect
         "#<LaserModule: #{path}>"
       end
+      
+      # simulation methods
+      def const_set(string, value)
+        @constant_table[string] = value
+      end
+      
+      def const_get(constant, inherit=true)
+        if inherit && @superclass
+          @constant_table[constant] || @superclass.const_get(constant, true)
+        else
+          @constant_table[constant] or raise ArgumentError.new("Class #{@full_path} has no constant #{constant}")
+        end
+      end
+      
+      def const_defined?(constant, inherit=true)
+        if inherit && @superclass
+          !!(@constant_table[constant] || @superclass.const_defined?(constant, inherit))
+        else
+          !!@constant_table[constant]
+        end
+      rescue
+        false
+      end
     end
 
     # Laser representation of a class. I named it LaserClass so it wouldn't
@@ -340,6 +346,7 @@ module Laser
             new_singleton_class.superclass = ClassRegistry['Class']
           end 
         end
+        @klass = @singleton_class
       end
       
       # Adds a subclass.
@@ -493,7 +500,11 @@ module Laser
       extend ModuleExtensions
       attr_reader :name
       attr_accessor :body_ast, :owner, :signatures, :arity
+      attr_accessor_with_default :special, false
+      attr_accessor_with_default :builtin, false
+      attr_accessor_with_default :mutation, false
       attr_accessor_with_default :pure, false
+      attr_accessor_with_default :predictable, true
       attr_accessor_with_default :raises, []
       attr_accessor_with_default :raise_type, Frequency::MAYBE
 

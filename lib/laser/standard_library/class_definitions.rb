@@ -1,10 +1,18 @@
 class Class
+  # special: true
+  # pure: true
+  def self.new(superklass=Object)
+  end
   def new(*args)
     result = allocate
     result.initialize(*args)
     result
   end
   def allocate
+  end
+  # pure: true
+  # builtin: true
+  def superclass
   end
 end
 class String
@@ -26,38 +34,59 @@ $/ = "\n"
 ENV = {"RUBY_VERSION"=>"ruby-1.9.2-p136"}
 
 class << self
+  # special: true
   def private(*args)
   end
+  # special: true
   def public(*args)
   end
 end
 class Module
   # pure: true
   # raises: never
+  # builtin: true
   def name
   end
   # pure: true
   # raises: never
+  # builtin: true
+  # special: true
   def ===(other)
   end
+    # builtin: true
+  # mutation: true
   def define_method(name, body=nil)
   end
+  # builtin: true
+  # mutation: true
   def const_set(sym, val)
   end
+  # builtin: true
   def const_defined?(sym, inherit=true)
   end
+  # builtin: true
   def const_get(sym, inherit=true)
   end
+  # builtin: true
+  # special: true
   def private(*args)
   end
   private :private
  private
+  # special: true
+  # mutation: true
   def include(*mods)
   end
+  # special: true
+  # mutation: true
   def extend(*mods)
   end
+  # special: true
+  # mutation: true
   def public(*args)
   end
+  # special: true
+  # mutation: true
   def protected(*args)
   end
   def attr_reader(sym, *syms)
@@ -66,12 +95,20 @@ class Module
   end
   def attr_accessor(sym, *syms)
   end
+  # special: true
+  # mutation: true
   def module_function(*args)
   end
+  # special: true
+  # mutation: true
   def alias_method(to, from)
   end
 end
 module Kernel
+  # pure: true
+  # builtin: true
+  def eql?(other)
+  end
   # pure: true
   # raises: never
   def singleton_class
@@ -84,7 +121,22 @@ module Kernel
   # raises: never
   def inspect
   end
+  # special: true
+  # raises: never
+  def instance_variable_get(name)
+  end
+  # special: true
+  # raises: never
+  def instance_variable_defined?(name)
+  end
+  # special: true
+  # raises: never
+  # mutation: true
+  def instance_variable_set(name, val)
+  end
  private
+  # special: true
+  # predictable: maybe
   def require(path)
   end
   # raises: never
@@ -97,6 +149,7 @@ module Kernel
   # raises: always
   def raise(msg_or_instance=nil, message='', callback=caller)
   end
+  # predictable: false
   def gets(opt_arg_1 = :__unset__, opt_arg_2 = :__unset__)
   end
   def puts(*to_put)
@@ -158,6 +211,7 @@ class Struct
 end
 
 class IO
+  # predictable: false
   def read(len=nil)
   end
 end
@@ -180,6 +234,7 @@ class Time
   class << self
     alias mktime local
   end
+  # predictable: false
   def self.now
     new
   end

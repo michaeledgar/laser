@@ -1041,19 +1041,19 @@ module Laser
             copy_instruct(superclass_val, ClassRegistry['Object'])
           end
           
-          already_exists = call_instruct(receiver_val, :const_defined?, actual_name, value: true, raise: false)
+          already_exists = call_instruct(receiver_val, :const_defined?, actual_name, const_instruct(false), value: true, raise: false)
           if_exists_block, if_noexists_block, after_exists_check = create_blocks 3
           cond_instruct(already_exists, if_exists_block, if_noexists_block)
           
           start_block if_exists_block
-          the_class = call_instruct(receiver_val, :const_get, actual_name, value: true, raise: false)
+          the_class = call_instruct(receiver_val, :const_get, actual_name, const_instruct(false), value: true, raise: false)
           copy_instruct(the_class_holder, the_class)
           # check if it's actually a module
           is_module_block, after_conflict_check = create_blocks 2
-          is_module_cond_val = call_instruct(ClassRegistry['Module'].binding, :===, the_class, value: true, raise: false)
-          cond_instruct(is_module_cond_val, is_module_block, after_conflict_check)
+          is_class_cond_val = call_instruct(ClassRegistry['Class'].binding, :===, the_class, value: true, raise: false)
+          cond_instruct(is_class_cond_val, after_conflict_check, is_module_block)
           
-          # Unconditionally raise if it is a module! The error is a TypeError
+          # Unconditionally raise if it is not a class! The error is a TypeError
           start_block is_module_block
           raise_instance_of_instruct ClassRegistry['TypeError'].binding
           
@@ -1078,6 +1078,7 @@ module Laser
           
           start_block after_is_class_check
           the_class = call_instruct(ClassRegistry['Class'].binding, :new, superclass_val, value: true, raise: false)
+          call_instruct(current_namespace, :const_set, actual_name, the_class, value: false, raise: false)
           copy_instruct(the_class_holder, the_class)
           uncond_instruct after_exists_check
 
@@ -1101,12 +1102,12 @@ module Laser
             actual_name = const_instruct(module_name[2].expanded_identifier)
           end
 
-          already_exists = call_instruct(receiver_val, :const_defined?, actual_name, value: true, raise: false)
+          already_exists = call_instruct(receiver_val, :const_defined?, actual_name, const_instruct(false), value: true, raise: false)
           if_exists_block, if_noexists_block, after_exists_check = create_blocks 3
           cond_instruct(already_exists, if_exists_block, if_noexists_block)
 
           start_block if_exists_block
-          the_module = call_instruct(receiver_val, :const_get, actual_name, value: true, raise: false)
+          the_module = call_instruct(receiver_val, :const_get, actual_name, const_instruct(false), value: true, raise: false)
           copy_instruct(the_module_holder, the_module)
           # check if it's actually a class
           is_class_block, after_conflict_check = create_blocks 2
@@ -1231,8 +1232,12 @@ module Laser
             end
             
             var_name = lhs.expanded_identifier
-            lhs.binding = current_scope.lookup_or_create_local(var_name)
-            copy_instruct lhs.binding, rhs_val
+            if lhs.type == :@ident || lhs[1].type == :@ident
+              lhs.binding = current_scope.lookup_or_create_local(var_name)
+              copy_instruct lhs.binding, rhs_val
+            elsif lhs[1].type == :@const
+              call_instruct(current_namespace, :const_set, const_instruct(var_name), rhs_val, value: false, raise: false)
+            end
             rhs_val
           end
         end
