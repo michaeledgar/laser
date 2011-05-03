@@ -95,15 +95,17 @@ module Laser
     # Laser representation of a module. Named LaserModule to avoid naming
     # conflicts. It has lists of methods, instance variables, and so on.
     class LaserModule < LaserObject
-      attr_reader :path, :binding, :superclass
+      attr_reader :binding, :superclass
+      attr_accessor :path
       cattr_accessor_with_default :all_modules, []
       
       def initialize(klass = ClassRegistry['Module'], scope = Scope::GlobalScope,
-                     full_path="#{klass.path}:Anonymous:#{object_id.to_s(16)}")
+                     full_path=(@name_set = :no; "#{klass.path}:Anonymous:#{object_id.to_s(16)}"))
         super(klass, scope, full_path.split('::').last)
         full_path = submodule_path(full_path) if scope && scope.parent
         validate_module_path!(full_path) unless LaserSingletonClass === self
-        
+
+        @name_set = :yes unless @name_set == :no
         @path = full_path
         @instance_methods = {}
         @instance_variables = {}
@@ -117,6 +119,16 @@ module Laser
         initialize_scope
         yield self if block_given?
         LaserModule.all_modules << self
+      end
+
+      def name_set?
+        @name_set == :yes
+      end
+      
+      def set_name(new_path)
+        @path = new_path
+        ProtocolRegistry.add_class(self)
+        @name_set = :yes
       end
 
       # Returns the canonical path for a (soon-to-be-created) submodule of the given
@@ -298,13 +310,20 @@ module Laser
       # simulation methods
       def const_set(string, value)
         @constant_table[string] = value
+        if LaserModule === value && !value.name_set?
+          if self == ClassRegistry['Object']
+            value.set_name(string)
+          else
+            value.set_name("#{@path}::#{string}")
+          end
+        end
       end
       
       def const_get(constant, inherit=true)
         if inherit && @superclass
           @constant_table[constant] || @superclass.const_get(constant, true)
         else
-          @constant_table[constant] or raise ArgumentError.new("Class #{@full_path} has no constant #{constant}")
+          @constant_table[constant] or raise ArgumentError.new("Class #{@path} has no constant #{constant}")
         end
       end
       
@@ -326,7 +345,7 @@ module Laser
       attr_reader :subclasses
       
       def initialize(klass = ClassRegistry['Class'], scope = Scope::GlobalScope,
-                     full_path="#{klass.path}:Anonymous:#{object_id.to_s(16)}")
+                     full_path=(@name_set = :no; "#{klass.path}:Anonymous:#{object_id.to_s(16)}"))
         @subclasses ||= []
         # bootstrapping exception
         unless ['Class', 'Module', 'Object', 'BasicObject'].include?(full_path)

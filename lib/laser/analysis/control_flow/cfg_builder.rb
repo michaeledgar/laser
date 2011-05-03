@@ -1117,10 +1117,11 @@ module Laser
           # Unconditionally raise if it is a class! The error is a TypeError
           start_block is_class_block
           raise_instance_of_instruct ClassRegistry['TypeError'].binding
-          
+
           start_block if_noexists_block
           # create the class and assign
           the_module = call_instruct(ClassRegistry['Module'].binding, :new, value: true, raise: false)
+          call_instruct(current_namespace, :const_set, actual_name, the_module, value: false, raise: false)
           copy_instruct(the_module_holder, the_module)
           uncond_instruct after_exists_check
 

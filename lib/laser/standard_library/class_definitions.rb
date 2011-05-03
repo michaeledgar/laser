@@ -42,6 +42,10 @@ class << self
   end
 end
 class Module
+  # special: true
+  # pure: true
+  def self.new
+  end
   # pure: true
   # raises: never
   # builtin: true

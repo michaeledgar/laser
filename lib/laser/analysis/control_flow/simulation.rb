@@ -7,6 +7,7 @@ module Laser
         class SimulationError < StandardError; end
         class NonDeterminismHappened < StandardError; end
         class SimulationRaised < StandardError; end
+        class SimulationNonterminationError < StandardError; end
         # simulates the CFG, with different possible assumptions about
         # how we should treat the global environment/self object.
         def simulate(formal_vals=[], opts={})
@@ -15,6 +16,8 @@ module Laser
             simulate_block(@enter, opts)
           rescue NonDeterminismHappened => err
             puts "Simulation ended at nondeterminism: #{err.message}"
+          rescue SimulationNonterminationError => err
+            puts "Simulation failed to terminate: #{err.message}"
           end
         end
         
@@ -102,6 +105,7 @@ module Laser
             raise SimulationError.new("Found phi node with #{which_set.size} "+
                                       "options during toplevel simulation")
           end
+          puts "Simulating #{node.inspect}"
           simulate_assignment(node[1], which_set.first, opts)
         end
         
