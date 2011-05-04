@@ -11,7 +11,9 @@ begin
     gem.homepage = 'http://github.com/michaeledgar/laser'
     gem.authors = ['Michael Edgar']
     gem.add_dependency 'treetop', '~> 1.4'
-    gem.add_dependency 'ripper-plus', '>= 1.1.0.pre2'
+    gem.add_dependency 'ripper-plus', '~> 1.2'
+    gem.add_dependency 'axiom_of_choice'
+    gem.add_development_dependency 'rake', '~> 0.8'
     gem.add_development_dependency 'rspec', '~> 2.3'
     gem.add_development_dependency 'yard', '>= 0'
     gem.add_development_dependency 'cucumber', '>= 0.10.0'
