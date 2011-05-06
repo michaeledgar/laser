@@ -134,25 +134,30 @@ module Laser
           super
         end
         
+        DEFAULT_ANALYSIS_OPTS = {optimize: true}
         # Runs full analysis on the CFG. Puts it in SSA then searches for warnings.
-        def analyze
+        def analyze(opts={})
+          opts = DEFAULT_ANALYSIS_OPTS.merge(opts)
           # kill obvious dead code now.
           perform_dead_code_discovery(true)
-          static_single_assignment_form
           if @root.type == :program
+            opts[:optimize] = false
             simulate([], :mutation => true)
           else
+            static_single_assignment_form
             perform_constant_propagation
           end
-          kill_unexecuted_edges
-          prune_totally_useless_blocks
-          perform_dead_code_discovery
-          add_unused_variable_warnings
-          # Don't need these anymore
-          prune_unexecuted_blocks
+          if opts[:optimize]
+            kill_unexecuted_edges
+            prune_totally_useless_blocks
+            perform_dead_code_discovery
+            add_unused_variable_warnings
+            # Don't need these anymore
+            prune_unexecuted_blocks
 
-          find_yield_properties if @root.type != :program
-          find_raise_properties
+            find_yield_properties if @root.type != :program
+            find_raise_properties
+          end
         end
         
         def all_errors
@@ -161,7 +166,14 @@ module Laser
         
         # Returns the names of all variables in the graph
         def all_variables
-          vertices.map(&:variables).inject(:|)
+          return @all_variables if @all_variables
+          result = Set.new
+          vertices.each do |vert|
+            vert.variables.each do |var|
+              result << var
+            end
+          end
+          @all_variables = result
         end
         
         def var_named(name)

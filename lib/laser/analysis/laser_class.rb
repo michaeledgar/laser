@@ -92,11 +92,34 @@ module Laser
       end
     end
     
+    class LaserProc < LaserObject
+      attr_accessor :ast_node, :arguments, :cfg
+      def initialize(arguments, ast_node, cfg=nil)
+        self.ast_node = ast_node
+        self.arguments = arguments
+        self.cfg = cfg
+      end
+
+      def inspect
+        desc_part = "Proc:0x#{object_id.to_s(16)}@#{ast_node.file_name}"
+        arg_part = "(#{arguments.map(&:name).join(', ')})"
+        if ast_node.source_begin
+          "#<#{desc_part}:#{ast_node.line_number}*#{arg_part}>"
+        else
+          "#<#{desc_part}*#{arg_part}>"
+        end
+      end
+
+      def klass
+        ClassRegistry['Proc']
+      end
+    end
+    
     # Laser representation of a module. Named LaserModule to avoid naming
     # conflicts. It has lists of methods, instance variables, and so on.
     class LaserModule < LaserObject
       attr_reader :binding, :superclass
-      attr_accessor :path
+      attr_accessor :path, :current_default_visibility
       cattr_accessor_with_default :all_modules, []
       
       def initialize(klass = ClassRegistry['Module'], scope = Scope::GlobalScope,
@@ -105,6 +128,7 @@ module Laser
         full_path = submodule_path(full_path) if scope && scope.parent
         validate_module_path!(full_path) unless LaserSingletonClass === self
 
+        @current_default_visibility = :public
         @name_set = :yes unless @name_set == :no
         @path = full_path
         @instance_methods = {}
@@ -308,6 +332,11 @@ module Laser
       end
       
       # simulation methods
+      def ===(other)
+        klass = (LaserObject === other ? other.klass : ClassRegistry[other.class.name])
+        klass.ancestors.include?(self)
+      end
+      
       def const_set(string, value)
         @constant_table[string] = value
         if LaserModule === value && !value.name_set?
@@ -320,21 +349,89 @@ module Laser
       end
       
       def const_get(constant, inherit=true)
-        if inherit && @superclass
-          @constant_table[constant] || @superclass.const_get(constant, true)
-        else
+        if inherit && superclass
+          @constant_table[constant] || superclass.const_get(constant, true)
+        elsif LaserClass === self
           @constant_table[constant] or raise ArgumentError.new("Class #{@path} has no constant #{constant}")
+        else
+          (@constant_table[constant] || ClassRegistry['Object'].const_get(constant, false)) or
+              raise ArgumentError.new("Class #{@path} has no constant #{constant}")
         end
       end
       
+      # Fuck you, that's why
       def const_defined?(constant, inherit=true)
-        if inherit && @superclass
-          !!(@constant_table[constant] || @superclass.const_defined?(constant, inherit))
-        else
-          !!@constant_table[constant]
-        end
+        !!const_get(constant, inherit)
       rescue
         false
+      end
+
+      def define_method(name, proc)
+        name = name.to_s
+        new_method = LaserMethod.new(name, proc)
+        @instance_methods[name] = new_method
+        if current_default_visibility == :module_function
+          __make_module_function__(name)
+        else
+          @visibility_table[name] = current_default_visibility
+        end
+        new_method
+      end
+      
+      def define_method_with_annotations(name, proc, opts={})
+        method = define_method(name, proc)
+        opts.each { |name, value| method.send("#{name}=", value) }
+      end
+
+      def alias_method(new, old)
+        @instance_methods[new.to_s] = @instance_methods[old.to_s]
+        @visibility_table[new.to_s] = @visibility_table[old.to_s]
+      end
+      
+      def include(*mods)
+        mods.reverse.each { |mod| include_module(mod) }
+      end
+      
+      def extend(*mods)
+        singleton_class.include(*mods)
+      end
+      
+      def __visibility_modifier__(args, kind)
+        if args.empty?
+          self.current_default_visibility = kind
+        else
+          args.each { |method| set_visibility!(method.to_s, kind) }
+        end
+        self
+      end
+      
+      def __make_module_function__(method_name)
+        set_visibility!(method_name, :private)
+        found_method = instance_methods[method_name].dup
+        singleton_class.add_instance_method!(found_method)
+        singleton_class.set_visibility!(method_name, :public)
+      end
+      
+      def public(*args)
+        __visibility_modifier__(args, :public)
+      end
+      
+      def protected(*args)
+        __visibility_modifier__(args, :protected)
+      end
+      
+      def private(*args)
+        __visibility_modifier__(args, :private)
+      end
+      
+      def module_function(*args)
+        if args.any?
+          args.each do |method|
+            __make_module_function__(method.to_s)
+          end
+        else
+          self.current_default_visibility = :module_function
+        end
       end
     end
 
@@ -518,6 +615,7 @@ module Laser
     class LaserMethod
       extend ModuleExtensions
       attr_reader :name
+      attr_reader :proc
       attr_accessor :body_ast, :owner, :signatures, :arity
       attr_accessor_with_default :special, false
       attr_accessor_with_default :builtin, false
@@ -541,11 +639,20 @@ module Laser
         end
       end
 
-      def initialize(name)
+      def initialize(name, base_proc=nil)
         @name = name
         @signatures = []
-        @arity = nil
+        @proc = base_proc
+        if base_proc
+          @arity = Arity.for_arglist(base_proc.arguments)
+        else
+          @arity = nil
+        end  
         yield self if block_given?
+      end
+      
+      def arguments
+        @proc.arguments
       end
 
       def dup

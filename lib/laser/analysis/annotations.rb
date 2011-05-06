@@ -7,12 +7,12 @@ module Laser
       cattr_accessor_with_default :global_annotations, []
       
       # Performs full analysis on the given inputs.
-      def self.annotate_inputs(inputs)
+      def self.annotate_inputs(inputs, opts={})
         inputs.map! do |filename, text|
           [filename, text, Sexp.new(RipperPlus.sexp(text), filename, text)]
         end
         apply_inherited_attributes(inputs)
-        perform_load_time_analysis(inputs)
+        perform_load_time_analysis(inputs, opts)
         inputs.map! { |filename, _, tree| [filename, tree] }
       end
       
@@ -34,14 +34,15 @@ module Laser
       
       # Performs load-time analysis on the given inputs. Inherited attributes
       # must be applied at this point.
-      def self.perform_load_time_analysis(inputs)
+      def self.perform_load_time_analysis(inputs, opts={})
         annotator = ScopeAnnotation.new
         inputs.each do |filename, text, tree|
           if SETTINGS[:profile]
             time = Benchmark.realtime { annotator.annotate_with_text(tree, text) }
             puts "Time spent running #{annotator.class} on #{filename}: #{time}"
           else
-            annotator.annotate_with_text(tree, text)
+            #annotator.annotate_with_text(tree, text)
+            ControlFlow.perform_cfg_analysis(tree, text, opts)
           end
         end
       end

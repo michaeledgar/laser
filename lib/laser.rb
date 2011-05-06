@@ -3,7 +3,11 @@ module Laser
   TESTS_ACTIVATED = false
   ROOT = File.expand_path(File.dirname(__FILE__))
   SETTINGS = {}
+  def self.debug(*args)
+    puts *args if SETTINGS[:debug]
+  end
 end
+Laser::SETTINGS[:debug] = (ENV['LASER_DEBUG'].strip == 'true')
 
 # Dependencies
 require 'ripper'
@@ -70,12 +74,19 @@ require 'laser/scanner'
   path = File.join(File.dirname(__FILE__), 'laser', 'standard_library', file)
   [path, File.read(path)]
 end.tap do |tuples|
-  trees = Laser::SexpAnalysis.analyze_inputs(tuples)
-  trees.each do |filename, tree|
-    if tree.all_errors != []
-      $stderr.puts "Default file #{filename} had these errors:"
-      PP.pp(tree.all_errors, $stderr)
-      exit 1
+  begin
+    trees = Laser::SexpAnalysis::Annotations.annotate_inputs(tuples, optimize: false)
+    trees.each do |filename, tree|
+      if tree.all_errors != []
+        $stderr.puts "Default file #{filename} had these errors:"
+        PP.pp(tree.all_errors, $stderr)
+        exit 1
+      end
     end
+  rescue StandardError => err
+    puts "Loading class definitions failed:"
+    p err.message
+    pp err
+    pp err.backtrace
   end
 end

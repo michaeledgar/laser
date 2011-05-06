@@ -48,10 +48,10 @@ describe 'ClassRegistry' do
 
   describe 'built-in classes' do
     it 'sets up Module, Class, and Object as instances of Class correctly' do
-      ClassRegistry['BasicObject'].binding.class_used.should == ClassRegistry['Class']
-      ClassRegistry['Object'].binding.class_used.should == ClassRegistry['Class']
-      ClassRegistry['Module'].binding.class_used.should == ClassRegistry['Class']
-      ClassRegistry['Class'].binding.class_used.should == ClassRegistry['Class']
+      ClassRegistry['BasicObject'].binding.class_used.should == ClassRegistry['BasicObject'].singleton_class
+      ClassRegistry['Object'].binding.class_used.should == ClassRegistry['Object'].singleton_class
+      ClassRegistry['Module'].binding.class_used.should == ClassRegistry['Module'].singleton_class
+      ClassRegistry['Class'].binding.class_used.should == ClassRegistry['Class'].singleton_class
     end
     it "sets up Module, Class, and Object's hierarchy" do
       ClassRegistry['BasicObject'].superclass.should == nil

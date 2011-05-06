@@ -62,10 +62,9 @@ module Laser
       end
 
       class BlockBinding < GenericBinding
-        attr_reader :block
-        def initialize(name, value, block)
+        attr_reader :argument_bindings, :ast_body
+        def initialize(name, value)
           super(name, value)
-          @block = block
         end
         
         def expr_type

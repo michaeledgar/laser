@@ -4,6 +4,7 @@ module Laser
       # Finds unused variables in the control-flow graph. See thesis for
       # the algorithm and proof of correctness.
       module UnusedVariables
+        IGNORED_VARS = Set.new(%w(self t#current_exception t#current_block t#exit_exception $!))
         
         # Adds unused variable warnings to all nodes which define a variable
         # that is not used.
@@ -11,6 +12,7 @@ module Laser
           unused_variables.reject { |var| var.name.start_with?('%') }.each do |temp|
             # TODO(adgar): KILLMESOON
             next unless @definition[temp] && @definition[temp].node
+            next if IGNORED_VARS.include?(temp.non_ssa_name)
             node = @definition[temp].node
             node.add_error(
                 UnusedVariableWarning.new("Variable defined but not used: #{temp.non_ssa_name}", node))

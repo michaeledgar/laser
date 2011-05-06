@@ -97,19 +97,7 @@ module Laser
 
       # Returns the arity of the signature.
       def arity
-        min, max = 0, 0
-        arguments.each do |arg|
-          case arg.kind
-          when :positional
-            min += 1
-            max += 1
-          when :optional
-            max += 1
-          when :rest
-            max = Float::INFINITY
-          end
-        end
-        min..max
+        Arity.for_arglist(arguments)
       end
 
       # It's trivially clear that equal Signatures have equal mangled forms.

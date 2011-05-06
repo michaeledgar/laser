@@ -1036,9 +1036,11 @@ module Laser
           # TODO(adgar): weird cases
           if superclass
             superclass_val = walk_node(superclass, value: true)
+            need_confirm_superclass = true
           else
             superclass_val = lookup_or_create_temporary(:var, '::Object')
             copy_instruct(superclass_val, ClassRegistry['Object'])
+            need_confirm_superclass = false
           end
           
           already_exists = call_instruct(receiver_val, :const_defined?, actual_name, const_instruct(false), value: true, raise: false)
@@ -1068,21 +1070,26 @@ module Laser
           raise_instance_of_instruct ClassRegistry['TypeError'].binding
           
           start_block if_noexists_block
+          # only confirm superclass if it's not defaulting to Object!
+          if need_confirm_superclass
+            is_not_class_block, after_is_class_check = create_blocks 2
+            is_class_cond_val = call_instruct(ClassRegistry['Class'].binding, :===, superclass_val, value: true, raise: false)
+            cond_instruct(is_class_cond_val, after_is_class_check, is_not_class_block)
+          
+            start_block is_not_class_block
+            raise_instance_of_instruct ClassRegistry['TypeError'].binding
+          
+            start_block after_is_class_check
+          end
           # create the class and assign
-          is_not_class_block, after_is_class_check = create_blocks 2
-          is_class_cond_val = call_instruct(ClassRegistry['Class'].binding, :===, superclass_val, value: true, raise: false)
-          cond_instruct(is_class_cond_val, after_is_class_check, is_not_class_block)
-          
-          start_block is_not_class_block
-          raise_instance_of_instruct ClassRegistry['TypeError'].binding
-          
-          start_block after_is_class_check
           the_class = call_instruct(ClassRegistry['Class'].binding, :new, superclass_val, value: true, raise: false)
-          call_instruct(current_namespace, :const_set, actual_name, the_class, value: false, raise: false)
+          call_instruct(receiver_val, :const_set, actual_name, the_class, value: false, raise: false)
           copy_instruct(the_class_holder, the_class)
           uncond_instruct after_exists_check
 
           start_block after_exists_check
+          call_instruct(the_class_holder, :current_default_visibility=, const_instruct(:public),
+              value: false, raise: false)
           # use this namespace!
           with_namespace the_class_holder do
             module_eval_instruct(the_class_holder, body, opts)
@@ -1121,11 +1128,13 @@ module Laser
           start_block if_noexists_block
           # create the class and assign
           the_module = call_instruct(ClassRegistry['Module'].binding, :new, value: true, raise: false)
-          call_instruct(current_namespace, :const_set, actual_name, the_module, value: false, raise: false)
+          call_instruct(receiver_val, :const_set, actual_name, the_module, value: false, raise: false)
           copy_instruct(the_module_holder, the_module)
           uncond_instruct after_exists_check
 
           start_block after_exists_check
+          call_instruct(the_module_holder, :current_default_visibility=, const_instruct(:public),
+              value: false, raise: false)
           with_namespace the_module_holder do
             module_eval_instruct(the_module_holder, body, opts)
           end
@@ -1134,7 +1143,7 @@ module Laser
         def singleton_class_instruct(receiver, body, opts={value: false})
           receiver_val = walk_node receiver, value: true
 
-          maybe_symbol, no_singleton, has_singleton = create_blocks 2
+          maybe_symbol, no_singleton, has_singleton = create_blocks 3
           cond_result = call_instruct(ClassRegistry['Fixnum'].binding, :===, receiver_val, value: true)
           cond_instruct(cond_result, no_singleton, maybe_symbol)
 
@@ -1167,8 +1176,41 @@ module Laser
         def def_instruct(receiver, name, args, body, opts = {})
           opts = {value: false}.merge(opts)
           block = create_block_temporary(args, body)
-          call_instruct(receiver, 'define_method', name, block, :raise => false)
+          notes = notes_as_ruby_object(body.parent)
+          note_args = notes.flatten.map { |const| const_instruct(const) }
+          call_opts = call_instruct(ClassRegistry['Hash'].binding, :[], *note_args, raise: false, value: true)
+          call_instruct(receiver, 'define_method_with_annotations', name, block, call_opts, :raise => false)
           const_instruct(nil) if opts[:value]
+        end
+
+        BOOLEAN_ANNOTATIONS = %w(special pure builtin predictable mutation)
+        def notes_as_ruby_object(node)
+          result = {}
+          if node.comment && (annotations = node.comment.annotation_map)
+            BOOLEAN_ANNOTATIONS.each do |note_name|
+              annotations[note_name].each do |note|
+                result[note_name.to_sym] = note.literal if note.literal?
+              end
+            end
+            if annotations['raises'].any?
+              literals, types = annotations['raises'].partition { |x| x.literal? }
+              literals.map(&:literal).each do |literal|
+                if !literal
+                  result[:raises] = []
+                  result[:raise_type] = Frequency::NEVER
+                elsif ::Symbol === literal
+                  result[:raise_type] = Frequency[literal]
+                end
+              end
+              if types.any?
+                result[:raises] = []
+                types.each { |note| result[:raises] << note.type }
+              end
+            else result[:raises] = [Types::TOP]
+            end
+          else result[:raises] = [Types::TOP]
+          end
+          result
         end
 
         # Creates a temporary, assigns it a constant value, and returns it.
@@ -2121,11 +2163,12 @@ module Laser
         end
         
         # Creates a block temporary variable with an unused name.
-        def create_block_temporary(args, body)
+        def create_block_temporary(args, body, cfg_entry=nil)
           @temporary_counter += 1
           name = current_temporary('B-')
-          binding = Bindings::BlockBinding.new(name, nil, body)
-          add_instruction(:lambda, binding, args)
+          new_proc = LaserProc.new(args, body, cfg_entry)
+          binding = Bindings::BlockBinding.new(name, nil)
+          add_instruction(:assign, binding, new_proc)
           binding
         end
         

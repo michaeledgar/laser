@@ -1,4 +1,4 @@
-class Class
+class Class < Module
   # special: true
   # pure: true
   def self.new(superklass=Object)
@@ -28,7 +28,7 @@ end
 # Still not sure why this exists.
 class Data
 end
-
+# 
 RUBY_VERSION = '1.9.2'
 $/ = "\n"
 ENV = {"RUBY_VERSION"=>"ruby-1.9.2-p136"}
@@ -54,10 +54,9 @@ class Module
   # pure: true
   # raises: never
   # builtin: true
-  # special: true
   def ===(other)
   end
-    # builtin: true
+  # builtin: true
   # mutation: true
   def define_method(name, body=nil)
   end
@@ -72,38 +71,41 @@ class Module
   def const_get(sym, inherit=true)
   end
   # builtin: true
-  # special: true
+  # mutation: true
   def private(*args)
   end
   private :private
  private
-  # special: true
+  # builtin: true
   # mutation: true
   def include(*mods)
   end
-  # special: true
+  # builtin: true
   # mutation: true
   def extend(*mods)
   end
-  # special: true
+  # builtin: true
   # mutation: true
   def public(*args)
   end
-  # special: true
+  # builtin: true
   # mutation: true
   def protected(*args)
   end
+  # special: true
   def attr_reader(sym, *syms)
   end
+  # special: true
   def attr_writer(sym, *syms)
   end
+  # special: true
   def attr_accessor(sym, *syms)
   end
-  # special: true
+  # builtin: true
   # mutation: true
   def module_function(*args)
   end
-  # special: true
+  # builtin: true
   # mutation: true
   def alias_method(to, from)
   end
@@ -115,10 +117,12 @@ module Kernel
   end
   # pure: true
   # raises: never
+  # builtin: true
   def singleton_class
   end
   # pure: true
   # raises: never
+  # builtin: true
   def class
   end
   # pure: true
@@ -164,10 +168,6 @@ module Kernel
   alias fail raise
 end
 
-class Object < BasicObject
-  include Kernel
-end
-
 require 'basic_object'
 require 'nil_false_true'
 require 'exceptions'
@@ -202,14 +202,14 @@ end
 
 class Encoding
 end
-class Encoding::UndefinedConversionError < EncodingError
-end
-class Encoding::InvalidByteSequenceError < EncodingError
-end
-class Encoding::ConverterNotFoundError < EncodingError
-end
-class Encoding::CompatibilityError < EncodingError
-end
+# class Encoding::UndefinedConversionError < EncodingError
+# end
+# class Encoding::InvalidByteSequenceError < EncodingError
+# end
+# class Encoding::ConverterNotFoundError < EncodingError
+# end
+# class Encoding::CompatibilityError < EncodingError
+# end
 
 class Struct
 end
@@ -220,11 +220,11 @@ class IO
   end
 end
 # STDERR: IO
-STDERR = IO.new
+# STDERR = IO.new
 # STDOUT: IO
-STDOUT = IO.new
+# STDOUT = IO.new
 # STDIN: IO
-STDIN = IO.new
+# STDIN = IO.new
 class File < IO
 end
 

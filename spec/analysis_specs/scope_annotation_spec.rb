@@ -9,145 +9,6 @@ describe ScopeAnnotation do
   it 'adds the #scope method to Sexp' do
     Sexp.instance_methods.should include(:scope)
   end
-  
-  it 'adds scopes to each node with a flat example with no new scopes' do
-    tree = annotate_all('p 5; if b; a; end')
-    tree.all_subtrees.each do |node|
-      node.scope.should == Scope::GlobalScope
-    end
-  end
-  
-  # This is the AST that Ripper generates for the parsed code. It is
-  # provided here because otherwise the test is inscrutable.
-  #
-  # sexp = [:program,
-  #        [[:assign, [:var_field, [:@ident, "a", [1, 0]]], [:var_ref, [:@kw, "nil", [1, 4]]]],
-  #         [:module, [:const_ref, [:@const, "A", [1, 16]]],
-  #           [:bodystmt, [[:void_stmt], [:assign, [:var_field, [:@ident, "a", [1, 19]]],
-  #           [:@int, "10", [1, 23]]]], nil, nil, nil]]]]
-  it 'creates a new scope when a simple module declaration is encountered' do
-    tree = annotate_all('p 5; module A; end')
-    list = tree[1]
-    with_new_scope = list[1][2], *list[1][2].all_subtrees
-    expectalot(scope: { Scope::GlobalScope => [tree, list[0], list[0][1], list[0][2]],
-                           Scope::GlobalScope.lookup('A').scope => with_new_scope })
-
-    list[1][2].scope.should be_a(ClosedScope)
-    list[1][2].scope.self_ptr.klass.path.should == 'Module'
-    list[1][2].scope.self_ptr.path.should == 'A'
-    tree.all_errors.should be_empty
-  end
-  
-  # This is the AST that Ripper generates for the parsed code. It is
-  # provided here because otherwise the test is inscrutable.
-  #
-  # sexp = [:program,
-  #        [[:assign, [:var_field, [:@ident, "a", [1, 0]]], [:var_ref, [:@kw, "nil", [1, 4]]]],
-  #         [:module, [:top_const_ref, [:@const, "B", [1, 18]]],
-  #           [:bodystmt, [[:void_stmt], [:assign, [:var_field, [:@ident, "a", [1, 21]]],
-  #           [:@int, "10", [1, 25]]]], nil, nil, nil]]]]
-  it 'creates a new scope when a simple top-pathed module declaration is encountered' do
-    tree = annotate_all('p 5; module ::B; end')
-    list = tree[1]
-    list[1][2].scope.self_ptr.name.should == 'B'
-    list[1][2].scope.should be_a(ClosedScope)
-
-    with_new_scope = list[1][2], *list[1][2].all_subtrees
-    expectalot(scope: { Scope::GlobalScope => [tree, list[0], list[0][1], list[0][2]],
-                           Scope::GlobalScope.lookup('B').scope => with_new_scope })
-    tree.all_errors.should be_empty
-  end
-  
-  # This is the AST that Ripper generates for the parsed code. It is
-  # provided here because otherwise the test is inscrutable.
-  #
-  # [:program,
-  # [[:module,
-  #   [:const_path_ref,
-  #    [:var_ref, [:@const, "ABC", [1, 7]]],
-  #    [:@const, "DEF", [1, 12]]],
-  #   [:bodystmt, [[:void_stmt]], nil, nil, nil]]]]
-  it 'creates a new scope when a pathed module declaration is encountered' do
-    temp_scope = ClosedScope.new(Scope::GlobalScope, nil)
-    temp_mod = LaserModule.new(ClassRegistry['Module'], temp_scope, 'ABC')
-    tree = annotate_all('p 5; module ABC::DEF; end')
-    list = tree[1]
-    mod = list[1][2].scope.self_ptr
-    #mod.class_used.path.should == 'ABC::DEF'
-    mod.klass.path.should == 'Module'
-    mod.path.should == 'ABC::DEF'
-    mod.name.should == 'DEF'
-    mod.scope.parent.self_ptr.name.should == 'ABC'
-    mod.scope.should be_a(ClosedScope)
-
-    with_new_scope = list[1][2], *list[1][2].all_subtrees
-    expectalot(scope: { Scope::GlobalScope => [tree, list[0], list[0][1], list[0][2]],
-                           temp_scope.lookup('DEF').scope => with_new_scope })
-    tree.all_errors.should be_empty
-  end
-  
-  # This is the AST that Ripper generates for the parsed code. It is
-  # provided here because otherwise the test is inscrutable.
-  #
-  # sexp = [:program, [
-  #         [:module, [:const_path_ref, [:var_ref, [:@const, "A10", [1, 7]]], [:@const, "B12", [1, 12]]],
-  #           [:bodystmt, [[:void_stmt]], nil, nil, nil]],
-  #         [:module, [:const_path_ref, [:var_ref, [:@const, "A10", [1, 29]]], [:@const, "B12", [1, 34]]],
-  #           [:bodystmt, [[:void_stmt]], nil, nil, nil]]]]
-  it 'creates a new scope when a simple module declaration is encountered' do
-    temp_scope = ClosedScope.new(Scope::GlobalScope, nil)
-    temp_mod = LaserModule.new(ClassRegistry['Module'], temp_scope, 'A10')
-    tree = annotate_all('module A10::B12; end; module A10::B12; end')
-    
-    list = tree[1]
-    with_new_scope = [list[0][2], *list[0][2].all_subtrees] +
-                     [list[1][2], *list[1][2].all_subtrees]
-    expectalot(scope: { Scope::GlobalScope => [tree, list[0], list[0][1], list[1][1]],
-                           temp_scope.lookup('B12').scope => with_new_scope })
-
-    list[0][2].scope.should be_a(ClosedScope)
-    list[0][2].scope.self_ptr.name.should == 'B12'
-    list[1][2].scope.self_ptr.name.should == 'B12'
-    
-    # *MUST* Be same objects because this is how we implement re-opening - the
-    # second has to modify the same scope as before!
-    list[0][2].scope.object_id.should == list[1][2].scope.object_id
-    tree.all_errors.should be_empty
-  end
-
-  # This is the AST that Ripper generates for the parsed code. It is
-  # provided here because otherwise the test is inscrutable.
-  #
-  # sexp = [:program, [
-  #         [:module, [:const_ref, [:@const, "A", [1, 7]]],
-  #           [:bodystmt, [[:void_stmt],
-  #            [:module, [:const_ref, [:@const, "B", [1, 17]]],
-  #              [:bodystmt, [[:void_stmt],
-  #               [:module, [:const_ref, [:@const, "C", [1, 27]]],
-  #                 [:bodystmt, [[:void_stmt]],
-  #                  nil, nil, nil]]], nil, nil, nil]]], nil, nil, nil]]]]
-  it 'creates several new scopes when a bunch of nested modules are encountered' do
-    tree = annotate_all('module A; module B32; module C444; end; end; end')
-    list = tree[1]
-    a_body = list[0][2]
-    b_body = a_body[1][1][2]
-    c_body = b_body[1][1][2]
-    [a_body, b_body, c_body].each { |x| x.scope.should be_a(ClosedScope) }
-    a, b, c = [a_body, b_body, c_body].map { |x| x.scope.self_ptr }
-    
-    
-    a.klass.path.should == 'Module'
-    b.klass.path.should == 'Module'
-    c.klass.path.should == 'Module'
-    a.path.should == 'A'
-    b.path.should == 'A::B32'
-    c.path.should == 'A::B32::C444'
-    a.name.should == 'A'
-    b.name.should == 'B32'
-    c.name.should == 'C444'
-    tree.all_errors.should be_empty
-  end
-  
   # This is the AST that Ripper generates for the parsed code. It is
   # provided here because otherwise the test is inscrutable.
   #
@@ -169,22 +30,13 @@ describe ScopeAnnotation do
   #     nil, nil, nil]]]]
   it 'defines methods on the current Module, if inside a module lexically' do
     tree = annotate_all('module M13; def silly(*rest); p rest; end; end; class C13; include M13; end')
-    definition = tree[1][0][2][1][1]
-    body = definition[3]
-    [body, *body.all_subtrees].each do |node|
-      new_scope = node.scope
-      new_scope.self_ptr.should be_a(LaserObject)
-      new_scope.self_ptr.klass.should == ClassRegistry['M13']
-      new_scope.locals.should_not be_empty
-      new_scope.lookup('rest').should == Bindings::ArgumentBinding.new('rest', LaserObject.new(ClassRegistry['Array']), :rest)
-    end
     # now make sure the method got created in the M13 module!
     method = ClassRegistry['M13'].instance_methods['silly']
     method.should_not be_nil
-    method.signatures.size.should == 1
-    signature = method.signatures.first
-    signature.arguments.should == [body.scope.lookup('rest')]
-    signature.name.should == 'silly'
+    rest = method.arguments[0]
+    rest.name.should == 'rest'
+    rest.kind.should == :rest
+    method.name.should == 'silly'
     tree.all_errors.should be_empty
   end
   
@@ -206,26 +58,16 @@ describe ScopeAnnotation do
   #     nil, nil, nil]]]]
   it "allows singleton method declarations on a Module's self" do
     tree = annotate_all('module M49; def self.silly(a, b=a); end; end')
-    definition = tree[1][0][2][1][1]
-    body = definition[5]
-    [body, *body.all_subtrees].each do |node|
-      new_scope = node.scope
-      new_scope.self_ptr.should be_a(LaserModule)
-      new_scope.self_ptr.should == ClassRegistry['M49']
-      new_scope.self_ptr.klass.should == ClassRegistry['M49'].singleton_class
-      new_scope.locals.should_not be_empty
-      new_scope.lookup('a').should == Bindings::ArgumentBinding.new('a', LaserObject.new, :positional)
-      new_scope.lookup('b').should == Bindings::ArgumentBinding.new(
-          'b', LaserObject.new, :optional,
-          Sexp.new([:var_ref, [:@ident, "a", [1, 32]]]))
-    end
     
     method = ClassRegistry['M49'].singleton_class.instance_methods['silly']
     method.should_not be_nil
-    method.signatures.size.should == 1
-    signature = method.signatures.first
-    signature.arguments.should == [body.scope.lookup('a'), body.scope.lookup('b')]
-    signature.name.should == 'silly'
+    a = method.arguments[0]
+    a.name.should == 'a'
+    a.kind.should == :positional
+    b = method.arguments[1]
+    b.name.should == 'b'
+    b.kind.should == :optional
+    method.name.should == 'silly'
     tree.all_errors.should be_empty
   end
   
@@ -249,28 +91,16 @@ describe ScopeAnnotation do
   #    nil, nil, nil]]]]
   it "allows singleton method declarations on a Module's self using sclass opening" do
     tree = annotate_all('module M50; class << self; def silly(a, b=a); end; end; end')
-    sclass_body = tree[1][0][2][1][1][2]
-    definition = sclass_body[1][0]
-    body = definition[3]
-    [body, *body.all_subtrees].each do |node|
-      new_scope = node.scope
-      new_scope.self_ptr.should be_a(LaserModule)
-      new_scope.self_ptr.should == ClassRegistry['M50']
-      new_scope.self_ptr.klass.should == ClassRegistry['M50'].singleton_class
-      new_scope.locals.should_not be_empty
-      new_scope.lookup('a').should == Bindings::ArgumentBinding.new('a', LaserObject.new, :positional)
-      new_scope.lookup('b').should == Bindings::ArgumentBinding.new(
-          'b', LaserObject.new, :optional,
-          Sexp.new([:var_ref, [:@ident, "a", [1, 32]]]))
-      
-    end
     
     method = ClassRegistry['M50'].singleton_class.instance_methods['silly']
     method.should_not be_nil
-    method.signatures.size.should == 1
-    signature = method.signatures.first
-    signature.arguments.should == [body.scope.lookup('a'), body.scope.lookup('b')]
-    signature.name.should == 'silly'
+    a = method.arguments[0]
+    a.name.should == 'a'
+    a.kind.should == :positional
+    b = method.arguments[1]
+    b.name.should == 'b'
+    b.kind.should == :optional
+    method.name.should == 'silly'
     tree.all_errors.should be_empty
   end
   
@@ -294,48 +124,16 @@ describe ScopeAnnotation do
   
   it "allows singleton method declarations on a Module's self using sclass opening" do
     tree = annotate_all('class C51; end; class << C51; def silly(a, b=a); end; end')
-    sclass_body = tree[1][1][2]
-    definition = sclass_body[1][0]
-    body = definition[3]
-    [body, *body.all_subtrees].each do |node|
-      new_scope = node.scope
-      new_scope.self_ptr.should be_a(LaserClass)
-      new_scope.self_ptr.should == ClassRegistry['C51']
-      new_scope.self_ptr.klass.should == ClassRegistry['Class']
-      new_scope.locals.should_not be_empty
-      new_scope.lookup('a').should == Bindings::ArgumentBinding.new('a', LaserObject.new, :positional)
-      new_scope.lookup('b').should == Bindings::ArgumentBinding.new(
-          'b', LaserObject.new, :optional,
-          Sexp.new([:var_ref, [:@ident, "a", [1, 32]]]))
-    end
     
     method = ClassRegistry['C51'].singleton_class.instance_methods['silly']
     method.should_not be_nil
-    method.signatures.size.should == 1
-    signature = method.signatures.first
-    signature.arguments.should == [body.scope.lookup('a'), body.scope.lookup('b')]
-    signature.name.should == 'silly'
-    tree.all_errors.should be_empty
-  end
-  
-  # This is the AST that Ripper generates for the parsed code. It is
-  # provided here because otherwise the test is inscrutable.
-  #
-  # sexp = [:program, [
-  #         [:class, [:const_ref, [:@const, "A", [1, 6]]], nil,
-  #           [:bodystmt, [[:void_stmt]], nil, nil, nil]]]]
-  it 'creates a new scope when a class declaration is encountered' do
-    tree = annotate_all('class C99; end')
-    list = tree[1]
-    a_header = list[0][1]
-    a_body = list[0][3]
-    a_body.scope.should be_a(ClosedScope)
-    a = a_body.scope.self_ptr
-    
-    a_header.scope.should == Scope::GlobalScope
-    a.klass.path.should == 'Class'
-    a.path.should == 'C99'
-    a.superclass.should == ClassRegistry['Object']
+    a = method.arguments[0]
+    a.name.should == 'a'
+    a.kind.should == :positional
+    b = method.arguments[1]
+    b.name.should == 'b'
+    b.kind.should == :optional
+    method.name.should == 'silly'
     tree.all_errors.should be_empty
   end
   
@@ -349,15 +147,8 @@ describe ScopeAnnotation do
   #           [:bodystmt, [[:void_stmt]], nil, nil, nil]]]]
   it 'creates a new class with the appropriate superclass when specified' do
     tree = annotate_all('class C89; end; class CPP < C89; end')
-    list = tree[1]
-    a_header = list[0][1]
-    a_body = list[0][3]
-    b_header = list[1][1]
-    b_body = list[1][3]
-    [a_body, b_body].each { |x| x.scope.should be_a(ClosedScope) }
-    a, b = a_body.scope.self_ptr, b_body.scope.self_ptr
+    a, b = ClassRegistry['C89'], ClassRegistry['CPP']
     
-    a_header.scope.should == Scope::GlobalScope
     a.klass.path.should == 'Class'
     a.path.should == 'C89'
     a.superclass.should == ClassRegistry['Object']
@@ -380,19 +171,11 @@ describe ScopeAnnotation do
   #           [:bodystmt, [[:void_stmt]], nil, nil, nil]]]]
   it 'declares classes inside modules with path-based definitions' do
     tree = annotate_all('module WWD; end; class WWD::SuperModule < Module; end')
-    list = tree[1]
-    wwd_header = list[0][1]
-    wwd_body = list[0][2]
-    supermod_header = list[1][1]
-    supermod_body = list[1][3]
-    wwd, supermod = wwd_body.scope.self_ptr, supermod_body.scope.self_ptr
-    
-    [wwd_body, supermod_body].each { |x| x.scope.should be_a(ClosedScope) }
-    wwd_header.scope.should == Scope::GlobalScope
-    wwd.klass.path.should == 'Module'
-    wwd.path.should == 'WWD'
-    supermod.klass.path.should == 'Class'
-    supermod.path.should == 'WWD::SuperModule'
+
+    mod = ClassRegistry['WWD']
+    mod.should be_a(LaserModule)
+    supermod = ClassRegistry['WWD::SuperModule']
+    supermod.should be_a(LaserClass)
     supermod.superclass.should == ClassRegistry['Module']
     tree.all_errors.should be_empty
   end
@@ -422,26 +205,17 @@ describe ScopeAnnotation do
   #    [:bodystmt, [[:void_stmt]], nil, nil, nil]]]]
   it 'defines methods on the current Class, which are inherited' do
     tree = annotate_all('class Alpha; def do_xyz(a, b=a); p b; end; end; class B22 < Alpha; end')
-    definition = tree[1][0][3][1][0]
-    body = definition[3]
-    [body, *body.all_subtrees].each do |node|
-      new_scope = node.scope
-      new_scope.self_ptr.should be_a(LaserObject)
-      new_scope.self_ptr.klass.should == ClassRegistry['Alpha']
-      new_scope.locals.should_not be_empty
-      new_scope.lookup('a').should == Bindings::ArgumentBinding.new('a', LaserObject.new, :positional)
-      new_scope.lookup('b').should == Bindings::ArgumentBinding.new(
-          'b', LaserObject.new, :optional,
-          Sexp.new([:var_ref, [:@ident, "a", [1, 29]]]))
-    end
     # now make sure the method got created in the M13 module!
     ['Alpha', 'B22'].each do |klass|
       method = ClassRegistry[klass].instance_methods['do_xyz']
       method.should_not be_nil
-      method.signatures.size.should == 1
-      signature = method.signatures.first
-      signature.arguments.should == [body.scope.lookup('a'), body.scope.lookup('b')]
-      signature.name.should == 'do_xyz'
+      a = method.arguments[0]
+      a.name.should == 'a'
+      a.kind.should == :positional
+      b = method.arguments[1]
+      b.name.should == 'b'
+      b.kind.should == :optional
+      method.name.should == 'do_xyz'
     end
     tree.all_errors.should be_empty
   end
@@ -462,23 +236,16 @@ describe ScopeAnnotation do
   #     nil, nil, nil]]]]
   it 'defines method on the main object, if no scope is otherwise enclosing a method definition' do
     tree = annotate_all('def abc(bar, &blk); p blk; end')
-    definition = tree[1][0]
-    body = definition[3]
-    [body, *body.all_subtrees].each do |node|
-      new_scope = node.scope
-      new_scope.self_ptr.should be_a(LaserObject)
-      new_scope.self_ptr.klass.should == ClassRegistry['Object']
-      new_scope.locals.should_not be_empty
-      new_scope.lookup('bar').should == Bindings::ArgumentBinding.new('bar', LaserObject.new, :positional)
-      new_scope.lookup('blk').should == Bindings::ArgumentBinding.new('blk', ClassRegistry['Proc'], :block)
-    end
     method = Scope::GlobalScope.self_ptr.singleton_class.instance_methods['abc']
     method.should_not be_nil
     Scope::GlobalScope.self_ptr.singleton_class.visibility_table['abc'].should == :private
-    method.signatures.size.should == 1
-    signature = method.signatures.first
-    signature.arguments.should == [body.scope.lookup('bar'), body.scope.lookup('blk')]
-    signature.name.should == 'abc'
+    bar = method.arguments[0]
+    bar.name.should == 'bar'
+    bar.kind.should == :positional
+    blk = method.arguments[1]
+    blk.name.should == 'blk'
+    blk.kind.should == :block
+    method.name.should == 'abc'
     tree.all_errors.should be_empty
   end
   
@@ -500,109 +267,15 @@ describe ScopeAnnotation do
   #    nil, nil, nil]]]]
   it 'defines singleton methods on the main object, if no scope is otherwise enclosing a method definition' do
     tree = annotate_all('def self.abcd(bar, &blk); p blk; end')
-    definition = tree[1][0]
-    body = definition[5]
-    [body, *body.all_subtrees].each do |node|
-      new_scope = node.scope
-      new_scope.self_ptr.name.should == 'main'
-      new_scope.self_ptr.should be_a(LaserObject)
-      new_scope.self_ptr.klass.should == Scope::GlobalScope.self_ptr.singleton_class
-      new_scope.locals.should_not be_empty
-      new_scope.lookup('bar').should == Bindings::ArgumentBinding.new('bar', LaserObject.new, :positional)
-      new_scope.lookup('blk').should == Bindings::ArgumentBinding.new('blk', ClassRegistry['Proc'], :block)
-    end
     method = Scope::GlobalScope.self_ptr.singleton_class.instance_methods['abcd']
     method.should_not be_nil
-    method.signatures.size.should == 1
-    signature = method.signatures.first
-    signature.arguments.should == [body.scope.lookup('bar'), body.scope.lookup('blk')]
-    signature.name.should == 'abcd'
-    tree.all_errors.should be_empty
-  end
-  
-  # [:program,
-  #  [[:def,
-  #    [:@ident, "abc", [1, 4]],
-  #    [:paren,
-  #     [:params,
-  #      [[:@ident, "bar", [1, 8]]], nil, nil, nil,
-  #      [:blockarg, [:@ident, "blk", [1, 14]]]]],
-  #    [:bodystmt,
-  #     [[:void_stmt],
-  #      [:command,
-  #       [:@ident, "p", [1, 20]],
-  #       [:args_add_block, [[:var_ref, [:@ident, "blk", [1, 22]]]], false]],
-  #      [:assign,
-  #       [:var_field, [:@ident, "a", [1, 27]]],
-  #       [:var_ref, [:@ident, "bar", [1, 31]]]],
-  #      [:assign,
-  #       [:var_field, [:@ident, "z", [1, 36]]],
-  #       [:var_ref, [:@ident, "a", [1, 40]]]]],
-  #     nil, nil, nil]]]]
-  it 'creates new bindings on single assignments' do
-    tree = annotate_all('def abc(bar, &blk); p blk; a = bar; z = a; end')
-    definition = tree[1][0]
-    body = definition[3]
-    body_def = body[1][1..-1]
-
-    body_def[1].scope.lookup('a').should be_a(Bindings::LocalVariableBinding)
-    body_def[2].scope.lookup('z').should be_a(Bindings::LocalVariableBinding)
-    body_def[2].scope.lookup('a').should be_a(Bindings::LocalVariableBinding)
-    
-    tree.all_errors.should be_empty
-  end
-  
-  it 'attaches annotated types on single assignments' do
-    tree = annotate_all <<-EOF
-def abc(bar, &blk)
-  # a: Symbol= => String=
-  p blk; a = bar; z = a
-end
-EOF
-    definition = tree[1][0]
-    body = definition[3]
-    body_def = body[1][0..-1]
-
-    type = body_def[2].scope.lookup('a').expr_type
-    type.should == Types::GenericType.new(Types::ClassType.new('Hash', :covariant),
-        [Types::ClassType.new('Symbol', :invariant),
-         Types::ClassType.new('String', :invariant)])
-    
-    tree.all_errors.should be_empty
-  end
-  
-  # [:program,
-  #  [[:def,
-  #    [:@ident, "abc", [1, 4]],
-  #    [:paren,
-  #     [:params,
-  #      [[:@ident, "bar", [1, 8]]], nil, nil, nil,
-  #      [:blockarg, [:@ident, "blk", [1, 14]]]]],
-  #    [:bodystmt,
-  #     [[:void_stmt],
-  #      [:command,
-  #       [:@ident, "p", [1, 20]],
-  #       [:args_add_block, [[:var_ref, [:@ident, "blk", [1, 22]]]], false]],
-  #      [:assign,
-  #       [:var_field, [:@ident, "a", [1, 27]]],
-  #       [:var_ref, [:@ident, "bar", [1, 31]]]],
-  #      [:assign,
-  #       [:var_field, [:@ident, "a", [1, 36]]],
-  #       [:var_ref, [:@ident, "blk", [1, 40]]]]],
-  #     nil, nil, nil]]]]
-  it 'does not create new scopes when re-using a binding' do
-    tree = annotate_all('def abc(bar, &blk); p blk; a = bar; a = blk; end')
-    definition = tree[1][0]
-    body = definition[3]
-    body_def = body[1][1..-1]
-
-    body_def[1].should see_var('a')
-    body_def[2].should see_var('a')
-    body_def[1].scope.lookup('a').should be_a(Bindings::LocalVariableBinding)
-    body_def[2].scope.lookup('a').should be_a(Bindings::LocalVariableBinding)
-    
-    body_def[2].scope.object_id.should == body_def[1].scope.object_id
-    body_def[1].scope.lookup('a').object_id.should == body_def[2].scope.lookup('a').object_id
+    bar = method.arguments[0]
+    bar.name.should == 'bar'
+    bar.kind.should == :positional
+    blk = method.arguments[1]
+    blk.name.should == 'blk'
+    blk.kind.should == :block
+    method.name.should == 'abcd'
     tree.all_errors.should be_empty
   end
   
@@ -623,403 +296,10 @@ EOF
   #     nil, nil, nil]]]]
   it 'creates new constant bindings as new constants are assigned to' do
     tree = annotate_all('module TestA; PI = 3.14; TAU = PI * 2; end')
-    body = tree[1][0][2][1]
     
-    body[2].should see_var('PI')
-    body[2].should see_var('TAU')
-    
-    body[1].scope.lookup('PI').should be_a(Bindings::ConstantBinding)
-    body[2].scope.lookup('TAU').should be_a(Bindings::ConstantBinding)
-    tree.all_errors.should be_empty
-  end
-  
-  it 'attaches annotated types as new constants are assigned to' do
-    tree = annotate_all <<-EOF
-module TestB
-# PI: Float | Integer
-PI = 3.14; TAU = PI * 2
-end
-EOF
-
-    body = tree[1][0][2][1]
-
-    body[1].scope.lookup('PI').expr_type.should == Types::UnionType.new([
-        Types::ClassType.new('Float', :covariant),
-        Types::ClassType.new('Integer', :covariant)
-    ])
-    tree.all_errors.should be_empty
-  end
-  
-  # [:program,
-  #  [[:module,
-  #    [:const_ref, [:@const, "TestA", [1, 7]]],
-  #    [:bodystmt,
-  #     [[:void_stmt],
-  #      [:assign,
-  #       [:var_field, [:@const, "PI", [1, 14]]],
-  #       [:@float, "3.14", [1, 19]]],
-  #      [:assign,
-  #       [:var_field, [:@gvar, "$TEST_TAU", [1, 25]]],
-  #       [:binary,
-  #        [:var_ref, [:@const, "PI", [1, 37]]],
-  #        :*,
-  #        [:@int, "2", [1, 42]]]]],
-  #     nil, nil, nil]]]]
-  it 'creates global variable bindings when discovered' do
-    tree = annotate_all('module TestA; PI = 3.14; $TEST_TAU = PI * 2; end')
-    
-    # just by annotating this, the new gvar should've been discovered.
-    Scope::GlobalScope.lookup('$TEST_TAU').should be_a(Bindings::GlobalVariableBinding)
-    body = tree[1][0][2][1]
-    body[1].should see_var('PI')
-    # and this is why dynamic scoping is bad:
-    body[1].should see_var('$TEST_TAU')
-    tree.all_errors.should be_empty
-  end
-  
-  # [:program,
-  # [[:command,
-  #   [:@ident, "p", [1, 0]],
-  #   [:args_add_block, [[:var_ref, [:@kw, "nil", [1, 2]]]], false]],
-  #  [:massign,
-  #   [[:@ident, "a", [1, 7]],
-  #    [:mlhs_paren,
-  #     [:mlhs_add_star,
-  #      [[:@const, "Z", [1, 11]],
-  #       [:mlhs_paren,
-  #        [[:mlhs_paren,
-  #          [[:@ivar, "@b", [1, 16]],
-  #           [:@gvar, "$f", [1, 20]],
-  #           [:@cvar, "@@j", [1, 24]]]],
-  #         [:mlhs_paren, [[:@ident, "i", [1, 31]], [:@ident, "p", [1, 34]]]]]]],
-  #      [:@ident, "d", [1, 40]]]],
-  #    [:@ident, "c", [1, 44]]],
-  #   [:mrhs_new_from_args, [[:@int, "1", [1, 48]]], [:@int, "2", [1, 51]]]],
-  #  [:command,
-  #   [:@ident, "p", [1, 54]],
-  #   [:args_add_block, [[:var_ref, [:@ident, "c", [1, 56]]]], false]]]]
-  
-  it 'creates multiple bindings all at once during multiple assignments' do
-    tree = annotate_all('p nil; a, (Z, ((b, $f, j), (i, p)), *d), c = 1, ["hi", [[2,3,4], [5,6]], 8, 9], 2; p c')
-    
-    list = tree[1]
-    %w(a Z b j i p d c).each do |var|
-      list[1].should see_var(var)
-      list[2].should see_var(var)
-    end
-    list[0].should see_var('$f')
-    list[1].should see_var('$f')
-    tree.all_errors.should be_empty
-  end
-  
-  # [:program,
-  #  [[:command,
-  #    [:@ident, "p", [1, 0]],
-  #    [:args_add_block, [[:var_ref, [:@kw, "nil", [1, 2]]]], false]],
-  #   [:for,
-  #    [:var_field, [:@ident, "x", [1, 11]]],
-  #    [:array, nil],
-  #    [[:command,
-  #      [:@ident, "p", [1, 20]],
-  #      [:args_add_block, [[:var_ref, [:@ident, "x", [1, 22]]]], false]]]]]]
-  it 'creates a single binding with a simple for loop' do
-    tree = annotate_all('p nil; for x in []; p x; end')
-    list = tree[1]
-
-    forloop = list[1]
-    forloop.should see_var('x')
-    forloop[3].should see_var('x')
-    tree.all_errors.should be_empty
-  end
-  
-  # [:program,
-  #  [[:command,
-  #    [:@ident, "p", [1, 0]],
-  #    [:args_add_block, [[:var_ref, [:@kw, "nil", [1, 2]]]], false]],
-  #   [:for,
-  #    [[:@const, "A92", [1, 11]],
-  #     [:@ident, "x", [1, 16]],
-  #     [:mlhs_paren,
-  #      [[:@ident, "y", [1, 20]],
-  #       [:mlhs_paren, [[:@ident, "z", [1, 24]], [:@gvar, "$f", [1, 27]]]]]]],
-  #    [:array, nil],
-  #    [[:command,
-  #      [:@ident, "p", [1, 39]],
-  #      [:args_add_block, [[:var_ref, [:@ident, "x", [1, 41]]]], false]]]]]]
-  it 'creates many bindings with a complex for loop initializer' do
-    tree = annotate_all('p nil; for A92, x, (y, (z, $f)) in []; p x; end')
-    list = tree[1]
-    list[0].should see_var('$f')
-
-    forloop = list[1]
-    forloop.should see_var('A92')
-    forloop.should see_var('x')
-    forloop.should see_var('y')
-    forloop.should see_var('z')
-    forloop.should see_var('$f')
-    tree.all_errors.should_not be_empty
-    tree.all_errors.first.should be_a(ScopeAnnotation::ConstantInForLoopError)
-    tree.all_errors.first.message.should include('A92')
-  end
-  
-  it 'creates an error for each constant named as a for loop variable' do
-    consts = %w(A99 B99 C99 D99)
-    tree = annotate_all("for #{consts.join(', ')} in []; p A99; end")
-    
-    tree.all_errors.size.should == 4
-    consts.each_with_index do |const, idx|
-      tree.all_errors[idx].should be_a(ScopeAnnotation::ConstantInForLoopError)
-      tree.all_errors[idx].message.should include(const)
-    end
-  end
-  
-  it 'attaches types to for loop variables' do
-    begin
-      tree = annotate_all <<-EOF
-# x: #to_i -> Integer
-for x in [1, 2]; p x; end
-EOF
-
-      list = tree[1]
-      forloop = list[0][3]
-      binding = forloop.scope.lookup('x')
-      binding.expr_type.should == Types::StructuralType.new('to_i', [], 
-          Types::ClassType.new('Integer', :covariant))
-      tree.all_errors.should be_empty
-    ensure
-      Scope::GlobalScope.lookup('x').annotated_type = nil
-    end
-  end
-  
-  it 'attaches types to multiple for loop variables' do
-    begin
-      tree = annotate_all <<-EOF
-# x: #to_i -> Integer
-# y: String=
-for x, y in [[1, "hello"], [2, "world"]]; p x; end
-EOF
-
-      list = tree[1]
-      forloop = list[0][3]
-      binding = forloop.scope.lookup('x')
-      binding.expr_type.should == Types::StructuralType.new('to_i', [], 
-          Types::ClassType.new('Integer', :covariant))
-      binding = forloop.scope.lookup('y')
-      binding.expr_type.should == Types::ClassType.new('String', :invariant)
-      tree.all_errors.should be_empty
-    ensure
-      Scope::GlobalScope.lookup('x').annotated_type = nil
-      Scope::GlobalScope.lookup('y').annotated_type = nil
-    end
-  end
-  
-  # [:program,
-  # [[:command,
-  #   [:@ident, "p", [1, 0]],
-  #   [:args_add_block, [[:var_ref, [:@kw, "nil", [1, 2]]]], false]],
-  #  [:method_add_block,
-  #   [:method_add_arg,
-  #    [:call,
-  #     [:array, [[:@int, "1", [1, 8]], [:@int, "2", [1, 10]]]],
-  #     :".",
-  #     [:@ident, "crazy_blocker", [1, 13]]],
-  #    [:arg_paren,
-  #     [:args_add_block,
-  #      [[:@int, "2", [1, 27]], [:@int, "5", [1, 29]]],
-  #      false]]],
-  #   [:do_block,
-  #    [:block_var,
-  #     [:params,
-  #      [[:@ident, "x", [1, 36]]],
-  #      [[[:@ident, "y", [1, 39]], [:var_ref, [:@ident, "x", [1, 41]]]]],
-  #      [:rest_param, [:@ident, "rest", [1, 45]]],
-  #      nil,
-  #      [:blockarg, [:@ident, "blk", [1, 52]]]],
-  #     nil],
-  #    [[:void_stmt],
-  #     [:command,
-  #      [:@ident, "p", [1, 58]],
-  #      [:args_add_block, [[:var_ref, [:@ident, "x", [1, 60]]]], false]]]]]]]
-  it 'creates a new open scope when a block is used' do
-    tree = annotate_all('p nil; [1,2].fetch(2) do |x, y=x, *rest, &blk|; p x; end')
-    list = tree[1]
-
-    block_body = list[1][2][2]
-    block_body.scope.should be_a(OpenScope)
-    block_body.should see_var('x')
-    block_body.should see_var('y')
-    block_body.should see_var('rest')
-    block_body.should see_var('blk')
-    tree.all_errors.should be_empty
-  end
-  
-  
-  # [:program,
-  # [[:assign, [:var_field, [:@ident, "z", [1, 0]]], [:@int, "10", [1, 4]]],
-  #  [:method_add_block,
-  #   [:method_add_arg,
-  #    [:call,
-  #     [:array, [[:@int, "1", [1, 9]], [:@int, "2", [1, 11]]]],
-  #     :".",
-  #     [:@ident, "crazy_blocker", [1, 14]]],
-  #    [:arg_paren,
-  #     [:args_add_block,
-  #      [[:@int, "2", [1, 28]], [:@int, "5", [1, 30]]],
-  #      false]]],
-  #   [:do_block,
-  #    [:block_var,
-  #     [:params,
-  #      [[:@ident, "x", [1, 37]]],
-  #      [[[:@ident, "y", [1, 40]], [:var_ref, [:@ident, "x", [1, 42]]]]],
-  #      nil, nil, nil],
-  #     nil],
-  #    [[:void_stmt],
-  #     [:command,
-  #      [:@ident, "p", [1, 46]],
-  #      [:args_add_block, [[:var_ref, [:@ident, "x", [1, 48]]]], false]]]]]]]
-  it 'creates a scope that can reference parent scope variables when a block is found' do
-    tree = annotate_all('z = 10; [1,2].fetch(2) do |x, y=x|; p x; end')
-    list = tree[1]
-    list[0].should see_var('z')
-
-    block_body = list[1][2][2]
-    block_body.should see_var('z')
-    block_body.should see_var('x')
-    block_body.should see_var('y')
-    tree.all_errors.should be_empty
-  end
-  
-  # [:program,
-  #  [[:assign, [:var_field, [:@ident, "z", [1, 0]]], [:@int, "10", [1, 4]]],
-  #   [:method_add_block,
-  #    [:call, [:array, nil], :".", [:@ident, "each", [1, 11]]],
-  #    [:brace_block,
-  #     [:block_var,
-  #      [:params,
-  #       [[:@ident, "x", [1, 19]]],
-  #       [[[:@ident, "y", [1, 22]], [:var_ref, [:@ident, "x", [1, 24]]]]],
-  #       nil, nil, nil],
-  #      nil],
-  #     [[:method_add_block,
-  #       [:call,
-  #        [:var_ref, [:@ident, "x", [1, 27]]],
-  #        :".",
-  #        [:@ident, "each", [1, 29]]],
-  #       [:brace_block,
-  #        [:block_var,
-  #         [:params,
-  #          [[:@ident, "abc", [1, 37]], [:@ident, "jkl", [1, 42]]],
-  #          nil, nil, nil, nil],
-  #         nil],
-  #        [[:method_add_block,
-  #          [:call,
-  #           [:var_ref, [:@ident, "abc", [1, 47]]],
-  #           :".",
-  #           [:@ident, "each", [1, 51]]],
-  #          [:brace_block,
-  #           [:block_var,
-  #            [:params, [[:@ident, "oo", [1, 59]]], nil, nil, nil, nil],
-  #            nil],
-  #           [[:var_ref, [:@ident, "oo", [1, 63]]]]]]]]]]]]]]
-  it 'handles deep block nesting' do
-    tree = annotate_all('z = 10; [].each { |x, y=x| x.each { |abc, jkl| abc.each { |oo| oo }}}')
-
-    list = tree[1]
-    list[0].should see_var('z')
-
-    first_block_body = list[1][2][2]
-    first_block_body.should see_var('z')
-    first_block_body.should see_var('x')
-    first_block_body.should see_var('y')
-    first_block_body.should_not see_var('abc')
-    first_block_body.should_not see_var('jkl')
-    first_block_body.should_not see_var('oo')
-    
-    second_block_body = first_block_body[0][2][2]
-    second_block_body.should see_var('z')
-    second_block_body.should see_var('x')
-    second_block_body.should see_var('y')
-    second_block_body.should see_var('abc')
-    second_block_body.should see_var('jkl')
-    second_block_body.should_not see_var('oo')
-    
-    third_block_body = second_block_body[0][2][2]
-    third_block_body.should see_var('z')
-    third_block_body.should see_var('x')
-    third_block_body.should see_var('y')
-    third_block_body.should see_var('abc')
-    third_block_body.should see_var('jkl')
-    third_block_body.should see_var('oo')
-    
-    third_block_body.scope.lookup('z').should be list[0].scope.lookup('z')
-    tree.all_errors.should be_empty
-  end
-  
-  # [:program,
-  #  [[:assign, [:var_field, [:@ident, "x", [1, 0]]], [:@int, "10", [1, 4]]],
-  #   [:method_add_block,
-  #    [:call, [:array, nil], :".", [:@ident, "each", [1, 11]]],
-  #    [:brace_block,
-  #     [:block_var,
-  #      [:params,
-  #       [[:@ident, "x", [1, 19]]],
-  #       [[[:@ident, "y", [1, 22]], [:var_ref, [:@ident, "x", [1, 24]]]]],
-  #       nil,
-  #       nil,
-  #       nil],
-  #      nil],
-  #     [[:var_ref, [:@ident, "y", [1, 27]]]]]]]]
-  it 'handles block variables shadowing outside variables' do
-    tree = annotate_all('x = 10; [].each { |x, y=x| y }')
-
-    list = tree[1]
-    list[0].should see_var('x')
-
-    first_block_body = list[1][2][2]
-    first_block_body.should see_var('x')
-    first_block_body.should see_var('y')
-    
-    first_block_body.scope.lookup('x').should_not be list[0].scope.lookup('x')
-    tree.all_errors.should be_empty
-  end
-  
-  it 'attaches types to block variables' do
-    tree = annotate_all <<-EOF
-# x: Integer
-x = 10
-# x: Float
-# y: TrueClass
-[].each do |x, y=x| 
-  y
-end
-EOF
-
-    list = tree[1]
-    list[0].should see_var('x')
-    list[0].scope.lookup('x').expr_type.should ==
-        Types::ClassType.new('Integer', :covariant)
-
-    first_block_body = list[1][2][2]
-    first_block_body.should see_var('x')
-    first_block_body.scope.lookup('x').expr_type.should ==
-        Types::ClassType.new('Float', :covariant)
-    first_block_body.should see_var('y')
-    first_block_body.scope.lookup('y').expr_type.should ==
-        Types::ClassType.new('TrueClass', :covariant)
-    
-    tree.all_errors.should be_empty
-  end
-  
-  it 'handles blocks with *no* variables' do
-    tree = annotate_all('x = 10; [].each { x }')
-
-    list = tree[1]
-    list[0].should see_var('x')
-
-    first_block_body = list[1][2][2]
-    first_block_body.should see_var('x')
-    
-    tree.all_errors.should be_empty
+    ClassRegistry['TestA'].should be_a(LaserModule)
+    ClassRegistry['TestA'].const_get('PI').should_not be_nil
+    ClassRegistry['TestA'].const_get('TAU').should_not be_nil
   end
   
   it 'handles module inclusions done in the typical method-call fashion' do
@@ -1544,30 +824,13 @@ module And
 end
 EOF
 )
-    list = tree[1]
-    and_header, and_body = list[0][1..2]
-    or_body = and_body[1][1][2]
-    is_body = or_body[1][1][2]
-    and_mod, or_mod, is_mod = [and_body, or_body, is_body].map {|node| node.scope.self_ptr }
-    and_header.scope.self_ptr.name.should == 'main'
-    and_mod.path.should == 'And'
-    or_mod.path.should == 'And::Or'
-    is_mod.path.should == 'And::Or::Is'
-    reopen_and_body = list[1][2]
-    type_body = reopen_and_body[1][1][3]
-    kind_body = reopen_and_body[1][2][3]
-    silly_body = reopen_and_body[1][3][2]
-    reopen_and_mod, type_class, kind_class, silly_mod =
-        [reopen_and_body, type_body, kind_body, silly_body].map do |node|
-      node.scope.self_ptr
-    end
-    reopen_and_mod.path.should == 'And'
-    reopen_and_mod.object_id.should == and_mod.object_id
-    type_class.path.should == 'And::Or::Type'
-    kind_class.path.should == 'And::Or::Is::Ten::Kind'
-    kind_class.superclass.path.should == 'And::Or::Type'
-    silly_mod.path.should == 'And::Or::Is::Ten::Kind::Silly'
-    tree.all_errors.should be_empty
+    modules = %w(And And::Or And::Or::Is And::Or::Is::Ten And::Or::Is::Ten::Seven
+                 And::Or::Is::Ten::Kind::Silly)
+    modules.each { |mod| ClassRegistry[mod].should be_a(LaserModule) }
+    ClassRegistry['And::Or::Type'].should be_a(LaserClass)
+    ClassRegistry['And::Or::Type'].superclass.should be ClassRegistry['Object']
+    ClassRegistry['And::Or::Is::Ten::Kind'].should be_a(LaserClass)
+    ClassRegistry['And::Or::Is::Ten::Kind'].superclass.should be ClassRegistry['And::Or::Type']
   end
   
   describe 'with a real ruby file as input' do
@@ -1698,32 +961,32 @@ end
       end
       
       generic = ClassRegistry["#{bindings_mod}::GenericBinding"]
-      generic.instance_variables['@name'].should be_a(Bindings::InstanceVariableBinding)
-      generic.instance_variables['@value'].should be_a(Bindings::InstanceVariableBinding)
+      #generic.instance_variables['@name'].should be_a(Bindings::InstanceVariableBinding)
+      #generic.instance_variables['@value'].should be_a(Bindings::InstanceVariableBinding)
       class_binding = ClassRegistry["#{bindings_mod}::ConstantBinding"]
       kw_binding = ClassRegistry["#{bindings_mod}::KeywordBinding"]
       arg_binding = ClassRegistry["#{bindings_mod}::ArgumentBinding"]
-      arg_binding.instance_variables['@name'].should be generic.instance_variables['@name']
-      arg_binding.instance_variables['@value'].should be generic.instance_variables['@value']
-      arg_binding.instance_variables['@kind'].should be_a(Bindings::InstanceVariableBinding)
-      arg_binding.instance_variables['@default_value_sexp'].should be_a(Bindings::InstanceVariableBinding)
+      #arg_binding.instance_variables['@name'].should be generic.instance_variables['@name']
+      #arg_binding.instance_variables['@value'].should be generic.instance_variables['@value']
+      #arg_binding.instance_variables['@kind'].should be_a(Bindings::InstanceVariableBinding)
+      #arg_binding.instance_variables['@default_value_sexp'].should be_a(Bindings::InstanceVariableBinding)
       
       arg_binding.ancestors.should == [arg_binding, generic, ClassRegistry['Comparable'],
                                        ClassRegistry['Object'], ClassRegistry['Kernel'],
                                        ClassRegistry['BasicObject']]
       
       %w(initialize bind! <=> scope protocol class_used to_s inspect).each do |method|
-        generic.instance_methods[method].should_not be_empty
+        generic.instance_methods[method].should_not be_nil
         generic.visibility_table[method].should == :public
       end
       kw_binding.visibility_table['bind!'].should == :private
-      init_sig = generic.instance_methods['initialize'].signatures.first
-      init_sig.arguments.size.should == 2
-      init_sig.arguments.map(&:name).should == ['name', 'value']
+      init_method = generic.instance_methods['initialize']
+      init_method.arguments.size.should == 2
+      init_method.arguments.map(&:name).should == ['name', 'value']
       
-      arg_binding_sig = arg_binding.instance_methods['initialize'].signatures.first
-      arg_binding_sig.arguments.size.should == 4
-      arg_binding_sig.arguments.map(&:name).should == ['name', 'value', 'kind', 'default_value']
+      arg_binding_method = arg_binding.instance_methods['initialize']
+      arg_binding_method.arguments.size.should == 4
+      arg_binding_method.arguments.map(&:name).should == ['name', 'value', 'kind', 'default_value']
       
       
       generic.instance_methods['initialize'].arity.should == (2..2)
@@ -1733,40 +996,6 @@ end
       generic.instance_methods['class_used'].arity.should == (0..0)
       class_binding.instance_methods['bind!'].arity.should == (1..2)
       arg_binding.instance_methods['initialize'].arity.should == (3..4)
-      
-      # [:bodystmt,
-      #  [[:super,
-      #    [:arg_paren,
-      #     [:args_add_block,
-      #      [[:var_ref, [:@ident, "name", [82, 16]]],
-      #       [:var_ref, [:@ident, "value", [82, 22]]]],
-      #      false]]],
-      #   [:assign,
-      #    [:var_field, [:@ivar, "@kind", [83, 10]]],
-      #    [:var_ref, [:@ident, "kind", [83, 18]]]],
-      #   [:assign,
-      #    [:var_field, [:@ivar, "@default_value_sexp", [84, 10]]],
-      #    [:var_ref, [:@ident, "default_value", [84, 32]]]]],
-      #  nil,
-      #  nil,
-      #  nil]
-      
-      arg_init_body = arg_binding.instance_methods['initialize'].body_ast
-      # arguments to super
-      arg_init_body[1][0][1][1][1][0].binding.should be_a(Bindings::ArgumentBinding)
-      arg_init_body[1][0][1][1][1][0].binding.name.should == 'name'
-      arg_init_body[1][0][1][1][1][1].binding.should be_a(Bindings::ArgumentBinding)
-      arg_init_body[1][0][1][1][1][1].binding.name.should == 'value'
-      # first assign
-      arg_init_body[1][1][1].binding.should be_a(Bindings::InstanceVariableBinding)
-      arg_init_body[1][1][1].binding.name.should == '@kind'
-      arg_init_body[1][1][2].binding.should be_a(Bindings::ArgumentBinding)
-      arg_init_body[1][1][2].binding.name.should == 'kind'
-      # second assign
-      arg_init_body[1][2][1].binding.should be_a(Bindings::InstanceVariableBinding)
-      arg_init_body[1][2][1].binding.name.should == '@default_value_sexp'
-      arg_init_body[1][2][2].binding.should be_a(Bindings::ArgumentBinding)
-      arg_init_body[1][2][2].binding.name.should == 'default_value'
     end
   end
 end

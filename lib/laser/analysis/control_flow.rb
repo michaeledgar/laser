@@ -14,9 +14,9 @@ require 'laser/analysis/control_flow/control_flow_graph'
 module Laser
   module SexpAnalysis
     module ControlFlow
-      def self.perform_cfg_analysis(tree, text)
+      def self.perform_cfg_analysis(tree, text, opts={})
         graph = GraphBuilder.new(tree).build
-        graph.analyze
+        graph.analyze(opts)
         graph
       end
     end

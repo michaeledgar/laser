@@ -37,6 +37,10 @@ module Laser
         object_class.instance_variable_set("@scope", object_scope)
         module_class.instance_variable_set("@scope", module_scope)
         class_class.instance_variable_set("@scope", class_scope)
+        object_class.const_set('BasicObject', basic_object_class)
+        object_class.const_set('Object', object_class)
+        object_class.const_set('Module', module_class)
+        object_class.const_set('Class', class_class)
         basic_object_class.instance_variable_set("@klass", class_class)
         object_class.instance_variable_set("@klass", class_class)
         module_class.instance_variable_set("@klass", class_class)
@@ -65,6 +69,17 @@ module Laser
             method.add_signature!(Signature.new('current_self', [],
             Types::ClassType.new('BasicObject', :covariant)))
         end)
+        object_class = ClassRegistry['Class']
+        exception_class = LaserClass.new(class_class, Scope::GlobalScope, 'Exception')
+        object_class.const_set('Exception', exception_class)
+        std_error_class = LaserClass.new(class_class, Scope::GlobalScope, 'StandardError') do |klass|
+          klass.superclass = exception_class
+        end
+        object_class.const_set('StandardError', std_error_class)
+        type_error_class = LaserClass.new(class_class, Scope::GlobalScope, 'TypeError') do |klass|
+          klass.superclass = std_error_class
+        end
+        object_class.const_set('TypeError', type_error_class)
       end
       
       # Before we analyze any code, we need to create classes for all the
@@ -74,6 +89,7 @@ module Laser
       def self.bootstrap_literals
         global = Scope::GlobalScope
         class_class = ClassRegistry['Class']
+        object_class = ClassRegistry['Object']
         true_class = LaserSingletonClass.new(class_class, ClosedScope.new(Scope::GlobalScope, nil), 'TrueClass', 'true')
         false_class = LaserSingletonClass.new(class_class, ClosedScope.new(Scope::GlobalScope, nil), 'FalseClass', 'false')
         nil_class = LaserSingletonClass.new(class_class, ClosedScope.new(Scope::GlobalScope, nil), 'NilClass', 'nil')
@@ -85,9 +101,21 @@ module Laser
         global.add_binding!(
             Bindings::KeywordBinding.new('nil', nil_class.get_instance))
 
-        superclass_assignment = proc { |klass| klass.superclass = ClassRegistry['Object'] }
-        global.add_binding!(Bindings::ConstantBinding.new(
-            'Array', LaserClass.new(class_class, ClosedScope.new(Scope::GlobalScope, nil), 'Array', &superclass_assignment)))
+        kernel_module = stub_toplevel_module('Kernel')
+        object_class.include(kernel_module)
+        stub_toplevel_class('Proc')
+        stub_toplevel_class('Array')
+        stub_toplevel_class('String')
+        stub_toplevel_class('Hash')
+        stub_toplevel_class('Regexp')
+        stub_toplevel_class('Range')
+        stub_toplevel_class('Symbol')
+        stub_toplevel_class('Numeric')
+        stub_toplevel_class('Float', 'Numeric')
+        stub_toplevel_class('Integer', 'Numeric')
+        stub_toplevel_class('Fixnum', 'Integer')
+        stub_toplevel_class('Bignum', 'Integer')
+        
         global.add_binding!(
             Bindings::GlobalVariableBinding.new('$:',
               RealObjectProxy.new(ClassRegistry['Array'], global, '$:',
@@ -95,6 +123,61 @@ module Laser
         global.add_binding!(
             Bindings::GlobalVariableBinding.new('$"',
               RealObjectProxy.new(ClassRegistry['Array'], global, '$"', [])))
+        stub_core_methods
+      end
+      
+      def self.stub_core_methods
+        class_class = ClassRegistry['Class']
+        module_class = ClassRegistry['Module']
+        kernel_module = ClassRegistry['Kernel']
+        array_class = ClassRegistry['Array']
+        hash_class = ClassRegistry['Hash']
+        def hash_class.[](*args)
+          ::Hash[*args]
+        end
+        def array_class.[](*args)
+          ::Array[*args]
+        end
+        string_class = ClassRegistry['String']
+        stub_method(class_class.singleton_class, 'new', builtin: true, pure: true)
+        stub_method(class_class, 'superclass', builtin: true, pure: true, raises: Frequency::NEVER)
+        stub_method(class_class, 'new')
+        stub_method(module_class, 'current_default_visibility=', builtin: true, pure: true)
+        stub_method(module_class, 'define_method', builtin: true, pure: true, mutation: true)
+        stub_method(module_class, 'define_method_with_annotations', builtin: true, pure: true, mutation: true)
+        stub_method(module_class.singleton_class, 'new', builtin: true, pure: true)
+        stub_method(module_class, 'const_defined?', builtin: true, raises: Frequency::NEVER)
+        stub_method(module_class, 'const_set', builtin: true, mutation: true)
+        stub_method(module_class, 'const_get', builtin: true)
+        stub_method(module_class, '===', builtin: true, pure: true, raises: Frequency::NEVER)
+        stub_method(kernel_module, 'eql?', builtin: true, pure: true,
+            raises: Frequency::NEVER)
+        stub_method(kernel_module, 'singleton_class', builtin: true, pure: true,
+            raises: Frequency::NEVER)
+        stub_method(array_class.singleton_class, '[]', builtin: true, pure: true, raises: Frequency::NEVER)
+        stub_method(hash_class.singleton_class, '[]', builtin: true, pure: true)
+        stub_method(string_class, '+', builtin: true, pure: true)
+      end
+      
+      def self.stub_method(klass, name, opts={})
+        method = LaserMethod.new(name)
+        opts.each { |k, v| method.send("#{k}=", v) }
+        klass.add_instance_method!(method)
+      end
+      
+      def self.stub_toplevel_class(name, superclass_name='Object')
+        klass = LaserClass.new(ClassRegistry['Class'], ClosedScope.new(Scope::GlobalScope, nil), name) do |klass|
+          klass.superclass = ClassRegistry[superclass_name]
+        end
+        ClassRegistry['Object'].const_set(name, klass)
+        klass
+      end
+
+      def self.stub_toplevel_module(name)
+        # i say "module" like "mojule" anyway, so i'll use that as the misspelling
+        mojule = LaserModule.new(ClassRegistry['Module'], ClosedScope.new(Scope::GlobalScope, nil), name)
+        ClassRegistry['Object'].const_set(name, mojule)
+        mojule
       end
     end
   end
