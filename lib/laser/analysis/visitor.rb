@@ -64,28 +64,6 @@ module Laser
         def add(*args, &blk)
           (self.filters ||= []) << Filter.new(args, blk)
         end
-        
-        # Creates a special kind of filter: one which matches the calling of a method
-        # of a certain name. Since there are several AST trees matching different calling
-        # syntaxes, this alleviates a lot of pain.
-        #
-        # The filter, when matched, will run the block provided to #match_method_call with
-        # the node as the first argument to the block and the array of argument nodes to
-        # the method call as the second argument to the block.
-        def match_precise_loadtime_method(method_proc, &blk)
-          is_method = proc do |node|
-            node.runtime == :load && node.is_method_call?
-          end
-
-          add(is_method) do |node|
-            default_visit node
-            method_call_info = node.method_call
-            matching_methods = method_proc.call rescue []
-            if matching_methods.any? { |meth| node.method_estimate == [meth] }
-              instance_exec(node, ArgumentExpansion.new(method_call_info.arg_node), &blk)
-            end
-          end
-        end
       end
       
       attr_reader :text

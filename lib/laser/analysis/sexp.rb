@@ -3,12 +3,11 @@ module Laser
     # Replaces the ParseTree Sexps by adding a few handy-dandy methods.
     class Sexp < Array
       include SexpExtensions::ConstantExtraction      
-      include SexpExtensions::MethodResolution
       include SexpExtensions::SourceLocation
       include SexpExtensions::TypeInference
       
       extend ModuleExtensions
-      attr_accessor :errors, :binding, :file_name, :file_source
+      attr_accessor :errors, :binding, :file_name, :file_source, :scope
       attr_accessor :reachable
 
       # Initializes the Sexp with the contents of the array returned by Ripper.

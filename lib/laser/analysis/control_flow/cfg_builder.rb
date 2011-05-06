@@ -574,6 +574,9 @@ module Laser
                 variable_instruct(node)
               elsif node[1].type == :@kw
                 const_instruct(node.constant_value.raw_object)
+              elsif node[1].type == :@gvar
+                call_instruct(ClassRegistry['Laser#Magic'].binding, :get_global,
+                    const_instruct(node.expanded_identifier), raise: false, value: true)
               end
             when :top_const_ref
               const = node[1]
@@ -977,7 +980,7 @@ module Laser
               with_current_basic_block(catcher) do
                 failure_block = nil
                 foreach_on_rhs(rhs) do |temp|
-                  result = call_instruct(temp, :===, node.scope.lookup('$!'), value: true)
+                  result = call_instruct(temp, :===, Scope::GlobalScope.lookup('$!'), value: true)
                   failure_block = create_block
                   cond_instruct(result, handler_block, failure_block)
                   start_block failure_block
@@ -992,8 +995,8 @@ module Laser
             if exception_name
               temp = lookup_or_create_temporary(:var, node.scope.lookup('$!'))
               copy_instruct(temp, node.scope.lookup('$!'))
-              copy_instruct(exception_name.scope.lookup(exception_name.expanded_identifier),
-                            temp)
+              var_name = exception_name.expanded_identifier
+              copy_instruct(current_scope.lookup_or_create_local(var_name), temp)
             end
             body_result = walk_body handler_body, value: true
             copy_instruct(enclosing_body_result, body_result)
@@ -1280,6 +1283,9 @@ module Laser
               copy_instruct lhs.binding, rhs_val
             elsif lhs[1].type == :@const
               call_instruct(current_namespace, :const_set, const_instruct(var_name), rhs_val, value: false, raise: false)
+            elsif lhs[1].type == :@gvar
+              call_instruct(ClassRegistry['Laser#Magic'].binding, :set_global,
+                  const_instruct(var_name), rhs_val, raise: false, value: true)
             end
             rhs_val
           end
@@ -1899,6 +1905,7 @@ module Laser
 
           lhs_result = walk_node lhs, value: true
           
+          result = nil
           false_block = build_block_with_jump(after) do
             rhs_result = walk_node rhs, value: true
             result = lookup_or_create_temporary(:or_short_circuit, lhs_result, rhs_result)
@@ -1944,6 +1951,7 @@ module Laser
 
           lhs_result = walk_node lhs, value: true
           
+          result = nil
           true_block = build_block_with_jump(after) do
             rhs_result = walk_node rhs, value: true
             result = lookup_or_create_temporary(:and_short_circuit, lhs_result, rhs_result)

@@ -69,17 +69,8 @@ module Laser
             method.add_signature!(Signature.new('current_self', [],
             Types::ClassType.new('BasicObject', :covariant)))
         end)
-        object_class = ClassRegistry['Class']
-        exception_class = LaserClass.new(class_class, Scope::GlobalScope, 'Exception')
-        object_class.const_set('Exception', exception_class)
-        std_error_class = LaserClass.new(class_class, Scope::GlobalScope, 'StandardError') do |klass|
-          klass.superclass = exception_class
-        end
-        object_class.const_set('StandardError', std_error_class)
-        type_error_class = LaserClass.new(class_class, Scope::GlobalScope, 'TypeError') do |klass|
-          klass.superclass = std_error_class
-        end
-        object_class.const_set('TypeError', type_error_class)
+        stub_method(magic_class.singleton_class, 'get_global', special: true, pure: true)
+        stub_method(magic_class.singleton_class, 'set_global', special: true, mutation: true)
       end
       
       # Before we analyze any code, we need to create classes for all the
@@ -93,6 +84,9 @@ module Laser
         true_class = LaserSingletonClass.new(class_class, ClosedScope.new(Scope::GlobalScope, nil), 'TrueClass', 'true')
         false_class = LaserSingletonClass.new(class_class, ClosedScope.new(Scope::GlobalScope, nil), 'FalseClass', 'false')
         nil_class = LaserSingletonClass.new(class_class, ClosedScope.new(Scope::GlobalScope, nil), 'NilClass', 'nil')
+        object_class.const_set('TrueClass', true_class)
+        object_class.const_set('FalseClass', true_class)
+        object_class.const_set('NilClass', true_class)
 
         global.add_binding!(
             Bindings::KeywordBinding.new('true', true_class.get_instance))
@@ -103,18 +97,21 @@ module Laser
 
         kernel_module = stub_toplevel_module('Kernel')
         object_class.include(kernel_module)
-        stub_toplevel_class('Proc')
-        stub_toplevel_class('Array')
-        stub_toplevel_class('String')
-        stub_toplevel_class('Hash')
-        stub_toplevel_class('Regexp')
-        stub_toplevel_class('Range')
-        stub_toplevel_class('Symbol')
-        stub_toplevel_class('Numeric')
-        stub_toplevel_class('Float', 'Numeric')
-        stub_toplevel_class('Integer', 'Numeric')
-        stub_toplevel_class('Fixnum', 'Integer')
-        stub_toplevel_class('Bignum', 'Integer')
+        stub_toplevel_class 'Proc'
+        stub_toplevel_class 'Array'
+        stub_toplevel_class 'String'
+        stub_toplevel_class 'Hash'
+        stub_toplevel_class 'Regexp'
+        stub_toplevel_class 'Range'
+        stub_toplevel_class 'Symbol'
+        stub_toplevel_class 'Numeric'
+        stub_toplevel_class 'Float', 'Numeric'
+        stub_toplevel_class 'Integer', 'Numeric'
+        stub_toplevel_class 'Fixnum', 'Integer'
+        stub_toplevel_class 'Bignum', 'Integer'
+        stub_toplevel_class 'Exception'
+        stub_toplevel_class 'StandardError', 'Exception'
+        stub_toplevel_class 'TypeError', 'StandardError'
         
         global.add_binding!(
             Bindings::GlobalVariableBinding.new('$:',

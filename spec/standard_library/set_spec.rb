@@ -17,8 +17,7 @@ describe 'the Set module' do
     method = ClassRegistry['Set'].singleton_class.instance_methods['[]']
     method.should_not be_nil
     method.arity.should == Arity::ANY
-    method.signatures.size.should == 1
-    method.signatures.first.arguments.size.should == 1
+    method.arguments.size.should == 1
   end
   
   %w(& + - << == ^ add add? classify clear collect! delete delete? delete_if difference divide

@@ -1,6 +1,6 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 require 'set'
-describe ScopeAnnotation do
+describe 'general analyses' do
   extend AnalysisHelpers
   clean_registry
   
@@ -336,7 +336,7 @@ describe ScopeAnnotation do
     tree = annotate_all(input)
     
     tree[1][1].errors.should_not be_empty
-    tree[1][1].errors.first.should be_a(ScopeAnnotation::ReopenedClassAsModuleError)
+    tree[1][1].errors.first.should be_a(ReopenedClassAsModuleError)
   end
   
   it 'generates an error when a module is re-opened as a class' do
@@ -344,7 +344,7 @@ describe ScopeAnnotation do
     tree = annotate_all(input)
     
     tree[1][1].errors.should_not be_empty
-    tree[1][1].errors.first.should be_a(ScopeAnnotation::ReopenedModuleAsClassError)
+    tree[1][1].errors.first.should be_a(ReopenedModuleAsClassError)
   end
   
   it 'handles module inclusions done in the parenthesized method-call fashion' do

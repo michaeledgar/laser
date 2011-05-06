@@ -141,6 +141,10 @@ module Laser
               LaserModule.new(ClassRegistry['Module'], nil)
             when ClassRegistry['Kernel'].instance_methods['require']
               simulate_require(args)
+            when ClassRegistry['Laser#Magic'].singleton_class.instance_methods['get_global']
+              Scope::GlobalScope.lookup(args.first).value
+            when ClassRegistry['Laser#Magic'].singleton_class.instance_methods['set_global']
+              Scope::GlobalScope.lookup(args[0]).bind!(args[1])
             end
           elsif method.builtin
             begin

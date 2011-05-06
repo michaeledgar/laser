@@ -35,7 +35,6 @@ module Laser
       # Performs load-time analysis on the given inputs. Inherited attributes
       # must be applied at this point.
       def self.perform_load_time_analysis(inputs, opts={})
-        annotator = ScopeAnnotation.new
         inputs.each do |filename, text, tree|
           if SETTINGS[:profile]
             time = Benchmark.realtime { annotator.annotate_with_text(tree, text) }

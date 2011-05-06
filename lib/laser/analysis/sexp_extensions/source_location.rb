@@ -14,7 +14,6 @@ module Laser::SexpAnalysis
         return @source_begin if @source_begin
         default_result = children.select { |child| Sexp === child }.
                                   map(&:source_begin).compact.first
-
         @source_begin = 
             case type
             when :@ident, :@int, :@kw, :@float, :@tstring_content, :@regexp_end,
@@ -29,7 +28,9 @@ module Laser::SexpAnalysis
               if default_result
                 result = default_result.dup  # make a copy we can mutate
                 if backtrack_expecting!(result, -1, "'") ||
-                   backtrack_expecting!(result, -1, '"')
+                   backtrack_expecting!(result, -1, '"') ||
+                   backtrack_expecting!(result, -3, '%q') ||
+                   backtrack_expecting!(result, -3, '%Q')
                   result
                 end
               end
