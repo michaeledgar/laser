@@ -4,9 +4,7 @@ module ScopeSpecHelpers
   def add_scope_instance_variables(klass)
     before do
       @base_scope = klass.new(Scope::GlobalScope, nil)
-      LaserModule.new(ClassRegistry['Module'], @base_scope, 'ABD')  # ignore: unused return
       @nested_scope = klass.new(@base_scope, nil)
-      LaserModule.new(ClassRegistry['Module'], @nested_scope, 'OOP')  # ignore: unused return
     end
   end
 end
@@ -46,24 +44,17 @@ shared_examples_for Scope do
 
   before do
     @base_scope = described_class.new(Scope::GlobalScope, nil)
-    LaserModule.new(ClassRegistry['Module'], @base_scope, 'ABD')  # ignore: unused return
     @nested_scope = described_class.new(@base_scope, nil)
-    LaserModule.new(ClassRegistry['Module'], @nested_scope, 'OOP')  # ignore: unused return
   end
 
   describe '#lookup' do
-    it 'looks up a constant if given a query starting with a capital letter' do
-      Scope::GlobalScope.lookup('ABD').scope.should == @base_scope
-      @base_scope.lookup('OOP').scope.should == @nested_scope
-    end
-
     it 'raises a ScopeLookupFailure on failure' do
-      expect { Scope::GlobalScope.lookup('ABC987') }.to raise_error(Scope::ScopeLookupFailure)
+      expect { Scope::GlobalScope.lookup('sdflkj') }.to raise_error(Scope::ScopeLookupFailure)
       begin
-        Scope::GlobalScope.lookup('ABC987')
+        Scope::GlobalScope.lookup('sdflkj')
       rescue Scope::ScopeLookupFailure => err
         err.scope.should == Scope::GlobalScope
-        err.query.should == 'ABC987'
+        err.query.should == 'sdflkj'
       end
     end
   end
@@ -77,7 +68,6 @@ shared_examples_for Scope do
       @duplicate = @nested_scope.dup
     end
     it 'can duplicate itself, shallowly, retaining references to old bindings' do
-      @duplicate.lookup('ABD::OOP').should be @nested_scope.lookup('ABD::OOP')
       @duplicate.lookup('a').should be @a
       @duplicate.lookup('b').should be @b
       @duplicate.lookup('c').should be @c
@@ -96,21 +86,6 @@ shared_examples_for Scope do
       @duplicate.locals['a'] = new_a
       @nested_scope.lookup('a').should be @a
       @duplicate.lookup('a').should be new_a
-    end
-    
-    it "ensures changes to a duplicate's constants do not affect the original" do
-      new_a = mock
-      @duplicate.constants['ABC999'] = new_a
-      expect {
-        @nested_scope.lookup('ABC999')
-      }.to raise_error(Scope::ScopeLookupFailure)
-      begin
-        @nested_scope.lookup('ABC999')
-      rescue Scope::ScopeLookupFailure => err
-        err.scope.should == @nested_scope
-        err.query.should == 'ABC999'
-      end
-      @duplicate.lookup('ABC999').should be new_a
     end
   end
 end

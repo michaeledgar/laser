@@ -4,12 +4,20 @@ module Laser
     # and modules that build up the meta-model (Class, Module, Object).
     module Bootstrap
       extend SexpAnalysis
+      VISIBILITY_STACK_NAME = '$#visibility_stack'
+      VISIBILITY_STACK = Bindings::GlobalVariableBinding.new(VISIBILITY_STACK_NAME, [:private])
+      EXCEPTION_STACK_NAME = '$#exception_stack'
+      EXCEPTION_STACK = Bindings::GlobalVariableBinding.new(EXCEPTION_STACK_NAME, [])
       class BootstrappingError < StandardError; end
       def self.bootstrap
-        class_class = LaserClass.new(nil, nil, 'Class')
-        module_class = LaserClass.new(nil, nil, 'Module')
         object_class = LaserClass.new(nil, nil, 'Object')
+        ProtocolRegistry.add_class(object_class)
+        class_class = LaserClass.new(nil, nil, 'Class')
+        ProtocolRegistry.add_class(class_class)
+        module_class = LaserClass.new(nil, nil, 'Module')
+        ProtocolRegistry.add_class(module_class)
         basic_object_class = LaserClass.new(nil, nil, 'BasicObject')
+        ProtocolRegistry.add_class(basic_object_class)
         class_scope = ClosedScope.new(nil, class_class)
         module_scope = ClosedScope.new(nil, module_class)
         object_scope = ClosedScope.new(nil, object_class)
@@ -56,15 +64,25 @@ module Laser
         class_class = ClassRegistry['Class']
         magic_class = LaserClass.new(
             class_class, Scope::GlobalScope, 'Laser#Magic')
+        ClassRegistry['Object'].const_set('Laser#Magic', magic_class)
         magic_class.singleton_class.add_instance_method!(LaserMethod.new('current_block') do |method|
             method.add_signature!(Signature.new('current_block', [],
             Types::UnionType.new([Types::ClassType.new('Proc', :invariant),
                                   Types::ClassType.new('NilClass', :invariant)])))
         end)
-        magic_class.singleton_class.add_instance_method!(LaserMethod.new('current_exception') do |method|
-            method.add_signature!(Signature.new('current_exception', [],
-            Types::ClassType.new('BasicObject', :covariant)))
-        end)
+        stub_method(magic_class.singleton_class, 'current_arity', special: true)
+        stub_method(magic_class.singleton_class, 'current_exception', builtin: true)
+        def magic_class.current_exception
+          EXCEPTION_STACK.value.last
+        end
+        stub_method(magic_class.singleton_class, 'push_exception', builtin: true, mutation: true)
+        def magic_class.push_exception(arg)
+          EXCEPTION_STACK.value.push arg
+        end
+        stub_method(magic_class.singleton_class, 'pop_exception', builtin: true, mutation: true)
+        def magic_class.pop_exception
+          EXCEPTION_STACK.value.pop
+        end
         magic_class.singleton_class.add_instance_method!(LaserMethod.new('current_self') do |method|
             method.add_signature!(Signature.new('current_self', [],
             Types::ClassType.new('BasicObject', :covariant)))
@@ -113,13 +131,10 @@ module Laser
         stub_toplevel_class 'StandardError', 'Exception'
         stub_toplevel_class 'TypeError', 'StandardError'
         
-        global.add_binding!(
-            Bindings::GlobalVariableBinding.new('$:',
-              RealObjectProxy.new(ClassRegistry['Array'], global, '$:',
-                ['.', File.expand_path(File.join(File.dirname(__FILE__), '..', 'standard_library'))])))
-        global.add_binding!(
-            Bindings::GlobalVariableBinding.new('$"',
-              RealObjectProxy.new(ClassRegistry['Array'], global, '$"', [])))
+        global.add_binding!(Bindings::GlobalVariableBinding.new('$:',
+            ['.', File.expand_path(File.join(File.dirname(__FILE__), '..', 'standard_library'))]))
+        global.add_binding!(Bindings::GlobalVariableBinding.new('$"', []))
+        global.add_binding!(VISIBILITY_STACK)
         stub_core_methods
       end
       
@@ -135,11 +150,13 @@ module Laser
         def array_class.[](*args)
           ::Array[*args]
         end
+        def array_class.new(*args)
+          ::Array.new(*args)
+        end
         string_class = ClassRegistry['String']
         stub_method(class_class.singleton_class, 'new', builtin: true, pure: true)
         stub_method(class_class, 'superclass', builtin: true, pure: true, raises: Frequency::NEVER)
         stub_method(class_class, 'new')
-        stub_method(module_class, 'current_default_visibility=', builtin: true, pure: true)
         stub_method(module_class, 'define_method', builtin: true, pure: true, mutation: true)
         stub_method(module_class, 'define_method_with_annotations', builtin: true, pure: true, mutation: true)
         stub_method(module_class.singleton_class, 'new', builtin: true, pure: true)
@@ -151,6 +168,8 @@ module Laser
             raises: Frequency::NEVER)
         stub_method(kernel_module, 'singleton_class', builtin: true, pure: true,
             raises: Frequency::NEVER)
+        stub_method(array_class, 'push', builtin: true, mutation: true, raises: Frequency::NEVER)
+        stub_method(array_class, 'pop', builtin: true, mutation: true, raises: Frequency::NEVER)
         stub_method(array_class.singleton_class, '[]', builtin: true, pure: true, raises: Frequency::NEVER)
         stub_method(hash_class.singleton_class, '[]', builtin: true, pure: true)
         stub_method(string_class, '+', builtin: true, pure: true)
@@ -172,7 +191,7 @@ module Laser
 
       def self.stub_toplevel_module(name)
         # i say "module" like "mojule" anyway, so i'll use that as the misspelling
-        mojule = LaserModule.new(ClassRegistry['Module'], ClosedScope.new(Scope::GlobalScope, nil), name)
+        mojule = LaserModule.new
         ClassRegistry['Object'].const_set(name, mojule)
         mojule
       end

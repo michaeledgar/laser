@@ -96,4 +96,8 @@ module Laser
   class UnusedVariableWarning < Laser::Error
     severity WARNING
   end
+  
+  class TopLevelSimulationRaised < Laser::Error
+    severity FUCKUP
+  end
 end

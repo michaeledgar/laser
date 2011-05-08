@@ -63,15 +63,6 @@ shared_examples_for 'a Ruby module' do
     end
   end
   
-  describe '#scope' do
-    it 'should return a scope with a self local' do
-      x = described_class.new(ClassRegistry[@name], OpenScope.new(Scope::GlobalScope, nil), 'A::TemporaryA123')
-      x.scope.lookup('self').should_not be_nil
-      x.scope.lookup('self').value.should be x
-      x.scope.lookup('self').expr_type.should == Types::ClassType.new(x.klass.path, :covariant)
-    end
-  end
-  
   describe '#name' do
     it 'extracts the name from the full path' do
       x = described_class.new(ClassRegistry[@name], Scope::GlobalScope, '::A::B::C::D::EverybodysFavoriteClass')
@@ -133,16 +124,16 @@ describe LaserModule do
 
   describe '#singleton_class' do
     it 'should return a class with Module as its superclass' do
-      LaserModule.new(ClassRegistry['Module'], Scope::GlobalScope, 'A').singleton_class.superclass.should == ClassRegistry['Module']
+      LaserModule.new.singleton_class.superclass.should == ClassRegistry['Module']
     end              
   end                
                      
   describe '#include_module' do
     before do
-      @a = LaserModule.new(ClassRegistry['Module'], Scope::GlobalScope, 'A')
-      @b = LaserModule.new(ClassRegistry['Module'], Scope::GlobalScope, 'B')
-      @c = LaserModule.new(ClassRegistry['Module'], Scope::GlobalScope, 'C')
-      @d = LaserModule.new(ClassRegistry['Module'], Scope::GlobalScope, 'D')
+      @a = LaserModule.new
+      @b = LaserModule.new
+      @c = LaserModule.new
+      @d = LaserModule.new
     end
 
     it "inserts the included module into the receiving module's hierarchy when not already there" do
@@ -243,10 +234,10 @@ describe LaserClass do
   
   describe '#include_module' do
     before do
-      @a = LaserModule.new(ClassRegistry['Module'], Scope::GlobalScope, 'A')
-      @b = LaserModule.new(ClassRegistry['Module'], Scope::GlobalScope, 'B')
-      @c = LaserModule.new(ClassRegistry['Module'], Scope::GlobalScope, 'C')
-      @d = LaserModule.new(ClassRegistry['Module'], Scope::GlobalScope, 'D')
+      @a = LaserModule.new
+      @b = LaserModule.new
+      @c = LaserModule.new
+      @d = LaserModule.new
       @x = LaserClass.new(ClassRegistry['Class'], Scope::GlobalScope, 'X')
       @y = LaserClass.new(ClassRegistry['Class'], Scope::GlobalScope, 'Y') { |klass| klass.superclass = @x }
       @z = LaserClass.new(ClassRegistry['Class'], Scope::GlobalScope, 'Z') { |klass| klass.superclass = @y }

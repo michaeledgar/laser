@@ -20,6 +20,9 @@ end
 class Symbol
 end
 class Array
+  # builtin: true
+  def self.new(arg)
+  end
 end
 class Proc
 end
@@ -181,14 +184,17 @@ require '_thread'
 class Range
   # this is here because early in testing Class#new wasn't smart about purity.
   # pure: true
+  # builtin: true
   def self.new(start, stop, exclusive=false)
   end
   
   # pure: true
+  # builtin: true
   def initialize(start, stop, exclusive=false)
   end
   
   # pure: true
+  # builtin: true
   def to_a
   end
 end

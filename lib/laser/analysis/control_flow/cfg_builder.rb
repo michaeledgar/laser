@@ -125,6 +125,11 @@ module Laser
           end
         end
 
+        def reset_visibility_stack
+          initial = call_instruct(ClassRegistry['Array'].binding, :[], const_instruct(:private), value: true, raise: false)
+          copy_instruct(Bootstrap::VISIBILITY_STACK, initial)
+        end
+
         def build_formal_args
           uncond_instruct create_block
           if @sexp.type == :program
@@ -132,6 +137,7 @@ module Laser
           else
             push_self(query_self)
           end
+          reset_visibility_stack
           build_exception_blocks
           if @sexp.type != :program
             push_scope(Scope::ClosedScope.new(current_scope, current_self))
@@ -484,8 +490,11 @@ module Laser
               call_instruct(self_register, :`, body, value: false)
             when :regexp_literal
               node[1].each { |part| walk_node node, value: false }
+            when :dyna_symbol
+              content_nodes = node[1].children
+              content_nodes.each { |node| walk_node node, value: false }
             when :array
-              receiver = Scope::GlobalScope.lookup('Array')
+              receiver = ClassRegistry['Array'].binding
               generic_call_instruct(receiver, :[], node[1], false, value: false)
             when :hash
               if node[1]
@@ -496,7 +505,7 @@ module Laser
             when :assoclist_from_args, :bare_assoc_hash
               pairs = node[1]
               key_value_paired = pairs.map {|a, b| [walk_node(a, value: true), walk_node(b, value: true)] }.flatten
-              receiver = Scope::GlobalScope.lookup('Hash')
+              receiver = ClassRegistry['Hash'].binding
               call_instruct(receiver, :[], *key_value_paired, block: false, value: false, raise: false)
             else
               raise ArgumentError.new("Unknown AST node type #{node.type.inspect}")
@@ -573,7 +582,7 @@ module Laser
               elsif node[1].type == :@ident || node[1].expanded_identifier == 'self'
                 variable_instruct(node)
               elsif node[1].type == :@kw
-                const_instruct(node.constant_value.raw_object)
+                const_instruct(node.constant_value)
               elsif node[1].type == :@gvar
                 call_instruct(ClassRegistry['Laser#Magic'].binding, :get_global,
                     const_instruct(node.expanded_identifier), raise: false, value: true)
@@ -637,7 +646,7 @@ module Laser
               result
             when :@CHAR, :@tstring_content, :@int, :@float, :@regexp_end, :symbol,
                  :@label, :symbol_literal
-              const_instruct(node.constant_value.raw_object)
+              const_instruct(node.constant_value)
             when :string_literal
               content_nodes = node[1].children
               build_string_instruct(content_nodes)
@@ -649,11 +658,15 @@ module Laser
               call_instruct(self_register, :`, body, value: true)
             when :regexp_literal
               body = build_string_instruct(node[1])
-              options = const_instruct(node[2].constant_value.raw_object)
-              receiver = Scope::GlobalScope.lookup('Regexp')
+              options = const_instruct(node[2].constant_value)
+              receiver = ClassRegistry['Regexp'].binding
               call_instruct(receiver, :new, body, options, value: true)
+            when :dyna_symbol
+              content_nodes = node[1].children
+              string_version = build_string_instruct(content_nodes)
+              call_instruct(string_version, :to_sym, value: true, raise: false)
             when :array
-              receiver = Scope::GlobalScope.lookup('Array')
+              receiver = ClassRegistry['Array'].binding
               generic_call_instruct(receiver, :[], node[1], false, value: true)
             when :hash
               if node[1]
@@ -664,7 +677,7 @@ module Laser
             when :assoclist_from_args, :bare_assoc_hash
               pairs = node[1].map { |_, k, v| [k, v] }
               key_value_paired = pairs.map {|a, b| [walk_node(a, value: true), walk_node(b, value: true)] }.flatten
-              receiver = Scope::GlobalScope.lookup('Hash')
+              receiver = ClassRegistry['Hash'].binding
               call_instruct(receiver, :[], *key_value_paired, block: false, value: true)
             else
               raise ArgumentError.new("Unknown AST node type #{node.type.inspect}")
@@ -737,6 +750,7 @@ module Laser
         
         def raise_instruct(arg, opts)
           target = opts[:target]
+          call_instruct(ClassRegistry['Laser#Magic'].binding, :push_exception, arg, raise: false)
           copy_instruct(Scope::GlobalScope.lookup('$!'), arg)
           uncond_instruct target, flags: RGL::ControlFlowGraph::EDGE_ABNORMAL
           start_block target
@@ -1000,6 +1014,7 @@ module Laser
             end
             body_result = walk_body handler_body, value: true
             copy_instruct(enclosing_body_result, body_result)
+            call_instruct(ClassRegistry['Laser#Magic'].binding, :pop_exception, raise: false)
             uncond_instruct ensure_block
           end
           # All rescues failed.
@@ -1034,6 +1049,9 @@ module Laser
           when :const_path_ref
             receiver_val = walk_node(class_name[1], value: true)
             actual_name = const_instruct(class_name[2].expanded_identifier)
+          when :top_const_ref
+            receiver_val = ClassRegistry['Object'].binding
+            actual_name = const_instruct(class_name[1].expanded_identifier)
           end
 
           # TODO(adgar): weird cases
@@ -1091,12 +1109,12 @@ module Laser
           uncond_instruct after_exists_check
 
           start_block after_exists_check
-          call_instruct(the_class_holder, :current_default_visibility=, const_instruct(:public),
-              value: false, raise: false)
+          call_instruct(Bootstrap::VISIBILITY_STACK, :push, const_instruct(:public), raise: false, value: false)
           # use this namespace!
           with_namespace the_class_holder do
             module_eval_instruct(the_class_holder, body, opts)
           end
+          call_instruct(Bootstrap::VISIBILITY_STACK, :pop, raise: false, value: false)
         end
         
         def module_instruct(scope, module_name, body, opts={value: true})
@@ -1110,6 +1128,9 @@ module Laser
           when :const_path_ref
             receiver_val = walk_node(module_name[1], value: true)
             actual_name = const_instruct(module_name[2].expanded_identifier)
+          when :top_const_ref
+            receiver_val = ClassRegistry['Object'].binding
+            actual_name = const_instruct(module_name[1].expanded_identifier)
           end
 
           already_exists = call_instruct(receiver_val, :const_defined?, actual_name, const_instruct(false), value: true, raise: false)
@@ -1136,11 +1157,12 @@ module Laser
           uncond_instruct after_exists_check
 
           start_block after_exists_check
-          call_instruct(the_module_holder, :current_default_visibility=, const_instruct(:public),
-              value: false, raise: false)
+
+          call_instruct(Bootstrap::VISIBILITY_STACK, :push, const_instruct(:public), raise: false, value: false)
           with_namespace the_module_holder do
             module_eval_instruct(the_module_holder, body, opts)
           end
+          call_instruct(Bootstrap::VISIBILITY_STACK, :pop, raise: false, value: false)
         end
 
         def singleton_class_instruct(receiver, body, opts={value: false})
@@ -1178,6 +1200,7 @@ module Laser
         # Defines a method on the current lexically-enclosing class/module.
         def def_instruct(receiver, name, args, body, opts = {})
           opts = {value: false}.merge(opts)
+          body.scope = current_scope
           block = create_block_temporary(args, body)
           notes = notes_as_ruby_object(body.parent)
           note_args = notes.flatten.map { |const| const_instruct(const) }
@@ -1651,7 +1674,7 @@ module Laser
           args = [] if args.nil?
           if args[0] == :args_add_star
             arg_array = compute_varargs(args)
-            call_vararg_instruct(receiver, method, arg_array, block, opts)
+            call_vararg_instruct(receiver, method, arg_array, {block: block}.merge(opts))
           else
             arg_temps = args.map { |arg| walk_node(arg, value: true) }
             call_instruct(receiver, method, *arg_temps, {block: block}.merge(opts))
@@ -1720,20 +1743,20 @@ module Laser
 
         # Computes a splatting node (:args_add_star)
         def compute_varargs(args)
-          result = lookup_or_create_temporary(:compute_varargs, args)
+          result = call_instruct(ClassRegistry['Array'].binding, :new, value: true, raise: false)
           if args[1][0] == :args_add_star || args[1].children.any?
             prefix = if args[1][0] == :args_add_star
                      then compute_varargs(args[1])
                      else prefix = build_array_instruct(args[1].children)
                      end
-            call_instruct(result, :concat, prefix, value: false)
+            result = call_instruct(result, :+, prefix, value: true, raise: false)
           end
           starred = walk_node args[2], value: true
           starred_converted = rb_check_convert_type(starred, ClassRegistry['Array'].binding, :to_a)
-          call_instruct(result, :concat, starred_converted, value: false)
+          result = call_instruct(result, :+, starred_converted, value: true, raise: false)
           if args[3..-1].any?
             suffix = build_array_instruct(args[3..-1])
-            call_instruct(result, :concat, suffix, value: false)
+            result = call_instruct(result, :+, suffix, value: true, raise: false)
           end
           result
         end
@@ -1750,10 +1773,10 @@ module Laser
         end
         
         # Adds a generic method call instruction.
-        def call_vararg_instruct(receiver, method, args, block, opts={})
+        def call_vararg_instruct(receiver, method, args, opts={})
           opts = {raise: true, value: true}.merge(opts)
           result = create_result_if_needed opts
-          add_instruction(:call_vararg, result, receiver, method.to_sym, args, block)
+          add_instruction(:call_vararg, result, receiver, method.to_sym, args, opts)
           add_potential_raise_edge if opts[:raise]
           result
         end

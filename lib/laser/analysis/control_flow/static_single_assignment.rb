@@ -11,6 +11,7 @@ module Laser
           ssa_name_formals
           dom_tree = dominator_tree
           rename_for_ssa(enter, dom_tree)
+          @in_ssa = true
           self
         end
         

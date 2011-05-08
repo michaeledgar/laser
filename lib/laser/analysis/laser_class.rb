@@ -62,42 +62,13 @@ module Laser
       extend ModuleExtensions
       include BasicLaserObjectBehavior
     end
-    
-    class RealObjectProxy < BasicObject
-      # Allow updating of scope after the creation of the object, since these
-      # constants are discovered very early in the annotation process.
-      attr_reader :raw_object
-      attr_writer :scope
-      include BasicLaserObjectBehavior
-      
-      def self.careful_forward(*args)
-        args.each do |arg|
-          define_method arg do |other|
-            if RealObjectProxy === other
-            then @raw_object.send(arg, other.raw_object)
-            else @raw_object.send(arg, other)
-            end
-          end
-        end
-      end
-      
-      def initialize(klass, scope, name, raw_object)
-        super(klass, scope, name)
-        @raw_object = raw_object
-      end
-      careful_forward :==, :eql?, :equal?
 
-      def method_missing(meth, *args, &blk)
-        @raw_object.send(meth, *args, &blk)
-      end
-    end
-    
     class LaserProc < LaserObject
       attr_accessor :ast_node, :arguments, :cfg
       def initialize(arguments, ast_node, cfg=nil)
-        self.ast_node = ast_node
-        self.arguments = arguments
-        self.cfg = cfg
+        @ast_node = ast_node
+        @arguments = arguments
+        @cfg = cfg
       end
 
       def inspect
@@ -110,6 +81,16 @@ module Laser
         end
       end
 
+      def compiled_cfg
+        return @cfg if @cfg
+        builder = ControlFlow::GraphBuilder.new(@ast_node, @arguments, @ast_node.scope)
+        @cfg = builder.build
+      end
+
+      def ssa_cfg
+        @ssa_cfg ||= compiled_cfg.static_single_assignment_form
+      end
+
       def klass
         ClassRegistry['Proc']
       end
@@ -119,7 +100,7 @@ module Laser
     # conflicts. It has lists of methods, instance variables, and so on.
     class LaserModule < LaserObject
       attr_reader :binding, :superclass
-      attr_accessor :path, :current_default_visibility
+      attr_accessor :path
       cattr_accessor_with_default :all_modules, []
       
       def initialize(klass = ClassRegistry['Module'], scope = Scope::GlobalScope,
@@ -128,7 +109,6 @@ module Laser
         full_path = submodule_path(full_path) if scope && scope.parent
         validate_module_path!(full_path) unless LaserSingletonClass === self
 
-        @current_default_visibility = :public
         @name_set = :yes unless @name_set == :no
         @path = full_path
         @instance_methods = {}
@@ -370,10 +350,10 @@ module Laser
         name = name.to_s
         new_method = LaserMethod.new(name, proc)
         @instance_methods[name] = new_method
-        if current_default_visibility == :module_function
+        if Bootstrap::VISIBILITY_STACK.value.last == :module_function
           __make_module_function__(name)
         else
-          @visibility_table[name] = current_default_visibility
+          @visibility_table[name] = Bootstrap::VISIBILITY_STACK.value.last
         end
         new_method
       end
@@ -398,7 +378,7 @@ module Laser
       
       def __visibility_modifier__(args, kind)
         if args.empty?
-          self.current_default_visibility = kind
+          Bootstrap::VISIBILITY_STACK.value[-1] = kind
         else
           args.each { |method| set_visibility!(method.to_s, kind) }
         end
@@ -430,7 +410,7 @@ module Laser
             __make_module_function__(method.to_s)
           end
         else
-          self.current_default_visibility = :module_function
+          Bootstrap::VISIBILITY_STACK.value[-1] = :module_function
         end
       end
     end
@@ -651,6 +631,10 @@ module Laser
         yield self if block_given?
       end
       
+      def master_cfg
+        @master_cfg ||= @proc.ssa_cfg
+      end
+      
       def arguments
         @proc.arguments
       end
@@ -662,10 +646,6 @@ module Laser
         result.signatures = self.signatures
         result.arity = self.arity
         result
-      end
-
-      def cfg
-        ControlFlow::GraphBuilder.new(self.body_ast.deep_find { |node| node.type == :bodystmt }).build
       end
 
       def add_signature!(signature)

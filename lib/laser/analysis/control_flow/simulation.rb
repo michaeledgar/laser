@@ -21,22 +21,24 @@ module Laser
             end
           rescue NonDeterminismHappened => err
             puts "Simulation ended at nondeterminism: #{err.message}"
-            p err.backtrace
+            Laser.debug_p err.backtrace
           rescue SimulationNonterminationError => err
             puts "Simulation failed to terminate: #{err.message}"
-            p err.backtrace
+            @root.
+            Laser.debug_p err.backtrace
           rescue SimulationRaised => err
             puts "Simulation raised: #{err.message}"
-            p err.backtrace
+            Laser.debug_p err.backtrace
+            @root.add_error(TopLevelSimulationRaised.new(err.message, @root))
           rescue NotImplementedError => err
             puts "Simulation attempted: #{err.message}"
-            p err.backtrace
+            Laser.debug_p err.backtrace
           end
         end
         
         def simulate_block(block, opts)
           return if block.name == 'Exit'
-          Laser.debug "Entering block #{block.name}"
+          Laser.debug_puts "Entering block #{block.name}"
           # phi nodes always go first
           block.phi_nodes.each do |node|
             simulate_deterministic_phi_node(node, opts)
@@ -52,7 +54,7 @@ module Laser
         end
         
         def simulate_exit_instruction(insn, opts)
-          Laser.debug "Simulating exit insn: #{insn.inspect}"
+          Laser.debug_puts "Simulating exit insn: #{insn.inspect}"
           successors = insn.block.real_successors.to_a
           case insn[0]
           when :jump, nil
@@ -63,15 +65,15 @@ module Laser
             else false_block, true_block = successors[0..1]
             end
 
-            Laser.debug "Branching on: #{insn[1].value.inspect}"
+            Laser.debug_puts "Branching on: #{insn[1].value.inspect}"
             insn[1].value ? true_block : false_block
-          when :call
-            # TODO(adgar): raise edges
+          when :call, :call_vararg
+            # todo: block edge!
             begin
               simulate_instruction(insn, opts)
               insn.block.normal_successors.first
             rescue SimulationRaised => err
-              Laser.debug "Exception raised by call, taking abnormal edge. Error: #{err.message}"
+              Laser.debug_puts "Exception raised by call, taking abnormal edge. Error: #{err.message}"
               insn.block.abnormal_successors.first
             end
           end 
@@ -79,11 +81,12 @@ module Laser
         
         IGNORED = [:branch, :jump, :resume, :return]
         def simulate_instruction(insn, opts)
-          Laser.debug "Simulating insn: #{insn.inspect}"
+          Laser.debug_puts "Simulating insn: #{insn.inspect}"
           return if IGNORED.include?(insn[0])
           case insn[0]
           when :assign then simulate_assignment(insn[1], insn[2], opts)
-          when :call
+          when :call, :call_vararg
+            args = insn[0] == :call ? insn[4..-2].map(&:value) : insn[4].value
             # cases: special method we intercept, builtin we direct-send, and cfg we simulate
             receiver = insn[2].value
             klass = if Bindings::ConstantBinding === insn[2]
@@ -94,13 +97,11 @@ module Laser
             if !method
               raise SimulationRaised.new("Method missing: #{klass.name}##{insn[3]}")
             elsif should_simulate_call(method, opts)
-              result = simulate_call(receiver, method, insn[4..-2].map(&:value), insn[-1][:block])
+              result = simulate_call(receiver, method, args, insn[-1][:block])
               insn[1].bind! result if insn[1]
             else
               raise NonDeterminismHappened.new("Nondeterministic call: #{method.inspect}")
             end
-          when :call_vararg
-            raise NotImplementedError.new("call_vararg doesn't work yet")
           when :super
             raise NotImplementedError.new("super doesn't work yet")
           when :super_vararg
@@ -114,7 +115,7 @@ module Laser
             raise SimulationError.new("Found phi node with #{which_set.size} "+
                                       "options during toplevel simulation")
           end
-          Laser.debug "Simulating #{node.inspect}"
+          Laser.debug_puts "Simulating #{node.inspect}"
           simulate_assignment(node[1], which_set.first, opts)
         end
         
@@ -133,18 +134,24 @@ module Laser
         def simulate_call(receiver, method, args, block)
           if method.special
             case method
+            when ClassRegistry['Class'].singleton_class.instance_methods['allocate']
+              LaserObject.new(receiver, nil)
             when ClassRegistry['Class'].singleton_class.instance_methods['new']
               LaserClass.new(ClassRegistry['Class'], nil) do |klass|
                 klass.superclass = args.first
               end
             when ClassRegistry['Module'].singleton_class.instance_methods['new']
-              LaserModule.new(ClassRegistry['Module'], nil)
+              LaserModule.new
             when ClassRegistry['Kernel'].instance_methods['require']
               simulate_require(args)
             when ClassRegistry['Laser#Magic'].singleton_class.instance_methods['get_global']
               Scope::GlobalScope.lookup(args.first).value
             when ClassRegistry['Laser#Magic'].singleton_class.instance_methods['set_global']
               Scope::GlobalScope.lookup(args[0]).bind!(args[1])
+            when Scope::GlobalScope.self_ptr.singleton_class.instance_methods['private']
+              ClassRegistry['Object'].private(*args)
+            when Scope::GlobalScope.self_ptr.singleton_class.instance_methods['public']
+              ClassRegistry['Object'].public(*args)
             end
           elsif method.builtin
             begin

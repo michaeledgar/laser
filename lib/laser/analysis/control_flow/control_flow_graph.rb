@@ -30,6 +30,7 @@ module Laser
         #
         # formal_arguments: [ArgumentBinding]
         def initialize(formal_arguments = [])
+          @in_ssa = false
           @uses = Hash.new { |hash, temp| hash[temp] = Set.new }
           @live = Hash.new { |hash, temp| hash[temp] = Set.new }
           @definition = {}
@@ -141,22 +142,21 @@ module Laser
           # kill obvious dead code now.
           perform_dead_code_discovery(true)
           if @root.type == :program
-            opts[:optimize] = false
             simulate([], :mutation => true)
           else
-            static_single_assignment_form
+            static_single_assignment_form unless @in_ssa
             perform_constant_propagation
-          end
-          if opts[:optimize]
-            kill_unexecuted_edges
-            prune_totally_useless_blocks
-            perform_dead_code_discovery
-            add_unused_variable_warnings
-            # Don't need these anymore
-            prune_unexecuted_blocks
+            if opts[:optimize]
+              kill_unexecuted_edges
+              prune_totally_useless_blocks
+              perform_dead_code_discovery
+              add_unused_variable_warnings
+              # Don't need these anymore
+              prune_unexecuted_blocks
 
-            find_yield_properties if @root.type != :program
-            find_raise_properties
+              find_yield_properties if @root.type != :program
+              find_raise_properties
+            end
           end
         end
         

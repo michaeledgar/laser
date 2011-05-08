@@ -1,7 +1,49 @@
-
 class Exception < Object
+  def initialize(msg=nil)
+    @__mesg__ = msg
+    @__bt__ = nil
+  end
+  def backtrace
+    @__bt__
+  end
+  def to_s
+    @__mesg__ ? (@__mesg__.to_s rescue @__mesg__) : self.class.name
+  end
+  alias message to_s
+  BT_FAILURE_MESSAGE = "backtrace must be Array of String"
+  def __check_backtrace__(bt)
+    return bt if NilClass === bt
+    if String === bt
+      [bt]
+    elsif Array === bt
+      unless bt.all? { |x| String === x }
+        raise TypeError.new(BT_FAILURE_MESSAGE)
+      end
+    else
+      raise TypeError.new(BT_FAILURE_MESSAGE)
+    end
+  end
+  private :__check_backtrace__
+  def set_backtrace(new_bt)
+    @__bt__ = __check_backtrace__(new_bt)
+  end
 end
 class SystemExit < Exception
+  EXIT_SUCCESS = 0
+  def initialize(val=nil, msg=nil)
+    if Fixnum === val
+      @__status__ = val
+      super(msg)
+    else
+      super(val)
+    end
+  end
+  def status
+    @__status__
+  end
+  def success?
+    @__status__.nil? || @__status__ == EXIT_SUCCESS
+  end
 end
 # class fatal < Exception
 # end

@@ -3,11 +3,17 @@ module Laser
   TESTS_ACTIVATED = false
   ROOT = File.expand_path(File.dirname(__FILE__))
   SETTINGS = {}
-  def self.debug(*args)
-    puts *args if SETTINGS[:debug]
+  def self.debug_puts(*args)
+    puts *args if debug?
+  end
+  def self.debug_p(*args)
+    p *args if debug?
+  end
+  def self.debug?
+    SETTINGS[:debug]
   end
 end
-Laser::SETTINGS[:debug] = (ENV['LASER_DEBUG'].strip == 'true')
+Laser::SETTINGS[:debug] = (ENV['LASER_DEBUG'] == 'true')
 
 # Dependencies
 require 'ripper'
