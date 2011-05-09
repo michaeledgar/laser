@@ -129,6 +129,9 @@ module Laser
         def is_optional?
           :optional == @kind
         end
+        def is_rest?
+          :rest == @kind
+        end
         def is_block?
           :block == @kind
         end

@@ -70,11 +70,6 @@ module Laser
             temp.bind! UNDEFINED
             temp.inferred_type = nil
           end
-          @formals.each do |formal|
-            temporary = @formal_map[formal]
-            temporary.bind! VARYING
-            temporary.inferred_type = Types::TOP
-          end
           vertices.each do |block|
             block.successors.each do |succ|
               block.remove_flag(succ, ControlFlowGraph::EDGE_EXECUTABLE)
@@ -405,6 +400,14 @@ module Laser
           case method_name
           when :current_self
             return [VARYING, Types::TOP, Frequency::NEVER]
+          when :current_block
+            return [VARYING, Types::BLOCK, Frequency::NEVER]
+          when :current_argument
+            return [VARYING, Types::TOP, Frequency::NEVER]
+          when :current_argument_range
+            return [VARYING, Types::ARRAY, Frequency::NEVER]
+          when :current_arity
+            return [VARYING, Types::FIXNUM, Frequency::NEVER]
           end
           [INAPPLICABLE, nil, Frequency::MAYBE]
         end

@@ -65,12 +65,10 @@ module Laser
         magic_class = LaserClass.new(
             class_class, Scope::GlobalScope, 'Laser#Magic')
         ClassRegistry['Object'].const_set('Laser#Magic', magic_class)
-        magic_class.singleton_class.add_instance_method!(LaserMethod.new('current_block') do |method|
-            method.add_signature!(Signature.new('current_block', [],
-            Types::UnionType.new([Types::ClassType.new('Proc', :invariant),
-                                  Types::ClassType.new('NilClass', :invariant)])))
-        end)
+        stub_method(magic_class.singleton_class, 'current_block', special: true)
         stub_method(magic_class.singleton_class, 'current_arity', special: true)
+        stub_method(magic_class.singleton_class, 'current_argument', special: true)
+        stub_method(magic_class.singleton_class, 'current_argument_range', special: true)
         stub_method(magic_class.singleton_class, 'current_exception', builtin: true)
         def magic_class.current_exception
           EXCEPTION_STACK.value.last
@@ -83,11 +81,8 @@ module Laser
         def magic_class.pop_exception
           EXCEPTION_STACK.value.pop
         end
-        magic_class.singleton_class.add_instance_method!(LaserMethod.new('current_self') do |method|
-            method.add_signature!(Signature.new('current_self', [],
-            Types::ClassType.new('BasicObject', :covariant)))
-        end)
-        stub_method(magic_class.singleton_class, 'get_global', special: true, pure: true)
+        stub_method(magic_class.singleton_class, 'current_self', special: true)
+        stub_method(magic_class.singleton_class, 'get_global', special: true)
         stub_method(magic_class.singleton_class, 'set_global', special: true, mutation: true)
       end
       

@@ -32,19 +32,8 @@ module Laser
         
         # Sets up SSA to handle the formal arguments
         def ssa_name_formals
-          @formal_map.clear
           self_binding = @root.scope.lookup('self')
           @name_stack[self_binding].push(self_binding)
-          @formal_map[self_binding] = self_binding
-          @formals.each do |formal|
-            initial_formal = new_ssa_name(formal)
-            @name_stack[formal].push(initial_formal)
-            @formal_map[formal] = initial_formal  # store very first binding
-            @definition[initial_formal] =
-              Instruction.new([:param, initial_formal, formal], 
-                              :node => formal.ast_node, :block => @enter)
-            ssa_name_for(formal).inferred_type = formal.expr_type
-          end
         end
 
         # Renames all variables in the block, and all blocks it dominates,
@@ -114,7 +103,13 @@ module Laser
           @name_count[temp] += 1
           name = "#{temp.name}##{@name_count[temp]}"
           name << '_undef' if undefined
-          Bindings::TemporaryBinding.new(name, nil)
+          result = Bindings::TemporaryBinding.new(name, nil)
+          if temp == @final_return
+            @final_return = result
+          elsif temp == @final_exception
+            @final_exception = result
+          end
+          result
         end
       end
     end

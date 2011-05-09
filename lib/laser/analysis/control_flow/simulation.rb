@@ -33,6 +33,8 @@ module Laser
           rescue NotImplementedError => err
             puts "Simulation attempted: #{err.message}"
             Laser.debug_p err.backtrace
+          else
+            @final_return.value
           end
         end
         
@@ -146,6 +148,14 @@ module Laser
               simulate_require(args)
             when ClassRegistry['Laser#Magic'].singleton_class.instance_methods['get_global']
               Scope::GlobalScope.lookup(args.first).value
+            when ClassRegistry['Laser#Magic'].singleton_class.instance_methods['current_self']
+              @simulated_self
+            when ClassRegistry['Laser#Magic'].singleton_class.instance_methods['current_arity']
+              @simulated_args.size
+            when ClassRegistry['Laser#Magic'].singleton_class.instance_methods['current_argument']
+              @simulated_args[args.first]
+            when ClassRegistry['Laser#Magic'].singleton_class.instance_methods['current_argument_range']
+              @simulated_args[args[0], args[1]]
             when ClassRegistry['Laser#Magic'].singleton_class.instance_methods['set_global']
               Scope::GlobalScope.lookup(args[0]).bind!(args[1])
             when Scope::GlobalScope.self_ptr.singleton_class.instance_methods['private']
@@ -160,7 +170,7 @@ module Laser
               raise SimulationRaised.new(err.inspect)
             end
           else
-            raise NotImplementedError.new("CFG simulation on call not done #{receiver.inspect} #{method.name}")
+            method.master_cfg.simulate(args, mutation: true, self: receiver, block: block)
             # simulate CFG
           end
         end
@@ -172,7 +182,9 @@ module Laser
             temp.bind! UNDEFINED
             temp.inferred_type = nil
           end
-          raise NotImplementedError.new("Formal assignment doesn't work yet") unless formal_vals.empty?
+          @simulated_block = opts[:block]
+          @simulated_self  = opts[:self]
+          @simulated_args = formal_vals
           vertices.each do |block|
             block.successors.each do |succ|
               block.remove_flag(succ, ControlFlowGraph::EDGE_EXECUTABLE)

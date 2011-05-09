@@ -108,6 +108,9 @@ module Laser
     FIXNUM = ClassType.new('Fixnum', :invariant)
     ARRAY = ClassType.new('Array', :invariant)
     HASH = ClassType.new('Hash', :invariant)
+    PROC = ClassType.new('Proc', :invariant)
+    NILCLASS = ClassType.new('NilClass', :invariant)
+    BLOCK = UnionType.new([PROC, NILCLASS])
 
     class GenericType < Base
       acts_as_struct :base_type, :subtypes

@@ -23,10 +23,9 @@ module Laser
           initialize_graph
           @namespace_stack = [ClassRegistry['Object'].binding]
           @self_stack = []
-          @current_return = @exit
           @current_node = @sexp
           @self_register = Bindings::TemporaryBinding.new('self', current_scope.self_ptr)
-          build_formal_args
+          build_prologue
           result = walk_node @sexp, value: true
           if @sexp.type == :program
             uncond_instruct @current_return
@@ -109,7 +108,10 @@ module Laser
         end
 
         def build_exception_blocks
-          @final_exception = create_temporary('t#exit_exception')
+          @return_register = create_temporary('t#return_value')
+          @graph.final_return    = create_temporary('t#final_return')
+          @graph.final_exception = create_temporary('t#exit_exception')
+          @current_return = create_block(ControlFlowGraph::RETURN_POSTDOMINATOR_NAME)
           @current_rescue = create_block(ControlFlowGraph::EXCEPTION_POSTDOMINATOR_NAME)
           @current_yield_fail = create_block(ControlFlowGraph::YIELD_POSTDOMINATOR_NAME)
           joined = create_block(ControlFlowGraph::FAILURE_POSTDOMINATOR_NAME)
@@ -120,8 +122,12 @@ module Laser
             uncond_instruct joined, flags: RGL::ControlFlowGraph::EDGE_ABNORMAL
           end
           with_current_basic_block(joined) do
-            copy_instruct(@final_exception, Scope::GlobalScope.lookup('$!'))
+            copy_instruct(@graph.final_exception, Scope::GlobalScope.lookup('$!'))
             uncond_instruct @exit, flags: RGL::ControlFlowGraph::EDGE_ABNORMAL
+          end
+          with_current_basic_block(@current_return) do
+            copy_instruct(@graph.final_return, @return_register)
+            uncond_instruct @exit
           end
         end
 
@@ -130,7 +136,7 @@ module Laser
           copy_instruct(Bootstrap::VISIBILITY_STACK, initial)
         end
 
-        def build_formal_args
+        def build_prologue
           uncond_instruct create_block
           if @sexp.type == :program
             push_self(Scope::GlobalScope.self_ptr)
@@ -141,53 +147,109 @@ module Laser
           build_exception_blocks
           if @sexp.type != :program
             push_scope(Scope::ClosedScope.new(current_scope, current_self))
-            @formals.each { |formal| current_scope.add_binding!(formal) }
             @block_arg = call_instruct(ClassRegistry['Laser#Magic'].binding,
                 :current_block, value: true, raise: false)
             @block_arg.name = 't#current_block'
             reobserve_current_exception
-            if @formals.any?
-              if @formals.last.is_block?
-                copy_instruct(@formals.last, @block_arg)
-              end
-              if @formals.any?(&:is_optional?)
-                cur_arity = call_instruct(ClassRegistry['Laser#Magic'].binding,
-                    :current_arity, value: true, raise: false)
-                min_arity = @formals.count(&:is_positional?)
-                optionals = @formals.select(&:is_optional?)
-                previous_optional_block = nil
-                optionals.each_with_index do |argument, index|
-                  max_arity_indicating_missing = const_instruct(index + min_arity)
-                  has_arg, no_arg = create_blocks 2
-                  if previous_optional_block
-                    with_current_basic_block(previous_optional_block) do
-                      uncond_instruct no_arg
-                    end
-                  end
-                  cond_result = call_instruct(cur_arity, :<, max_arity_indicating_missing,
-                                              value: true, raise: false)
-                  cond_instruct cond_result, no_arg, has_arg
-                  
-                  start_block no_arg
-                  arg_value = walk_node(argument.default_value_sexp, value: true)
-                  copy_instruct(argument, arg_value)
-                  previous_optional_block = @current_block
-                  
-                  start_block has_arg
-                end
-                
-                optionals_done = create_block
-                uncond_instruct optionals_done
+            build_formal_args unless @formals.empty?
+          end
+        end
+        
+        def formal_arg_range(start, size)
+          call_instruct(ClassRegistry['Laser#Magic'].binding, :current_argument_range,
+              start, size, value: true, raise: false)
+        end
+        
+        def formal_arg_at(idx)
+          call_instruct(ClassRegistry['Laser#Magic'].binding, :current_argument, idx,
+              value: true, raise: false)
+        end
+        
+        def copy_positionals(args)
+          args.each_with_index do |pos, idx|
+            copy_instruct(pos, formal_arg_at(const_instruct(idx)))
+          end
+        end
+        
+        def copy_positionals_with_offset(args, offset)
+          args.each_with_index do |pos, idx|
+            dynamic_idx = idx.zero? ? offset : call_instruct(const_instruct(idx), :+, offset,
+                value: true, raise: false)
+            copy_instruct(pos, formal_arg_at(dynamic_idx))
+          end
+        end
+        
+        def build_formal_args
+          @formals.each { |formal| current_scope.add_binding!(formal) }
 
+          nb_formals = @formals.last.is_block? ? @formals[0..-2] : @formals
+          has_rest  = rest_arg = nb_formals.find(&:is_rest?)
+          min_arity = nb_formals.count(&:is_positional?)
+          optionals = nb_formals.select(&:is_optional?)
+          num_optionals = optionals.size
+          min_nonrest_arity = min_arity + num_optionals
+          # zero dynamic args = easy and more efficient case
+          if !rest_arg && optionals.empty?
+            copy_positionals(nb_formals)
+          else
+            # pre-dynamic positionals
+            cur_arity = call_instruct(ClassRegistry['Laser#Magic'].binding,
+                :current_arity, value: true, raise: false)
+            pre_dynamic_positional = nb_formals.take_while(&:is_positional?)
+            num_pre_dynamics = pre_dynamic_positional.size
+            copy_positionals(pre_dynamic_positional)
+            # optional args
+            previous_optional_block = nil
+            optionals.each_with_index do |argument, index|
+              max_arity_indicating_missing = const_instruct(index + min_arity)
+              has_arg, no_arg = create_blocks 2
+              if previous_optional_block
                 with_current_basic_block(previous_optional_block) do
-                  uncond_instruct optionals_done
+                  uncond_instruct no_arg
                 end
-                
-                start_block optionals_done
+              end
+              cond_result = call_instruct(cur_arity, :<, max_arity_indicating_missing,
+                                          value: true, raise: false)
+              cond_instruct cond_result, no_arg, has_arg
+              
+              start_block no_arg
+              arg_value = walk_node(argument.default_value_sexp, value: true)
+              copy_instruct(argument, arg_value)
+              previous_optional_block = @current_block
+              
+              start_block has_arg
+              copy_instruct(argument, formal_arg_at(const_instruct(index + num_pre_dynamics)))
+            end
+            
+            optionals_done = create_block
+            # rest args
+            if has_rest
+              rest_start = const_instruct(num_pre_dynamics + num_optionals)
+              rest_size = call_instruct(cur_arity, :-, const_instruct(min_nonrest_arity), value: true, raise: false)
+              copy_instruct(rest_arg, formal_arg_range(rest_start, rest_size))
+            end
+            uncond_instruct optionals_done
+
+            if previous_optional_block
+              with_current_basic_block(previous_optional_block) do
+                # at this point, if there was a rest arg, it's empty.
+                if has_rest
+                  empty_rest = call_instruct(ClassRegistry['Array'].binding, :[], value: true, raise: false)
+                  copy_instruct(rest_arg, empty_rest)
+                end
+                uncond_instruct optionals_done
               end
             end
+            start_block optionals_done
+
+            # post-dynamic conditionals
+            post_dynamic_positional = nb_formals[num_pre_dynamics..-1].select(&:is_positional?)
+            post_dynamic_start = call_instruct(cur_arity, :-,
+                const_instruct(post_dynamic_positional.size), value: true, raise: false)
+            copy_positionals_with_offset(post_dynamic_positional, post_dynamic_start)
           end
-          # First, set the block arg if there is an explicit block argument.
+          block_arg = @formals.find(&:is_block?)
+          copy_instruct(block_arg, @block_arg) if block_arg
         end
         
         # Creates a new block that jumps to the given target upon completion.
@@ -848,7 +910,7 @@ module Laser
         end
         
         def return_uncond_jump_instruct(result)
-          add_instruction(:return, result)
+          copy_instruct(@return_register, result)
           uncond_instruct @current_return
           start_block create_block
           result

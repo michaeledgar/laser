@@ -178,6 +178,7 @@ require 'comparable'
 require 'enumerable'
 require 'array'
 require 'string'
+require 'symbol'
 require 'numbers'
 require '_thread'
 

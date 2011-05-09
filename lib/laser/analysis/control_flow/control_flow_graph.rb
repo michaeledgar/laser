@@ -14,12 +14,13 @@ module Laser
         include RaiseProperties
         include Simulation
         
+        RETURN_POSTDOMINATOR_NAME = 'Return'
         YIELD_POSTDOMINATOR_NAME = 'YieldWithoutBlock'
         EXCEPTION_POSTDOMINATOR_NAME = 'UncaughtException'
         FAILURE_POSTDOMINATOR_NAME = 'Failure'
 
-        attr_accessor :root
-        attr_reader :formals, :uses, :definition, :constants, :live, :globals, :formal_map
+        attr_accessor :root, :final_exception, :final_return
+        attr_reader :formals, :uses, :definition, :constants, :live, :globals
         attr_reader :yield_type, :raise_type
         # postdominator blocks for: all non-failed-yield exceptions, yield-failing
         # exceptions, and all failure types.
@@ -39,7 +40,6 @@ module Laser
           @name_stack = Hash.new { |hash, temp| hash[temp] = [] }
           @name_count = Hash.new { |hash, temp| hash[temp] = 0 }
           @formals = formal_arguments
-          @formal_map = {}
           @yield_type = :required
           @yield_arity = Set.new([Arity::ANY])
           @raise_type = Frequency::MAYBE
@@ -68,7 +68,6 @@ module Laser
           @formals = source.formals.map do |formal|
             copy = formal.deep_dup
             temp_lookup[formal] = copy
-            @formal_map[copy] = temp_lookup[source.formal_map[formal]]
             copy
           end
 
