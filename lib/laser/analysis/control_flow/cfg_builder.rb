@@ -290,10 +290,10 @@ module Laser
               bodystmt_walk node
             when :class
               class_name, superclass, body = node.children
-              class_instruct(node.scope, class_name, superclass, body, opts)
+              class_instruct(class_name, superclass, body, opts)
             when :module
               module_name, body = node.children
-              module_instruct(node.scope, module_name, body, opts)
+              module_instruct(module_name, body, opts)
             when :sclass
               receiver, body = node.children
               singleton_class_instruct receiver, body, opts
@@ -371,7 +371,7 @@ module Laser
               method_call = node.method_call
               receiver = if method_call.receiver_node
                          then walk_node(method_call.receiver_node, value: true)
-                         else self_instruct(node[2][2].scope)
+                         else self_instruct
                          end
               arg_node = method_call.arg_node
               arg_node = arg_node[1] if arg_node && arg_node.type == :arg_paren
@@ -1102,7 +1102,7 @@ module Laser
           end
         end
 
-        def class_instruct(scope, class_name, superclass, body, opts={value: true})
+        def class_instruct(class_name, superclass, body, opts={value: true})
           # first: calculate receiver to perform a check if
           # the class already exists
           the_class_holder = create_temporary
@@ -1119,7 +1119,6 @@ module Laser
           end
           actual_name = const_instruct(name_as_string)
 
-          # TODO(adgar): weird cases
           if superclass
             superclass_val = walk_node(superclass, value: true)
             need_confirm_superclass = true
@@ -1133,6 +1132,8 @@ module Laser
           if_exists_block, if_noexists_block, after_exists_check = create_blocks 3
           cond_instruct(already_exists, if_exists_block, if_noexists_block)
           
+          ############### LOOKING UP AND VERIFYING CLASS BRANCH ###########
+          
           start_block if_exists_block
           the_class = call_instruct(receiver_val, :const_get, actual_name, const_instruct(false), value: true, raise: false)
           copy_instruct(the_class_holder, the_class)
@@ -1143,18 +1144,31 @@ module Laser
           
           # Unconditionally raise if it is not a class! The error is a TypeError
           start_block is_module_block
-          raise_instance_of_instruct(ClassRegistry['TypeError'].binding,
+          raise_instance_of_instruct(ClassRegistry['LaserReopenedModuleAsClassError'].binding,
               const_instruct("#{name_as_string} is not a class"))
           
           start_block after_conflict_check
-          # Now, compare superclasses!
-          old_superclass_val = call_instruct(the_class, :superclass, value: true, raise: false)
-          superclass_is_equal_cond = call_instruct(old_superclass_val, :eql?, superclass_val, value: true, raise: false)
-          superclass_conflict_block = create_block
-          cond_instruct(superclass_is_equal_cond, after_exists_check, superclass_conflict_block)
+          # Now, compare superclasses if provided superclass is not Object
+          if need_confirm_superclass
+            should_not_confirm_superclass = call_instruct(superclass_val, :equal?,
+                ClassRegistry['Object'].binding, value: true, raise: false)
+            validate_superclass_mismatch_block = create_block
+            cond_instruct(should_not_confirm_superclass, after_exists_check, validate_superclass_mismatch_block)
+
+            start_block validate_superclass_mismatch_block
+            old_superclass_val = call_instruct(the_class, :superclass, value: true, raise: false)
+            superclass_is_equal_cond = call_instruct(old_superclass_val, :equal?, superclass_val, value: true, raise: false)
+            superclass_conflict_block = create_block
+            cond_instruct(superclass_is_equal_cond, after_exists_check, superclass_conflict_block)
+            
+            start_block superclass_conflict_block
+            raise_instance_of_instruct(ClassRegistry['LaserSuperclassMismatchError'].binding,
+                const_instruct("superclass mismatch for class #{name_as_string}"))
+          else
+            uncond_instruct(after_exists_check)
+          end
           
-          start_block superclass_conflict_block
-          raise_instance_of_instruct ClassRegistry['TypeError'].binding
+          ############### CREATING CLASS BRANCH ###############################
           
           start_block if_noexists_block
           # only confirm superclass if it's not defaulting to Object!
@@ -1183,7 +1197,7 @@ module Laser
           call_instruct(Bootstrap::VISIBILITY_STACK, :pop, raise: false, value: false)
         end
         
-        def module_instruct(scope, module_name, body, opts={value: true})
+        def module_instruct(module_name, body, opts={value: true})
           # first: calculate receiver to perform a check if
           # the class already exists
           the_module_holder = create_temporary
@@ -1214,7 +1228,7 @@ module Laser
 
           # Unconditionally raise if it is a class! The error is a TypeError
           start_block is_class_block
-          raise_instance_of_instruct(ClassRegistry['TypeError'].binding,
+          raise_instance_of_instruct(ClassRegistry['LaserReopenedClassAsModuleError'].binding,
               const_instruct("#{name_as_string} is not a module"))
 
           start_block if_noexists_block
@@ -1314,7 +1328,7 @@ module Laser
           result
         end
         
-        def self_instruct(scope = nil)
+        def self_instruct
           @self_register
         end
         
@@ -1732,7 +1746,7 @@ module Laser
           method_call = node.method_call
           if method_call.receiver_node
           then walk_node method_call.receiver_node, value: true
-          else self_instruct(node.scope)
+          else self_instruct
           end
         end
         

@@ -21,7 +21,7 @@ module Laser
 
         attr_accessor :root, :final_exception, :final_return
         attr_reader :formals, :uses, :definition, :constants, :live, :globals
-        attr_reader :yield_type, :raise_type
+        attr_reader :yield_type, :raise_type, :in_ssa
         # postdominator blocks for: all non-failed-yield exceptions, yield-failing
         # exceptions, and all failure types.
         
@@ -54,6 +54,7 @@ module Laser
         
         def initialize_dup(source)
           @root = source.root
+          @in_ssa = source.in_ssa
           # we'll be duplicating temporaries, and since we need to know how
           # our source data about temps (defs, uses, constants...) corresponds
           # the duplicated temps, we'll need a hash to look them up.
@@ -64,11 +65,11 @@ module Laser
           source.definition.each_key do |k|
             temp_lookup[k] = k.deep_dup
           end
+          @final_exception = temp_lookup[source.final_exception]
+          @final_return = temp_lookup[source.final_return]
           # copy all formals and their mapping to initial bindings
           @formals = source.formals.map do |formal|
-            copy = formal.deep_dup
-            temp_lookup[formal] = copy
-            copy
+            temp_lookup[formal] = formal.deep_dup
           end
 
           new_blocks = source.vertices.reject { |v| TerminalBasicBlock === v }

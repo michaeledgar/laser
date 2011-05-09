@@ -116,6 +116,11 @@ module Laser
         stub_toplevel_class 'Exception'
         stub_toplevel_class 'StandardError', 'Exception'
         stub_toplevel_class 'TypeError', 'StandardError'
+        # My specific tweaks
+        stub_toplevel_class 'LaserTypeErrorWrapper', 'TypeError'
+        stub_toplevel_class 'LaserReopenedClassAsModuleError', 'LaserTypeErrorWrapper'
+        stub_toplevel_class 'LaserReopenedModuleAsClassError', 'LaserTypeErrorWrapper'
+        stub_toplevel_class 'LaserSuperclassMismatchError', 'LaserTypeErrorWrapper'
         
         global.add_binding!(Bindings::GlobalVariableBinding.new('$:',
             ['.', File.expand_path(File.join(File.dirname(__FILE__), '..', 'standard_library'))]))
@@ -151,6 +156,8 @@ module Laser
         stub_method(module_class, 'const_get', builtin: true)
         stub_method(module_class, '===', builtin: true, pure: true, raises: Frequency::NEVER)
         stub_method(kernel_module, 'eql?', builtin: true, pure: true,
+            raises: Frequency::NEVER)
+        stub_method(kernel_module, 'equal?', builtin: true, pure: true,
             raises: Frequency::NEVER)
         stub_method(kernel_module, 'singleton_class', builtin: true, pure: true,
             raises: Frequency::NEVER)

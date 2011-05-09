@@ -121,6 +121,10 @@ module Kernel
   def eql?(other)
   end
   # pure: true
+  # builtin: true
+  def equal?(other)
+  end
+  # pure: true
   # raises: never
   # builtin: true
   def singleton_class

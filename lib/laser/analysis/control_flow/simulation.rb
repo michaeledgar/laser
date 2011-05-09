@@ -6,7 +6,6 @@ module Laser
       module Simulation
         class SimulationError < StandardError; end
         class NonDeterminismHappened < StandardError; end
-        class SimulationRaised < StandardError; end
         class SimulationNonterminationError < StandardError; end
         class ExitedAbnormally < StandardError
           def initialize(error)
@@ -35,21 +34,17 @@ module Laser
               current_block = next_block
             end until done
           rescue NonDeterminismHappened => err
-            puts "Simulation ended at nondeterminism: #{err.message}"
+            Laser.debug_puts "Simulation ended at nondeterminism: #{err.message}"
             Laser.debug_p err.backtrace
           rescue SimulationNonterminationError => err
-            puts "Simulation failed to terminate: #{err.message}"
+            Laser.debug_puts "Simulation failed to terminate: #{err.message}"
             Laser.debug_p err.backtrace
-          rescue SimulationRaised => err
-            puts "Simulation raised: #{err.message}"
-            Laser.debug_p err.backtrace
-            @root.add_error(TopLevelSimulationRaised.new(err.message, @root))
           rescue ExitedAbnormally => err
-            msg = err.error.laser_simulate('message', [])
-            puts "Simulation exited abnormally: #{msg}"
-            @root.add_error(TopLevelSimulationRaised.new(msg, @root))
+            msg = LaserObject === err.error ? err.error.laser_simulate('message', []) : err.error.message
+            Laser.debug_puts "Simulation exited abnormally: #{msg}"
+            @root.add_error(TopLevelSimulationRaised.new(msg, @root, err.error))
           rescue NotImplementedError => err
-            puts "Simulation attempted: #{err.message}"
+            Laser.debug_puts "Simulation attempted: #{err.message}"
             Laser.debug_p err.backtrace
           else
             @final_return.value
@@ -92,7 +87,7 @@ module Laser
             begin
               simulate_instruction(insn, opts)
               insn.block.normal_successors.first
-            rescue SimulationRaised => err
+            rescue ExitedAbnormally => err
               Laser.debug_puts "Exception raised by call, taking abnormal edge. Error: #{err.message}"
               insn.block.abnormal_successors.first
             end
@@ -115,9 +110,11 @@ module Laser
                     end
             method = klass.instance_methods[insn[3].to_s]
             if !method
-              Bootstrap::EXCEPTION_STACK.value.push(ClassRegistry['StandardError'].laser_simulate(
-                  'new', ["Method missing: #{klass.name}##{insn[3]}"]))
-              raise SimulationRaised.new("Method missing: #{klass.name}##{insn[3]}")
+              error_klass = insn.node.type == :zcall ? 'NameError' : 'NoMethodError'
+              missing_method_error = ClassRegistry[error_klass].laser_simulate(
+                  'new', ["Method missing: #{klass.name}##{insn[3]}", insn[3].to_s])
+              Bootstrap::EXCEPTION_STACK.value.push(missing_method_error)
+              raise ExitedAbnormally.new(missing_method_error)
             elsif should_simulate_call(method, opts)
               result = simulate_call(receiver, method, args, insn[-1][:block])
               insn[1].bind! result if insn[1]
@@ -193,11 +190,12 @@ module Laser
             begin
               receiver.send(method.name, *args)
             rescue Exception => err
-              raise SimulationRaised.new(err.inspect)
+              Bootstrap::EXCEPTION_STACK.value.push(err)
+              raise ExitedAbnormally.new(err)
             end
           else
             Laser.debug_puts "About to simulate #{method.owner.name}##{method.name}"
-            result = method.master_cfg.simulate(args, mutation: true, self: receiver, block: block)
+            result = method.master_cfg.dup.simulate(args, mutation: true, self: receiver, block: block)
             Laser.debug_puts "Finished simulating #{method.owner.name}##{method.name} => #{result.inspect}"
             result
             # simulate CFG

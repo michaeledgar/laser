@@ -335,16 +335,20 @@ describe 'general analyses' do
     input = "class A115; end; module A115; end"
     tree = annotate_all(input)
     
-    tree[1][1].errors.should_not be_empty
-    tree[1][1].errors.first.should be_a(ReopenedClassAsModuleError)
+    tree.errors.should_not be_empty
+    tree.all_errors.first.should be_a(TopLevelSimulationRaised)
+    err = tree.all_errors.first
+    err.error.klass.should == ClassRegistry['LaserReopenedClassAsModuleError']
   end
   
   it 'generates an error when a module is re-opened as a class' do
     input = "module A116; end; class A116; end"
     tree = annotate_all(input)
     
-    tree[1][1].errors.should_not be_empty
-    tree[1][1].errors.first.should be_a(ReopenedModuleAsClassError)
+    tree.errors.should_not be_empty
+    tree.all_errors.first.should be_a(TopLevelSimulationRaised)
+    err = tree.all_errors.first
+    err.error.klass.should == ClassRegistry['LaserReopenedModuleAsClassError']
   end
   
   it 'handles module inclusions done in the parenthesized method-call fashion' do
@@ -371,7 +375,9 @@ describe 'general analyses' do
                               ClassRegistry['Kernel'], ClassRegistry['BasicObject']]
     tree.all_errors.should_not be_empty
     tree.all_errors.size.should == 1
-    tree.all_errors.first.should be_a(UselessIncludeError)
+    tree.all_errors.first.should be_a(TopLevelSimulationRaised)
+    err = tree.all_errors.first
+    err.error.class.should == UselessIncludeError
   end
   
   it 'handles module extensions done in the typical method-call fashion' do
@@ -458,11 +464,8 @@ describe 'general analyses' do
     
     errors = tree.all_errors
     errors.should_not be_empty
-    errors[0].should be_a(Scope::ScopeLookupFailure)
-    errors[0].query.should == 'Z223'
-    errors[0].scope.self_ptr.should == ClassRegistry['A121'].scope.self_ptr
-    errors[0].ast_node.should == tree[1][0][3][1][1][2]
-    errors[0].ast_node.binding.should == nil
+    errors.first.should be_a(TopLevelSimulationRaised)
+    errors.first.error.class.should == ArgumentError
   end
   
   it 'switches to private visibility upon reaching a call to #private in a class/module' do
@@ -561,8 +564,8 @@ describe 'general analyses' do
     input = 'def t14; end; protected; def t15; end; public; def t16; end'
     tree = annotate_all(input)
     tree.all_errors.size.should be 1
-    tree.all_errors.first.should be_a(NoSuchMethodError)
-    tree.all_errors.first.message.should include('protected')
+    tree.all_errors.first.should be_a(TopLevelSimulationRaised)
+    tree.all_errors.first.error.klass.should == ClassRegistry['NameError']
     
     # recovers by not changing visibility
     # singleton = Scope::GlobalScope.self_ptr.singleton_class
@@ -642,13 +645,11 @@ describe 'general analyses' do
     end
     
     it 'should raise a SuperclassMismatchError when an improper superclass is specified' do
-      input = 'class A250 < String; end; class A250; end'
+      input = 'class A250 < String; end; class A250 < Fixnum; end'
       tree = annotate_all(input)
       tree.all_errors.size.should be 1
-      tree.all_errors.first.should be_a(SuperclassMismatchError)
-      tree.all_errors.first.message.should include('A250')
-      tree.all_errors.first.message.should include('String')
-      tree.all_errors.first.message.should include('Object')
+      tree.all_errors.first.should be_a(TopLevelSimulationRaised)
+      tree.all_errors.first.error.klass.should == ClassRegistry['LaserSuperclassMismatchError']
     end
     
     it "should not raise a SuperclassMismatchError when BasicObject's superclass is omitted" do
@@ -664,13 +665,11 @@ describe 'general analyses' do
     end
     
     it "should raise a SuperclassMismatchError when BasicObject's superclass is specified and not nil" do
-      input = 'class BasicObject < Object; end'
+      input = 'class BasicObject < String; end'
       tree = annotate_all(input)
       tree.all_errors.size.should be 1
-      tree.all_errors.first.should be_a(SuperclassMismatchError)
-      tree.all_errors.first.message.should include('BasicObject')
-      tree.all_errors.first.message.should include('nil')
-      tree.all_errors.first.message.should include('Object')
+      tree.all_errors.first.should be_a(TopLevelSimulationRaised)
+      tree.all_errors.first.error.klass.should == ClassRegistry['LaserSuperclassMismatchError']
     end
     
     it "should not raise a SuperclassMismatchError when Object's superclass is omitted" do
@@ -689,10 +688,8 @@ describe 'general analyses' do
       input = 'class Object < Array; end'
       tree = annotate_all(input)
       tree.all_errors.size.should be 1
-      tree.all_errors.first.should be_a(SuperclassMismatchError)
-      tree.all_errors.first.message.should include('Object')
-      tree.all_errors.first.message.should include('BasicObject')
-      tree.all_errors.first.message.should include('Array')
+      tree.all_errors.first.should be_a(TopLevelSimulationRaised)
+      tree.all_errors.first.error.klass.should == ClassRegistry['LaserSuperclassMismatchError']
     end
     
     it "should not raise a SuperclassMismatchError when Class's superclass is omitted" do
@@ -708,23 +705,11 @@ describe 'general analyses' do
     end
     
     it "should raise a SuperclassMismatchError when Class's superclass is specified and not Module" do
-      input = 'class Class < Object; end'
+      input = 'class Class < BasicObject; end'
       tree = annotate_all(input)
       tree.all_errors.size.should be 1
-      tree.all_errors.first.should be_a(SuperclassMismatchError)
-      tree.all_errors.first.message.should include('Class')
-      tree.all_errors.first.message.should include('Module')
-      tree.all_errors.first.message.should include('Object')
-    end
-    
-    it "should raise a SuperclassMismatchError when a class is opened without it's non-Object superclass" do
-      input = 'class Integer; end'
-      tree = annotate_all(input)
-      tree.all_errors.size.should be 1
-      tree.all_errors.first.should be_a(SuperclassMismatchError)
-      tree.all_errors.first.message.should include('Integer')
-      tree.all_errors.first.message.should include('Numeric')
-      tree.all_errors.first.message.should include('Object')
+      tree.all_errors.first.should be_a(TopLevelSimulationRaised)
+      tree.all_errors.first.error.klass.should == ClassRegistry['LaserSuperclassMismatchError']
     end
     
     it "should not raise a SuperclassMismatchError when a class is opened without it's Object superclass" do

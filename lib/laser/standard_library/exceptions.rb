@@ -7,7 +7,7 @@ class Exception < Object
     @__bt__
   end
   def to_s
-    @__mesg__ ? (@__mesg__.to_s) : self.class.name
+    @__mesg__ ? (@__mesg__.to_str) : self.class.name
     #@__mesg__ ? (@__mesg__.to_s rescue @__mesg__) : self.class.name
   end
   alias message to_s
@@ -56,6 +56,21 @@ class StandardError < Exception
 end
 class TypeError < StandardError
 end
+# Since TypeErrors often have specific semantic meanings, I'd rather
+# use a class for each. But I have to make sure user code isn't impacted
+# by this choice, so we must override #class. TypeError#=== and rescues
+# will still work.
+class LaserTypeErrorWrapper < TypeError
+  def class
+    TypeError
+  end
+end
+class LaserReopenedClassAsModuleError < LaserTypeErrorWrapper
+end
+class LaserReopenedModuleAsClassError < LaserTypeErrorWrapper
+end
+class LaserSuperclassMismatchError < LaserTypeErrorWrapper
+end
 class ArgumentError < StandardError
 end
 class IndexError < StandardError
@@ -73,6 +88,14 @@ end
 class NotImplementedError < ScriptError
 end
 class NameError < StandardError
+  def initialize(msg=nil, name=nil)
+    @__name__ = name
+    @__mesg__ = msg
+    @__bt__ = nil
+  end
+  def name
+    @__name__
+  end
 end
 class NoMethodError < NameError
 end

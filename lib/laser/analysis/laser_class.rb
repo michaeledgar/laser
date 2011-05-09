@@ -61,7 +61,7 @@ module Laser
 
       def laser_simulate(method, args, opts={})
         opts = {self: self, mutation: false}.merge(opts)
-        klass.instance_methods[method].master_cfg.simulate(args, opts)
+        klass.instance_methods[method].master_cfg.dup.simulate(args, opts)
       end
 
       def instance_variable_defined?(var)

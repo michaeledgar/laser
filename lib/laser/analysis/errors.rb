@@ -98,6 +98,10 @@ module Laser
   end
   
   class TopLevelSimulationRaised < Laser::Error
-    severity FUCKUP
+    attr_reader :error
+    def initialize(message, ast_node, detected_error)
+      super(message, ast_node, FUCKUP)
+      @error = detected_error
+    end
   end
 end
