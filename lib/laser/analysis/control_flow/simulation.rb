@@ -8,28 +8,46 @@ module Laser
         class NonDeterminismHappened < StandardError; end
         class SimulationRaised < StandardError; end
         class SimulationNonterminationError < StandardError; end
+        class ExitedAbnormally < StandardError
+          def initialize(error)
+            @error = error
+          end
+          def error
+            @error
+          end
+        end
         # simulates the CFG, with different possible assumptions about
         # how we should treat the global environment/self object.
         def simulate(formal_vals=[], opts={})
           assign_formals(formal_vals, opts)
           current_block = @enter
           begin
-            while current_block.name != 'Exit'
+            done = raised = false
+            begin
               next_block = simulate_block(current_block, opts)
               current_block.add_flag(next_block, ControlFlowGraph::EDGE_EXECUTABLE)
+              if next_block.name == 'Exit'
+                done = true
+                if current_block.has_flag?(next_block, ControlFlowGraph::EDGE_ABNORMAL)
+                  raise ExitedAbnormally.new(@final_exception.value)
+                end
+              end
               current_block = next_block
-            end
+            end until done
           rescue NonDeterminismHappened => err
             puts "Simulation ended at nondeterminism: #{err.message}"
             Laser.debug_p err.backtrace
           rescue SimulationNonterminationError => err
             puts "Simulation failed to terminate: #{err.message}"
-            @root.
             Laser.debug_p err.backtrace
           rescue SimulationRaised => err
             puts "Simulation raised: #{err.message}"
             Laser.debug_p err.backtrace
             @root.add_error(TopLevelSimulationRaised.new(err.message, @root))
+          rescue ExitedAbnormally => err
+            msg = err.error.laser_simulate('message', [])
+            puts "Simulation exited abnormally: #{msg}"
+            @root.add_error(TopLevelSimulationRaised.new(msg, @root))
           rescue NotImplementedError => err
             puts "Simulation attempted: #{err.message}"
             Laser.debug_p err.backtrace
@@ -97,6 +115,8 @@ module Laser
                     end
             method = klass.instance_methods[insn[3].to_s]
             if !method
+              Bootstrap::EXCEPTION_STACK.value.push(ClassRegistry['StandardError'].laser_simulate(
+                  'new', ["Method missing: #{klass.name}##{insn[3]}"]))
               raise SimulationRaised.new("Method missing: #{klass.name}##{insn[3]}")
             elsif should_simulate_call(method, opts)
               result = simulate_call(receiver, method, args, insn[-1][:block])
@@ -148,6 +168,8 @@ module Laser
               simulate_require(args)
             when ClassRegistry['Laser#Magic'].singleton_class.instance_methods['get_global']
               Scope::GlobalScope.lookup(args.first).value
+            when ClassRegistry['Laser#Magic'].singleton_class.instance_methods['set_global']
+              Scope::GlobalScope.lookup(args[0]).bind!(args[1])
             when ClassRegistry['Laser#Magic'].singleton_class.instance_methods['current_self']
               @simulated_self
             when ClassRegistry['Laser#Magic'].singleton_class.instance_methods['current_arity']
@@ -156,8 +178,12 @@ module Laser
               @simulated_args[args.first]
             when ClassRegistry['Laser#Magic'].singleton_class.instance_methods['current_argument_range']
               @simulated_args[args[0], args[1]]
-            when ClassRegistry['Laser#Magic'].singleton_class.instance_methods['set_global']
-              Scope::GlobalScope.lookup(args[0]).bind!(args[1])
+            when ClassRegistry['Laser#Magic'].singleton_class.instance_methods['current_exception']
+              Bootstrap::EXCEPTION_STACK.value.last
+            when ClassRegistry['Laser#Magic'].singleton_class.instance_methods['push_exception']
+              Bootstrap::EXCEPTION_STACK.value.push args[0]
+            when ClassRegistry['Laser#Magic'].singleton_class.instance_methods['pop_exception']
+              Bootstrap::EXCEPTION_STACK.value.pop
             when Scope::GlobalScope.self_ptr.singleton_class.instance_methods['private']
               ClassRegistry['Object'].private(*args)
             when Scope::GlobalScope.self_ptr.singleton_class.instance_methods['public']
@@ -170,7 +196,10 @@ module Laser
               raise SimulationRaised.new(err.inspect)
             end
           else
-            method.master_cfg.simulate(args, mutation: true, self: receiver, block: block)
+            Laser.debug_puts "About to simulate #{method.owner.name}##{method.name}"
+            result = method.master_cfg.simulate(args, mutation: true, self: receiver, block: block)
+            Laser.debug_puts "Finished simulating #{method.owner.name}##{method.name} => #{result.inspect}"
+            result
             # simulate CFG
           end
         end

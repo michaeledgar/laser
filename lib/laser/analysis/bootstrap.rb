@@ -69,18 +69,9 @@ module Laser
         stub_method(magic_class.singleton_class, 'current_arity', special: true)
         stub_method(magic_class.singleton_class, 'current_argument', special: true)
         stub_method(magic_class.singleton_class, 'current_argument_range', special: true)
-        stub_method(magic_class.singleton_class, 'current_exception', builtin: true)
-        def magic_class.current_exception
-          EXCEPTION_STACK.value.last
-        end
-        stub_method(magic_class.singleton_class, 'push_exception', builtin: true, mutation: true)
-        def magic_class.push_exception(arg)
-          EXCEPTION_STACK.value.push arg
-        end
-        stub_method(magic_class.singleton_class, 'pop_exception', builtin: true, mutation: true)
-        def magic_class.pop_exception
-          EXCEPTION_STACK.value.pop
-        end
+        stub_method(magic_class.singleton_class, 'current_exception', special: true)
+        stub_method(magic_class.singleton_class, 'push_exception', special: true, mutation: true)
+        stub_method(magic_class.singleton_class, 'pop_exception', special: true, mutation: true)
         stub_method(magic_class.singleton_class, 'current_self', special: true)
         stub_method(magic_class.singleton_class, 'get_global', special: true)
         stub_method(magic_class.singleton_class, 'set_global', special: true, mutation: true)

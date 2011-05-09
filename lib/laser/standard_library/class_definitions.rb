@@ -8,6 +8,8 @@ class Class < Module
     result.initialize(*args)
     result
   end
+  # special: true
+  # pure: true
   def allocate
   end
   # pure: true
@@ -132,16 +134,13 @@ module Kernel
   # raises: never
   def inspect
   end
-  # special: true
-  # raises: never
+  # builtin: true
   def instance_variable_get(name)
   end
-  # special: true
-  # raises: never
+  # builtin: true
   def instance_variable_defined?(name)
   end
-  # special: true
-  # raises: never
+  # builtin: true
   # mutation: true
   def instance_variable_set(name, val)
   end
@@ -163,6 +162,7 @@ module Kernel
   # predictable: false
   def gets(opt_arg_1 = :__unset__, opt_arg_2 = :__unset__)
   end
+  # predictable: false
   def puts(*to_put)
   end
   # raises: never

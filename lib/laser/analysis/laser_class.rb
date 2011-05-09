@@ -17,7 +17,9 @@ module Laser
       end
     end
 
-    module BasicLaserObjectBehavior
+    # Catch all representation of an object. Should never have klass <: Module.
+    class LaserObject
+      extend ModuleExtensions
       attr_reader :scope, :klass, :name
       attr_writer :singleton_class
       def initialize(klass = ClassRegistry['Object'], scope = Scope::GlobalScope,
@@ -25,6 +27,7 @@ module Laser
         @klass = klass
         @scope = scope
         @name = name
+        @instance_variables = {}
       end
       
       def add_instance_method!(method)
@@ -55,12 +58,23 @@ module Laser
       def signatures
         singleton_class.instance_signatures
       end
-    end
-    
-    # Catch all representation of an object. Should never have klass <: Module.
-    class LaserObject
-      extend ModuleExtensions
-      include BasicLaserObjectBehavior
+
+      def laser_simulate(method, args, opts={})
+        opts = {self: self, mutation: false}.merge(opts)
+        klass.instance_methods[method].master_cfg.simulate(args, opts)
+      end
+
+      def instance_variable_defined?(var)
+        @instance_variables.has_key?(var)
+      end
+
+      def instance_variable_get(var)
+        @instance_variables[var]
+      end
+
+      def instance_variable_set(var, value)
+        @instance_variables[var] = value
+      end
     end
 
     class LaserProc < LaserObject
@@ -349,6 +363,7 @@ module Laser
       def define_method(name, proc)
         name = name.to_s
         new_method = LaserMethod.new(name, proc)
+        new_method.owner = self
         @instance_methods[name] = new_method
         if Bootstrap::VISIBILITY_STACK.value.last == :module_function
           __make_module_function__(name)

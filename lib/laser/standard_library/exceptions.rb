@@ -7,7 +7,8 @@ class Exception < Object
     @__bt__
   end
   def to_s
-    @__mesg__ ? (@__mesg__.to_s rescue @__mesg__) : self.class.name
+    @__mesg__ ? (@__mesg__.to_s) : self.class.name
+    #@__mesg__ ? (@__mesg__.to_s rescue @__mesg__) : self.class.name
   end
   alias message to_s
   BT_FAILURE_MESSAGE = "backtrace must be Array of String"

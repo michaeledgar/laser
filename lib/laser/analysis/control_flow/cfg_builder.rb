@@ -104,12 +104,13 @@ module Laser
         def reobserve_current_exception
           cur_exception = call_instruct(ClassRegistry['Laser#Magic'].binding,
               :current_exception, value: true, raise: false)
-          copy_instruct(Scope::GlobalScope.lookup('$!'), cur_exception)
+          copy_instruct(@exception_register, cur_exception)
         end
 
         def build_exception_blocks
           @return_register = create_temporary('t#return_value')
           @graph.final_return    = create_temporary('t#final_return')
+          @exception_register    = create_temporary('t#exception_value')
           @graph.final_exception = create_temporary('t#exit_exception')
           @current_return = create_block(ControlFlowGraph::RETURN_POSTDOMINATOR_NAME)
           @current_rescue = create_block(ControlFlowGraph::EXCEPTION_POSTDOMINATOR_NAME)
@@ -122,7 +123,7 @@ module Laser
             uncond_instruct joined, flags: RGL::ControlFlowGraph::EDGE_ABNORMAL
           end
           with_current_basic_block(joined) do
-            copy_instruct(@graph.final_exception, Scope::GlobalScope.lookup('$!'))
+            copy_instruct(@graph.final_exception, @exception_register)
             uncond_instruct @exit, flags: RGL::ControlFlowGraph::EDGE_ABNORMAL
           end
           with_current_basic_block(@current_return) do
@@ -645,6 +646,9 @@ module Laser
                 variable_instruct(node)
               elsif node[1].type == :@kw
                 const_instruct(node.constant_value)
+              elsif node[1].type == :@ivar
+                call_instruct(current_self, :instance_variable_get,
+                    const_instruct(node.expanded_identifier), value: true, ignore_privacy: true)
               elsif node[1].type == :@gvar
                 call_instruct(ClassRegistry['Laser#Magic'].binding, :get_global,
                     const_instruct(node.expanded_identifier), raise: false, value: true)
@@ -813,7 +817,7 @@ module Laser
         def raise_instruct(arg, opts)
           target = opts[:target]
           call_instruct(ClassRegistry['Laser#Magic'].binding, :push_exception, arg, raise: false)
-          copy_instruct(Scope::GlobalScope.lookup('$!'), arg)
+          copy_instruct(@exception_register, arg)
           uncond_instruct target, flags: RGL::ControlFlowGraph::EDGE_ABNORMAL
           start_block target
         end
@@ -1056,7 +1060,7 @@ module Laser
               with_current_basic_block(catcher) do
                 failure_block = nil
                 foreach_on_rhs(rhs) do |temp|
-                  result = call_instruct(temp, :===, Scope::GlobalScope.lookup('$!'), value: true)
+                  result = call_instruct(temp, :===, @exception_register, value: true)
                   failure_block = create_block
                   cond_instruct(result, handler_block, failure_block)
                   start_block failure_block
@@ -1069,10 +1073,8 @@ module Laser
             start_block handler_block
             # Assign to $! if there is a requested name for the exception
             if exception_name
-              temp = lookup_or_create_temporary(:var, node.scope.lookup('$!'))
-              copy_instruct(temp, node.scope.lookup('$!'))
               var_name = exception_name.expanded_identifier
-              copy_instruct(current_scope.lookup_or_create_local(var_name), temp)
+              copy_instruct(current_scope.lookup_or_create_local(var_name), @exception_register)
             end
             body_result = walk_body handler_body, value: true
             copy_instruct(enclosing_body_result, body_result)
@@ -1107,14 +1109,15 @@ module Laser
           case class_name.type
           when :const_ref
             receiver_val = current_namespace
-            actual_name = const_instruct(class_name.expanded_identifier)
+            name_as_string = class_name.expanded_identifier
           when :const_path_ref
             receiver_val = walk_node(class_name[1], value: true)
-            actual_name = const_instruct(class_name[2].expanded_identifier)
+            name_as_string = class_name[2].expanded_identifier
           when :top_const_ref
             receiver_val = ClassRegistry['Object'].binding
-            actual_name = const_instruct(class_name[1].expanded_identifier)
+            name_as_string = class_name[1].expanded_identifier
           end
+          actual_name = const_instruct(name_as_string)
 
           # TODO(adgar): weird cases
           if superclass
@@ -1140,7 +1143,8 @@ module Laser
           
           # Unconditionally raise if it is not a class! The error is a TypeError
           start_block is_module_block
-          raise_instance_of_instruct ClassRegistry['TypeError'].binding
+          raise_instance_of_instruct(ClassRegistry['TypeError'].binding,
+              const_instruct("#{name_as_string} is not a class"))
           
           start_block after_conflict_check
           # Now, compare superclasses!
@@ -1186,14 +1190,15 @@ module Laser
           case module_name.type
           when :const_ref
             receiver_val = current_namespace
-            actual_name = const_instruct(module_name.expanded_identifier)
+            name_as_string = module_name.expanded_identifier
           when :const_path_ref
             receiver_val = walk_node(module_name[1], value: true)
-            actual_name = const_instruct(module_name[2].expanded_identifier)
+            name_as_string = module_name[2].expanded_identifier
           when :top_const_ref
             receiver_val = ClassRegistry['Object'].binding
-            actual_name = const_instruct(module_name[1].expanded_identifier)
+            name_as_string = module_name[1].expanded_identifier
           end
+          actual_name = const_instruct(name_as_string)
 
           already_exists = call_instruct(receiver_val, :const_defined?, actual_name, const_instruct(false), value: true, raise: false)
           if_exists_block, if_noexists_block, after_exists_check = create_blocks 3
@@ -1209,7 +1214,8 @@ module Laser
 
           # Unconditionally raise if it is a class! The error is a TypeError
           start_block is_class_block
-          raise_instance_of_instruct ClassRegistry['TypeError'].binding
+          raise_instance_of_instruct(ClassRegistry['TypeError'].binding,
+              const_instruct("#{name_as_string} is not a module"))
 
           start_block if_noexists_block
           # create the class and assign
@@ -1368,6 +1374,9 @@ module Laser
               copy_instruct lhs.binding, rhs_val
             elsif lhs[1].type == :@const
               call_instruct(current_namespace, :const_set, const_instruct(var_name), rhs_val, value: false, raise: false)
+            elsif lhs[1].type == :@ivar
+              call_instruct(current_self, :instance_variable_set, const_instruct(var_name),
+                  rhs_val, value: true, ignore_privacy: true)
             elsif lhs[1].type == :@gvar
               call_instruct(ClassRegistry['Laser#Magic'].binding, :set_global,
                   const_instruct(var_name), rhs_val, raise: false, value: true)
