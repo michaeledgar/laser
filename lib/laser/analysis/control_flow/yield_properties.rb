@@ -7,11 +7,12 @@ module Laser
         def find_yield_properties
           without_yield = dup
           with_yield = dup
-          
           kernel_method_to_fix = ClassRegistry['Kernel'].instance_methods['block_given?']
+          magic_method_to_fix = ClassRegistry['Laser#Magic'].singleton_class.instance_methods['current_block']
           
           without_yield.perform_constant_propagation(
-              fixed_methods: {kernel_method_to_fix => false})
+              fixed_methods: {kernel_method_to_fix => false, magic_method_to_fix => nil})
+          without_yield.dotty
 
           without_yield.prune_unexecuted_blocks
           with_yield.prune_unexecuted_blocks

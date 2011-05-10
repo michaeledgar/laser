@@ -26,7 +26,9 @@ module Laser
         # the constant, as a Ruby object (or a proxy to one), UNDEFINED, or VARYING.
         def perform_constant_propagation(opts={})
           opts = {:fixed_methods => {}}.merge(opts)
+          
           initialize_constant_propagation(opts)
+          dotty if opts[:fixed_methods].any?
           visited = Set.new
           worklist = Set.new
           blocklist = Set[self.enter]
@@ -192,6 +194,8 @@ module Laser
 
           opts = Hash === args.last ? args.pop : {}
           components = [receiver, *args]
+          Laser.debug_puts("constant prop. simulating #{instruction.inspect}")
+          Laser.debug_puts("components #{components.map(&:value).inspect}")
           special_result, special_type, special_raised = apply_special_case(receiver, method_name, *args)
           if special_result != INAPPLICABLE
             changed = (target.value != special_result)
@@ -237,12 +241,8 @@ module Laser
               changed = (target.value == UNDEFINED)  # varying impossible here
               # TODO(adgar): CONSTANT BLOCKS
               if changed && (!opts || !opts[:block])
-                if method && method.pure
-                  if Bindings::ConstantBinding === receiver  # literal here
-                    real_receiver = Object.const_get(receiver.name)
-                  else
-                    real_receiver = receiver.value
-                  end
+                if method && (method.pure || allow_impure_method?(method))
+                  real_receiver = receiver.value
                   # SIMULATE PURE METHOD CALL
                   begin
                     result = real_receiver.send(method_name, *args.map(&:value))
@@ -396,12 +396,14 @@ module Laser
           [INAPPLICABLE, Frequency::MAYBE]
         end
         
+        def allow_impure_method?(method)
+          method == ClassRegistry['Module'].instance_methods(false)['const_get']
+        end
+        
         def cp_magic(method_name, *args)
           case method_name
           when :current_self
             return [VARYING, Types::TOP, Frequency::NEVER]
-          when :current_block
-            return [VARYING, Types::BLOCK, Frequency::NEVER]
           when :current_argument
             return [VARYING, Types::TOP, Frequency::NEVER]
           when :current_argument_range

@@ -203,8 +203,7 @@ class Range
   def to_a
   end
 end
-class Proc
-end
+require 'proc'
 require 'hash'
 class Symbol
 end

@@ -135,6 +135,7 @@ module Laser
         kernel_module = ClassRegistry['Kernel']
         array_class = ClassRegistry['Array']
         hash_class = ClassRegistry['Hash']
+        range_class = ClassRegistry['Range']
         def hash_class.[](*args)
           ::Hash[*args]
         end
@@ -143,6 +144,9 @@ module Laser
         end
         def array_class.new(*args)
           ::Array.new(*args)
+        end
+        def range_class.new(*args)
+          ::Range.new(*args)
         end
         string_class = ClassRegistry['String']
         stub_method(class_class.singleton_class, 'new', builtin: true, pure: true)

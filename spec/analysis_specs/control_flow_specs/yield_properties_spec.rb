@@ -61,6 +61,17 @@ end
 EOF
     g.yield_type.should be :optional
   end
-  
-  pending 'denotes the method optional when yield is guarded by a guaranteed rescue'
+
+
+  it 'denotes the method optional when yield is guarded by guaranteed rescue' do
+    g = cfg_method <<-EOF
+def one
+  yield 1
+  4
+rescue LocalJumpError
+  2
+end
+EOF
+    g.yield_type.should be :optional
+  end
 end
