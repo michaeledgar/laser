@@ -255,7 +255,7 @@ module Laser
                     end
                     target.bind!(result)
                     target.inferred_type = Utilities.type_for(result)
-                    puts "Binding #{target.inspect} <- #{result.inspect} #{target.inferred_type.inspect}"
+                    Laser.debug_puts "Binding #{target.inspect} <- #{result.inspect} #{target.inferred_type.inspect}"
                     raised = Frequency::NEVER
                   rescue BasicObject => err
                     # any exception caught - this is an extremely unsafe rescue handler - means my
@@ -347,7 +347,7 @@ module Laser
           end
           if old_type != new_type
             target.inferred_type = new_type
-            puts "Binding #{target.inspect} <- #{target.value.inspect} #{target.inferred_type.inspect}"
+            Laser.debug_puts "Binding #{target.inspect} <- #{target.value.inspect} #{target.inferred_type.inspect}"
             changed = true
           end
 

@@ -34,10 +34,6 @@ module Laser
         singleton_class.add_instance_method!(method)
       end
       
-      def add_signature!(signature)
-        singleton_class.add_signature!(signature)
-      end
-      
       def inspect
         return 'main' if self == Scope::GlobalScope.self_ptr
         super
@@ -53,10 +49,6 @@ module Laser
           new_singleton_class.superclass = self.klass
         end
         @klass = @singleton_class
-      end
-      
-      def signatures
-        singleton_class.instance_signatures
       end
 
       def laser_simulate(method, args, opts={})
@@ -219,14 +211,6 @@ module Laser
         then @superclass.instance_methods.merge(@instance_methods)
         else @instance_methods
         end
-      end
-      
-      def instance_signatures
-        instance_methods.values.map(&:signatures).flatten
-      end
-      
-      def add_signature!(signature)
-        @instance_methods[signature.name].add_signature!(signature)
       end
       
       def instance_variables
@@ -611,7 +595,7 @@ module Laser
       extend ModuleExtensions
       attr_reader :name
       attr_reader :proc
-      attr_accessor :body_ast, :owner, :signatures, :arity
+      attr_accessor :body_ast, :owner, :arity
       attr_accessor_with_default :special, false
       attr_accessor_with_default :builtin, false
       attr_accessor_with_default :mutation, false
@@ -636,8 +620,7 @@ module Laser
 
       def initialize(name, base_proc=nil)
         @name = name
-        @signatures = []
-		@type_instantiations = {}
+        @type_instantiations = {}
         @proc = base_proc
         if base_proc
           @arity = Arity.for_arglist(base_proc.arguments)
@@ -675,14 +658,8 @@ module Laser
         result = LaserMethod.new(name)
         result.body_ast = self.body_ast
         result.owner = self.owner
-        result.signatures = self.signatures
         result.arity = self.arity
         result
-      end
-
-      def add_signature!(signature)
-        @signatures << signature
-        @arity = Arity.new(refine_arity(signature.arity))
       end
       
       def refine_arity(new_arity)
@@ -690,10 +667,6 @@ module Laser
         new_begin = [new_arity.begin, @arity.begin].min
         new_end = [new_arity.end, @arity.end].max
         new_begin..new_end
-      end
-      
-      def empty?
-        signatures.empty?
       end
     end
   end

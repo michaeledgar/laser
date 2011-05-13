@@ -68,50 +68,9 @@ module Laser
       end
     end
     
-    # A single signature in the Laser protocol system. This is just
-    # a simple specification of a method that an object can receive,
-    # either explicitly or implicitly defined, and the protocols of the
-    # return type and all arguments.
-    #
-    # name: String
-    # return_type: Protocol
-    # arguments: Symbol => Protocol
-    Signature = Struct.new(:name, :arguments, :return_type) do
+    module Signature
       include Comparable
       extend ArgumentListHandling
-
-      def self.for_definition_sexp(name, arglist, body)
-        arg_hash = {}
-        new_signature = Signature.new(name, arg_list_for_arglist(arglist), Types::TOP)
-      end
-
-      def initialize(*args)
-        super
-        # validate state
-        unless String === self.name && Types::Base === self.return_type &&
-               Array === self.arguments && self.arguments.all? { |v| Bindings::ArgumentBinding === v }
-          raise ArgumentError.new("Invalid arguments to a signature: #{args.inspect}")
-        end
-        @argument_hash = Hash[arguments.map {|arg| [arg.name, arg]}]
-      end
-
-      # Returns the arity of the signature.
-      def arity
-        Arity.for_arglist(arguments)
-      end
-
-      # It's trivially clear that equal Signatures have equal mangled forms.
-      # It's nice to notice that by using a space as the delimeter, the mangled
-      # form is still all visible characters, but also the space will compare less
-      # than any other visible character. Thus, when sorted, we can achieve
-      # a piecewise comparison purely lexicographically.
-      def mangled_form
-        "#{name} #{return_type.inspect} #{arguments.to_a.flatten.map(&:to_s).sort.join(' ')}"
-      end
-
-      def <=>(other)
-        mangled_form <=> other.mangled_form
-      end
     end
   end
 end

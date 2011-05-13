@@ -1805,7 +1805,7 @@ module Laser
         #
         # returns: (Bindings::GenericBinding | [Bindings::GenericBinding], Boolean)
         def compute_zsuper_arguments(node)
-          args_to_walk = node.scope.method.signatures.first.arguments
+          args_to_walk = node.scope.method.arguments
           is_vararg = args_to_walk.any? { |arg| arg.kind == :rest }
           if is_vararg
             index_of_star = args_to_walk.index { |arg| arg.kind == :rest }

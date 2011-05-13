@@ -11,13 +11,7 @@ describe LaserObject do
   
   describe '#add_instance_method!' do
     it 'should add the method to its singleton class' do
-      @instance.add_instance_method!(LaserMethod.new('abcdef') do |method|
-        method.add_signature!(Signature.new('abcdef', [], Types::TOP))
-      end)
-      @instance.signatures.should include(
-          Signature.new('abcdef', [], Types::TOP))
-      @instance.singleton_class.instance_signatures.should include(
-          Signature.new('abcdef', [], Types::TOP))
+      @instance.add_instance_method!(LaserMethod.new('abcdef'))
     end
   end
   
@@ -39,16 +33,8 @@ shared_examples_for 'a Ruby module' do
     @a = described_class.new(ClassRegistry[@name], Scope::GlobalScope, 'A')
     @b = described_class.new(ClassRegistry[@name], Scope::GlobalScope, 'B') do |b|
       b.add_instance_method!(LaserMethod.new('foo') do |method|
-        method.add_signature!(Signature.new('foo', [], Types::ClassType.new(@a.path, :covariant)))
-        method.add_signature!(Signature.new('foo',
-            [Bindings::ArgumentBinding.new('a', LaserObject.new(@a), :positional)],
-            Types::ClassType.new(b.path, :covariant)))
       end)
       b.add_instance_method!(LaserMethod.new('bar') do |method|
-        method.add_signature!(Signature.new('bar',
-            [Bindings::ArgumentBinding.new('a', LaserObject.new(@a), :positional),
-             Bindings::ArgumentBinding.new('b', LaserObject.new(b), :positional)],
-            Types::ClassType.new(b.path, :covariant)))
       end)
     end
   end
@@ -67,32 +53,6 @@ shared_examples_for 'a Ruby module' do
     it 'extracts the name from the full path' do
       x = described_class.new(ClassRegistry[@name], Scope::GlobalScope, '::A::B::C::D::EverybodysFavoriteClass')
       x.name.should == 'EverybodysFavoriteClass'
-    end
-  end
-  
-  describe '#instance_signatures' do
-    it 'returns an empty list when no methods are declared' do
-      (@a.signatures - ClassRegistry['Object'].signatures).should be_empty
-    end
-    
-    it "flattens all its normal instance method's signatures" do
-      @b.instance_signatures.should include(Signature.new('foo', [], Types::ClassType.new(@a.path, :covariant)))
-      @b.instance_signatures.should include(Signature.new('foo',
-          [Bindings::ArgumentBinding.new('a', LaserObject.new(@a), :positional)],
-          Types::ClassType.new(@b.path, :covariant)))
-      @b.instance_signatures.should include(
-          Signature.new('bar',
-          [Bindings::ArgumentBinding.new('a', LaserObject.new(@a), :positional),
-           Bindings::ArgumentBinding.new('b', LaserObject.new(@b), :positional)],
-          Types::ClassType.new(@b.path, :covariant)))
-    end
-  end
-  
-  describe '#add_signature!' do
-    it 'adds the signature to the instance method with the given name' do
-      @b.add_signature! Signature.new('foo', [], Types::ClassType.new(@b, :covariant))
-      @b.instance_methods['foo'].signatures.should include(
-          Signature.new('foo', [], Types::ClassType.new(@b, :covariant)))
     end
   end
   
@@ -372,39 +332,6 @@ describe LaserMethod do
     @a = LaserClass.new(ClassRegistry['Class'], Scope::GlobalScope, 'A')
     @b = LaserClass.new(ClassRegistry['Class'], Scope::GlobalScope, 'B')
     @method = LaserMethod.new('foobar')
-  end
-  
-  describe '#add_signature!' do
-    it 'creates signature objects and returns them in #signatures' do
-      @method.add_signature!(Signature.new('foobar', [], Types::ClassType.new(@a, :covariant)))
-      @method.add_signature!(Signature.new('foobar',
-          [Bindings::ArgumentBinding.new('a', @a, :positional),
-           Bindings::ArgumentBinding.new('a2', @a, :positional)],
-          Types::ClassType.new(@b, :covariant)))
-      @method.signatures.should include(Signature.new('foobar', [], Types::ClassType.new(@a, :covariant)))
-      @method.signatures.should include(
-          Signature.new('foobar',
-              [Bindings::ArgumentBinding.new('a', @a, :positional),
-               Bindings::ArgumentBinding.new('a2', @a, :positional)],
-              Types::ClassType.new(@b, :covariant)))
-    end
-  end
-  
-  describe '#arity' do
-    it 'should compute the arity from the collection of signatures' do
-      sexp = Sexp.new(Ripper.sexp('def a(x, a=2, y=3, z, d, &blk); end'))
-      signature1 = Signature.for_definition_sexp('a', sexp, Sexp.new([]))
-      sexp = Sexp.new(Ripper.sexp('def a(y=3, z, d, &blk); end'))
-      signature2 = Signature.for_definition_sexp('a', sexp, Sexp.new([]))
-      sexp = Sexp.new(Ripper.sexp('def a(*rest); end'))
-      signature3 = Signature.for_definition_sexp('a', sexp, Sexp.new([]))
-      @method.add_signature!(signature1)
-      @method.arity.should == (3..5)
-      @method.add_signature!(signature2)
-      @method.arity.should == (2..5)
-      @method.add_signature!(signature3)
-      @method.arity.should == (0..Float::INFINITY)
-    end
   end
   
   describe '#name' do
