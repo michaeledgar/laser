@@ -15,9 +15,11 @@ module Laser
             @error
           end
         end
+        DEFAULT_SIMULATION_OPTS = {on_raise: :annotate}
         # simulates the CFG, with different possible assumptions about
         # how we should treat the global environment/self object.
         def simulate(formal_vals=[], opts={})
+          opts = DEFAULT_SIMULATION_OPTS.merge(opts)
           assign_formals(formal_vals, opts)
           current_block = @enter
           begin
@@ -40,9 +42,13 @@ module Laser
             Laser.debug_puts "Simulation failed to terminate: #{err.message}"
             Laser.debug_p err.backtrace
           rescue ExitedAbnormally => err
-            msg = LaserObject === err.error ? err.error.laser_simulate('message', []) : err.error.message
-            Laser.debug_puts "Simulation exited abnormally: #{msg}"
-            @root.add_error(TopLevelSimulationRaised.new(msg, @root, err.error))
+            if opts[:on_raise] == :annotate
+              msg = LaserObject === err.error ? err.error.laser_simulate('message', []) : err.error.message
+              Laser.debug_puts "Simulation exited abnormally: #{msg}"
+              @root.add_error(TopLevelSimulationRaised.new(msg, @root, err.error))
+            elsif opts[:on_raise] = :raise
+              raise err
+            end
           rescue NotImplementedError => err
             Laser.debug_puts "Simulation attempted: #{err.message}"
             Laser.debug_p err.backtrace
@@ -195,7 +201,7 @@ module Laser
             end
           else
             Laser.debug_puts "About to simulate #{method.owner.name}##{method.name}"
-            result = method.master_cfg.dup.simulate(args, mutation: true, self: receiver, block: block)
+            result = method.simulate_with_args(receiver, args, block, mutation: true)
             Laser.debug_puts "Finished simulating #{method.owner.name}##{method.name} => #{result.inspect}"
             result
             # simulate CFG

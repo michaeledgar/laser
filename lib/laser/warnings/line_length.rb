@@ -98,6 +98,7 @@ module Laser
       new_warning.line_length_limit = size
       new_warning.severity = severity
       new_warning.desc = Laser::GenericLineLengthWarning.desc
+	  new_warning.type(Laser::GenericLineLengthWarning.type)
       new_warning
     end
   end

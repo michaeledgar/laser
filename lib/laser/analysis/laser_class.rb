@@ -1,4 +1,4 @@
-        require 'pp'
+require 'pp'
 require 'delegate'
 module Laser
   module SexpAnalysis
@@ -637,6 +637,7 @@ module Laser
       def initialize(name, base_proc=nil)
         @name = name
         @signatures = []
+		@type_instantiations = {}
         @proc = base_proc
         if base_proc
           @arity = Arity.for_arglist(base_proc.arguments)
@@ -650,6 +651,22 @@ module Laser
         @master_cfg ||= @proc.ssa_cfg
       end
       
+      def cfg_for_types(self_type, arg_types, block_type)
+        @type_instantiations[[self_type, *arg_types, block_type]] ||= master_cfg.dup.tap do |cfg|
+          cfg.bind_self_type(self_type)
+          cfg.bind_formal_types(arg_types)
+          cfg.bind_block_type(block_type)
+          cfg.analyze
+        end
+      end
+
+      def simulate_with_args(new_self, args, block, opts)
+        self_type = Utilities.type_for(new_self)
+        formal_types = args.map { |arg| Utilities.type_for(arg) }
+        block_type = Utilities.type_for(block)
+        cfg_for_types(self_type, formal_types, block_type).simulate(args, opts.merge(self: new_self, block: block))
+      end
+
       def arguments
         @proc.arguments
       end

@@ -235,17 +235,17 @@ describe 'general analyses' do
   #       [:args_add_block, [[:var_ref, [:@ident, "blk", [1, 22]]]], false]]],
   #     nil, nil, nil]]]]
   it 'defines method on the main object, if no scope is otherwise enclosing a method definition' do
-    tree = annotate_all('def abc(bar, &blk); p blk; end')
-    method = Scope::GlobalScope.self_ptr.singleton_class.instance_methods['abc']
+    tree = annotate_all('def abce(bar, &blk); p blk; end')
+    method = Scope::GlobalScope.self_ptr.singleton_class.instance_methods['abce']
     method.should_not be_nil
-    Scope::GlobalScope.self_ptr.singleton_class.visibility_table['abc'].should == :private
+    Scope::GlobalScope.self_ptr.singleton_class.visibility_table['abce'].should == :private
     bar = method.arguments[0]
     bar.name.should == 'bar'
     bar.kind.should == :positional
     blk = method.arguments[1]
     blk.name.should == 'blk'
     blk.kind.should == :block
-    method.name.should == 'abc'
+    method.name.should == 'abce'
     tree.all_errors.should be_empty
   end
   

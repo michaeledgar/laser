@@ -30,7 +30,7 @@ module Laser
         
         def expr_type
           annotated_type || inferred_type || Types::ClassType.new(
-              (LaserObject === @value ? @value.klass.path : @value.class.name), :covariant)
+              (LaserObject === @value ? @value.klass.path : @value.class.name), :invariant)
         end
       
         def bind!(value)

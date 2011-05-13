@@ -22,7 +22,7 @@ describe Scope::GlobalScope do
     # self_ptr is a Bindings::GenericBinding
     Scope::GlobalScope.self_ptr.klass.path.should == 'Class:main'
     Scope::GlobalScope.self_ptr.name.should == 'main'
-    Scope::GlobalScope.lookup('self').expr_type.should == Types::ClassType.new('Class:main', :covariant)
+    Scope::GlobalScope.lookup('self').expr_type.should == Types::ClassType.new('Class:main', :invariant)
   end
   
   it 'has Object in its constants table' do

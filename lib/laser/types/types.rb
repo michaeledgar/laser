@@ -28,7 +28,7 @@ module Laser
     class UnionType < TypeConstraint
       acts_as_struct :member_types
       def initialize(member_types)
-        @member_types = member_types
+        @member_types = Set.new(member_types)
       end
       
       def signature
@@ -59,7 +59,7 @@ module Laser
     end
     
     class StructuralType < TypeConstraint
-      acts_as_struct :method_name, :variance, :return_type
+      acts_as_struct :method_name, :argument_types, :return_type
       
       def signature
         {method_name: method_name, argument_types: argument_types,

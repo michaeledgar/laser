@@ -479,5 +479,28 @@ def foo(x)
 end
 EOF
     g.should have_constant('c').with_value(5)
+    g.return_type.should == Types::FIXNUM
+  end
+
+  it 'should always simulate annotated-pure methods' do
+    g = cfg <<-EOF
+module CPSim1
+  # pure: true
+  def self.make(x, y)
+    {x: x, y: y}
+  end
+end
+EOF
+    g2 = cfg_method <<-EOF
+def foo(x)
+  made = CPSim1.make(3, 'foo')
+  z1 = made[:x]
+  z2 = made[:y]
+end
+EOF
+    g2.should have_constant('z1').with_value(3)
+    g2.should have_constant('z2').with_value('foo')
+    g2.return_type.should == Types::STRING
+    ClassRegistry['CPSim1'].singleton_class.instance_methods['make'].cfg_for_types(Utilities.type_for(ClassRegistry['CPSim1']), [Types::FIXNUM, Types::STRING], Types::NILCLASS).return_type.should == Types::ClassType.new('Hash', :invariant)
   end
 end

@@ -208,6 +208,10 @@ require 'hash'
 class Symbol
 end
 class Regexp
+  # pure: true
+  # builtin: true
+  def self.new(body, opts=nil)
+  end
 end
 
 class Encoding

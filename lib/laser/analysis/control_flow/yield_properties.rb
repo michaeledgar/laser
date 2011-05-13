@@ -12,7 +12,6 @@ module Laser
           
           without_yield.perform_constant_propagation(
               fixed_methods: {kernel_method_to_fix => false, magic_method_to_fix => nil})
-          without_yield.dotty
 
           without_yield.prune_unexecuted_blocks
           with_yield.prune_unexecuted_blocks

@@ -74,6 +74,14 @@ describe Types do
       Types::TOP.should == Types::ClassType.new('BasicObject', :covariant)
     end
   end
+  
+  describe Types::UnionType do
+    it 'should compare equal despite member type ordering' do
+      Types::UnionType.new([Types::STRING, Types::FIXNUM, Types::ARRAY]).should ==
+        Types::UnionType.new([Types::ARRAY, Types::STRING, Types::FIXNUM])
+    end
+  end
+
   describe Types::ClassType do
     describe '#possible_classes' do
       it 'should find subclasses if the ClassType is covariant and is a Class' do

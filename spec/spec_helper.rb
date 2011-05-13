@@ -17,6 +17,7 @@ module Laser
   const_set(:TESTS_ACTIVATED, true)
 end
 
+include Laser::SexpAnalysis
 RSpec::Matchers.define :see_var do |name|
   match do |node|
     node.scope.sees_var?(name)

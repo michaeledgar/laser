@@ -22,6 +22,7 @@ module Laser
         attr_accessor :root, :final_exception, :final_return
         attr_reader :formals, :uses, :definition, :constants, :live, :globals
         attr_reader :yield_type, :raise_type, :in_ssa
+        attr_reader :self_type, :formal_types, :block_type
         # postdominator blocks for: all non-failed-yield exceptions, yield-failing
         # exceptions, and all failure types.
         
@@ -32,6 +33,9 @@ module Laser
         # formal_arguments: [ArgumentBinding]
         def initialize(formal_arguments = [])
           @in_ssa = false
+          @self_type = nil
+          @formal_types = nil
+          @block_type = nil
           @uses = Hash.new { |hash, temp| hash[temp] = Set.new }
           @live = Hash.new { |hash, temp| hash[temp] = Set.new }
           @definition = {}
@@ -55,6 +59,9 @@ module Laser
         def initialize_dup(source)
           @root = source.root
           @in_ssa = source.in_ssa
+          @self_type = source.self_type
+          @formal_types = source.formal_types
+          @block_type = source.block_type
           # we'll be duplicating temporaries, and since we need to know how
           # our source data about temps (defs, uses, constants...) corresponds
           # the duplicated temps, we'll need a hash to look them up.
@@ -134,7 +141,37 @@ module Laser
         def dotty(params = {'shape' => 'box'})
           super
         end
+
+        def return_type
+          @final_return.expr_type
+        end
         
+        def real_self_type
+          @self_type || Types::TOP
+        end
+
+        def bind_self_type(new_self_type)
+          @self_type = new_self_type
+        end
+
+        def real_formal_type(idx)
+          (@formal_types && @formal_types[idx]) || Types::TOP
+        end
+
+        def bind_formal_types(new_formal_types)
+          raise RuntimeError.new("Attempted to bind formal-types when already bound.") if @formal_types
+          @formal_types = new_formal_types
+        end
+
+        def real_block_type
+          @block_type || Types::TOP
+        end
+
+        def bind_block_type(new_block_type)
+          raise RuntimeError.new("Attempted to bind block-type when already bound.") if @block_type
+          @block_type = new_block_type
+        end
+
         DEFAULT_ANALYSIS_OPTS = {optimize: true}
         # Runs full analysis on the CFG. Puts it in SSA then searches for warnings.
         def analyze(opts={})

@@ -29,7 +29,7 @@ module Laser
     # All types should be shared and modified by *all* subclasses. This makes
     # Laser::Warning.all_types a global registry.
     def self.all_types
-      @@all_types ||= Hash.new {|h,k| h[k] = []}
+      $all_types ||= Hash.new {|h,k| h[k] = []}
     end
 
     # When a Warning subclass is subclassed, store the subclass and inform the

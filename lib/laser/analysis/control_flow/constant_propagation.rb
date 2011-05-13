@@ -13,7 +13,6 @@ module Laser
       UNDEFINED = PlaceholderObject.new('UNDEFINED')
       VARYING = PlaceholderObject.new('VARYING')
       INAPPLICABLE = PlaceholderObject.new('INAPPLICABLE')
-      RAISED = PlaceholderObject.new('RAISED')
 
       # Sparse Conditional Constant Propagation: Wegman and Zadeck
       # Love those IBMers
@@ -28,7 +27,6 @@ module Laser
           opts = {:fixed_methods => {}}.merge(opts)
           
           initialize_constant_propagation(opts)
-          dotty if opts[:fixed_methods].any?
           visited = Set.new
           worklist = Set.new
           blocklist = Set[self.enter]
@@ -148,6 +146,13 @@ module Laser
                 constant_propagation_consider_edge block, succ, blocklist
               end
             end
+          when :call_vararg
+            if constant_propagation_evaluate(instruction)
+              add_target_uses_to_worklist instruction, worklist
+            end
+            block.successors.each do |succ|
+              constant_propagation_consider_edge block, succ, blocklist
+            end
           else
             if constant_propagation_evaluate(instruction)
               add_target_uses_to_worklist instruction, worklist
@@ -201,7 +206,6 @@ module Laser
             changed = (target.value != special_result)
             if changed
               target.bind! special_result
-              new_type = LaserObject === special_result ? special_result.klass.name : special_result.class.name
               target.inferred_type = special_type
             end
             raised = special_raised
@@ -222,8 +226,7 @@ module Laser
             elsif method && (@_cp_fixed_methods.has_key?(method))
               result = @_cp_fixed_methods[method]
               target.bind! result
-              new_type = LaserObject === result ? result.klass.name : result.class.name
-              target.inferred_type = Types::ClassType.new(new_type, :invariant)
+              target.inferred_type = Utilities.type_for(result)
               raised = Frequency::NEVER
             elsif components.any? { |arg| arg.value == VARYING }
               changed = (target.value != VARYING)
@@ -245,10 +248,14 @@ module Laser
                   real_receiver = receiver.value
                   # SIMULATE PURE METHOD CALL
                   begin
-                    result = real_receiver.send(method_name, *args.map(&:value))
+                    if method.builtin
+                      result = real_receiver.send(method_name, *args.map(&:value))
+                    else
+                      result = method.simulate_with_args(real_receiver, args.map(&:value), nil, {mutation: true})
+                    end
                     target.bind!(result)
-                    new_type = LaserObject === result ? result.klass.name : result.class.name
-                    target.inferred_type = Types::ClassType.new(new_type, :invariant)
+                    target.inferred_type = Utilities.type_for(result)
+                    puts "Binding #{target.inspect} <- #{result.inspect} #{target.inferred_type.inspect}"
                     raised = Frequency::NEVER
                   rescue BasicObject => err
                     # any exception caught - this is an extremely unsafe rescue handler - means my
@@ -287,32 +294,33 @@ module Laser
           [fails_privacy, raised].max
         end
 
+        def return_types_for_normal_call(receiver, args)
+          cartesian_parts = [receiver.inferred_types.member_types.to_a,
+                       *(args.map(&:inferred_type).map(&:member_types).map(&:to_a))]
+          cartesian = cartesian_parts.inject { |acc, mem| acc.product(mem) }
+        end
+
         # Evaluates the instruction, and if the constant value is lowered,
         # then return true. Otherwise, return false.
         def constant_propagation_evaluate(instruction)
-          changed = false  # unnecessary, but clarifies intent
+          target = instruction[1] || cp_cell_for(instruction)
+          original = target.value
+          old_type = target.inferred_type
+          changed = false
           case instruction.type
           when :assign
-            lhs, rhs = instruction[1..2]
+            rhs = instruction[2]
             if Bindings::GenericBinding === rhs
               # temporary <- temporary
-              changed = (lhs.value != rhs.value)
-              if changed
-                lhs.bind! rhs.value
-                lhs.inferred_type = rhs.inferred_type
-              end
+              new_value = rhs.value
+              new_type = rhs.inferred_type
             else
               # temporary <- constant
-              changed = (lhs.value != rhs)
-              if changed
-                lhs.bind! rhs
-                new_type = LaserObject === rhs ? rhs.klass.name : rhs.class.name
-                lhs.inferred_type = Types::ClassType.new(new_type, :invariant)
-              end
+              new_value = rhs
+              new_type = Utilities.type_for(rhs)
             end
           when :phi
-            target, *components = instruction[1..-1]
-            original = target.value
+            components = instruction[2..-1]
             if components.any? { |var| var.value == VARYING }
               new_value = VARYING
               new_type  = Types::TOP
@@ -323,35 +331,26 @@ module Laser
                 new_type  = nil
               elsif possible_values.size == 1
                 new_value = possible_values.first
-                new_type  = Types::ClassType.new(new_value.class.name, :invariant)
+                new_type  = Utilities.type_for(new_value)
               else
                 new_value = VARYING
                 new_type  = Types::UnionType.new(components.map(&:inferred_type).compact.uniq)
               end
             end
-            changed = original != new_value
-            if changed
-              target.bind! new_value
-              target.inferred_type = new_type
-            end
-          when :lambda
-            # lambdas are constant if they close over zero non-constant variables.
-            # I assume pessimistically that they always do, for now.
-            target = instruction[1]
-            changed = (target.value != VARYING)  # assume closure on non-constant here
-            if changed
-              target.bind! VARYING
-              target.inferred_type = Types::ClassType.new('Proc', :invariant)
-            end
           when :call_vararg, :super, :super_vararg
-            target = instruction[1]
-            return false if target.nil?
-            changed = (target.value != VARYING)  # assume closure on non-constant here
-            if changed
-              target.bind! VARYING
-              target.inferred_type = Types::TOP
-            end
+            new_value = VARYING
+            new_type = Types::TOP
           end
+          if original != new_value
+            target.bind! new_value
+            changed = true
+          end
+          if old_type != new_type
+            target.inferred_type = new_type
+            puts "Binding #{target.inspect} <- #{target.value.inspect} #{target.inferred_type.inspect}"
+            changed = true
+          end
+
           changed
         end
         
@@ -403,9 +402,9 @@ module Laser
         def cp_magic(method_name, *args)
           case method_name
           when :current_self
-            return [VARYING, Types::TOP, Frequency::NEVER]
+            return [VARYING, real_self_type, Frequency::NEVER]
           when :current_argument
-            return [VARYING, Types::TOP, Frequency::NEVER]
+            return [VARYING, real_formal_type(args[0].value), Frequency::NEVER]
           when :current_argument_range
             return [VARYING, Types::ARRAY, Frequency::NEVER]
           when :current_arity
