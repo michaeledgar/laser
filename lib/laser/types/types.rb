@@ -25,7 +25,19 @@ module Laser
     class UnionType < Base
       acts_as_struct :member_types
       def initialize(member_types)
-        @member_types = Set.new(member_types)
+        @member_types = Set.new(flatten_unions(member_types))
+      end
+
+      def flatten_unions(types)
+        result = []
+        types.each do |type|
+          if UnionType === type
+            result += type.member_types.to_a
+          else
+            result << type
+          end
+        end
+        result
       end
 
       def signature

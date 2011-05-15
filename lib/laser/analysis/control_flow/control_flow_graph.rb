@@ -143,7 +143,7 @@ module Laser
         end
 
         def return_type
-          @final_return.expr_type
+          @final_return.expr_type unless @exit.normal_predecessors.empty?
         end
         
         def real_self_type

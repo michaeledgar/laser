@@ -104,4 +104,8 @@ module Laser
       @error = detected_error
     end
   end
+
+  class NoMatchingTypeSignature < Laser::Error
+    severity MAJOR_ERROR
+  end
 end

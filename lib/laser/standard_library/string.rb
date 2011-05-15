@@ -452,6 +452,7 @@ class String
   end
   # pure: true
   # builtin: true
+  # returns: Symbol
   def to_sym
   end
   # pure: true

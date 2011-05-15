@@ -235,10 +235,7 @@ module Laser
                 target.inferred_type = Types::TOP
               end
               if components.all? { |arg| arg.value != UNDEFINED }
-                Laser.debug_puts "Looking up return type for #{instruction.inspect}"
-                target.inferred_type = return_types_for_normal_call(receiver, method_name, args)
-                Laser.debug_puts("Inferred type: #{target.inferred_type.inspect} for #{instruction.inspect}")
-                raised = raiseability_for_instruction(instruction)
+                target.inferred_type, raised = infer_type_and_raising(instruction, receiver, method_name, args)
               else
                 raised = Frequency::MAYBE
               end
@@ -270,8 +267,7 @@ module Laser
                   end
                 else
                   target.bind! VARYING
-                  target.inferred_type = Types::TOP
-                  raised = raiseability_for_instruction(instruction)
+                  target.inferred_type, raised = infer_type_and_raising(instruction, receiver, method_name, args)
                 end
               end
             end
@@ -280,6 +276,19 @@ module Laser
           [changed, raised]
         end
         
+        def infer_type_and_raising(instruction, receiver, method_name, args)
+          begin
+            type = return_types_for_normal_call(receiver, method_name, args)
+          rescue TypeError => err
+            type = Types::TOP
+            raised = Frequency::ALWAYS
+            instruction.node.add_error(NoMatchingTypeSignature.new("No method named #{method_name} with matching types was found", instruction.node))
+          else
+            raised = raiseability_for_instruction(instruction)
+          end
+          [type, raised]
+        end
+
         def raiseability_for_instruction(instruction)
           methods = instruction.possible_methods
           fails_privacy = Frequency::NEVER
@@ -298,6 +307,7 @@ module Laser
         end
 
         def return_types_for_normal_call(receiver, method, args)
+          method_name = method
           possible_dispatches = receiver.expr_type.member_types.map do |type|
             [type, type.matching_methods(method)]
           end
@@ -323,6 +333,10 @@ module Laser
               end.compact
             end.flatten
           end
+          if result.empty?
+            raise TypeError.new("No methods named #{method_name} with matching types were found.")
+          end
+          Laser.debug_puts("Resulting allowed types for #{receiver.inspect}.#{method_name}: #{result.inspect}")
           Types::UnionType.new(result)
         end
 

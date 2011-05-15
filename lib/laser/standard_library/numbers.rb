@@ -64,6 +64,7 @@ class Numeric
   end
   # pure: true
   # builtin: true
+  # returns: Boolean
   def eql?(numeric)
   end
   # pure: true
@@ -88,6 +89,7 @@ class Numeric
   end
   # pure: true
   # builtin: true
+  # returns: Boolean
   def integer?
   end
   # pure: true
@@ -101,6 +103,7 @@ class Numeric
   end
   # pure: true
   # builtin: true
+  # returns: Boolean
   def nonzero?
   end
   # pure: true
@@ -134,6 +137,7 @@ class Numeric
   end
   # pure: true
   # builtin: true
+  # returns: Boolean
   def real?
   end
   # pure: true
@@ -177,6 +181,7 @@ class Numeric
   end
   # pure: true
   # builtin: true
+  # returns: Boolean
   def zero?
   end
 end

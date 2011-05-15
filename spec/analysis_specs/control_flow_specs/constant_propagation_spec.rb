@@ -515,4 +515,41 @@ EOF
     ClassRegistry['CPSim2'].singleton_class.instance_methods['multiply'].return_type_for_types(Utilities.type_for(ClassRegistry['CPSim2']), [Types::FIXNUM, Types::FLOAT], Types::NILCLASS).should == Types::UnionType.new([Types::FLOAT])
     ClassRegistry['CPSim2'].singleton_class.instance_methods['multiply'].return_type_for_types(Utilities.type_for(ClassRegistry['CPSim2']), [Types::FIXNUM, Types::FIXNUM], Types::NILCLASS).should == Types::UnionType.new([Types::ClassType.new('Integer', :covariant)])
   end
+
+  it 'should infer type errors on methods with specified overloads' do
+    g = cfg <<-EOF
+module CPSim3
+  def self.sim3
+    if gets.size > 2
+      x = 'hi'
+    else
+      x = :hi
+    end
+    y = 15 * x
+  end
 end
+EOF
+   ClassRegistry['CPSim3'].singleton_class.instance_methods['sim3'].return_type_for_types(Utilities.type_for(ClassRegistry['CPSim3']), [], Types::NILCLASS).should == nil
+   g.should have_error(NoMatchingTypeSignature).on_line(8).with_message(/\*/)
+  end
+
+  it 'should infer the type resulting from a simple chain of standard-library methods' do
+    g = cfg <<-EOF
+module CPSim4
+  def self.bar
+    x = gets
+    qux(baz(x))
+  end
+  def self.baz(y)
+    y.to_sym.size
+  end
+  def self.qux(z)
+    z.zero?
+  end
+end
+EOF
+    ClassRegistry['CPSim4'].singleton_class.instance_methods['bar'].return_type_for_types(Utilities.type_for(ClassRegistry['CPSim4']), [], Types::NILCLASS).should == Types::BOOLEAN
+    
+  end
+end
+   
