@@ -235,6 +235,9 @@ module Laser
                 target.inferred_type = Types::TOP
               end
               if components.all? { |arg| arg.value != UNDEFINED }
+                Laser.debug_puts "Looking up return type for #{instruction.inspect}"
+                target.inferred_type = return_types_for_normal_call(receiver, method_name, args)
+                Laser.debug_puts("Inferred type: #{target.inferred_type.inspect} for #{instruction.inspect}")
                 raised = raiseability_for_instruction(instruction)
               else
                 raised = Frequency::MAYBE
@@ -294,10 +297,33 @@ module Laser
           [fails_privacy, raised].max
         end
 
-        def return_types_for_normal_call(receiver, args)
-          cartesian_parts = [receiver.inferred_types.member_types.to_a,
-                       *(args.map(&:inferred_type).map(&:member_types).map(&:to_a))]
-          cartesian = cartesian_parts.inject { |acc, mem| acc.product(mem) }
+        def return_types_for_normal_call(receiver, method, args)
+          possible_dispatches = receiver.expr_type.member_types.map do |type|
+            [type, type.matching_methods(method)]
+          end
+          result = Set.new
+          if args.empty?
+            cartesian = [ [] ]
+          elsif args.one?
+            cartesian = args.first.expr_type.member_types.to_a.map { |t| [t] }
+          else
+            cartesian_parts = args.map(&:expr_type).map(&:member_types).map(&:to_a)
+            cartesian = cartesian_parts.inject { |acc, mem| acc.product(mem) } || []
+          end
+          possible_dispatches.each do |self_type, methods|
+            result |= methods.map do |method|
+              cartesian.map do |type_list|
+                Laser.debug_puts "Looking up #{self_type.inspect}.#{method.name}(#{type_list.inspect})"
+                begin
+                  method.return_type_for_types(self_type, type_list, Types::NILCLASS)
+                rescue TypeError => err
+                  Laser.debug_puts("Invalid argument types found.")
+                  nil
+                end
+              end.compact
+            end.flatten
+          end
+          Types::UnionType.new(result)
         end
 
         # Evaluates the instruction, and if the constant value is lowered,

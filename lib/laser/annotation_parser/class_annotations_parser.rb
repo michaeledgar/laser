@@ -531,9 +531,15 @@ module Laser
       end
 
       module Constant0
+        def type
+          Types::BOOLEAN
+        end
       end
 
       module Constant1
+      end
+
+      module Constant2
         def type
           Types::ClassType.new(text_value, :covariant)
         end
@@ -550,68 +556,87 @@ module Laser
           return cached
         end
 
-        s0, i0 = [], index
-        loop do
-          i1, s1 = index, []
-          if has_terminal?('::', false, index)
-            r3 = instantiate_node(SyntaxNode,input, index...(index + 2))
-            @index += 2
-          else
-            terminal_parse_failure('::')
-            r3 = nil
-          end
-          if r3
-            r2 = r3
-          else
-            r2 = instantiate_node(SyntaxNode,input, index...index)
-          end
-          s1 << r2
-          if r2
-            if has_terminal?('\G[A-Z]', true, index)
-              r4 = true
-              @index += 1
-            else
-              r4 = nil
-            end
-            s1 << r4
-            if r4
-              s5, i5 = [], index
-              loop do
-                if has_terminal?('\G[A-Za-z_]', true, index)
-                  r6 = true
-                  @index += 1
-                else
-                  r6 = nil
-                end
-                if r6
-                  s5 << r6
-                else
-                  break
-                end
-              end
-              r5 = instantiate_node(SyntaxNode,input, i5...index, s5)
-              s1 << r5
-            end
-          end
-          if s1.last
-            r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
-            r1.extend(Constant0)
-          else
-            @index = i1
-            r1 = nil
-          end
-          if r1
-            s0 << r1
-          else
-            break
-          end
-        end
-        if s0.empty?
-          @index = i0
-          r0 = nil
+        i0 = index
+        if has_terminal?('Boolean', false, index)
+          r1 = instantiate_node(SyntaxNode,input, index...(index + 7))
+          r1.extend(Constant0)
+          @index += 7
         else
-          r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
-          r0.extend(Constant1)
+          terminal_parse_failure('Boolean')
+          r1 = nil
+        end
+        if r1
+          r0 = r1
+        else
+          s2, i2 = [], index
+          loop do
+            i3, s3 = index, []
+            if has_terminal?('::', false, index)
+              r5 = instantiate_node(SyntaxNode,input, index...(index + 2))
+              @index += 2
+            else
+              terminal_parse_failure('::')
+              r5 = nil
+            end
+            if r5
+              r4 = r5
+            else
+              r4 = instantiate_node(SyntaxNode,input, index...index)
+            end
+            s3 << r4
+            if r4
+              if has_terminal?('\G[A-Z]', true, index)
+                r6 = true
+                @index += 1
+              else
+                r6 = nil
+              end
+              s3 << r6
+              if r6
+                s7, i7 = [], index
+                loop do
+                  if has_terminal?('\G[A-Za-z_]', true, index)
+                    r8 = true
+                    @index += 1
+                  else
+                    r8 = nil
+                  end
+                  if r8
+                    s7 << r8
+                  else
+                    break
+                  end
+                end
+                r7 = instantiate_node(SyntaxNode,input, i7...index, s7)
+                s3 << r7
+              end
+            end
+            if s3.last
+              r3 = instantiate_node(SyntaxNode,input, i3...index, s3)
+              r3.extend(Constant1)
+            else
+              @index = i3
+              r3 = nil
+            end
+            if r3
+              s2 << r3
+            else
+              break
+            end
+          end
+          if s2.empty?
+            @index = i2
+            r2 = nil
+          else
+            r2 = instantiate_node(SyntaxNode,input, i2...index, s2)
+            r2.extend(Constant2)
+          end
+          if r2
+            r0 = r2
+          else
+            @index = i0
+            r0 = nil
+          end
         end
 
         node_cache[:constant][start_index] = r0

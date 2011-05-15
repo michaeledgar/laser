@@ -1300,6 +1300,32 @@ module Laser
                 result[note_name.to_sym] = note.literal if note.literal?
               end
             end
+            if annotations['returns'].any?
+              if annotations['returns'].size > 1
+                raise ArgumentError.new("Cannot have more than one 'returns' annotation")
+              end
+              return_type = annotations['returns'].first
+              if return_type.type?
+                result[:annotated_return] = return_type.type
+              else
+                literal = return_type.literal
+                raise NotImplementedError.new("Literal annotated return types not implemented")
+              end
+            end
+
+            if annotations['overload'].any?
+              overloads = {}
+              annotations['overload'].each do |overload|
+                raise ArgumentError.new('overload must be a type') unless overload.type?
+                proc_type = overload.type
+                unless Types::GenericType === proc_type && proc_type.base_type == Types::PROC
+                  raise ArgumentError.new('overload must be a function type')
+                end
+                overloads[proc_type.subtypes[0].element_types] = proc_type
+              end
+              result[:overloads] = overloads
+            end
+
             if annotations['raises'].any?
               literals, types = annotations['raises'].partition { |x| x.literal? }
               literals.map(&:literal).each do |literal|

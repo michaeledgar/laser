@@ -596,6 +596,8 @@ module Laser
       attr_reader :name
       attr_reader :proc
       attr_accessor :body_ast, :owner, :arity
+      attr_accessor_with_default :overloads, {}
+      attr_accessor_with_default :annotated_return, nil
       attr_accessor_with_default :special, false
       attr_accessor_with_default :builtin, false
       attr_accessor_with_default :mutation, false
@@ -630,6 +632,24 @@ module Laser
         yield self if block_given?
       end
       
+      def return_type_for_types(self_type, arg_types, block_type)
+        return self.annotated_return if annotated_return
+        unless overloads.empty?
+          overloads.each do |overload_args, proc_type|
+            # compatible arg count
+            if overload_args.size == arg_types.size
+              # all types unify?
+              if overload_args.zip(arg_types).all? { |spec, concrete| Types.subtype?(concrete, spec) }
+                return proc_type.subtypes[1]
+              end
+            end
+          end
+          raise TypeError.new("No overload found for #{self.inspect} with arg types #{arg_types.inspect}")
+        end
+        return Types::TOP if builtin || special
+        cfg_for_types(self_type, arg_types, block_type).return_type
+      end
+
       def master_cfg
         @master_cfg ||= @proc.ssa_cfg
       end
@@ -647,7 +667,7 @@ module Laser
         self_type = Utilities.type_for(new_self)
         formal_types = args.map { |arg| Utilities.type_for(arg) }
         block_type = Utilities.type_for(block)
-        cfg_for_types(self_type, formal_types, block_type).simulate(args, opts.merge(self: new_self, block: block))
+        cfg_for_types(self_type, formal_types, block_type).dup.simulate(args, opts.merge(self: new_self, block: block))
       end
 
       def arguments

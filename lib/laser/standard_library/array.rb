@@ -1,30 +1,37 @@
 class Array
   # pure: true
   # builtin: true
+  # returns: Array=
   def self.[](*args)
   end
   # pure: true
   # builtin: true
+  # returns: Array=
   def &(other_ary)
   end
   # pure: true
   # builtin: true
+  # returns: Array=
   def |(other_ary)
   end
   # pure: true
   # builtin: true
+  # returns: Array=
   def *(int_or_str)
   end
   # pure: true
   # builtin: true
+  # returns: Array=
   def +(other_ary)
   end
   # pure: true
   # builtin: true
+  # returns: Array=
   def -(other_ary)
   end
   # pure: true
   # builtin: true
+  # returns: Array=
   def <<(obj)
   end
   # pure: true
@@ -53,6 +60,7 @@ class Array
   end
   # pure: true
   # builtin: true
+  # returns: Array=
   def clear
   end
   # pure: true
@@ -69,6 +77,7 @@ class Array
   end
   # pure: true
   # builtin: true
+  # returns: Array=
   def compact
   end
   # pure: true
@@ -77,6 +86,7 @@ class Array
   end
   # pure: true
   # builtin: true
+  # returns: Array=
   def concat(other_ary)
   end
   # pure: true
@@ -101,10 +111,12 @@ class Array
   end
   # pure: true
   # builtin: true
+  # returns: Array=
   def drop(n)
   end
   # pure: true
   # builtin: true
+  # returns: Array=
   def drop_while
   end
   # pure: true
@@ -141,6 +153,7 @@ class Array
   end
   # pure: true
   # builtin: true
+  # returns: Array= | NilClass
   def flatten(*args)
   end
   # pure: true
@@ -189,6 +202,7 @@ class Array
   end
   # pure: true
   # builtin: true
+  # returns: Array=
   def map
   end
   # pure: true
@@ -209,10 +223,12 @@ class Array
   end
   # pure: true
   # builtin: true
+  # returns: Array=
   def product(other_ary, *rest)
   end
   # pure: true
   # builtin: true
+  # returns: Array=
   def push(obj, *rest)
   end
   # pure: true
@@ -221,6 +237,7 @@ class Array
   end
   # pure: true
   # builtin: true
+  # returns: Array=
   def reject
   end
   # pure: true
@@ -241,6 +258,7 @@ class Array
   end
   # pure: true
   # builtin: true
+  # returns: Array=
   def reverse
   end
   # pure: true
@@ -269,6 +287,7 @@ class Array
   end
   # pure: true
   # builtin: true
+  # returns: Array=
   def select
   end
   # pure: true
@@ -281,6 +300,7 @@ class Array
   end
   # builtin: true
   # predictable: false
+  # returns: Array=
   def shuffle
   end
   # builtin: true
@@ -302,6 +322,7 @@ class Array
   end
   # pure: true
   # builtin: true
+  # returns: Array=
   def sort
   end
   # pure: true
@@ -314,6 +335,7 @@ class Array
   end
   # pure: true
   # builtin: true
+  # returns: Array=
   def take(n)
   end
   # pure: true
@@ -323,11 +345,13 @@ class Array
   # pure: true
   # raise: false
   # builtin: true
+  # returns: Array=
   def to_a
   end
   # pure: true
   # raise: false
   # builtin: true
+  # returns: Array=
   def to_ary
   end
   # pure: true
@@ -340,6 +364,7 @@ class Array
   end
   # pure: true
   # builtin: true
+  # returns: Array=
   def uniq
   end
   # pure: true
@@ -348,6 +373,7 @@ class Array
   end
   # pure: true
   # builtin: true
+  # returns: Array=
   def unshift(obj, *objs)
   end
   # pure: true
@@ -356,6 +382,7 @@ class Array
   end
   # pure: true
   # builtin: true
+  # returns: Array=
   def zip(arg, *args)
   end
 end

@@ -1,6 +1,6 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 
-describe Parsers::ClassParser do
+describe Parsers::StructuralParser do
   before do
     @parser = Parsers::AnnotationParser.new
   end

@@ -3,6 +3,7 @@ module Laser
     grammar Annotation
       include Class
       include Structural
+      include Overload
       include GeneralPurpose
       
       rule named_annotation
@@ -94,7 +95,7 @@ module Laser
       end
 
       rule non_union_type
-        (top / self_type / class_based_constraint / structural_constraint)
+        (top / self_type / function_type / class_based_constraint / structural_constraint)
       end
 
       rule top

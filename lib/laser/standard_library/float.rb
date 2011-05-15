@@ -5,6 +5,9 @@ class Float < Numeric
   end
   # pure: true
   # builtin: true
+  # overload: (Float) -> Float=
+  # overload: (Fixnum) -> Float=
+  # overload: (Bignum) -> Float=
   def *(other)
   end
   # pure: true

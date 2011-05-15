@@ -501,6 +501,18 @@ EOF
     g2.should have_constant('z1').with_value(3)
     g2.should have_constant('z2').with_value('foo')
     g2.return_type.should == Types::STRING
-    ClassRegistry['CPSim1'].singleton_class.instance_methods['make'].cfg_for_types(Utilities.type_for(ClassRegistry['CPSim1']), [Types::FIXNUM, Types::STRING], Types::NILCLASS).return_type.should == Types::ClassType.new('Hash', :invariant)
+    ClassRegistry['CPSim1'].singleton_class.instance_methods['make'].return_type_for_types(Utilities.type_for(ClassRegistry['CPSim1']), [Types::FIXNUM, Types::STRING], Types::NILCLASS).should == Types::UnionType.new([Types::HASH])
+  end
+
+  it 'should infer types based on specified overloads' do
+    g = cfg <<-EOF
+module CPSim2
+  def self.multiply(x, y)
+    x * y
+  end
+end
+EOF
+    ClassRegistry['CPSim2'].singleton_class.instance_methods['multiply'].return_type_for_types(Utilities.type_for(ClassRegistry['CPSim2']), [Types::FIXNUM, Types::FLOAT], Types::NILCLASS).should == Types::UnionType.new([Types::FLOAT])
+    ClassRegistry['CPSim2'].singleton_class.instance_methods['multiply'].return_type_for_types(Utilities.type_for(ClassRegistry['CPSim2']), [Types::FIXNUM, Types::FIXNUM], Types::NILCLASS).should == Types::UnionType.new([Types::ClassType.new('Integer', :covariant)])
   end
 end

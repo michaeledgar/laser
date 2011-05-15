@@ -1,6 +1,7 @@
 class Hash
   # pure: true
   # builtin: true
+  # returns: Hash=
   def self.[](*args)
   end
   # pure: true

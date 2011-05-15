@@ -35,7 +35,7 @@ describe Parsers::AnnotationParser do
           Types::StructuralType.new('write', [
             Types::StructuralType.new('to_s', [], Types::ClassType.new('String', :covariant)),
             Types::ClassType.new('Integer', :covariant)
-          ], Types::ClassType.new('Boolean', :covariant))
+          ], Types::BOOLEAN)
         ])
       )
     end

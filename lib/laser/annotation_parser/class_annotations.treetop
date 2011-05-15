@@ -67,7 +67,11 @@ module Laser
       end
 
       rule constant
-        ( '::'? [A-Z] [A-Za-z_]* )+ {
+        'Boolean' {
+          def type
+            Types::BOOLEAN
+          end
+        } / ( '::'? [A-Z] [A-Za-z_]* )+ {
           def type
             Types::ClassType.new(text_value, :covariant)
           end

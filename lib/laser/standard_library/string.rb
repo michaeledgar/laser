@@ -2,30 +2,37 @@ class String
   include Comparable
   # pure: true
   # builtin: true
+  # returns: String=
   def %(format)
   end
   # pure: true
   # builtin: true
+  # returns: String=
   def *(integer)
   end
   # pure: true
   # builtin: true
+  # returns: String=
   def +(other_str)
   end
   # pure: true
   # builtin: true
+  # returns: String=
   def <<(int_or_obj)
   end
   # pure: true
   # builtin: true
+  # returns: NilClass | Fixnum
   def <=>(other_str)
   end
   # pure: true
   # builtin: true
+  # returns: Boolean
   def ==(other_str)
   end
   # pure: true
   # builtin: true
+  # returns: Boolean
   def ===(other_str)
   end
   # pure: true
@@ -34,14 +41,17 @@ class String
   end
   # pure: true
   # builtin: true
+  # returns: String=
   def [](*args)
   end
   # pure: true
   # builtin: true
+  # returns: String=
   def []=(*args, val)
   end
   # pure: true
   # builtin: true
+  # returns: Boolean
   def ascii_only?
   end
   # pure: true
@@ -50,14 +60,17 @@ class String
   end
   # pure: true
   # builtin: true
+  # returns: Integer
   def bytesize
   end
   # pure: true
   # builtin: true
+  # returns: String=
   def capitalize
   end
   # pure: true
   # builtin: true
+  # returns: NilClass | String=
   def capitalize!
   end
   # pure: true
@@ -66,14 +79,17 @@ class String
   end
   # pure: true
   # builtin: true
+  # returns: String=
   def center(integer, padstr)
   end
   # pure: true
   # builtin: true
+  # returns: String=
   def chars
   end
   # pure: true
   # builtin: true
+  # returns: String=
   def chomp(separator=$/)
   end
   # pure: true
@@ -82,6 +98,7 @@ class String
   end
   # pure: true
   # builtin: true
+  # returns: String=
   def chop
   end
   # pure: true
@@ -90,10 +107,12 @@ class String
   end
   # pure: true
   # builtin: true
+  # returns: String=
   def chr
   end
   # pure: true
   # builtin: true
+  # returns: String=
   def clear
   end
   # pure: true
@@ -102,6 +121,7 @@ class String
   end
   # pure: true
   # builtin: true
+  # returns: String=
   def concat(int_or_obj)
   end
   # pure: true
@@ -110,10 +130,12 @@ class String
   end
   # pure: true
   # builtin: true
+  # returns: String=
   def crypt(other_str)
   end
   # pure: true
   # builtin: true
+  # returns: String=
   def delete(other_str, *more_strs)
   end
   # pure: true
@@ -122,6 +144,7 @@ class String
   end
   # pure: true
   # builtin: true
+  # returns: String=
   def downcase
   end
   # pure: true
@@ -130,6 +153,7 @@ class String
   end
   # pure: true
   # builtin: true
+  # returns: String=
   def dump
   end
   # pure: true
@@ -150,6 +174,7 @@ class String
   end
   # pure: true
   # builtin: true
+  # returns: Boolean
   def empty?
   end
   # pure: true
@@ -166,10 +191,12 @@ class String
   end
   # pure: true
   # builtin: true
+  # returns: Boolean
   def end_with?(other_str, *more_strs)
   end
   # pure: true
   # builtin: true
+  # returns: Boolean
   def eql?(other)
   end
   # pure: true
@@ -182,6 +209,7 @@ class String
   end
   # pure: true
   # builtin: true
+  # returns: String=
   def gsub(pattern, *other_args)
   end
   # pure: true
@@ -190,14 +218,17 @@ class String
   end
   # pure: true
   # builtin: true
+  # returns: Integer
   def hash
   end
   # pure: true
   # builtin: true
+  # returns: Integer
   def hex
   end
   # pure: true
   # builtin: true
+  # returns: Boolean
   def include?(other_str)
   end
   # pure: true
@@ -210,14 +241,17 @@ class String
   end
   # pure: true
   # builtin: true
+  # returns: String=
   def inspect
   end
   # pure: true
   # builtin: true
+  # returns: Symbol
   def intern
   end
   # pure: true
   # builtin: true
+  # returns: Integer
   def length
   end
   # pure: true
@@ -226,14 +260,17 @@ class String
   end
   # pure: true
   # builtin: true
+  # returns: String=
   def ljust(integer, padstr='')
   end
   # pure: true
   # builtin: true
+  # returns: String=
   def lstrip
   end
   # pure: true
   # builtin: true
+  # returns: String= | NilClass
   def lstrip!
   end
   # pure: true
@@ -242,18 +279,22 @@ class String
   end
   # pure: true
   # builtin: true
+  # returns: String=
   def next
   end
   # pure: true
   # builtin: true
+  # returns: String=
   def next!
   end
   # pure: true
   # builtin: true
+  # returns: Integer
   def oct
   end
   # pure: true
   # builtin: true
+  # returns: Integer
   def ord
   end
   # pure: true
@@ -266,10 +307,12 @@ class String
   end
   # pure: true
   # builtin: true
+  # returns: String=
   def reverse
   end
   # pure: true
   # builtin: true
+  # returns: String=
   def reverse!
   end
   # pure: true
@@ -278,6 +321,7 @@ class String
   end
   # pure: true
   # builtin: true
+  # returns: String=
   def rjust(integer, padstr=' ')
   end
   # pure: true
@@ -286,10 +330,12 @@ class String
   end
   # pure: true
   # builtin: true
+  # returns: String=
   def rstrip
   end
   # pure: true
   # builtin: true
+  # returns: String= | NilClass
   def rstrip!
   end
   # pure: true
@@ -302,10 +348,12 @@ class String
   end
   # pure: true
   # builtin: true
+  # returns: Integer
   def size
   end
   # pure: true
   # builtin: true
+  # returns: String=
   def slice(*args)
   end
   # pure: true
@@ -318,26 +366,32 @@ class String
   end
   # pure: true
   # builtin: true
+  # returns: String=
   def squeeze(*other_strs)
   end
   # pure: true
   # builtin: true
+  # returns: String= | NilClass
   def squeeze!(*other_strs)
   end
   # pure: true
   # builtin: true
+  # returns: Boolean
   def start_with?(prefix, *prefixes)
   end
   # pure: true
   # builtin: true
+  # returns: String=
   def strip
   end
   # pure: true
   # builtin: true
+  # returns: String= | NilClass
   def strip!
   end
   # pure: true
   # builtin: true
+  # returns: String=
   def sub(pattern, *rest)
   end
   # pure: true
@@ -346,6 +400,7 @@ class String
   end
   # pure: true
   # builtin: true
+  # returns: String=
   def succ
   end
   # pure: true
@@ -358,22 +413,27 @@ class String
   end
   # pure: true
   # builtin: true
+  # returns: String=
   def swapcase
   end
   # pure: true
   # builtin: true
+  # returns: String=
   def swapcase!
   end
   # pure: true
   # builtin: true
+  # returns: Complex
   def to_c
   end
   # pure: true
   # builtin: true
+  # returns: Float
   def to_f
   end
   # pure: true
   # builtin: true
+  # returns: Integer
   def to_i(base=10)
   end
   # pure: true
@@ -382,10 +442,12 @@ class String
   end
   # pure: true
   # builtin: true
+  # returns: String=
   def to_s
   end
   # pure: true
   # builtin: true
+  # returns: String=
   def to_str
   end
   # pure: true
@@ -394,6 +456,7 @@ class String
   end
   # pure: true
   # builtin: true
+  # returns: String=
   def tr(from_str, to_str)
   end
   # pure: true
@@ -402,6 +465,7 @@ class String
   end
   # pure: true
   # builtin: true
+  # returns: String=
   def tr_s(from_str, to_str)
   end
   # pure: true
@@ -414,6 +478,7 @@ class String
   end
   # pure: true
   # builtin: true
+  # returns: String=
   def upcase
   end
   # pure: true
@@ -426,6 +491,7 @@ class String
   end
   # pure: true
   # builtin: true
+  # returns: Boolean
   def valid_encoding?
   end
 end

@@ -19,7 +19,7 @@ def foo(x)
 while y = gets() * 2
   p y
   #{keyword}
-  y.foo
+  z = y.foo
 end
 end
 EOF

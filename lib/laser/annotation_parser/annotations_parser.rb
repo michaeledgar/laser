@@ -14,6 +14,8 @@ module Laser
 
       include Structural
 
+      include Overload
+
       include GeneralPurpose
 
       def _nt_named_annotation
@@ -565,16 +567,21 @@ module Laser
           if r2
             r0 = r2
           else
-            r3 = _nt_class_based_constraint
+            r3 = _nt_function_type
             if r3
               r0 = r3
             else
-              r4 = _nt_structural_constraint
+              r4 = _nt_class_based_constraint
               if r4
                 r0 = r4
               else
-                @index = i0
-                r0 = nil
+                r5 = _nt_structural_constraint
+                if r5
+                  r0 = r5
+                else
+                  @index = i0
+                  r0 = nil
+                end
               end
             end
           end

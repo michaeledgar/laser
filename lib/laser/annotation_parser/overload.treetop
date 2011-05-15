@@ -1,0 +1,24 @@
+require 'laser/annotation_parser/useful_parsers_parser'
+module Laser
+  module Parsers
+    grammar Overload
+      include GeneralPurpose
+      rule function_type
+        parenthesized_type_list space* '->' space* return_type:type {
+          def type
+            result = Types::GenericType.new(
+                Types::PROC,
+                [Types::TupleType.new(parenthesized_type_list.all_types), return_type.type])
+          end
+        } / parenthesized_type_list space* return_type:type {
+          def type
+            result = Types::GenericType.new(
+                Types::PROC,
+                [Types::TupleType.new(parenthesized_type_list.all_types), return_type.type])
+          end
+        }
+      end
+    end
+  end
+end
+

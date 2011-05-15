@@ -12,6 +12,12 @@ describe Parsers::ClassParser do
     end
   end
   
+  describe 'the Boolean shorthand' do
+    it 'is parsed as the union of TrueClass and FalseClass' do
+      'Boolean'.should parse_to(Types::UnionType.new([Types::TRUECLASS, Types::FALSECLASS]))
+    end
+  end
+  
   describe "a complex class path" do
     it "is parsed into a single covariant constraint" do
       '::Hello::World::Is::Here'.should parse_to(

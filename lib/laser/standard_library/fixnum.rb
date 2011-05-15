@@ -1,14 +1,19 @@
 class Fixnum < Integer
   # pure: true
   # builtin: true
+  # returns: Integer
   def %(num)
   end
   # pure: true
   # builtin: true
+  # returns: Integer
   def &(num)
   end
   # pure: true
   # builtin: true
+  # overload: (Float) -> Float=
+  # overload: (Fixnum) -> Integer
+  # overload: (Bignum) -> Integer
   def *(num)
   end
   # pure: true
@@ -25,6 +30,7 @@ class Fixnum < Integer
   end
   # pure: true
   # builtin: true
+  # returns: Integer
   def -@
   end
   # pure: true
@@ -33,54 +39,67 @@ class Fixnum < Integer
   end
   # pure: true
   # builtin: true
+  # returns: Boolean
   def <(num)
   end
   # pure: true
   # builtin: true
+  # returns: Integer
   def <<(amt)
   end
   # pure: true
   # builtin: true
+  # returns: Boolean
   def <=(num)
   end
   # pure: true
   # builtin: true
+  # returns: NilClass | Fixnum
   def <=>(num)
   end
   # pure: true
   # builtin: true
+  # returns: Boolean
   def ==(num)
   end
   # pure: true
   # builtin: true
+  # returns: Boolean
   def ===(num)
   end
   # pure: true
   # builtin: true
+  # returns: Boolean
   def >(num)
   end
   # pure: true
   # builtin: true
+  # returns: Boolean
   def >=(num)
   end
   # pure: true
   # builtin: true
+  # returns: Integer
   def >>(num)
   end
   # pure: true
   # builtin: true
+  # returns: Integer
   def [](bit)
   end
   # pure: true
   # builtin: true
+  # returns: Integer
   def ^(num)
   end
   # pure: true
   # builtin: true
+  # returns: Integer
   def abs
   end
   # pure: true
   # builtin: true
+  # returns: Integer
   def div(other)
   end
   # pure: true
@@ -89,6 +108,7 @@ class Fixnum < Integer
   end
   # pure: true
   # builtin: true
+  # returns: Boolean
   def even?
   end
   # pure: true
@@ -97,6 +117,7 @@ class Fixnum < Integer
   end
   # pure: true
   # builtin: true
+  # returns: Integer
   def magnitude
   end
   # pure: true
@@ -105,34 +126,42 @@ class Fixnum < Integer
   end
   # pure: true
   # builtin: true
+  # returns: Boolean
   def odd?
   end
   # pure: true
   # builtin: true
+  # returns: Integer
   def size
   end
   # pure: true
   # builtin: true
+  # returns: Integer
   def succ
   end
   # pure: true
   # builtin: true
+  # returns: Float
   def to_f
   end
   # pure: true
   # builtin: true
+  # returns: String
   def to_s
   end
   # pure: true
   # builtin: true
+  # returns: Boolean
   def zero?
   end
   # pure: true
   # builtin: true
+  # returns: Integer
   def |(num)
   end
   # pure: true
   # builtin: true
+  # returns: Integer
   def ~
   end
 end

@@ -22,15 +22,12 @@ module Laser
       end
     end
 
-    class TypeConstraint < Base
-    end
-
-    class UnionType < TypeConstraint
+    class UnionType < Base
       acts_as_struct :member_types
       def initialize(member_types)
         @member_types = Set.new(member_types)
       end
-      
+
       def signature
         {member_types: member_types}
       end
@@ -50,7 +47,7 @@ module Laser
       end
     end
 
-    class SelfType < TypeConstraint
+    class SelfType < Base
       acts_as_struct :scope
       
       def signature
@@ -58,7 +55,7 @@ module Laser
       end
     end
     
-    class StructuralType < TypeConstraint
+    class StructuralType < Base
       acts_as_struct :method_name, :argument_types, :return_type
       
       def signature
@@ -73,6 +70,10 @@ module Laser
         "#<Class: #{class_name} variance: #{variance}>"
       end
       
+      def member_types
+        [self]
+      end
+
       def public_matching_methods(name)
         name = name.to_s
         possible_classes.map do |klass|
@@ -106,23 +107,27 @@ module Laser
     TOP = ClassType.new('BasicObject', :covariant)
     STRING = ClassType.new('String', :invariant)
     FIXNUM = ClassType.new('Fixnum', :invariant)
+    FLOAT = ClassType.new('Float', :invariant)
     ARRAY = ClassType.new('Array', :invariant)
     HASH = ClassType.new('Hash', :invariant)
     PROC = ClassType.new('Proc', :invariant)
     NILCLASS = ClassType.new('NilClass', :invariant)
+    TRUECLASS = ClassType.new('TrueClass', :invariant)
+    FALSECLASS = ClassType.new('FalseClass', :invariant)
+    BOOLEAN = UnionType.new([TRUECLASS, FALSECLASS])
     BLOCK = UnionType.new([PROC, NILCLASS])
 
     class GenericType < Base
       acts_as_struct :base_type, :subtypes
 
       def signature
-        super.merge(base_type: base_type, subtypes: subtypes)
+        {base_type: base_type, subtypes: subtypes}
       end
     end
     
     # Represents a Tuple: an array of a given, fixed size, with each position
     # in the array possessing a set of constraints.
-    class TupleType < TypeConstraint
+    class TupleType < Base
       attr_reader :element_types
       def initialize(element_types)
         @element_types = element_types
