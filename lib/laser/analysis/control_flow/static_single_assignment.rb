@@ -108,6 +108,8 @@ module Laser
             @final_return = result
           elsif temp == @final_exception
             @final_exception = result
+          elsif temp == @block_register
+            @block_register = result
           end
           result
         end

@@ -10,6 +10,7 @@ module Laser
         include StaticSingleAssignment
         include UnusedVariables
         include UnreachabilityAnalysis
+        include AliasAnalysis
         include YieldProperties
         include MethodCallSearch
         include RaiseProperties
@@ -20,7 +21,7 @@ module Laser
         EXCEPTION_POSTDOMINATOR_NAME = 'UncaughtException'
         FAILURE_POSTDOMINATOR_NAME = 'Failure'
 
-        attr_accessor :root, :final_exception, :final_return
+        attr_accessor :root, :block_register, :final_exception, :final_return
         attr_reader :formals, :uses, :definition, :constants, :live, :globals
         attr_reader :yield_type, :raise_type, :in_ssa
         attr_reader :self_type, :formal_types, :block_type
@@ -37,6 +38,7 @@ module Laser
           @self_type = nil
           @formal_types = nil
           @block_type = nil
+          @block_register = nil
           @uses = Hash.new { |hash, temp| hash[temp] = Set.new }
           @live = Hash.new { |hash, temp| hash[temp] = Set.new }
           @definition = {}
@@ -73,8 +75,9 @@ module Laser
           source.definition.each_key do |k|
             temp_lookup[k] = k.deep_dup
           end
-          @final_exception = temp_lookup[source.final_exception]
-          @final_return = temp_lookup[source.final_return]
+          self.block_register = temp_lookup[source.block_register]
+          self.final_exception = temp_lookup[source.final_exception]
+          self.final_return = temp_lookup[source.final_return]
           # copy all formals and their mapping to initial bindings
           @formals = source.formals.map do |formal|
             temp_lookup[formal] = formal.deep_dup

@@ -52,16 +52,51 @@ EOF
   it 'denotes the method optional when yield is guarded by block_given?' do
     g = cfg_method <<-EOF
 def one
-if block_given?
-  yield 1
-else
-  1
-end
+  if block_given?
+    yield 1
+  else
+    1
+  end
 end
 EOF
     g.yield_type.should be :optional
   end
 
+  it 'denotes the method optional when the explicit block arg is checked vs. nil' do
+    g = cfg_method <<-EOF
+def one(&blk)
+  if blk != nil
+    yield 1
+  else
+    1
+  end
+end
+EOF
+    g.yield_type.should be :optional
+  end
+
+  it 'denotes the method optional when the explicit block arg is checked vs. nil and called explicitly' do
+    g = cfg_method <<-EOF
+def one(&blk)
+  if blk != nil
+    blk.call(2, 3)
+  else
+    1
+  end
+end
+EOF
+    g.yield_type.should be :optional
+  end
+
+  it 'denotes the method required when the explicit block arg is not checked vs. nil and called explicitly' do
+    g = cfg_method <<-EOF
+def one(&blk)
+  blk.call(2, 3)
+  1
+end
+EOF
+    g.yield_type.should be :required
+  end
 
   %w(LocalJumpError StandardError Exception Object Kernel BasicObject).each do |exc|
     it "denotes the method optional when yield is guarded by rescue of #{exc}" do
@@ -76,6 +111,7 @@ EOF
       g.yield_type.should be :optional
     end
   end
+
   it "denotes the method required if the yield is guarded by a non-matching rescue" do
     g = cfg_method <<-EOF
 def one

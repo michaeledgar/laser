@@ -19,12 +19,26 @@ module Laser
           without_yield.prune_unexecuted_blocks
           with_yield.prune_unexecuted_blocks
 
-          # shortcut that ignores the possibility of foolish
+          call_receiver_group = Hash.new { |h, k| h[k] = [] }
           calls_to_call = with_yield.find_method_calls(ClassRegistry['Proc'].instance_method('call'))
-          ever_yields = calls_to_call.size > 0
-          guaranteed_calls = calls_to_call.select { |insn| insn[2].value == fake_block }
-          yields_without_block = !!without_yield.vertex_with_name(ControlFlowGraph::YIELD_POSTDOMINATOR_NAME)
-          @yield_type = case [ever_yields, yields_without_block]
+          calls_to_call.each { |insn| call_receiver_group[insn[2].value] << insn }
+          guaranteed_calls = call_receiver_group[fake_block]
+          possible_calls = call_receiver_group[VARYING]
+          [guaranteed_calls, possible_calls]
+          ever_yields_with_block = guaranteed_calls.size + possible_calls.size > 0
+
+          weak_without_aliases = without_yield.weak_local_aliases_for(without_yield.block_register)
+          calls = []
+          without_yield.vertices.each do |block|
+            block.instructions.each do |insn|
+              if (insn.type == :call || insn.type == :call_vararg) && insn[3] == :call && weak_without_aliases.include?(insn[2])
+                calls << insn
+              end
+            end
+          end
+          yields_without_block = !!without_yield.vertex_with_name(ControlFlowGraph::YIELD_POSTDOMINATOR_NAME) || calls.size > 0
+
+          @yield_type = case [ever_yields_with_block, yields_without_block]
                         when [true, true] then :required
                         when [true, false] then :optional
                         when [false, true] then :foolish

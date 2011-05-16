@@ -151,6 +151,7 @@ module Laser
             @block_arg = call_instruct(ClassRegistry['Laser#Magic'].binding,
                 :current_block, value: true, raise: false)
             @block_arg.name = 't#current_block'
+            @graph.block_register = @block_arg
             reobserve_current_exception
             build_formal_args unless @formals.empty?
           end
