@@ -412,10 +412,10 @@ module Laser
                (args.first.value == 0 && is_numeric?(receiver))
               return [0, Types::FIXNUM, Frequency::NEVER]
             elsif (args.first.value == 0 &&
-                   uses_method?(receiver, ClassRegistry['String'].instance_methods['*']))
+                   uses_method?(receiver, ClassRegistry['String'].instance_method('*')))
               return ['', Types::STRING, Frequency::NEVER]
             elsif (args.first.value == 0 &&
-                   uses_method?(receiver, ClassRegistry['Array'].instance_methods['*']))
+                   uses_method?(receiver, ClassRegistry['Array'].instance_method('*')))
               return [[], Types::ARRAY, Frequency::NEVER]
             end
           elsif method_name == :**
@@ -445,7 +445,7 @@ module Laser
         end
         
         def allow_impure_method?(method)
-          method == ClassRegistry['Module'].instance_methods(false)['const_get']
+          method == ClassRegistry['Module'].instance_method('const_get')
         end
         
         def cp_magic(method_name, *args)

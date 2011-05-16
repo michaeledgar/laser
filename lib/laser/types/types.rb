@@ -89,13 +89,13 @@ module Laser
       def public_matching_methods(name)
         name = name.to_s
         possible_classes.map do |klass|
-          klass.instance_methods[name] if klass.visibility_table[name] == :public
+          klass.instance_method(name) if klass.visibility_table[name] == :public
         end.compact.uniq
       end
       
       def matching_methods(name)
         name = name.to_s
-        possible_classes.map { |klass| klass.instance_methods[name] }.compact.uniq
+        possible_classes.map { |klass| klass.instance_method(name) }.compact.uniq
       end
       
       def possible_classes

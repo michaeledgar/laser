@@ -61,7 +61,7 @@ module Laser
 
       def laser_simulate(method, args, opts={})
         opts = {self: self, mutation: false}.merge(opts)
-        klass.instance_methods[method].master_cfg.dup.simulate(args, opts)
+        klass.instance_method(method).master_cfg.dup.simulate(args, opts)
       end
 
       def instance_variable_defined?(var)
@@ -211,13 +211,27 @@ module Laser
       def public_instance_methods
         methods = instance_methods
         table = visibility_table
-        methods.select { |name, _| table[name] == :public }
+        methods.select { |name| table[name.to_s] == :public }
+      end
+
+      def instance_method(name)
+        return @instance_methods[name.to_s] ||
+          (@superclass && @superclass.instance_method(name))
+      end
+
+      def public_instance_method(name)
+        if (result = @instance_methods[name.to_s])
+          @visibility_table[name.to_s] == :public ? result : nil
+        else
+          @superclass && @superclass.public_instance_method(name)
+        end
       end
 
       def instance_methods(include_superclass = true)
+        mine = @instance_methods.keys.map(&:to_sym)
         if include_superclass && @superclass
-        then @superclass.instance_methods.merge(@instance_methods)
-        else @instance_methods
+        then @superclass.instance_methods | mine
+        else mine
         end
       end
       
@@ -394,7 +408,7 @@ module Laser
       
       def __make_module_function__(method_name)
         set_visibility!(method_name, :private)
-        found_method = instance_methods[method_name].dup
+        found_method = instance_method(method_name).dup
         singleton_class.add_instance_method!(found_method)
         singleton_class.set_visibility!(method_name, :public)
       end
@@ -593,9 +607,14 @@ module Laser
         @delegated.instance_variables
       end
       
+      def instance_method(name)
+        return @delegated.instance_method(name.to_s) ||
+          (@superclass && @superclass.instance_method(name))
+      end
+
       def instance_methods(include_superclass = true)
         if include_superclass && @superclass
-        then @superclass.instance_methods.merge(@delegated.instance_methods)
+        then @superclass.instance_methods | @delegated.instance_methods
         else @delegated.instance_methods
         end
       end
@@ -623,10 +642,10 @@ module Laser
       def self.for(name)
         if name.include?('.')
           klass, method = name.split('.', 2)
-          Scope::GlobalScope.lookup(klass).value.singleton_class.instance_methods[method]
+          Scope::GlobalScope.lookup(klass).value.singleton_class.instance_method(method)
         elsif name.include?('#')
           klass, method = name.split('#', 2)
-          Scope::GlobalScope.lookup(klass).value.instance_methods[method]
+          Scope::GlobalScope.lookup(klass).value.instance_method(method)
         else
           raise ArgumentError.new("method '#{name}' should be in the form Class#instance_method or Class.singleton_method.")
         end

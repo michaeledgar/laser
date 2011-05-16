@@ -72,9 +72,9 @@ module Laser
           require_method_call
           if type == :call || type == :call_vararg
             if Bindings::ConstantBinding === self[2]
-              [self[2].value.singleton_class.public_instance_methods[self[3].to_s]].compact
+              [self[2].value.singleton_class.public_instance_method(self[3].to_s)].compact
             elsif LaserObject === self[2].value
-              [self[2].value.klass.public_instance_methods[self[3].to_s]].compact
+              [self[2].value.klass.public_instance_method(self[3].to_s)].compact
             else
               self[2].expr_type.public_matching_methods(self[3])
             end
@@ -87,9 +87,9 @@ module Laser
           require_method_call
           if type == :call || type == :call_vararg
             if Bindings::ConstantBinding === self[2]
-              [self[2].value.singleton_class.instance_methods[self[3].to_s]].compact
+              [self[2].value.singleton_class.instance_method(self[3].to_s)].compact
             elsif LaserObject === self[2].value
-              [self[2].value.klass.instance_methods[self[3].to_s]].compact
+              [self[2].value.klass.instance_method(self[3].to_s)].compact
             else
               self[2].expr_type.matching_methods(self[3])
             end

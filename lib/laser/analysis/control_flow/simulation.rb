@@ -114,7 +114,7 @@ module Laser
                     then receiver.singleton_class
                     else klass = LaserObject === receiver ? receiver.klass : ClassRegistry[receiver.class.name]
                     end
-            method = klass.instance_methods[insn[3].to_s]
+            method = klass.instance_method(insn[3].to_s)
             if !method
               error_klass = insn.node.type == :zcall ? 'NameError' : 'NoMethodError'
               missing_method_error = ClassRegistry[error_klass].laser_simulate(
@@ -159,37 +159,37 @@ module Laser
         def simulate_call(receiver, method, args, block)
           if method.special
             case method
-            when ClassRegistry['Class'].singleton_class.instance_methods['allocate']
+            when ClassRegistry['Class'].singleton_class.instance_method('allocate')
               LaserObject.new(receiver, nil)
-            when ClassRegistry['Class'].singleton_class.instance_methods['new']
+            when ClassRegistry['Class'].singleton_class.instance_method('new')
               LaserClass.new(ClassRegistry['Class'], nil) do |klass|
                 klass.superclass = args.first
               end
-            when ClassRegistry['Module'].singleton_class.instance_methods['new']
+            when ClassRegistry['Module'].singleton_class.instance_method('new')
               LaserModule.new
-            when ClassRegistry['Kernel'].instance_methods['require']
+            when ClassRegistry['Kernel'].instance_method('require')
               simulate_require(args)
-            when ClassRegistry['Laser#Magic'].singleton_class.instance_methods['get_global']
+            when ClassRegistry['Laser#Magic'].singleton_class.instance_method('get_global')
               Scope::GlobalScope.lookup(args.first).value
-            when ClassRegistry['Laser#Magic'].singleton_class.instance_methods['set_global']
+            when ClassRegistry['Laser#Magic'].singleton_class.instance_method('set_global')
               Scope::GlobalScope.lookup(args[0]).bind!(args[1])
-            when ClassRegistry['Laser#Magic'].singleton_class.instance_methods['current_self']
+            when ClassRegistry['Laser#Magic'].singleton_class.instance_method('current_self')
               @simulated_self
-            when ClassRegistry['Laser#Magic'].singleton_class.instance_methods['current_arity']
+            when ClassRegistry['Laser#Magic'].singleton_class.instance_method('current_arity')
               @simulated_args.size
-            when ClassRegistry['Laser#Magic'].singleton_class.instance_methods['current_argument']
+            when ClassRegistry['Laser#Magic'].singleton_class.instance_method('current_argument')
               @simulated_args[args.first]
-            when ClassRegistry['Laser#Magic'].singleton_class.instance_methods['current_argument_range']
+            when ClassRegistry['Laser#Magic'].singleton_class.instance_method('current_argument_range')
               @simulated_args[args[0], args[1]]
-            when ClassRegistry['Laser#Magic'].singleton_class.instance_methods['current_exception']
+            when ClassRegistry['Laser#Magic'].singleton_class.instance_method('current_exception')
               Bootstrap::EXCEPTION_STACK.value.last
-            when ClassRegistry['Laser#Magic'].singleton_class.instance_methods['push_exception']
+            when ClassRegistry['Laser#Magic'].singleton_class.instance_method('push_exception')
               Bootstrap::EXCEPTION_STACK.value.push args[0]
-            when ClassRegistry['Laser#Magic'].singleton_class.instance_methods['pop_exception']
+            when ClassRegistry['Laser#Magic'].singleton_class.instance_method('pop_exception')
               Bootstrap::EXCEPTION_STACK.value.pop
-            when Scope::GlobalScope.self_ptr.singleton_class.instance_methods['private']
+            when Scope::GlobalScope.self_ptr.singleton_class.instance_method('private')
               ClassRegistry['Object'].private(*args)
-            when Scope::GlobalScope.self_ptr.singleton_class.instance_methods['public']
+            when Scope::GlobalScope.self_ptr.singleton_class.instance_method('public')
               ClassRegistry['Object'].public(*args)
             end
           elsif method.builtin

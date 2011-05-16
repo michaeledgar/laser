@@ -113,20 +113,20 @@ describe Types do
     describe '#matching_methods' do
       it 'should search the possible classes for instance methods of the same name (covariant)' do
         Types::ClassType.new('Integer', :covariant).matching_methods('modulo').should ==
-            [ClassRegistry['Numeric'].instance_methods['modulo'],
-             ClassRegistry['Fixnum'].instance_methods['modulo'],
-             ClassRegistry['Bignum'].instance_methods['modulo']]
+            [ClassRegistry['Numeric'].instance_method('modulo'),
+             ClassRegistry['Fixnum'].instance_method('modulo'),
+             ClassRegistry['Bignum'].instance_method('modulo')]
       end
       
       it 'should search the possible classes for instance methods of the same name (invariant)' do
         Types::ClassType.new('Integer', :invariant).matching_methods('odd?').should ==
-            [ClassRegistry['Integer'].instance_methods['odd?']]
+            [ClassRegistry['Integer'].instance_method('odd?')]
       end
       
       it 'should search the possible classes for instance methods of the same name (contravariant)' do
         Types::ClassType.new('Bignum', :contravariant).matching_methods('odd?').should ==
-            [ClassRegistry['Bignum'].instance_methods['odd?'],
-             ClassRegistry['Integer'].instance_methods['odd?']]
+            [ClassRegistry['Bignum'].instance_method('odd?'),
+             ClassRegistry['Integer'].instance_method('odd?')]
       end
     end
   end

@@ -501,7 +501,7 @@ EOF
     g2.should have_constant('z1').with_value(3)
     g2.should have_constant('z2').with_value('foo')
     g2.return_type.should == Types::STRING
-    ClassRegistry['CPSim1'].singleton_class.instance_methods['make'].return_type_for_types(Utilities.type_for(ClassRegistry['CPSim1']), [Types::FIXNUM, Types::STRING], Types::NILCLASS).should == Types::UnionType.new([Types::HASH])
+    ClassRegistry['CPSim1'].singleton_class.instance_method('make').return_type_for_types(Utilities.type_for(ClassRegistry['CPSim1']), [Types::FIXNUM, Types::STRING], Types::NILCLASS).should == Types::UnionType.new([Types::HASH])
   end
 
   it 'should infer types based on specified overloads' do
@@ -512,8 +512,8 @@ module CPSim2
   end
 end
 EOF
-    ClassRegistry['CPSim2'].singleton_class.instance_methods['multiply'].return_type_for_types(Utilities.type_for(ClassRegistry['CPSim2']), [Types::FIXNUM, Types::FLOAT], Types::NILCLASS).should == Types::UnionType.new([Types::FLOAT])
-    ClassRegistry['CPSim2'].singleton_class.instance_methods['multiply'].return_type_for_types(Utilities.type_for(ClassRegistry['CPSim2']), [Types::FIXNUM, Types::FIXNUM], Types::NILCLASS).should == Types::UnionType.new([Types::ClassType.new('Integer', :covariant)])
+    ClassRegistry['CPSim2'].singleton_class.instance_method('multiply').return_type_for_types(Utilities.type_for(ClassRegistry['CPSim2']), [Types::FIXNUM, Types::FLOAT], Types::NILCLASS).should == Types::UnionType.new([Types::FLOAT])
+    ClassRegistry['CPSim2'].singleton_class.instance_method('multiply').return_type_for_types(Utilities.type_for(ClassRegistry['CPSim2']), [Types::FIXNUM, Types::FIXNUM], Types::NILCLASS).should == Types::UnionType.new([Types::ClassType.new('Integer', :covariant)])
   end
 
   it 'should infer type errors on methods with specified overloads' do
@@ -529,7 +529,7 @@ module CPSim3
   end
 end
 EOF
-   ClassRegistry['CPSim3'].singleton_class.instance_methods['sim3'].return_type_for_types(Utilities.type_for(ClassRegistry['CPSim3']), [], Types::NILCLASS).should == nil
+   ClassRegistry['CPSim3'].singleton_class.instance_method('sim3').return_type_for_types(Utilities.type_for(ClassRegistry['CPSim3']), [], Types::NILCLASS).should == nil
    g.should have_error(NoMatchingTypeSignature).on_line(8).with_message(/\*/)
   end
 
@@ -548,7 +548,7 @@ module CPSim4
   end
 end
 EOF
-    ClassRegistry['CPSim4'].singleton_class.instance_methods['bar'].return_type_for_types(Utilities.type_for(ClassRegistry['CPSim4']), [], Types::NILCLASS).should == Types::BOOLEAN
+    ClassRegistry['CPSim4'].singleton_class.instance_method('bar').return_type_for_types(Utilities.type_for(ClassRegistry['CPSim4']), [], Types::NILCLASS).should == Types::BOOLEAN
   end
 
   it 'should infer the type resulting from Class#new' do
@@ -565,7 +565,7 @@ module CPSim5
   end
 end
 EOF
-    ClassRegistry['CPSim5'].singleton_class.instance_methods['make_a_foo'].return_type_for_types(Utilities.type_for(ClassRegistry['CPSim5']), [Types::FIXNUM, Types::FLOAT], Types::NILCLASS).should == Types::UnionType.new([Types::ClassType.new('CPSim5::Foo', :invariant)])
+    ClassRegistry['CPSim5'].singleton_class.instance_method('make_a_foo').return_type_for_types(Utilities.type_for(ClassRegistry['CPSim5']), [Types::FIXNUM, Types::FLOAT], Types::NILCLASS).should == Types::UnionType.new([Types::ClassType.new('CPSim5::Foo', :invariant)])
   end
 end
    

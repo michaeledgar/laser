@@ -14,7 +14,7 @@ describe 'the Set module' do
   end
   
   it 'should have a class method .[]' do
-    method = ClassRegistry['Set'].singleton_class.instance_methods['[]']
+    method = ClassRegistry['Set'].singleton_class.instance_method('[]')
     method.should_not be_nil
     method.arity.should == Arity::ANY
     method.arguments.size.should == 1
@@ -25,7 +25,7 @@ describe 'the Set module' do
      length map! member? merge proper_subset? proper_superset? reject! replace size
      subset? subtract superset? to_a union |).each do |method|
     it "should have an instance method named #{method}" do
-      ClassRegistry['Set'].instance_methods[method].should_not be_nil
+      ClassRegistry['Set'].instance_method(method).should_not be_nil
     end
   end
 end

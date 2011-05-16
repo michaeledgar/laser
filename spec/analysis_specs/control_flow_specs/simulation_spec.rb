@@ -17,7 +17,7 @@ class Sim2
   end
 end
 EOF
-    ClassRegistry['Sim2'].instance_methods['foo'].should_not be_nil
+    ClassRegistry['Sim2'].instance_method('foo').should_not be_nil
   end
   
   it 'should simulate toplevel alias_method calls' do
@@ -28,8 +28,8 @@ class Sim3
   alias_method :bar, :foo
 end
 EOF
-    ClassRegistry['Sim3'].instance_methods['foo'].should ==
-        ClassRegistry['Sim3'].instance_methods['bar']
+    ClassRegistry['Sim3'].instance_method('foo').should ==
+        ClassRegistry['Sim3'].instance_method('bar')
   end
 
   it 'should simulate toplevel general calls' do
@@ -48,14 +48,14 @@ class Sim4
   end
 end
 }
-    old_foo = ClassRegistry['Sim4'].instance_methods['foo']
-    new_foo = ClassRegistry['Sim4'].instance_methods['foo_with_fun']
+    old_foo = ClassRegistry['Sim4'].instance_method('foo')
+    new_foo = ClassRegistry['Sim4'].instance_method('foo_with_fun')
     g2 = cfg %q{
 class Sim4
   alias_method_chain :foo, :fun
 end
 }
-    ClassRegistry['Sim4'].instance_methods['foo_without_fun'].should == old_foo
-    ClassRegistry['Sim4'].instance_methods['foo'].should == new_foo
+    ClassRegistry['Sim4'].instance_method('foo_without_fun').should == old_foo
+    ClassRegistry['Sim4'].instance_method('foo').should == new_foo
   end
 end

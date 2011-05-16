@@ -7,8 +7,8 @@ module Laser
         def find_yield_properties
           without_yield = dup
           with_yield = dup
-          kernel_method_to_fix = ClassRegistry['Kernel'].instance_methods['block_given?']
-          magic_method_to_fix  = ClassRegistry['Laser#Magic'].singleton_class.instance_methods['current_block']
+          kernel_method_to_fix = ClassRegistry['Kernel'].instance_method('block_given?')
+          magic_method_to_fix  = ClassRegistry['Laser#Magic'].singleton_class.instance_method('current_block')
           
           fake_block = proc { |*args| }
           without_yield.perform_constant_propagation(
@@ -20,7 +20,7 @@ module Laser
           with_yield.prune_unexecuted_blocks
 
           # shortcut that ignores the possibility of foolish
-          calls_to_call = with_yield.find_method_calls(ClassRegistry['Proc'].instance_methods['call'])
+          calls_to_call = with_yield.find_method_calls(ClassRegistry['Proc'].instance_method('call'))
           ever_yields = calls_to_call.size > 0
           guaranteed_calls = calls_to_call.select { |insn| insn[2].value == fake_block }
           yields_without_block = !!without_yield.vertex_with_name(ControlFlowGraph::YIELD_POSTDOMINATOR_NAME)

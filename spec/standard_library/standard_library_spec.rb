@@ -52,7 +52,7 @@ describe 'the automatically analyzed Ruby Standard Library' do
     
     %w(! == != equal? __send__ instance_eval instance_exec).each do |method|
       it "should define the instance method #{method}" do
-        @class.instance_methods[method].should_not be_nil
+        @class.instance_method(method).should_not be_nil
       end
       it "should define the instance method #{method} as public" do
         @class.visibility_table[method].should be :public
@@ -62,7 +62,7 @@ describe 'the automatically analyzed Ruby Standard Library' do
     %w(initialize method_missing singleton_method_added singleton_method_removed
        singleton_method_undefined).each do |method|
       it "should define the instance method #{method}" do
-        @class.instance_methods[method].should_not be_nil
+        @class.instance_method(method).should_not be_nil
       end
       it "should define the instance method #{method} as private" do
         @class.visibility_table[method].should be :private
@@ -267,7 +267,7 @@ describe 'the automatically analyzed Ruby Standard Library' do
     
     describe '#==' do
       it 'should be pure' do
-        @class.instance_methods['=='].pure.should be true
+        @class.instance_method('==').pure.should be true
       end
     end
     

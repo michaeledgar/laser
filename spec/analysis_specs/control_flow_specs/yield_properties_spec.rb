@@ -63,15 +63,28 @@ EOF
   end
 
 
-  it 'denotes the method optional when yield is guarded by guaranteed rescue' do
+  %w(LocalJumpError StandardError Exception Object Kernel BasicObject).each do |exc|
+    it "denotes the method optional when yield is guarded by rescue of #{exc}" do
+      g = cfg_method <<-EOF
+def one
+  yield 1
+  4
+rescue #{exc}
+  2
+end
+EOF
+      g.yield_type.should be :optional
+    end
+  end
+  it "denotes the method required if the yield is guarded by a non-matching rescue" do
     g = cfg_method <<-EOF
 def one
   yield 1
   4
-rescue LocalJumpError
+rescue RuntimeError
   2
 end
 EOF
-    g.yield_type.should be :optional
+    g.yield_type.should be :required
   end
 end
