@@ -348,6 +348,9 @@ module Laser
             when :unless_mod
               condition, body = node.children
               unless_instruct(condition, [body], nil, opts)
+            when :rescue_mod
+              rescue_expr, guarded_expr = node.children
+              rescue_mod_instruct(guarded_expr, rescue_expr, opts)
             when :unary
               op, receiver = node.children
               receiver = walk_node(receiver, value: true)
@@ -830,8 +833,6 @@ module Laser
           raise_instruct instance, opts
         end
         
-        # TODO(adgar): Cleanup on Aisle 6.
-
         # Yields with an explicit block being wrapped around the execution of the
         # user's block. The basic block object created is provided as a parameter to the
         # caller's operations which have the possibility of invoking the block.
@@ -1101,6 +1102,32 @@ module Laser
               uncond_instruct fail_target, flags: RGL::ControlFlowGraph::EDGE_ABNORMAL
             end
           end
+        end
+
+        # Generates the code for the 'expr rescue expr' construct, which
+        # catches StandardError exceptions. Offers a nice optimization opportunity
+        # for yield-failure.
+        def rescue_mod_instruct(guarded_expr, rescue_expr, opts={value: true})
+          # first off, yield failure ALWAYS caught, so that's optimized
+          # no ensure, else, etc
+          # StandardError is the caught exception
+          result_temporary = create_temporary if opts[:value]
+          rescue_check_block, after = create_blocks 2
+          is_caught_block = build_block_with_jump(after) do
+            caught_result = walk_node(rescue_expr, opts)
+            copy_instruct(result_temporary, caught_result) if opts[:value]
+          end
+          with_current_basic_block(rescue_check_block) do
+            caught = call_instruct(ClassRegistry['StandardError'].binding, :===,
+                                   @exception_register, value: true, raise: false)
+            cond_instruct(caught, is_caught_block, current_rescue)
+          end
+          with_jump_targets(:rescue => rescue_check_block, :yield_fail => is_caught_block) do
+            normal_result = walk_node(guarded_expr, opts)
+            copy_instruct(result_temporary, normal_result) if opts[:value]
+            uncond_instruct(after)
+          end
+          result_temporary
         end
 
         def class_instruct(class_name, superclass, body, opts={value: true})

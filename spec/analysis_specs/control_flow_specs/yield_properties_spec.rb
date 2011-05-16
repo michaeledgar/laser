@@ -144,6 +144,15 @@ EOF
     end
   end
 
+  it 'denotes the method optional when yield is guarded by a rescue modifier' do
+    g = cfg_method <<-EOF
+def one
+  yield 1 rescue 2
+end
+EOF
+    g.yield_type.should be :optional
+  end
+
   it "denotes the method required if the yield is guarded by a non-matching rescue" do
     g = cfg_method <<-EOF
 def one
