@@ -63,7 +63,6 @@ module RGL
     
     # Adds the edge to the graph. O(1) amortized.
     def add_edge(u, v, flags = EDGE_NORMAL)
-      #@edge_flags[[u.name, v.name]] |= flags
       self[u].successors << v
       self[v].predecessors << u
       u.set_flag(v, flags)
@@ -71,27 +70,22 @@ module RGL
 
     def is_abnormal?(src, dest)
       src.has_flag?(dest, EDGE_ABNORMAL)
-#      (@edge_flags[[src.name, dest.name]] & EDGE_ABNORMAL) > 0
     end
     
     def is_fake?(src, dest)
       src.has_flag?(dest, EDGE_FAKE)
-#      (@edge_flags[[src.name, dest.name]] & EDGE_FAKE) > 0
     end
     
     def is_executable?(src, dest)
       src.has_flag?(dest, EDGE_EXECUTABLE)
-#      (@edge_flags[[src.name, dest.name]] & EDGE_EXECUTABLE) > 0
     end
     
     def add_flag(src, dest, flag)
       src.add_flag(dest, flag)
-      #@edge_flags[[src.name, dest.name]] |= flag
     end
     
     def remove_flag(src, dest, flag)
       src.remove_flag(dest, flag)
-      #@edge_flags[[src.name, dest.name]] &= ~flag
     end
 
     # Removes the vertex from the graph. O(E) amortized.
@@ -115,7 +109,6 @@ module RGL
       looked_up_u.remove_successor looked_up_v
       looked_up_v.remove_predecessor looked_up_u
       u.delete_all_flags(looked_up_v)
-      #@edge_flags.delete([u.name, v.name])
     end
     
     # Counts the number of vertices. O(1).

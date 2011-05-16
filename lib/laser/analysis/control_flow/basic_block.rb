@@ -155,6 +155,7 @@ module Laser
           last_insn = u.instructions.last
           if last_insn.type == :branch
             which_to_keep = last_insn[3] == self.name ? last_insn[2] : last_insn[3]
+            last_insn[1].uses.delete last_insn
             last_insn.body.replace([:jump, which_to_keep])
           end
           # must update phi nodes.

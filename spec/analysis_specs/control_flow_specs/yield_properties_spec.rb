@@ -121,6 +121,14 @@ EOF
     g.yield_type.should be :ignored
   end
 
+#   it 'is not confused by sending .call to other arguments' do
+#     g = cfg_method <<-EOF
+# def one(other_arg, &blk)
+#   other_arg.call(5)
+# end
+# EOF
+#     g.yield_type.should be :ignored
+#   end
 
   %w(LocalJumpError StandardError Exception Object Kernel BasicObject).each do |exc|
     it "denotes the method optional when yield is guarded by rescue of #{exc}" do

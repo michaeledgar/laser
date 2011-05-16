@@ -25,6 +25,7 @@ module Laser
         attr_reader :formals, :uses, :definition, :constants, :live, :globals
         attr_reader :yield_type, :raise_type, :in_ssa
         attr_reader :self_type, :formal_types, :block_type
+        attr_reader :all_cached_variables
         # postdominator blocks for: all non-failed-yield exceptions, yield-failing
         # exceptions, and all failure types.
         
@@ -39,9 +40,8 @@ module Laser
           @formal_types = nil
           @block_type = nil
           @block_register = nil
-          @uses = Hash.new { |hash, temp| hash[temp] = Set.new }
+          @all_cached_variables = Set.new
           @live = Hash.new { |hash, temp| hash[temp] = Set.new }
-          @definition = {}
           @constants  = {}
           @globals = Set.new
           @name_stack = Hash.new { |hash, temp| hash[temp] = [] }
@@ -72,8 +72,10 @@ module Laser
           block_lookup = { source.enter => @enter, source.exit => @exit }
           insn_lookup = Hash.new
           # copy all vars defined in the body
-          source.definition.each_key do |k|
-            temp_lookup[k] = k.deep_dup
+          source.all_cached_variables.each do |k|
+            copy = k.deep_dup
+            temp_lookup[k] = copy
+            @all_cached_variables << copy
           end
           self.block_register = temp_lookup[source.block_register]
           self.final_exception = temp_lookup[source.final_exception]
@@ -98,18 +100,13 @@ module Laser
           end
           
           # computed stuff we shouldn't lose:
-          # @definition
-          # @uses
           # @globals
           # @constants
           # @live
           # @formal_map
-          
-          source.definition.each do |temp, def_insn|
-            @definition[temp_lookup[temp]] = insn_lookup[def_insn]
-          end
-          source.uses.each do |temp, insns|
-            @uses[temp_lookup[temp]] = Set.new(insns.map { |insn| insn_lookup[insn] })
+          temp_lookup.each do |old, new|
+            new.definition = insn_lookup[old.definition]
+            new.uses = Set.new(old.uses.map { |insn| insn_lookup[insn] })
           end
           source.globals.each do |global|
             @globals.add temp_lookup[global]
@@ -208,6 +205,7 @@ module Laser
         
         # Returns the names of all variables in the graph
         def all_variables
+          return @all_cached_variables unless @all_cached_variables.empty?
           return @all_variables if @all_variables
           result = Set.new
           vertices.each do |vert|
@@ -228,6 +226,10 @@ module Laser
         
         def exception_postdominator
           vertex_with_name(EXCEPTION_POSTDOMINATOR_NAME)
+        end
+        
+        def !=(other)
+          !(self == other)
         end
         
         def all_failure_postdominator
@@ -262,7 +264,7 @@ module Laser
           kill_unexecuted_edges(true)  # be ruthless
           unreachable_vertices.each do |block|
             block.instructions.each do |insn|
-              insn.operands.each { |op| @uses[op] -= ::Set[insn] }
+              insn.operands.each { |op| op.uses -= ::Set[insn] }
             end
             remove_vertex block
           end

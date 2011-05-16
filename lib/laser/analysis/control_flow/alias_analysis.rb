@@ -6,12 +6,12 @@ module Laser
       module AliasAnalysis
         def weak_local_aliases_for(var)
           aliases = ::Set[var]
-          worklist = @uses[var]
+          worklist = var.uses 
           until worklist.empty?
             use = worklist.pop
             # target of insn is always insn[1]
             if use[1] && aliases.add?(use[1])
-              worklist.merge(@uses[use[1]])
+              worklist.merge(use[1].uses)
             end
           end
           aliases

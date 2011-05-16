@@ -11,9 +11,9 @@ module Laser
         def add_unused_variable_warnings
           unused_variables.reject { |var| var.name.start_with?('%') }.each do |temp|
             # TODO(adgar): KILLMESOON
-            next unless @definition[temp] && @definition[temp].node
+            next unless temp.definition && temp.definition.node
             next if IGNORED_VARS.include?(temp.non_ssa_name)
-            node = @definition[temp].node
+            node = temp.definition.node
             node.add_error(
                 UnusedVariableWarning.new("Variable defined but not used: #{temp.non_ssa_name}", node))
           end
@@ -25,17 +25,17 @@ module Laser
           variables = self.all_variables
           result = variables.dup
           variables.each do |var|
-            defn = @definition[var]
+            defn = var.definition
             if defn.node.nil? || defn.node.reachable
-              @uses[var].each do |use|
+              var.uses.each do |use|
                 if use.node.nil? || use.node.reachable
                   result.delete var
                 else
-                  @uses[var].delete use
+                  var.uses.delete use
                 end
               end
             else
-              @uses[var].clear
+              var.uses.clear
             end
           end
           result
@@ -53,11 +53,11 @@ module Laser
           while worklist.any?
             var = worklist.pop
             all_unused << var
-            definition = @definition[var]
+            definition = var.definition
             if killable_with_unused_target?(definition)
               definition.operands.each do |op|
                 next if op.name == 'self'
-                use_set = @uses[op]
+                use_set = op.uses
                 use_set = use_set - [definition]
                 worklist << op if use_set.empty?
               end

@@ -162,7 +162,7 @@ module Laser
 
         def add_target_uses_to_worklist(instruction, worklist)
           instruction.explicit_targets.each do |target|
-            @uses[target].each do |use|
+            target.uses.each do |use|
               worklist.add? use
             end
           end

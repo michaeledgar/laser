@@ -49,19 +49,21 @@ module Laser
           block.phi_nodes.each do |phi_node|
             temp = phi_node[1]
             @name_stack[temp].push(new_ssa_name(temp))
-            @definition[ssa_name_for(temp)] = phi_node
+            ssa_name_for(temp).definition = phi_node
+            @all_cached_variables << ssa_name_for(temp)
           end
           # Replace current operands and note new definitions
           block.reject { |ins| ins[0] == :phi }.each do |ins|
             new_operands = []
             ins.operands.each do |temp|
-              @uses[ssa_name_for(temp)] << ins
+              ssa_name_for(temp).uses << ins
               new_operands << ssa_name_for(temp)
             end
             ins.replace_operands(new_operands) unless ins.operands.empty?
             ins.explicit_targets.each do |temp|
               @name_stack[temp].push(new_ssa_name(temp))
-              @definition[ssa_name_for(temp)] = ins
+              ssa_name_for(temp).definition = ins
+              @all_cached_variables << ssa_name_for(temp)
             end
           end
           # Update all phi nodes this block leads to with the name of
@@ -72,7 +74,7 @@ module Laser
             succ.phi_nodes.each do |phi_node|
               replacement = ssa_name_for(phi_node[j + 2])
               phi_node[j + 2] = replacement
-              @uses[replacement] << phi_node
+              replacement.uses << phi_node
             end
           end
           # Recurse to dominated blocks

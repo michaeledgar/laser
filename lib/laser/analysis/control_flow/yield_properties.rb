@@ -19,24 +19,11 @@ module Laser
           without_yield.prune_unexecuted_blocks
           with_yield.prune_unexecuted_blocks
 
-          call_receiver_group = Hash.new { |h, k| h[k] = [] }
-          calls_to_call = with_yield.find_method_calls(ClassRegistry['Proc'].instance_method('call'))
-          calls_to_call.each { |insn| call_receiver_group[insn[2].value] << insn }
-          guaranteed_calls = call_receiver_group[fake_block]
-          possible_calls = call_receiver_group[VARYING]
-          [guaranteed_calls, possible_calls]
-          ever_yields_with_block = guaranteed_calls.size + possible_calls.size > 0
+          weak_with_calls = with_yield.potential_block_calls
+          ever_yields_with_block = weak_with_calls.size > 0
 
-          weak_without_aliases = without_yield.weak_local_aliases_for(without_yield.block_register)
-          calls = []
-          without_yield.vertices.each do |block|
-            block.instructions.each do |insn|
-              if (insn.type == :call || insn.type == :call_vararg) && insn[3] == :call && weak_without_aliases.include?(insn[2])
-                calls << insn
-              end
-            end
-          end
-          yields_without_block = !!without_yield.vertex_with_name(ControlFlowGraph::YIELD_POSTDOMINATOR_NAME) || calls.size > 0
+          weak_without_calls = without_yield.potential_block_calls
+          yields_without_block = !!without_yield.vertex_with_name(ControlFlowGraph::YIELD_POSTDOMINATOR_NAME) || weak_without_calls.size > 0
 
           @yield_type = case [ever_yields_with_block, yields_without_block]
                         when [true, true] then :required
@@ -44,6 +31,19 @@ module Laser
                         when [false, true] then :foolish
                         when [false, false] then :ignored
                         end
+        end
+
+        def potential_block_calls
+          aliases = weak_local_aliases_for(block_register)
+          calls = []
+          vertices.each do |block|
+            block.instructions.each do |insn|
+              if (insn.type == :call || insn.type == :call_vararg) && insn[3] == :call && aliases.include?(insn[2])
+                calls << insn
+              end
+            end
+          end
+          calls
         end
       end
     end  # ControlFlow
