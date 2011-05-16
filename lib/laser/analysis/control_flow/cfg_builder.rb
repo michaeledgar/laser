@@ -350,7 +350,7 @@ module Laser
               unless_instruct(condition, [body], nil, opts)
             when :rescue_mod
               rescue_expr, guarded_expr = node.children
-              rescue_mod_instruct(guarded_expr, rescue_expr, opts)
+              rescue_mod_instruct(rescue_expr, guarded_expr, opts)
             when :unary
               op, receiver = node.children
               receiver = walk_node(receiver, value: true)
