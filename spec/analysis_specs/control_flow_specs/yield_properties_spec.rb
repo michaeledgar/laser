@@ -62,6 +62,19 @@ EOF
     g.yield_type.should be :optional
   end
 
+  it 'denotes the method foolish when yield is not guarded by block_given?, but the block is unused when given' do
+    g = cfg_method <<-EOF
+def one
+  if block_given?
+    1
+  else
+    yield 1
+  end
+end
+EOF
+    g.yield_type.should be :foolish
+  end
+
   it 'denotes the method optional when the explicit block arg is checked vs. nil' do
     g = cfg_method <<-EOF
 def one(&blk)
@@ -97,6 +110,17 @@ end
 EOF
     g.yield_type.should be :required
   end
+
+  it 'denotes the method ignored when the explicit block arg is never called' do
+    g = cfg_method <<-EOF
+def one(&blk)
+  result = blk.nil? ? 5 : 10
+  result ** result
+end
+EOF
+    g.yield_type.should be :ignored
+  end
+
 
   %w(LocalJumpError StandardError Exception Object Kernel BasicObject).each do |exc|
     it "denotes the method optional when yield is guarded by rescue of #{exc}" do
