@@ -426,6 +426,15 @@ module Laser
             elsif receiver.value == 1 && is_numeric?(args.first)
               return [1, Types::FIXNUM, Frequency::NEVER]
             end
+          elsif method_name == :===
+            if LaserModule === receiver.value && args.first != UNDEFINED
+              result = Types.subtype?(args.first.expr_type, Types::ClassType.new(receiver.value.path, :covariant))
+              if result
+                return [true, Types::TRUECLASS, Frequency::NEVER]
+              else
+                return [false, Types::FALSECLASS, Frequency::NEVER]
+              end
+            end
           elsif receiver == ClassRegistry['Laser#Magic'].binding
             magic_result, magic_type, magic_raises = cp_magic(method_name, *args)
             if magic_result != INAPPLICABLE

@@ -549,7 +549,23 @@ module CPSim4
 end
 EOF
     ClassRegistry['CPSim4'].singleton_class.instance_methods['bar'].return_type_for_types(Utilities.type_for(ClassRegistry['CPSim4']), [], Types::NILCLASS).should == Types::BOOLEAN
-    
+  end
+
+  it 'should infer the type resulting from Class#new' do
+    g = cfg <<-EOF
+module CPSim5
+  class Foo
+    def initialize(x, y)
+      @x = x
+      @y = y
+    end
+  end
+  def self.make_a_foo(a, b)
+    CPSim5::Foo.new(a, b)
+  end
+end
+EOF
+    ClassRegistry['CPSim5'].singleton_class.instance_methods['make_a_foo'].return_type_for_types(Utilities.type_for(ClassRegistry['CPSim5']), [Types::FIXNUM, Types::FLOAT], Types::NILCLASS).should == Types::UnionType.new([Types::ClassType.new('CPSim5::Foo', :invariant)])
   end
 end
    

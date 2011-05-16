@@ -40,7 +40,15 @@ module Laser
       end
       
       alias path name
-      
+
+      def normal_class
+        if @singleton_class
+          return @singleton_class.superclass
+        else
+          return @klass
+        end
+      end
+
       def singleton_class
         return @singleton_class if @singleton_class
         new_scope = ClosedScope.new(self.scope, nil)
@@ -430,6 +438,10 @@ module Laser
         super # can yield, so must come last
       end
       
+      def normal_class
+        return ClassRegistry['Class']
+      end
+
       def singleton_class
         return @singleton_class if @singleton_class
         new_scope = ClosedScope.new(self.scope, nil)

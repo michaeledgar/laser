@@ -11,6 +11,7 @@ module Laser
         include UnusedVariables
         include UnreachabilityAnalysis
         include YieldProperties
+        include MethodCallSearch
         include RaiseProperties
         include Simulation
         

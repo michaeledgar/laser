@@ -156,6 +156,13 @@ module Laser
         stub_method(class_class.singleton_class, 'new', builtin: true, pure: true)
         stub_method(class_class, 'superclass', builtin: true, pure: true, raises: Frequency::NEVER)
         stub_method(class_class, 'new')
+        allocate_method = stub_method(class_class, 'allocate', special: true, pure: true)
+        def allocate_method.return_type_for_types(self_type, arg_types, block_type)
+          unless arg_types.empty? && block_type == Types::NILCLASS
+            raise TypeError.new("Class#allocate takes no arguments and no block")
+          end
+          Types::ClassType.new(self_type.possible_classes.first.get_instance.path, :invariant)
+        end
         stub_method(module_class, 'define_method', builtin: true, pure: true, mutation: true)
         stub_method(module_class, 'define_method_with_annotations', builtin: true, pure: true, mutation: true)
         stub_method(module_class.singleton_class, 'new', builtin: true, pure: true)
@@ -180,6 +187,7 @@ module Laser
         method = LaserMethod.new(name)
         opts.each { |k, v| method.send("#{k}=", v) }
         klass.add_instance_method!(method)
+        method
       end
       
       def self.stub_toplevel_class(name, superclass_name='Object')

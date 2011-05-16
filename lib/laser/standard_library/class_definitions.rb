@@ -8,10 +8,6 @@ class Class < Module
     result.initialize(*args)
     result
   end
-  # special: true
-  # pure: true
-  def allocate
-  end
   # pure: true
   # builtin: true
   def superclass
