@@ -180,7 +180,6 @@ module Laser
           # kill obvious dead code now.
           perform_dead_code_discovery(true)
           if @root.type == :program
-#            dotty
             simulate([], :mutation => true)
           else
             static_single_assignment_form unless @in_ssa
