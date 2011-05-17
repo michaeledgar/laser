@@ -831,9 +831,9 @@ EOF
 module Laser
   module SexpAnalysis
     module Bindings
-      # This class represents a GenericBinding in Ruby. It may have a known protocol (type),
+      # This class represents a Base in Ruby. It may have a known protocol (type),
       # class, value (if constant!), and a variety of other details.
-      class GenericBinding
+      class Base
         include Comparable
 
         def initialize(name, value)
@@ -876,17 +876,17 @@ module Laser
         def class_used
           value.klass
         end
-
-        def to_s
-          inspect
-        end
-
-        def inspect
-          "#<#{self.class.name.split('::').last}: #{name}>"
-        end
+        # 
+        # def to_s
+        #   inspect
+        # end
+        # 
+        # def inspect
+        #   "#<#{self.class.name.split('::').last}: #{name}>"
+        # end
       end
 
-      class KeywordBinding < GenericBinding
+      class KeywordBinding < Base
         private :bind!
       end
 
@@ -894,7 +894,7 @@ module Laser
       # be rebound. However.... Ruby allows it. It prints a warning when the rebinding
       # happens, but we should be able to detect this statically. Oh, and they can't be
       # bound inside a method. That too is easily detected statically.
-      class ConstantBinding < GenericBinding
+      class ConstantBinding < Base
         # Require an additional force parameter to rebind a Constant. That way, the user
         # can configure whether rebinding counts as a warning or an error.
         def bind!(val, force=false)
@@ -906,16 +906,16 @@ module Laser
       end
 
       # We may want to track # of assignments/reads from local vars, so we should subclass
-      # GenericBinding for it.
-      class LocalVariableBinding < GenericBinding
+      # Base for it.
+      class LocalVariableBinding < Base
       end
 
       # Possible extension ideas:
       # - Initial definition point?
-      class GlobalVariableBinding < GenericBinding
+      class GlobalVariableBinding < Base
       end
 
-      class ArgumentBinding < GenericBinding
+      class ArgumentBinding < Base
         attr_reader :kind, :default_value_sexp
         def initialize(name, value, kind, default_value = nil)
           super(name, value)
@@ -936,23 +936,23 @@ end
       ClassRegistry['Laser'].should be_a(LaserModule)
       ClassRegistry['Laser::SexpAnalysis'].should be_a(LaserModule)
       ClassRegistry[bindings_mod].should be_a(LaserModule)
-      ClassRegistry["#{bindings_mod}::GenericBinding"].should be_a(LaserClass)
+      ClassRegistry["#{bindings_mod}::Base"].should be_a(LaserClass)
       ClassRegistry["#{bindings_mod}::KeywordBinding"].should be_a(LaserClass)
       ClassRegistry["#{bindings_mod}::ConstantBinding"].should be_a(LaserClass)
       ClassRegistry["#{bindings_mod}::LocalVariableBinding"].should be_a(LaserClass)
       ClassRegistry["#{bindings_mod}::GlobalVariableBinding"].should be_a(LaserClass)
       ClassRegistry["#{bindings_mod}::ArgumentBinding"].should be_a(LaserClass)
       
-      ClassRegistry["#{bindings_mod}::GenericBinding"].superclass.should be ClassRegistry['Object']
+      ClassRegistry["#{bindings_mod}::Base"].superclass.should be ClassRegistry['Object']
       [ClassRegistry["#{bindings_mod}::KeywordBinding"],
        ClassRegistry["#{bindings_mod}::ConstantBinding"],
        ClassRegistry["#{bindings_mod}::LocalVariableBinding"],
        ClassRegistry["#{bindings_mod}::GlobalVariableBinding"],
        ClassRegistry["#{bindings_mod}::ArgumentBinding"]].each do |subclass|
-        subclass.superclass.should be ClassRegistry["#{bindings_mod}::GenericBinding"]
+        subclass.superclass.should be ClassRegistry["#{bindings_mod}::Base"]
       end
       
-      generic = ClassRegistry["#{bindings_mod}::GenericBinding"]
+      generic = ClassRegistry["#{bindings_mod}::Base"]
       #generic.instance_variables['@name'].should be_a(Bindings::InstanceVariableBinding)
       #generic.instance_variables['@value'].should be_a(Bindings::InstanceVariableBinding)
       class_binding = ClassRegistry["#{bindings_mod}::ConstantBinding"]

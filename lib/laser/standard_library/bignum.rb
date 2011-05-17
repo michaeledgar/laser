@@ -1,19 +1,19 @@
 class Bignum < Integer
   # pure: true
   # builtin: true
-  # returns: Integer
+  # returns: Fixnum= | Bignum=
   def %(num)
   end
   # pure: true
   # builtin: true
-  # returns: Integer
+  # returns: Fixnum= | Bignum=
   def &(num)
   end
   # pure: true
   # builtin: true
   # overload: (Float) -> Float=
-  # overload: (Fixnum) -> Integer
-  # overload: (Bignum) -> Integer
+  # overload: (Fixnum) -> Fixnum= | Bignum=
+  # overload: (Bignum) -> Fixnum= | Bignum=
   def *(num)
   end
   # pure: true
@@ -30,7 +30,7 @@ class Bignum < Integer
   end
   # pure: true
   # builtin: true
-  # returns: Integer
+  # returns: Fixnum= | Bignum=
   def -@
   end
   # pure: true
@@ -44,7 +44,7 @@ class Bignum < Integer
   end
   # pure: true
   # builtin: true
-  # returns: Integer
+  # returns: Fixnum= | Bignum=
   def <<(amt)
   end
   # pure: true
@@ -79,22 +79,22 @@ class Bignum < Integer
   end
   # pure: true
   # builtin: true
-  # returns: Integer
+  # returns: Fixnum= | Bignum=
   def >>(num)
   end
   # pure: true
   # builtin: true
-  # returns: Integer
+  # returns: Fixnum= | Bignum=
   def [](bit)
   end
   # pure: true
   # builtin: true
-  # returns: Integer
+  # returns: Fixnum= | Bignum=
   def ^(num)
   end
   # pure: true
   # builtin: true
-  # returns: Integer
+  # returns: Fixnum= | Bignum=
   def abs
   end
   # pure: true
@@ -103,7 +103,7 @@ class Bignum < Integer
   end
   # pure: true
   # builtin: true
-  # returns: Integer
+  # returns: Fixnum= | Bignum=
   def div(other)
   end
   # pure: true
@@ -126,12 +126,12 @@ class Bignum < Integer
   end
   # pure: true
   # builtin: true
-  # returns: Integer
+  # returns: Fixnum= | Bignum=
   def magnitude
   end
   # pure: true
   # builtin: true
-  # returns: Integer
+  # returns: Fixnum= | Bignum=
   def modulo(num)
   end
   # pure: true
@@ -145,7 +145,7 @@ class Bignum < Integer
   end
   # pure: true
   # builtin: true
-  # returns: Integer
+  # returns: Fixnum= | Bignum=
   def size
   end
   # pure: true
@@ -160,12 +160,12 @@ class Bignum < Integer
   end
   # pure: true
   # builtin: true
-  # returns: Integer
+  # returns: Fixnum= | Bignum=
   def |(num)
   end
   # pure: true
   # builtin: true
-  # returns: Integer
+  # returns: Fixnum= | Bignum=
   def ~
   end
 end

@@ -179,7 +179,7 @@ module Laser
             else range = 1..-1
             end
             args = ins[range].map do |arg|
-              if Bindings::GenericBinding === arg
+              if Bindings::Base === arg
               then arg.name
               else arg.inspect
               end

@@ -10,6 +10,7 @@ c = z * z
 end
 EOF
     g.yield_type.should be :ignored
+    g.yield_arity.should == Set[]
   end
 
   it 'should recognize non-yielding methods via CP' do
@@ -24,6 +25,7 @@ end
 end
 EOF
     g.yield_type.should be :ignored
+    g.yield_arity.should == Set[]
   end
 
   it 'should recognize simple required-yield methods' do
@@ -34,6 +36,7 @@ self
 end
 EOF
     g.yield_type.should be :required
+    g.yield_arity.should == Set[1]
   end
 
   it 'denotes the method required when a branch is unprovable' do
@@ -47,6 +50,7 @@ end
 end
 EOF
     g.yield_type.should be :required
+    g.yield_arity.should == Set[0]
   end
 
   it 'denotes the method optional when yield is guarded by block_given?' do
@@ -60,6 +64,7 @@ def one
 end
 EOF
     g.yield_type.should be :optional
+    g.yield_arity.should == Set[1]
   end
 
   it 'denotes the method foolish when yield is not guarded by block_given?, but the block is unused when given' do
@@ -73,6 +78,7 @@ def one
 end
 EOF
     g.yield_type.should be :foolish
+    g.yield_arity.should == Set[]
   end
 
   it 'denotes the method optional when the explicit block arg is checked vs. nil' do
@@ -80,12 +86,14 @@ EOF
 def one(&blk)
   if blk != nil
     yield 1
+    yield(1, 2)
   else
     1
   end
 end
 EOF
     g.yield_type.should be :optional
+    g.yield_arity.should == Set[1, 2]
   end
 
   it 'denotes the method optional when the explicit block arg is checked vs. nil and called explicitly' do
@@ -99,6 +107,7 @@ def one(&blk)
 end
 EOF
     g.yield_type.should be :optional
+    g.yield_arity.should == Set[2]
   end
 
   it 'denotes the method required when the explicit block arg is not checked vs. nil and called explicitly' do
@@ -109,6 +118,7 @@ def one(&blk)
 end
 EOF
     g.yield_type.should be :required
+    g.yield_arity.should == Set[2]
   end
 
   it 'denotes the method ignored when the explicit block arg is never called' do
@@ -119,6 +129,7 @@ def one(&blk)
 end
 EOF
     g.yield_type.should be :ignored
+    g.yield_arity.should == Set[]
   end
 
 #   it 'is not confused by sending .call to other arguments' do
@@ -141,6 +152,7 @@ rescue #{exc}
 end
 EOF
       g.yield_type.should be :optional
+      g.yield_arity.should == Set[1]
     end
   end
 
@@ -151,6 +163,7 @@ def one
 end
 EOF
     g.yield_type.should be :optional
+    g.yield_arity.should == Set[1]
   end
 
   it "denotes the method required if the yield is guarded by a non-matching rescue" do
@@ -163,5 +176,6 @@ rescue RuntimeError
 end
 EOF
     g.yield_type.should be :required
+    g.yield_arity.should == Set[1]
   end
 end

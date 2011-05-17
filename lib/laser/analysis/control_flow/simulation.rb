@@ -22,10 +22,11 @@ module Laser
           opts = DEFAULT_SIMULATION_OPTS.merge(opts)
           assign_formals(formal_vals, opts)
           current_block = @enter
+          previous_block = nil
           begin
             done = raised = false
             begin
-              next_block = simulate_block(current_block, opts)
+              next_block = simulate_block(current_block, opts.merge(:previous_block => previous_block))
               current_block.add_flag(next_block, ControlFlowGraph::EDGE_EXECUTABLE)
               if next_block.name == 'Exit'
                 done = true
@@ -33,7 +34,7 @@ module Laser
                   raise ExitedAbnormally.new(@final_exception.value)
                 end
               end
-              current_block = next_block
+              current_block, previous_block = next_block, current_block
             end until done
           rescue NonDeterminismHappened => err
             Laser.debug_puts "Simulation ended at nondeterminism: #{err.message}"
@@ -135,17 +136,13 @@ module Laser
         end
         
         def simulate_deterministic_phi_node(node, opts)
-          which_set = node.operands.reject { |var| UNDEFINED == var.value }
-          unless which_set.one?
-            raise SimulationError.new("Found phi node with #{which_set.size} "+
-                                      "options during toplevel simulation")
-          end
-          Laser.debug_puts "Simulating #{node.inspect}"
-          simulate_assignment(node[1], which_set.first, opts)
+          Laser.debug_puts "Simulating #{node.inspect} from #{opts[:previous_block].name}"
+          index_of_predecessor = node.block.predecessors.to_a.index(opts[:previous_block])
+          simulate_assignment(node[1], node[2 + index_of_predecessor], opts)
         end
         
         def simulate_assignment(lhs, rhs, opts)
-          if Bindings::GenericBinding === rhs
+          if Bindings::Base === rhs
             lhs.bind! rhs.value
           else
             lhs.bind! rhs
@@ -169,6 +166,8 @@ module Laser
               LaserModule.new
             when ClassRegistry['Kernel'].instance_method('require')
               simulate_require(args)
+            when ClassRegistry['Module'].instance_method('module_eval')
+              simulate_module_eval(args)
             when ClassRegistry['Laser#Magic'].singleton_class.instance_method('get_global')
               Scope::GlobalScope.lookup(args.first).value
             when ClassRegistry['Laser#Magic'].singleton_class.instance_method('set_global')
@@ -244,6 +243,22 @@ module Laser
             end
           end
           raise LoadError.new("No such file: #{file}")
+        end
+        
+        def simulate_module_eval(args)
+          # essentially: parse, compile with a custom scope + lexical target (cref), simulate.
+          if args.size > 0
+            text = args[0]
+            file = args[1] || "(eval)"
+            line = args[2] || 1  # ignored currently
+            tree = Sexp.new(RipperPlus.sexp(text), file, text)
+            Annotations.ordered_annotations.each do |annotator|
+              annotator.annotate_with_text(tree, text)
+            end
+            custom_scope = ClosedScope.new(Scope::GlobalScope, @simulated_self.binding)
+            cfg = GraphBuilder.new(tree, [], custom_scope).build
+            cfg.analyze
+          end
         end
       end  # Simulation
     end  # ControlFlow

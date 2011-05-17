@@ -47,6 +47,9 @@ class Module
   # pure: true
   def self.new
   end
+  # special: true
+  def module_eval(text, filename='(eval)', line=1)
+  end
   # pure: true
   # raises: never
   # builtin: true
@@ -93,14 +96,32 @@ class Module
   # mutation: true
   def protected(*args)
   end
-  # special: true
-  def attr_reader(sym, *syms)
+  # pure: true
+  def attr_reader(*syms)
+    i = syms.size
+    while i > 0
+      module_eval("def #{syms[i-1]}; @#{syms[i-1]}; end")
+      i -= 1
+    end
+    # ([sym] + syms).each do |ivar|
+    #   module_eval("def #{ivar}; @#{ivar}; end")
+    # end
   end
-  # special: true
-  def attr_writer(sym, *syms)
+  # pure: true
+  def attr_writer(*syms)
+    i = syms.size
+    while i > 0
+      module_eval("def #{syms[i-1]}=(val); @#{syms[i-1]} = val; end")
+      i -= 1
+    end
+    # ([sym] + syms).each do |ivar|
+    #       module_eval("def #{ivar}=(val); @#{ivar} = val; end")
+    #     end
   end
-  # special: true
-  def attr_accessor(sym, *syms)
+  # pure: true
+  def attr_accessor(*syms)
+    attr_reader(*syms)
+    attr_writer(*syms)
   end
   # builtin: true
   # mutation: true

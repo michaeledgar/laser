@@ -3,7 +3,7 @@ module Laser
     # The arity of a method is an instance of Arity. It's basically a range
     # with some helper methods.
     class Arity < Range
-      # arguments: [Binding::GenericBinding]
+      # arguments: [Binding::Base]
       def self.for_arglist(arguments)
         min, max = 0, 0
         arguments.each do |arg|

@@ -16,7 +16,7 @@ class Symbol
   end
   # builtin: true
   # pure: true
-  # returns: Integer | NilClass
+  # returns: Fixnum= | Bignum= | NilClass
   def =~(other)
   end
   # builtin: true
@@ -65,7 +65,7 @@ class Symbol
   end
   # builtin: true
   # pure: true
-  # returns: Integer
+  # returns: Fixnum= | Bignum=
   def length
   end
   # builtin: true
@@ -79,7 +79,7 @@ class Symbol
   end
   # builtin: true
   # pure: true
-  # returns: Integer
+  # returns: Fixnum= | Bignum=
   def size
   end
   # builtin: true

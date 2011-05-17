@@ -1,9 +1,9 @@
 module Laser
   module SexpAnalysis
     module Bindings
-      # This class represents a GenericBinding in Ruby. It may have a known type,
+      # This class represents a Base in Ruby. It may have a known type,
       # class, value (if constant!), and a variety of other details.
-      class GenericBinding
+      class Base
         include Comparable
         attr_accessor :name, :annotated_type, :inferred_type, :ast_node, :uses, :definition
         attr_reader :value
@@ -63,7 +63,7 @@ module Laser
         end
       end
 
-      class BlockBinding < GenericBinding
+      class BlockBinding < Base
         attr_reader :argument_bindings, :ast_body
         def initialize(name, value)
           super(name, value)
@@ -74,7 +74,7 @@ module Laser
         end
       end
 
-      class KeywordBinding < GenericBinding
+      class KeywordBinding < Base
         private :bind!
       end
 
@@ -82,7 +82,7 @@ module Laser
       # be rebound. However.... Ruby allows it. It prints a warning when the rebinding
       # happens, but we should be able to detect this statically. Oh, and they can't be
       # bound inside a method. That too is easily detected statically.
-      class ConstantBinding < GenericBinding
+      class ConstantBinding < Base
         # Require an additional force parameter to rebind a Constant. That way, the user
         # can configure whether rebinding counts as a warning or an error.
         def bind!(val, force=false)
@@ -94,25 +94,25 @@ module Laser
       end
 
       # We may want to track # of assignments/reads from local vars, so we should subclass
-      # GenericBinding for it.
-      class LocalVariableBinding < GenericBinding
+      # Base for it.
+      class LocalVariableBinding < Base
       end
       
-      class TemporaryBinding < GenericBinding
+      class TemporaryBinding < Base
         def non_ssa_name
           name.rpartition('#').first
         end
       end
       
-      class InstanceVariableBinding < GenericBinding
+      class InstanceVariableBinding < Base
       end
 
       # Possible extension ideas:
       # - Initial definition point?
-      class GlobalVariableBinding < GenericBinding
+      class GlobalVariableBinding < Base
       end
     
-      class ArgumentBinding < GenericBinding
+      class ArgumentBinding < Base
         attr_reader :kind, :default_value_sexp
         def initialize(name, value, kind, default_value = nil)
           super(name, value)

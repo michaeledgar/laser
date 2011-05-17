@@ -58,4 +58,26 @@ end
     ClassRegistry['Sim4'].instance_method('foo_without_fun').should == old_foo
     ClassRegistry['Sim4'].instance_method('foo').should == new_foo
   end
+  
+  it 'should simulate ruby-level attr_{reader,writer,accessor} calls' do
+    g = cfg %q{
+class Sim5
+  attr_reader :foo, :bar
+  attr_writer :baz
+  attr_accessor :qux, :pie
+end
+}
+
+    %w(foo bar qux pie).each do |name|
+      method = ClassRegistry['Sim5'].instance_method(name)
+      method.should be_a(LaserMethod)
+      method.arity.should == Arity.new(0..0)
+    end
+
+    %w(baz= qux= pie=).each do |name|
+      method = ClassRegistry['Sim5'].instance_method(name)
+      method.should be_a(LaserMethod)
+      method.arity.should == Arity.new(1..1)
+    end
+  end
 end

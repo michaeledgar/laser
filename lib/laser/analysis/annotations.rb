@@ -40,7 +40,6 @@ module Laser
             time = Benchmark.realtime { annotator.annotate_with_text(tree, text) }
             puts "Time spent running #{annotator.class} on #{filename}: #{time}"
           else
-            #annotator.annotate_with_text(tree, text)
             ControlFlow.perform_cfg_analysis(tree, text, opts)
           end
         end

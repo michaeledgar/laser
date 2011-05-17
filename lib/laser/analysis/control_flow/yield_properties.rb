@@ -7,14 +7,18 @@ module Laser
         def find_yield_properties
           without_yield = dup
           with_yield = dup
-          kernel_method_to_fix = ClassRegistry['Kernel'].instance_method('block_given?')
-          magic_method_to_fix  = ClassRegistry['Laser#Magic'].singleton_class.instance_method('current_block')
+          kernel_method_to_fix = ClassRegistry['Kernel'].
+              instance_method('block_given?')
+          magic_method_to_fix  = ClassRegistry['Laser#Magic'].singleton_class.
+              instance_method('current_block')
           
           fake_block = proc { |*args| }
           without_yield.perform_constant_propagation(
-              fixed_methods: {kernel_method_to_fix => false, magic_method_to_fix => nil})
+              fixed_methods: { kernel_method_to_fix => false,
+                               magic_method_to_fix => nil})
           with_yield.perform_constant_propagation(
-              fixed_methods: {kernel_method_to_fix => true,  magic_method_to_fix => fake_block})
+              fixed_methods: { kernel_method_to_fix => true,
+                               magic_method_to_fix => fake_block})
 
           without_yield.prune_unexecuted_blocks
           with_yield.prune_unexecuted_blocks
@@ -23,7 +27,9 @@ module Laser
           ever_yields_with_block = weak_with_calls.size > 0
 
           weak_without_calls = without_yield.potential_block_calls
-          yields_without_block = !!without_yield.vertex_with_name(ControlFlowGraph::YIELD_POSTDOMINATOR_NAME) || weak_without_calls.size > 0
+          has_yield_pd = !!without_yield.vertex_with_name(
+              ControlFlowGraph::YIELD_POSTDOMINATOR_NAME)
+          yields_without_block = has_yield_pd || weak_without_calls.size > 0
 
           @yield_type = case [ever_yields_with_block, yields_without_block]
                         when [true, true] then :required
@@ -31,6 +37,19 @@ module Laser
                         when [false, true] then :foolish
                         when [false, false] then :ignored
                         end
+          @yield_arity = calculate_yield_arity(weak_with_calls)
+        end
+        
+        # Unpack tuple types!
+        def calculate_yield_arity(calls)
+          yield_arity = Set.new
+          calls.each do |call|
+            case call.type
+            when :call then yield_arity << (call.size - 5)
+            when :call_vararg then yield_arity << (0..Float::INFINITY)
+            end
+          end
+          yield_arity
         end
 
         def potential_block_calls
@@ -38,7 +57,8 @@ module Laser
           calls = []
           vertices.each do |block|
             block.instructions.each do |insn|
-              if (insn.type == :call || insn.type == :call_vararg) && insn[3] == :call && aliases.include?(insn[2])
+              if (insn.type == :call || insn.type == :call_vararg) &&
+                 insn[3] == :call && aliases.include?(insn[2])
                 calls << insn
               end
             end

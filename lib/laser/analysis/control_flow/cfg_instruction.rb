@@ -29,7 +29,7 @@ module Laser
           new_body = @body[1..-1].map do |arg|
             case arg
             when Bindings::ConstantBinding then arg
-            when Bindings::GenericBinding then temp_lookup[arg]
+            when Bindings::Base then temp_lookup[arg]
             else arg.dup rescue arg
             end
           end
@@ -41,21 +41,6 @@ module Laser
 
         def method_missing(meth, *args, &blk)
           @body.send(meth, *args, &blk)
-        end
-
-        def simulate!
-          case type
-          when :assign
-            lhs, rhs = self[1..2]
-            if Bindings::GenericBinding === rhs
-              lhs.bind! rhs.value
-              lhs.inferred_type = rhs.inferred_type
-            else
-              # literal assignment e.g. fixnum/float/string
-              lhs.bind! rhs
-              lhs.inferred_type = Types::ClassType.new(rhs.class.name, :invariant)
-            end
-          end
         end
 
         def method_call?
@@ -111,7 +96,7 @@ module Laser
   
         # Gets all bindings that are operands in this instruction
         def operands
-          self[operand_range].select { |x| Bindings::GenericBinding === x}
+          self[operand_range].select { |x| Bindings::Base === x}
         end
         
         # Replaces the operands with a new list. Used by SSA renaming.
@@ -119,7 +104,7 @@ module Laser
           # splice in new operands: replace bindings with bindings.
           index = operand_range.begin
           while new_operands.any? && index < @body.size
-            if Bindings::GenericBinding === self[index]
+            if Bindings::Base === self[index]
               self[index] = new_operands.shift
             end
             index += 1

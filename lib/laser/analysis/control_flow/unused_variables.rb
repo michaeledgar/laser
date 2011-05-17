@@ -49,17 +49,19 @@ module Laser
         # O(N)
         def unused_variables
           worklist = Set.new(simple_unused())
+          Laser.debug_puts('>>> Finished finding simple unused vars <<<')
           all_unused = Set.new
           while worklist.any?
             var = worklist.pop
-            all_unused << var
-            definition = var.definition
-            if killable_with_unused_target?(definition)
-              definition.operands.each do |op|
-                next if op.name == 'self'
-                use_set = op.uses
-                use_set = use_set - [definition]
-                worklist << op if use_set.empty?
+            if all_unused.add?(var)
+              definition = var.definition
+              if killable_with_unused_target?(definition)
+                definition.operands.each do |op|
+                  next if op.name == 'self'
+                  use_set = op.uses
+                  use_set = use_set - [definition]
+                  worklist << op if use_set.empty?
+                end
               end
             end
           end

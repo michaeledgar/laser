@@ -6,6 +6,14 @@ module Laser
       sub.possible_classes.subset?(top.possible_classes)
     end
     
+    def self.equal?(t1, t2)
+      t1.possible_classes == t2.possible_classes
+    end
+    
+    def self.overlap?(t1, t2)
+      !(t1.possible_classes & t2.possible_classes).empty?
+    end
+    
     class Base
       extend ActsAsStruct
       
@@ -119,6 +127,7 @@ module Laser
     TOP = ClassType.new('BasicObject', :covariant)
     STRING = ClassType.new('String', :invariant)
     FIXNUM = ClassType.new('Fixnum', :invariant)
+    BIGNUM = ClassType.new('Bignum', :invariant)
     FLOAT = ClassType.new('Float', :invariant)
     ARRAY = ClassType.new('Array', :invariant)
     HASH = ClassType.new('Hash', :invariant)

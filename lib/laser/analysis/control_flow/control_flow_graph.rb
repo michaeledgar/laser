@@ -23,7 +23,7 @@ module Laser
 
         attr_accessor :root, :block_register, :final_exception, :final_return
         attr_reader :formals, :uses, :definition, :constants, :live, :globals
-        attr_reader :yield_type, :raise_type, :in_ssa
+        attr_reader :yield_type, :raise_type, :in_ssa, :yield_arity
         attr_reader :self_type, :formal_types, :block_type
         attr_reader :all_cached_variables
         # postdominator blocks for: all non-failed-yield exceptions, yield-failing
@@ -183,14 +183,26 @@ module Laser
             simulate([], :mutation => true)
           else
             static_single_assignment_form unless @in_ssa
+            Laser.debug_puts('>>> Starting CP <<<')
             perform_constant_propagation
+            Laser.debug_puts('>>> Finished CP <<<')
             if opts[:optimize]
+              Laser.debug_puts('>>> Killing Unexecuted Edges <<<')
               kill_unexecuted_edges
+              Laser.debug_puts('>>> Finished Killing Unexecuted Edges <<<')
+              Laser.debug_puts('>>> Pruning Totally Useless Blocks <<<')
               prune_totally_useless_blocks
+              Laser.debug_puts('>>> Finished Pruning Totally Useless Blocks <<<')
+              Laser.debug_puts('>>> Dead Code Discovery <<<')
               perform_dead_code_discovery
+              Laser.debug_puts('>>> Finished Dead Code Discovery <<<')
+              Laser.debug_puts('>>> Adding Unused Variable Warnings <<<')
               add_unused_variable_warnings
+              Laser.debug_puts('>>> Finished Adding Unused Variable Warnings <<<')
               # Don't need these anymore
+              Laser.debug_puts('>>> Pruning Unexecuted Blocks <<<')
               prune_unexecuted_blocks
+              Laser.debug_puts('>>> Finished Pruning Unexecuted Blocks <<<')
 
               find_yield_properties if @root.type != :program
               find_raise_properties

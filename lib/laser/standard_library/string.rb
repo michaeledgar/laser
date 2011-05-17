@@ -60,7 +60,7 @@ class String
   end
   # pure: true
   # builtin: true
-  # returns: Integer
+  # returns: Fixnum= | Bignum=
   def bytesize
   end
   # pure: true
@@ -218,12 +218,12 @@ class String
   end
   # pure: true
   # builtin: true
-  # returns: Integer
+  # returns: Fixnum= | Bignum=
   def hash
   end
   # pure: true
   # builtin: true
-  # returns: Integer
+  # returns: Fixnum= | Bignum=
   def hex
   end
   # pure: true
@@ -251,7 +251,7 @@ class String
   end
   # pure: true
   # builtin: true
-  # returns: Integer
+  # returns: Fixnum= | Bignum=
   def length
   end
   # pure: true
@@ -289,12 +289,12 @@ class String
   end
   # pure: true
   # builtin: true
-  # returns: Integer
+  # returns: Fixnum= | Bignum=
   def oct
   end
   # pure: true
   # builtin: true
-  # returns: Integer
+  # returns: Fixnum= | Bignum=
   def ord
   end
   # pure: true
@@ -348,7 +348,7 @@ class String
   end
   # pure: true
   # builtin: true
-  # returns: Integer
+  # returns: Fixnum= | Bignum=
   def size
   end
   # pure: true
@@ -433,7 +433,7 @@ class String
   end
   # pure: true
   # builtin: true
-  # returns: Integer
+  # returns: Fixnum= | Bignum=
   def to_i(base=10)
   end
   # pure: true

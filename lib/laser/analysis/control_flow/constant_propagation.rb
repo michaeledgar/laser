@@ -282,7 +282,8 @@ module Laser
           rescue TypeError => err
             type = Types::TOP
             raised = Frequency::ALWAYS
-            instruction.node.add_error(NoMatchingTypeSignature.new("No method named #{method_name} with matching types was found", instruction.node))
+            instruction.node.add_error(NoMatchingTypeSignature.new(
+                "No method named #{method_name} with matching types was found", instruction.node))
           else
             raised = raiseability_for_instruction(instruction)
           end
@@ -350,7 +351,7 @@ module Laser
           case instruction.type
           when :assign
             rhs = instruction[2]
-            if Bindings::GenericBinding === rhs
+            if Bindings::Base === rhs
               # temporary <- temporary
               new_value = rhs.value
               new_type = rhs.inferred_type
@@ -428,10 +429,12 @@ module Laser
             end
           elsif method_name == :===
             if LaserModule === receiver.value && args.first != UNDEFINED
-              result = Types.subtype?(args.first.expr_type, Types::ClassType.new(receiver.value.path, :covariant))
+              instance_type = args.first.expr_type
+              module_type = Types::ClassType.new(receiver.value.path, :covariant)
+              result = Types.subtype?(instance_type, module_type)
               if result
                 return [true, Types::TRUECLASS, Frequency::NEVER]
-              else
+              elsif !(Types.overlap?(instance_type, module_type))
                 return [false, Types::FALSECLASS, Frequency::NEVER]
               end
             end

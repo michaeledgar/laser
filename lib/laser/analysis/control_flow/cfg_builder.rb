@@ -12,6 +12,7 @@ module Laser
           @formals = formals
           @graph = @enter = @exit = nil
           @scope_stack = [scope]
+          @self_stack = []
           @temporary_counter = 0
           @temporary_table = Hash.new do |hash, keys|
             @temporary_counter += 1
@@ -21,8 +22,6 @@ module Laser
 
         def build
           initialize_graph
-          @namespace_stack = [ClassRegistry['Object'].binding]
-          @self_stack = []
           @current_node = @sexp
           @self_register = Bindings::TemporaryBinding.new('self', current_scope.self_ptr)
           build_prologue
@@ -37,23 +36,10 @@ module Laser
           @graph
         end
 
-        def push_namespace(class_or_mod)
-          @namespace_stack.push class_or_mod
-        end
-
         def current_namespace
-          @namespace_stack.last
-        end
-
-        def pop_namespace
-          @namespace_stack.pop
-        end
-        
-        def with_namespace(namespace)
-          push_namespace namespace
-          yield
-        ensure
-          pop_namespace
+          scope = current_scope
+          scope = scope.parent if @scope_stack.size == 1 && @sexp.type != :program
+          scope.lexical_target
         end
         
         def push_scope(scope)
@@ -88,9 +74,9 @@ module Laser
           @self_stack.pop
           copy_instruct(@self_register, current_self)
         end
-        
-        def with_self(obj)
-          push_self obj
+
+        def with_self(namespace)
+          push_self namespace
           yield
         ensure
           pop_self
@@ -147,7 +133,8 @@ module Laser
           reset_visibility_stack
           build_exception_blocks
           if @sexp.type != :program
-            push_scope(Scope::ClosedScope.new(current_scope, current_self))
+            dynamic_context = Scope::ClosedScope.new(current_scope, current_self)
+            @scope_stack = [dynamic_context]
             @block_arg = call_instruct(ClassRegistry['Laser#Magic'].binding,
                 :current_block, value: true, raise: false)
             @block_arg.name = 't#current_block'
@@ -911,7 +898,7 @@ module Laser
         end
         
         def return_instruct(node)
-          result = evaluate_args_into_array node[1][1]
+          result = evaluate_args_into_array node[1]
           return_uncond_jump_instruct result
         end
         
@@ -948,7 +935,7 @@ module Laser
 
         def yield_instruct_with_arg(node, opts={})
           opts = {raise: true, value: true}.merge(opts)
-          result = evaluate_args_into_array node[1][1]
+          result = evaluate_args_into_array node[1]
           yield_instruct result, opts
         end
 
@@ -958,6 +945,10 @@ module Laser
           if args[0] == :args_add_star
             # if there's a splat, always return an actual array object of all the arguments.
             compute_varargs(args)
+          elsif args[0] == :paren
+            evaluate_args_into_array(args[1])
+          elsif args[0] == :args_add_block
+            evaluate_args_into_array(args[1])
           elsif args.size > 1
             # if there's more than 1 argument, but no splats, then we just pack
             # them into an array and return that array.
@@ -1219,9 +1210,7 @@ module Laser
           start_block after_exists_check
           call_instruct(Bootstrap::VISIBILITY_STACK, :push, const_instruct(:public), raise: false, value: false)
           # use this namespace!
-          with_namespace the_class_holder do
-            module_eval_instruct(the_class_holder, body, opts)
-          end
+          module_eval_instruct(the_class_holder, body, opts)
           call_instruct(Bootstrap::VISIBILITY_STACK, :pop, raise: false, value: false)
         end
         
@@ -1269,9 +1258,7 @@ module Laser
           start_block after_exists_check
 
           call_instruct(Bootstrap::VISIBILITY_STACK, :push, const_instruct(:public), raise: false, value: false)
-          with_namespace the_module_holder do
-            module_eval_instruct(the_module_holder, body, opts)
-          end
+          module_eval_instruct(the_module_holder, body, opts)
           call_instruct(Bootstrap::VISIBILITY_STACK, :pop, raise: false, value: false)
         end
 
@@ -1291,19 +1278,14 @@ module Laser
 
           start_block has_singleton
           singleton = call_instruct(receiver_val, :singleton_class, value: true, raise: false)
-          with_namespace singleton do
-            module_eval_instruct(singleton, body, opts)
-          end
+          module_eval_instruct(singleton, body, opts)
         end
 
-        # Runs the block as a module evaluation by the given receiver. When
-        # we call module_eval, we know its raising characteristics, so we
-        # can generate efficient jumps here.
-        #
-        # TODO(adgar): figure out resume...
-        def module_eval_instruct(receiver, body, opts = {value: false})
-          with_self(receiver) do
-            result = walk_node body, opts
+        def module_eval_instruct(new_self, body, opts)
+          with_scope(ClosedScope.new(current_scope, new_self)) do
+            with_self new_self do
+              walk_node body, opts
+            end
           end
         end
 
@@ -1392,7 +1374,7 @@ module Laser
         end
         
         def evaluate_if_needed(node, opts={})
-          if Bindings::GenericBinding === node
+          if Bindings::Base === node
             node
           else
             walk_node(node, opts)
@@ -1426,7 +1408,7 @@ module Laser
             # rhs may or may not be evaluated, and we're okay with that
             multiple_assign_instruct(lhs[1], rhs, opts)
           else
-            if Bindings::GenericBinding === rhs
+            if Bindings::Base === rhs
               rhs_val = rhs
             elsif rhs.type == :mrhs_new_from_args || rhs.type == :args_add_star ||
                   rhs.type == :mrhs_add_star
@@ -1857,7 +1839,7 @@ module Laser
         # This is different from normal splatting because we are computing based
         # upon the argument list of the method, not a normal arg_ node.
         #
-        # returns: (Bindings::GenericBinding | [Bindings::GenericBinding], Boolean)
+        # returns: (Bindings::Base | [Bindings::Base], Boolean)
         def compute_zsuper_arguments(node)
           args_to_walk = node.scope.method.arguments
           is_vararg = args_to_walk.any? { |arg| arg.kind == :rest }

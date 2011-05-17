@@ -35,6 +35,7 @@ module Laser
         if Scope.const_defined?("GlobalScope")
           raise BootstrappingError.new('GlobalScope has already been initialized')
         else
+          global.lexical_target = object_class.binding
           Scope.const_set("GlobalScope", global) 
         end
         class_scope.parent = Scope::GlobalScope

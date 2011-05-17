@@ -97,6 +97,9 @@ module Laser
 
       def compiled_cfg
         return @cfg if @cfg
+        # since this is lazily compiling, we should update cref to reflect the runtime
+        # value before compiling. hackish.
+        @ast_node.scope.lexical_target = @ast_node.scope.self_ptr.value.binding
         builder = ControlFlow::GraphBuilder.new(@ast_node, @arguments, @ast_node.scope)
         @cfg = builder.build
       end
