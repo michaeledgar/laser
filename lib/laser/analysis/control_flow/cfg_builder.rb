@@ -110,11 +110,13 @@ module Laser
           end
           with_current_basic_block(joined) do
             copy_instruct(@graph.final_exception, @exception_register)
-            uncond_instruct @exit, flags: RGL::ControlFlowGraph::EDGE_ABNORMAL
+            add_instruction(:raise, @graph.final_exception)
+            uncond_instruct @exit, flags: RGL::ControlFlowGraph::EDGE_ABNORMAL, jump_instruct: false
           end
           with_current_basic_block(@current_return) do
             copy_instruct(@graph.final_return, @return_register)
-            uncond_instruct @exit
+            add_instruction(:return, @graph.final_return)
+            uncond_instruct @exit, jump_instruct: false
           end
         end
 
@@ -390,7 +392,7 @@ module Laser
               # TODO(adgar): blocks in args & style
               invoke_super_with_block(*compute_zsuper_arguments(node), false, opts)
             when :yield
-              yield_instruct_with_arg(node, opts)
+              yield_instruct(node[1], opts)
             when :yield0
               yield_instruct(nil, opts)
             when :return
@@ -824,11 +826,11 @@ module Laser
         # user's block. The basic block object created is provided as a parameter to the
         # caller's operations which have the possibility of invoking the block.
         def call_with_explicit_block(block_arg_bindings, block_sexp)
-          after = create_block
-          body_value = call_block_instruct block_arg_bindings, block_sexp
+          body_value = create_block_temporary block_arg_bindings, block_sexp
           body_block = create_block
-          result = yield(body_block, after)
-          block_funcall_branch_instruct(body_block, after)
+          @graph.add_edge(@current_block, body_block, ControlFlowGraph::EDGE_BLOCK_TAKEN | ControlFlowGraph::EDGE_ABNORMAL)
+          result = yield(body_value)
+          after = @current_block  # new block caused by method call
           walk_block_body body_block, block_sexp, after
           start_block after
           result
@@ -836,15 +838,15 @@ module Laser
 
         def call_zsuper_with_block(node, block_arg_bindings, block_sexp, opts={})
           opts = {value: true, raise: true}.merge(opts)
-          call_with_explicit_block(block_arg_bindings, block_sexp) do |body_block, after|
-            invoke_super_with_block *compute_zsuper_arguments(node), body_block.name, opts
+          call_with_explicit_block(block_arg_bindings, block_sexp) do |body_value|
+            invoke_super_with_block *compute_zsuper_arguments(node), body_value, opts
           end
         end
 
         def call_method_with_block(receiver, method, args, block_arg_bindings, block_sexp, opts={})
           opts = {value: true, raise: true}.merge(opts)
-          call_with_explicit_block(block_arg_bindings, block_sexp) do |body_block, after|
-            generic_call_instruct receiver, method, args, body_block.name, opts
+          call_with_explicit_block(block_arg_bindings, block_sexp) do |body_value|
+            generic_call_instruct receiver, method, args, body_value, opts
           end
         end
         
@@ -869,7 +871,7 @@ module Laser
         def walk_block_body(body_block, body, after)
           start_block body_block
           body_result = walk_body body, value: true
-          add_instruction(:resume, body_result)
+          add_instruction(:return, body_result)
           @graph.add_edge(@current_block, current_rescue, RGL::ControlFlowGraph::EDGE_ABNORMAL)
           cond_instruct(nil, body_block, after, :branch_instruct => false)
         end
@@ -911,8 +913,7 @@ module Laser
         
         # Performs a yield of the given value, capturing the return
         # value.
-        def yield_instruct(arg=nil, opts={})
-          call_args = arg ? [arg] : []
+        def yield_instruct(arg_node, opts={})
           opts = {raise: true, value: true}.merge(opts)
           # this is: if @block_arg; @block_arg.call(args)
           #          else raise LocalJumpError.new(...)
@@ -928,8 +929,12 @@ module Laser
               target: current_yield_fail)
           
           start_block if_block
-          result = call_instruct(@block_arg, :call, *call_args, opts)
-
+          if arg_node.nil?
+            result = call_instruct(@block_arg, :call, opts)
+          else
+            arg_node = arg_node[1] if arg_node[0] == :paren
+            result = generic_call_instruct(@block_arg, :call, arg_node[1], nil, opts)
+          end
           result
         end
 
@@ -1757,16 +1762,6 @@ module Laser
           
           start_block after
           result
-        end
-
-        # Creates a block for a method send operation. Requires a binding list
-        # and a sexp for the body of the block.
-        #
-        # args: [Argument]
-        # body: Sexp
-        # returns: (TemporaryBinding, BasicBlock)
-        def call_block_instruct(args, body)
-          create_block_temporary(args, body)
         end
         
         def issue_call(node, opts={})

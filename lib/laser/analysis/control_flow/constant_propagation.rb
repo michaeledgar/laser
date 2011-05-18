@@ -120,7 +120,7 @@ module Laser
           case instruction.type
           when :branch
             constant_propagation_for_branch(instruction, blocklist)
-          when :jump
+          when :jump, :raise, :return
             succ = block.real_successors.first
             constant_propagation_consider_edge block, succ, blocklist
           when :resume
@@ -381,6 +381,8 @@ module Laser
           when :call_vararg, :super, :super_vararg
             new_value = VARYING
             new_type = Types::TOP
+          when :return, :raise
+            return false  # not applicable
           end
           if original != new_value
             target.bind! new_value

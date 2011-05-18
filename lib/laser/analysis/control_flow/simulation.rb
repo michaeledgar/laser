@@ -7,12 +7,16 @@ module Laser
         class SimulationError < StandardError; end
         class NonDeterminismHappened < StandardError; end
         class SimulationNonterminationError < StandardError; end
+        class ExitedNormally < StandardError
+          attr_reader :result
+          def initialize(result)
+            @result = result
+          end
+        end
         class ExitedAbnormally < StandardError
+          attr_reader :error
           def initialize(error)
             @error = error
-          end
-          def error
-            @error
           end
         end
         DEFAULT_SIMULATION_OPTS = {on_raise: :annotate}
@@ -24,18 +28,14 @@ module Laser
           current_block = @enter
           previous_block = nil
           begin
-            done = raised = false
-            begin
+            loop do
               next_block = simulate_block(current_block, opts.merge(:previous_block => previous_block))
               current_block.add_flag(next_block, ControlFlowGraph::EDGE_EXECUTABLE)
-              if next_block.name == 'Exit'
-                done = true
-                if current_block.has_flag?(next_block, ControlFlowGraph::EDGE_ABNORMAL)
-                  raise ExitedAbnormally.new(@final_exception.value)
-                end
-              end
               current_block, previous_block = next_block, current_block
-            end until done
+            end
+          rescue ExitedNormally => err
+            current_block.add_flag(@exit, ControlFlowGraph::EDGE_EXECUTABLE)
+            err.result
           rescue NonDeterminismHappened => err
             Laser.debug_puts "Simulation ended at nondeterminism: #{err.message}"
             Laser.debug_p err.backtrace
@@ -43,6 +43,7 @@ module Laser
             Laser.debug_puts "Simulation failed to terminate: #{err.message}"
             Laser.debug_p err.backtrace
           rescue ExitedAbnormally => err
+            current_block.add_flag(@exit, ControlFlowGraph::EDGE_EXECUTABLE)
             if opts[:on_raise] == :annotate
               msg = LaserObject === err.error ? err.error.laser_simulate('message', []) : err.error.message
               Laser.debug_puts "Simulation exited abnormally: #{msg}"
@@ -98,6 +99,10 @@ module Laser
               Laser.debug_puts "Exception raised by call, taking abnormal edge. Error: #{err.message}"
               insn.block.abnormal_successors.first
             end
+          when :return
+            raise ExitedNormally.new(insn[1].value)
+          when :raise
+            raise ExitedAbnormally.new(insn[1].value)
           end 
         end
         

@@ -172,6 +172,7 @@ module Kernel
   end
   # raises: never
   def p(*args)
+    args
   end
   def eval(string, bndg = nil, filename = nil, lineno = nil)
   end

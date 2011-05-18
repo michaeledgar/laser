@@ -184,6 +184,9 @@ module Laser
               else arg.inspect
               end
             end
+            if ::Hash === ins.last && ins.last[:block]
+              args << {block: ins.last[:block].name}
+            end
             [opcode, *args].join(', ')
           end.join('\\n')
         end

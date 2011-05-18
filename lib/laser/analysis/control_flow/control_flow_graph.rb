@@ -173,14 +173,14 @@ module Laser
           @block_type = new_block_type
         end
 
-        DEFAULT_ANALYSIS_OPTS = {optimize: true}
+        DEFAULT_ANALYSIS_OPTS = {optimize: true, simulate: true}
         # Runs full analysis on the CFG. Puts it in SSA then searches for warnings.
         def analyze(opts={})
           opts = DEFAULT_ANALYSIS_OPTS.merge(opts)
           # kill obvious dead code now.
           perform_dead_code_discovery(true)
           if @root.type == :program
-            simulate([], :mutation => true)
+            simulate([], :mutation => true) if opts[:simulate]
           else
             static_single_assignment_form unless @in_ssa
             Laser.debug_puts('>>> Starting CP <<<')

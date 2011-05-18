@@ -11,6 +11,7 @@ module RGL
     EDGE_ABNORMAL = 1 << 1
     EDGE_FAKE = 1 << 2
     EDGE_EXECUTABLE = 1 << 3
+    EDGE_BLOCK_TAKEN = 1 << 4
 
     include Enumerable
     include MutableGraph
@@ -66,6 +67,10 @@ module RGL
       self[u].successors << v
       self[v].predecessors << u
       u.set_flag(v, flags)
+    end
+
+    def is_block_taken?(src, dest)
+      src.has_flag?(dest, EDGE_BLOCK_TAKEN)
     end
 
     def is_abnormal?(src, dest)
