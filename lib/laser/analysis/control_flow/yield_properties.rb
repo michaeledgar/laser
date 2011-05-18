@@ -39,8 +39,7 @@ module Laser
                         end
           @yield_arity = calculate_yield_arity(weak_with_calls)
         end
-        
-        # Unpack tuple types!
+
         def calculate_yield_arity(calls)
           yield_arity = Set.new
           calls.each do |call|

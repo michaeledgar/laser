@@ -34,7 +34,8 @@ module Laser
               current_block, previous_block = next_block, current_block
             end
           rescue ExitedNormally => err
-            current_block.add_flag(@exit, ControlFlowGraph::EDGE_EXECUTABLE)
+            current_block.add_flag(current_block.real_successors.first,
+                ControlFlowGraph::EDGE_EXECUTABLE)
             err.result
           rescue NonDeterminismHappened => err
             Laser.debug_puts "Simulation ended at nondeterminism: #{err.message}"
@@ -43,7 +44,8 @@ module Laser
             Laser.debug_puts "Simulation failed to terminate: #{err.message}"
             Laser.debug_p err.backtrace
           rescue ExitedAbnormally => err
-            current_block.add_flag(@exit, ControlFlowGraph::EDGE_EXECUTABLE)
+            current_block.add_flag(current_block.real_successors.first,
+                ControlFlowGraph::EDGE_EXECUTABLE)
             if opts[:on_raise] == :annotate
               msg = LaserObject === err.error ? err.error.laser_simulate('message', []) : err.error.message
               Laser.debug_puts "Simulation exited abnormally: #{msg}"
@@ -54,8 +56,6 @@ module Laser
           rescue NotImplementedError => err
             Laser.debug_puts "Simulation attempted: #{err.message}"
             Laser.debug_p err.backtrace
-          else
-            @final_return.value
           end
         end
         

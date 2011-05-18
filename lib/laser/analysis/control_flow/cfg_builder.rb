@@ -828,7 +828,8 @@ module Laser
         def call_with_explicit_block(block_arg_bindings, block_sexp)
           body_value = create_block_temporary block_arg_bindings, block_sexp
           body_block = create_block
-          @graph.add_edge(@current_block, body_block, ControlFlowGraph::EDGE_BLOCK_TAKEN | ControlFlowGraph::EDGE_ABNORMAL)
+          @graph.add_edge(@current_block, body_block,
+              ControlFlowGraph::EDGE_BLOCK_TAKEN | ControlFlowGraph::EDGE_ABNORMAL)
           result = yield(body_value)
           after = @current_block  # new block caused by method call
           walk_block_body body_block, block_sexp, after
@@ -857,13 +858,6 @@ module Laser
           then super_vararg_instruct(args, {:block => body_block}.merge(opts))
           else super_instruct(*args, {:block => body_block}.merge(opts))
           end
-        end
-        
-        # Performs the branches either into the block or around it. Later, this
-        # method can provide logic for skipping provably skippable edges.
-        def block_funcall_branch_instruct(body_block, after_block)
-          @graph.add_edge(@current_block, body_block)
-          @graph.add_edge(@current_block, after_block)
         end
         
         # Walks the block with it's new next/etc. boundaries set based on the block's
