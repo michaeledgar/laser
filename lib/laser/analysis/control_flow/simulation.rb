@@ -208,7 +208,6 @@ module Laser
             result = method.simulate_with_args(receiver, args, block, mutation: true)
             Laser.debug_puts "Finished simulating #{method.owner.name}##{method.name} => #{result.inspect}"
             result
-            # simulate CFG
           end
         end
         
