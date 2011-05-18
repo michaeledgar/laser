@@ -9,7 +9,7 @@ module ScopeSpecHelpers
   end
 end
 
-describe Scope::GlobalScope do
+describe Scope::GlobalScope do  
   it 'is a closed scope' do
     Scope::GlobalScope.should be_a(ClosedScope)
   end

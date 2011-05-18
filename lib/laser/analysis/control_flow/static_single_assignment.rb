@@ -59,6 +59,11 @@ module Laser
               ssa_name_for(temp).uses << ins
               new_operands << ssa_name_for(temp)
             end
+            if ins.block_operand
+              new_block_operand = ssa_name_for(ins.block_operand)
+              new_block_operand.uses << ins
+              ins.replace_block_operand(new_block_operand)
+            end
             ins.replace_operands(new_operands) unless ins.operands.empty?
             ins.explicit_targets.each do |temp|
               @name_stack[temp].push(new_ssa_name(temp))

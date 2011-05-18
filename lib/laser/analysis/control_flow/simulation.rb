@@ -24,8 +24,8 @@ module Laser
         # how we should treat the global environment/self object.
         def simulate(formal_vals=[], opts={})
           opts = DEFAULT_SIMULATION_OPTS.merge(opts)
-          assign_formals(formal_vals, opts)
-          current_block = @enter
+          opts[:formals] = formal_vals
+          current_block = opts[:start_block] || @enter
           previous_block = nil
           begin
             loop do
@@ -92,7 +92,7 @@ module Laser
               insn.block.normal_successors.first
             rescue ExitedAbnormally => err
               Laser.debug_puts "Exception raised by call, taking abnormal edge. Error: #{err.message}"
-              insn.block.abnormal_successors.first
+              insn.block.exception_successors.first
             end
           when :return
             raise ExitedNormally.new(insn[1].value)
@@ -108,7 +108,6 @@ module Laser
           case insn[0]
           when :assign then simulate_assignment(insn[1], insn[2], opts)
           when :call, :call_vararg
-            args = insn[0] == :call ? insn[4..-2].map(&:value) : insn[4].value
             # cases: special method we intercept, builtin we direct-send, and cfg we simulate
             receiver = insn[2].value
             klass = if Bindings::ConstantBinding === insn[2]
@@ -123,7 +122,9 @@ module Laser
               Bootstrap::EXCEPTION_STACK.value.push(missing_method_error)
               raise ExitedAbnormally.new(missing_method_error)
             elsif should_simulate_call(method, opts)
-              result = simulate_call(receiver, method, args, insn[-1][:block])
+              args = insn[0] == :call ? insn[4..-2].map(&:value) : insn[4].value
+              block_to_use = insn[-1][:block] && insn[-1][:block].value
+              result = simulate_call(receiver, method, args, block_to_use, opts)
               insn[1].bind! result if insn[1]
             else
               raise NonDeterminismHappened.new("Nondeterministic call: #{method.inspect}")
@@ -153,47 +154,23 @@ module Laser
           method.predictable && (opts[:mutation] || !method.mutation)
         end
         
-        def simulate_call(receiver, method, args, block)
+        def simulate_call(receiver, method, args, block, opts)
+          Laser.debug_puts("simulate_call(#{receiver.inspect}, #{method.name}, #{args.inspect}, #{block.inspect}, #{opts.inspect})")
           if method.special
-            case method
-            when ClassRegistry['Class'].singleton_class.instance_method('allocate')
-              LaserObject.new(receiver, nil)
-            when ClassRegistry['Class'].singleton_class.instance_method('new')
-              LaserClass.new(ClassRegistry['Class'], nil) do |klass|
-                klass.superclass = args.first
-              end
-            when ClassRegistry['Module'].singleton_class.instance_method('new')
-              LaserModule.new
-            when ClassRegistry['Kernel'].instance_method('require')
-              simulate_require(args)
-            when ClassRegistry['Module'].instance_method('module_eval')
-              simulate_module_eval(args)
-            when ClassRegistry['Laser#Magic'].singleton_class.instance_method('get_global')
-              Scope::GlobalScope.lookup(args.first).value
-            when ClassRegistry['Laser#Magic'].singleton_class.instance_method('set_global')
-              Scope::GlobalScope.lookup(args[0]).bind!(args[1])
-            when ClassRegistry['Laser#Magic'].singleton_class.instance_method('current_self')
-              @simulated_self
-            when ClassRegistry['Laser#Magic'].singleton_class.instance_method('current_arity')
-              @simulated_args.size
-            when ClassRegistry['Laser#Magic'].singleton_class.instance_method('current_argument')
-              @simulated_args[args.first]
-            when ClassRegistry['Laser#Magic'].singleton_class.instance_method('current_argument_range')
-              @simulated_args[args[0], args[1]]
-            when ClassRegistry['Laser#Magic'].singleton_class.instance_method('current_exception')
-              Bootstrap::EXCEPTION_STACK.value.last
-            when ClassRegistry['Laser#Magic'].singleton_class.instance_method('push_exception')
-              Bootstrap::EXCEPTION_STACK.value.push args[0]
-            when ClassRegistry['Laser#Magic'].singleton_class.instance_method('pop_exception')
-              Bootstrap::EXCEPTION_STACK.value.pop
-            when Scope::GlobalScope.self_ptr.singleton_class.instance_method('private')
-              ClassRegistry['Object'].private(*args)
-            when Scope::GlobalScope.self_ptr.singleton_class.instance_method('public')
-              ClassRegistry['Object'].public(*args)
-            end
+            simulate_special_method(receiver, method, args, block, opts)
           elsif method.builtin
             begin
-              receiver.send(method.name, *args)
+              if !block
+                receiver.send(method.name, *args)
+              else
+                receiver.send(method.name, *args) do |*given_args, &given_blk|
+                  # self is this because no builtins change self... right?
+                  block.cfg.simulate(given_args,
+                    {self: opts[:self], block: given_blk, start_block: block.start_block})
+                end
+              end
+            # Extremely unsafe exception handler: assumes my code does not raise
+            # exceptions!
             rescue Exception => err
               Bootstrap::EXCEPTION_STACK.value.push(err)
               raise ExitedAbnormally.new(err)
@@ -206,16 +183,52 @@ module Laser
           end
         end
         
-        # Fills in the formal variables with respect to rest args and whatnot.
-        # Unused for now because simulation only happens @ top level.
-        def assign_formals(formal_vals, opts)
+        def simulate_special_method(receiver, method, args, block, opts)
+          case method
+          when ClassRegistry['Class'].singleton_class.instance_method('allocate')
+            LaserObject.new(receiver, nil)
+          when ClassRegistry['Class'].singleton_class.instance_method('new')
+            LaserClass.new(ClassRegistry['Class'], nil) do |klass|
+              klass.superclass = args.first
+            end
+          when ClassRegistry['Module'].singleton_class.instance_method('new')
+            LaserModule.new
+          when ClassRegistry['Kernel'].instance_method('require')
+            simulate_require(args)
+          when ClassRegistry['Module'].instance_method('module_eval')
+            simulate_module_eval(receiver, args, block)
+          when ClassRegistry['Laser#Magic'].singleton_class.instance_method('get_global')
+            Scope::GlobalScope.lookup(args.first).value
+          when ClassRegistry['Laser#Magic'].singleton_class.instance_method('set_global')
+            Scope::GlobalScope.lookup(args[0]).bind!(args[1])
+          when ClassRegistry['Laser#Magic'].singleton_class.instance_method('current_self')
+            opts[:self]
+          when ClassRegistry['Laser#Magic'].singleton_class.instance_method('current_block')
+            opts[:block]
+          when ClassRegistry['Laser#Magic'].singleton_class.instance_method('current_arity')
+            opts[:formals].size
+          when ClassRegistry['Laser#Magic'].singleton_class.instance_method('current_argument')
+            opts[:formals][args.first]
+          when ClassRegistry['Laser#Magic'].singleton_class.instance_method('current_argument_range')
+            opts[:formals][args[0], args[1]]
+          when ClassRegistry['Laser#Magic'].singleton_class.instance_method('current_exception')
+            Bootstrap::EXCEPTION_STACK.value.last
+          when ClassRegistry['Laser#Magic'].singleton_class.instance_method('push_exception')
+            Bootstrap::EXCEPTION_STACK.value.push args[0]
+          when ClassRegistry['Laser#Magic'].singleton_class.instance_method('pop_exception')
+            Bootstrap::EXCEPTION_STACK.value.pop
+          when Scope::GlobalScope.self_ptr.singleton_class.instance_method('private')
+            ClassRegistry['Object'].private(*args)
+          when Scope::GlobalScope.self_ptr.singleton_class.instance_method('public')
+            ClassRegistry['Object'].public(*args)
+          end
+        end
+        
+        def reset_simulation!
           all_variables.each do |temp|
             temp.bind! UNDEFINED
             temp.inferred_type = nil
           end
-          @simulated_block = opts[:block]
-          @simulated_self  = opts[:self]
-          @simulated_args = formal_vals
           vertices.each do |block|
             block.successors.each do |succ|
               block.remove_flag(succ, ControlFlowGraph::EDGE_EXECUTABLE)
@@ -244,7 +257,7 @@ module Laser
           raise LoadError.new("No such file: #{file}")
         end
         
-        def simulate_module_eval(args)
+        def simulate_module_eval(receiver, args, block)
           # essentially: parse, compile with a custom scope + lexical target (cref), simulate.
           if args.size > 0
             text = args[0]
@@ -254,7 +267,7 @@ module Laser
             Annotations.ordered_annotations.each do |annotator|
               annotator.annotate_with_text(tree, text)
             end
-            custom_scope = ClosedScope.new(Scope::GlobalScope, @simulated_self.binding)
+            custom_scope = ClosedScope.new(Scope::GlobalScope, receiver.binding)
             cfg = GraphBuilder.new(tree, [], custom_scope).build
             cfg.analyze
           end

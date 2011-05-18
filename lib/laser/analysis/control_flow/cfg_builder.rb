@@ -142,7 +142,7 @@ module Laser
             @block_arg.name = 't#current_block'
             @graph.block_register = @block_arg
             reobserve_current_exception
-            build_formal_args unless @formals.empty?
+            build_formal_args(@formals, :block_arg => @block_arg) unless @formals.empty?
           end
         end
         
@@ -170,10 +170,10 @@ module Laser
           end
         end
         
-        def build_formal_args
-          @formals.each { |formal| current_scope.add_binding!(formal) }
+        def build_formal_args(formals, opts={})
+          formals.each { |formal| current_scope.add_binding!(formal) }
 
-          nb_formals = @formals.last.is_block? ? @formals[0..-2] : @formals
+          nb_formals = formals.last.is_block? ? formals[0..-2] : formals
           has_rest  = rest_arg = nb_formals.find(&:is_rest?)
           min_arity = nb_formals.count(&:is_positional?)
           optionals = nb_formals.select(&:is_optional?)
@@ -239,8 +239,16 @@ module Laser
                 const_instruct(post_dynamic_positional.size), value: true, raise: false)
             copy_positionals_with_offset(post_dynamic_positional, post_dynamic_start)
           end
-          block_arg = @formals.find(&:is_block?)
-          copy_instruct(block_arg, @block_arg) if block_arg
+          block_arg = formals.find(&:is_block?)
+          if block_arg
+            if opts[:block_arg]
+              the_block = opts[:block_arg]
+            else
+              the_block = call_instruct(ClassRegistry['Laser#Magic'].binding,
+                  :current_block, value: true, raise: false)
+            end
+            copy_instruct(block_arg, the_block)
+          end
         end
         
         # Creates a new block that jumps to the given target upon completion.
@@ -826,13 +834,13 @@ module Laser
         # user's block. The basic block object created is provided as a parameter to the
         # caller's operations which have the possibility of invoking the block.
         def call_with_explicit_block(block_arg_bindings, block_sexp)
-          body_value = create_block_temporary block_arg_bindings, block_sexp
           body_block = create_block
+          body_value = create_block_temporary block_arg_bindings, block_sexp, body_block
           @graph.add_edge(@current_block, body_block,
               ControlFlowGraph::EDGE_BLOCK_TAKEN | ControlFlowGraph::EDGE_ABNORMAL)
           result = yield(body_value)
           after = @current_block  # new block caused by method call
-          walk_block_body body_block, block_sexp, after
+          walk_block_body block_arg_bindings, body_block, block_sexp, after
           start_block after
           result
         end
@@ -862,9 +870,13 @@ module Laser
         
         # Walks the block with it's new next/etc. boundaries set based on the block's
         # scope
-        def walk_block_body(body_block, body, after)
+        def walk_block_body(block_arg_bindings, body_block, body, after)
           start_block body_block
-          body_result = walk_body body, value: true
+          body_result = nil
+          with_self(query_self) do
+            build_formal_args(block_arg_bindings)
+            body_result = walk_body body, value: true
+          end
           add_instruction(:return, body_result)
           @graph.add_edge(@current_block, current_rescue, RGL::ControlFlowGraph::EDGE_ABNORMAL)
           cond_instruct(nil, body_block, after, :branch_instruct => false)
@@ -2304,10 +2316,14 @@ module Laser
         end
         
         # Creates a block temporary variable with an unused name.
-        def create_block_temporary(args, body, cfg_entry=nil)
+        def create_block_temporary(args, body, cfg_built_start=nil)
           @temporary_counter += 1
           name = current_temporary('B-')
-          new_proc = LaserProc.new(args, body, cfg_entry)
+          if cfg_built_start
+            new_proc = LaserProc.new(args, body, @graph, cfg_built_start)
+          else
+            new_proc = LaserProc.new(args, body)
+          end
           binding = Bindings::BlockBinding.new(name, nil)
           add_instruction(:assign, binding, new_proc)
           binding

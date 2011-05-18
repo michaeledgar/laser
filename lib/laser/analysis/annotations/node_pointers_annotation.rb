@@ -12,6 +12,12 @@ module Laser
         else parent.ancestors + [parent]
         end
       end
+      add_computed_property :root do
+        case parent
+        when nil then self
+        else parent.root
+        end
+      end
 
       # Replaces the general node visit method with one that assigns
       # the current scope to the visited node.

@@ -59,4 +59,18 @@ end
 EOF
     g.should have_error(Laser::DeadCodeWarning).on_line(7)
   end
+  
+  it 'should find code that never runs due to CP + local type inference' do
+    g = cfg_method <<-EOF
+def foo
+  a = gets
+  if a.strip  # no !, always returns a String
+    10
+  else
+    20  # dead code
+  end
+end
+EOF
+    g.should have_error(Laser::DeadCodeWarning).on_line(6)
+  end
 end

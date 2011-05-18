@@ -91,6 +91,16 @@ module Laser
           predecessors.select { |dest| dest.has_flag?(self, ::RGL::ControlFlowGraph::EDGE_ABNORMAL) }
         end
 
+        def exception_successors
+          successors.select { |dest| has_flag?(dest, ::RGL::ControlFlowGraph::EDGE_ABNORMAL) &&
+                                    !has_flag?(dest, ::RGL::ControlFlowGraph::EDGE_BLOCK_TAKEN) }
+        end
+
+        def exception_predecessors
+          predecessors.select { |dest| dest.has_flag?(self, ::RGL::ControlFlowGraph::EDGE_ABNORMAL) &&
+                                      !dest.has_flag?(self, ::RGL::ControlFlowGraph::EDGE_BLOCK_TAKEN) }
+        end
+
         def executed_successors
           successors.select { |dest| has_flag?(dest, ::RGL::ControlFlowGraph::EDGE_EXECUTABLE) }
         end
@@ -144,7 +154,7 @@ module Laser
         end
 
         def fall_through_block?
-          instructions.empty?# || instructions.last.type == :call
+          instructions.empty?
         end
 
         def remove_successor(u)

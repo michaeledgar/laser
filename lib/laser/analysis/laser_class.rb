@@ -78,11 +78,12 @@ module Laser
     end
 
     class LaserProc < LaserObject
-      attr_accessor :ast_node, :arguments, :cfg
-      def initialize(arguments, ast_node, cfg=nil)
+      attr_accessor :ast_node, :arguments, :cfg, :start_block
+      def initialize(arguments, ast_node, cfg = nil, start_block = nil)
         @ast_node = ast_node
         @arguments = arguments
         @cfg = cfg
+        @start_block = start_block
       end
 
       def inspect
@@ -102,6 +103,10 @@ module Laser
         @ast_node.scope.lexical_target = @ast_node.scope.self_ptr.value.binding
         builder = ControlFlow::GraphBuilder.new(@ast_node, @arguments, @ast_node.scope)
         @cfg = builder.build
+      end
+
+      def call(*args, &blk)
+        
       end
 
       def ssa_cfg
@@ -701,7 +706,8 @@ module Laser
         self_type = Utilities.type_for(new_self)
         formal_types = args.map { |arg| Utilities.type_for(arg) }
         block_type = Utilities.type_for(block)
-        cfg_for_types(self_type, formal_types, block_type).dup.simulate(args, opts.merge(self: new_self, block: block))
+        cfg_for_types(self_type, formal_types, block_type).dup.simulate(
+            args, opts.merge(self: new_self, block: block, start_block: @proc.start_block))
       end
 
       def arguments

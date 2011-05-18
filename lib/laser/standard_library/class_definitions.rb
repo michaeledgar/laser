@@ -98,25 +98,15 @@ class Module
   end
   # pure: true
   def attr_reader(*syms)
-    i = syms.size
-    while i > 0
-      module_eval("def #{syms[i-1]}; @#{syms[i-1]}; end")
-      i -= 1
+    syms.each do |sym|
+      module_eval("def #{sym}; @#{sym}; end")
     end
-    # ([sym] + syms).each do |ivar|
-    #   module_eval("def #{ivar}; @#{ivar}; end")
-    # end
   end
   # pure: true
   def attr_writer(*syms)
-    i = syms.size
-    while i > 0
-      module_eval("def #{syms[i-1]}=(val); @#{syms[i-1]} = val; end")
-      i -= 1
+    syms.each do |sym|
+      module_eval("def #{sym}=(val); @#{sym} = val; end")
     end
-    # ([sym] + syms).each do |ivar|
-    #       module_eval("def #{ivar}=(val); @#{ivar} = val; end")
-    #     end
   end
   # pure: true
   def attr_accessor(*syms)

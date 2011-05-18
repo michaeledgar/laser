@@ -31,12 +31,17 @@ module Laser
             case arg
             when Bindings::ConstantBinding then arg
             when Bindings::Base then temp_lookup[arg]
+            when ::Hash
+              if arg[:block]
+              then arg.merge(block: temp_lookup[arg[:block]])
+              else arg
+              end
             else arg.dup rescue arg
             end
           end
           
           new_body.unshift(self[0])  # self[0] always symbol
-          new_opts = {node: @node, block: @block, ignore_privacy: @ignore_privacy}.merge(opts)
+          new_opts = {node: @node, block: temp_lookup[@block], ignore_privacy: @ignore_privacy}.merge(opts)
           self.class.new(new_body, new_opts)
         end
 
@@ -121,7 +126,15 @@ module Laser
             ::Set[]
           end
         end
-  
+
+        def block_operand
+          ::Hash === last ? last[:block] : nil
+        end
+        
+        def replace_block_operand(new_block)
+          last[:block] = new_block
+        end
+
         # Gets all bindings that are operands in this instruction
         def operands
           self[operand_range].select { |x| Bindings::Base === x}

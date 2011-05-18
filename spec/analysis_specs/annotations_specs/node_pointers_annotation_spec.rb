@@ -38,6 +38,16 @@ describe NodePointersAnnotation do
                             [tree, tree[2]] => [tree[2][1], tree[2][3]] } )
   end
   
+  it 'adds the #root method to Sexp' do
+    Sexp.instance_methods.should include(:root)
+  end
+  
+  it 'can compute the root from any node in the tree' do
+    tree = Sexp.new(Ripper.sexp('x = proc {|x, *rst, &blk| p x ** rst[0]; blk.call(rst[1..-1])}'))
+    NodePointersAnnotation.new.annotate!(tree)
+    tree.dfs { |node| node.root.should be tree }
+  end
+  
   # This will actually verify that every node in the tree has a
   # proper parent set. It's a complex, but thorough test.
   it 'adds parents to each node with a real-world parse result' do
