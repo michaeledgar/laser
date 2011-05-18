@@ -86,9 +86,15 @@ module Laser
         global = Scope::GlobalScope
         class_class = ClassRegistry['Class']
         object_class = ClassRegistry['Object']
-        true_class = LaserSingletonClass.new(class_class, ClosedScope.new(Scope::GlobalScope, nil), 'TrueClass', 'true')
-        false_class = LaserSingletonClass.new(class_class, ClosedScope.new(Scope::GlobalScope, nil), 'FalseClass', 'false')
-        nil_class = LaserSingletonClass.new(class_class, ClosedScope.new(Scope::GlobalScope, nil), 'NilClass', 'nil')
+        true_class = LaserSingletonClass.new(class_class, ClosedScope.new(Scope::GlobalScope, nil), 'TrueClass', 'true') do |klass|
+          klass.superclass = object_class
+        end
+        false_class = LaserSingletonClass.new(class_class, ClosedScope.new(Scope::GlobalScope, nil), 'FalseClass', 'false') do |klass|
+          klass.superclass = object_class
+        end
+        nil_class = LaserSingletonClass.new(class_class, ClosedScope.new(Scope::GlobalScope, nil), 'NilClass', 'nil') do |klass|
+          klass.superclass = object_class
+        end
         object_class.const_set('TrueClass', true_class)
         object_class.const_set('FalseClass', true_class)
         object_class.const_set('NilClass', true_class)

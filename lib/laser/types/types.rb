@@ -135,6 +135,7 @@ module Laser
     NILCLASS = ClassType.new('NilClass', :invariant)
     TRUECLASS = ClassType.new('TrueClass', :invariant)
     FALSECLASS = ClassType.new('FalseClass', :invariant)
+    FALSY = UnionType.new([FALSECLASS, NILCLASS])
     BOOLEAN = UnionType.new([TRUECLASS, FALSECLASS])
     BLOCK = UnionType.new([PROC, NILCLASS])
 

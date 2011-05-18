@@ -309,6 +309,22 @@ EOF
     g.should have_constant('z').with_value(40)
   end
   
+  it 'should ignore branches on non-constants whose types are never be nil or false' do
+    g = cfg_method <<-EOF
+def foo(x)
+  a = x.nil? ? 30 : 'hello'
+  b = a * 2
+  if b
+    y = 40
+  else
+    y = 30
+  end
+  z = y
+end
+EOF
+    g.should have_constant('z').with_value(40)
+  end
+  
   it 'should calculate bignum arithmetic' do
     g = cfg_method <<-EOF
 def foo(x)

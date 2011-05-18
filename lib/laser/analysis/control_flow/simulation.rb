@@ -83,13 +83,8 @@ module Laser
           when :jump, nil
             successors.first
           when :branch
-            if successors[0].name == insn[2]
-            then true_block, false_block = successors[0..1]
-            else false_block, true_block = successors[0..1]
-            end
-
             Laser.debug_puts "Branching on: #{insn[1].value.inspect}"
-            insn[1].value ? true_block : false_block
+            insn[1].value ? insn.true_successor : insn.false_successor
           when :call, :call_vararg
             # todo: block edge!
             begin

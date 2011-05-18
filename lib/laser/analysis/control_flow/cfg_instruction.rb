@@ -11,6 +11,7 @@ module Laser
           @block = opts[:block]
           @raise_type = :unknown
           @ignore_privacy = opts[:ignore_privacy]
+          @true_successor = @false_successor = nil
         end
 
         def type
@@ -50,6 +51,33 @@ module Laser
         def require_method_call
           unless method_call?
             raise TypeError.new("#possible_methods is not defined on #{type} instructions.")
+          end
+        end
+
+        def require_branch(method_needed='the requested operation')
+          unless type == :branch
+            raise TypeError.new("#{method_needed} is not defined on #{type} instructions.")
+          end
+        end
+
+        def true_successor
+          require_branch('#true_successor')
+          calculate_branch_successors
+          return @true_successor
+        end
+
+        def false_successor
+          require_branch('#false_successor')
+          calculate_branch_successors
+          return @false_successor
+        end
+        
+        def calculate_branch_successors
+          return if @true_successor
+          successors = block.successors.to_a
+          if successors[0].name == self[2]
+          then @true_successor, @false_successor = successors[0..1]
+          else @false_successor, @true_successor = successors[0..1]
           end
         end
 

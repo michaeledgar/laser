@@ -172,15 +172,24 @@ module Laser
         # the blocklist.
         def constant_propagation_for_branch(instruction, blocklist)
           block = instruction.block
-          executable_successors = case instruction[1].value
-                                  when VARYING then block.real_successors
-                                  when UNDEFINED then []
-                                  when nil, false then [vertex_with_name(instruction[3])]
-                                  else [vertex_with_name(instruction[2])]
-                                  end
-
+          executable_successors = constant_propagation_branch_successors(instruction)
           executable_successors.each do |succ|
             constant_propagation_consider_edge block, succ, blocklist
+          end
+        end
+        
+        def constant_propagation_branch_successors(instruction)
+          condition = instruction[1]
+          case condition.value
+          when VARYING
+            if Types.overlap?(condition.expr_type, Types::FALSY)
+              instruction.block.real_successors
+            else
+              [instruction.true_successor]
+            end
+          when UNDEFINED then []
+          when nil, false then [instruction.false_successor]
+          else [instruction.true_successor]
           end
         end
 
@@ -192,10 +201,10 @@ module Laser
         end
 
         def constant_propagation_for_call(instruction)
-          changed = false
-          raised = instruction.raise_type
-          target, receiver, method_name, *args = instruction[1..-1]
-          target ||= cp_cell_for(instruction)
+          target = instruction[1] || cp_cell_for(instruction)
+          original = target.value
+          old_type = target.inferred_type
+          receiver, method_name, *args = instruction[2..-1]
 
           opts = Hash === args.last ? args.pop : {}
           components = [receiver, *args]
@@ -203,80 +212,79 @@ module Laser
           Laser.debug_puts("components #{components.map(&:value).inspect}")
           special_result, special_type, special_raised = apply_special_case(receiver, method_name, *args)
           if special_result != INAPPLICABLE
-            changed = (target.value != special_result)
-            if changed
-              target.bind! special_result
-              target.inferred_type = special_type
-            end
+            new_value = special_result
+            new_type = special_type
             raised = special_raised
           elsif components.any? { |arg| arg.value == UNDEFINED }
-            changed = false  # cannot evaluate unless all args and receiver are constant
-            raised = :unknown
+            # cannot evaluate unless all args and receiver are defined
+            return [false, :unknown]
           else
             # check purity
             methods = instruction.possible_methods
             # Require precise resolution
             method = methods.size == 1 ? methods.first : nil
-            
             if methods.empty?
-              target.bind! UNDEFINED
-              target.inferred_type = Types::TOP
+              new_value = UNDEFINED
+              new_type = Types::TOP
               raised = Frequency::ALWAYS
-              # no such method. prune successful call
             elsif method && (@_cp_fixed_methods.has_key?(method))
               result = @_cp_fixed_methods[method]
-              target.bind! result
-              target.inferred_type = Utilities.type_for(result)
+              new_value = result
+              new_type = Utilities.type_for(result)
               raised = Frequency::NEVER
             elsif components.any? { |arg| arg.value == VARYING }
-              changed = (target.value != VARYING)
-              if changed
-                target.bind! VARYING
-                target.inferred_type = Types::TOP
-              end
+              new_value = VARYING
               if components.all? { |arg| arg.value != UNDEFINED }
-                target.inferred_type, raised = infer_type_and_raising(instruction, receiver, method_name, args)
+                new_type, raised = infer_type_and_raising(instruction, methods, receiver, method_name, args)
               else
+                new_type = Types::TOP
                 raised = Frequency::MAYBE
               end
-            else
-              # all components constant.
-              changed = (target.value == UNDEFINED)  # varying impossible here
-              # TODO(adgar): CONSTANT BLOCKS
-              if changed && (!opts || !opts[:block])
-                if method && (method.pure || allow_impure_method?(method))
-                  real_receiver = receiver.value
-                  # SIMULATE PURE METHOD CALL
-                  begin
-                    if method.builtin
-                      result = real_receiver.send(method_name, *args.map(&:value))
-                    else
-                      result = method.simulate_with_args(real_receiver, args.map(&:value), nil, {mutation: true})
-                    end
-                    target.bind!(result)
-                    target.inferred_type = Utilities.type_for(result)
-                    Laser.debug_puts "Binding #{target.inspect} <- #{result.inspect} #{target.inferred_type.inspect}"
-                    raised = Frequency::NEVER
-                  rescue BasicObject => err
-                    # any exception caught - this is an extremely unsafe rescue handler - means my
-                    # simulation *MUST NOT* raise or I will conflate user-level raises
-                    # with my own
-                    target.bind! UNDEFINED
-                    target.inferred_type = Types::TOP
-                    raised = Frequency::ALWAYS
+            # All components constant, and never evaluated before.
+            elsif original == UNDEFINED && (!opts || !opts[:block])
+              if method && (method.pure || allow_impure_method?(method))
+                real_receiver = receiver.value
+                begin
+                  if method.builtin
+                    result = real_receiver.send(method_name, *args.map(&:value))
+                  else
+                    result = method.simulate_with_args(real_receiver, args.map(&:value), nil, {mutation: true})
                   end
-                else
-                  target.bind! VARYING
-                  target.inferred_type, raised = infer_type_and_raising(instruction, receiver, method_name, args)
+                  new_value = result
+                  new_type = Utilities.type_for(result)
+                  raised = Frequency::NEVER
+                rescue BasicObject => err
+                  # any exception caught - this is an extremely unsafe rescue handler - means my
+                  # simulation *MUST NOT* raise or I will conflate user-level raises
+                  # with my own
+                  new_value = UNDEFINED
+                  new_type = Types::TOP
+                  raised = Frequency::ALWAYS
                 end
+              else
+                new_value = VARYING
+                new_type, raised = infer_type_and_raising(instruction, methods, receiver, method_name, args)
               end
+            else
+              # all components constant, nothing changed, shouldn't happen, but okay
+              new_value = original
+              new_type = old_type
+              raised = instruction.raise_type
             end
             # At this point, we should prune raise edges!
+          end
+          if original != new_value
+            target.bind! new_value
+            changed = true
+          end
+          if old_type != new_type
+            target.inferred_type = new_type
+            changed = true
           end
           [changed, raised]
         end
         
-        def infer_type_and_raising(instruction, receiver, method_name, args)
+        def infer_type_and_raising(instruction, methods, receiver, method_name, args)
           begin
             type = return_types_for_normal_call(receiver, method_name, args)
           rescue TypeError => err
@@ -285,13 +293,12 @@ module Laser
             instruction.node.add_error(NoMatchingTypeSignature.new(
                 "No method named #{method_name} with matching types was found", instruction.node))
           else
-            raised = raiseability_for_instruction(instruction)
+            raised = raiseability_for_instruction(instruction, methods)
           end
           [type, raised]
         end
 
-        def raiseability_for_instruction(instruction)
-          methods = instruction.possible_methods
+        def raiseability_for_instruction(instruction, methods)
           fails_privacy = Frequency::NEVER
           if methods.size > 0 && !instruction.ignore_privacy
             public_methods = instruction.possible_public_methods
@@ -315,11 +322,9 @@ module Laser
           result = Set.new
           if args.empty?
             cartesian = [ [] ]
-          elsif args.one?
-            cartesian = args.first.expr_type.member_types.to_a.map { |t| [t] }
           else
             cartesian_parts = args.map(&:expr_type).map(&:member_types).map(&:to_a)
-            cartesian = cartesian_parts.inject { |acc, mem| acc.product(mem) } || []
+            cartesian = cartesian_parts[0].product(*cartesian_parts[1..-1])
           end
           possible_dispatches.each do |self_type, methods|
             result |= methods.map do |method|
@@ -393,7 +398,6 @@ module Laser
             Laser.debug_puts "Binding #{target.inspect} <- #{target.value.inspect} #{target.inferred_type.inspect}"
             changed = true
           end
-
           changed
         end
         
