@@ -888,7 +888,7 @@ module Laser
             add_instruction(:raise, block_exception)
             uncond_instruct block_exit, flags: RGL::ControlFlowGraph::EDGE_ABNORMAL, jump_instruct: false
           end
-          with_jump_targets(rescue: block_exit) do
+          with_jump_targets(rescue: rescue_block) do
             with_current_basic_block(body_block) do
               body_result = nil
               with_self(query_self) do

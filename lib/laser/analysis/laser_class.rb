@@ -109,16 +109,15 @@ module Laser
       def simulate(args, block, opts={})
         update_cfg_edges(opts)
         self_to_use = opts[:self] || @lexical_self
-        cfg.simulate(args, {self: opts[:self], block: block, start_block: start_block})
+        cfg.simulate(args, opts.merge({self: opts[:self], block: block, start_block: start_block}))
       end
 
       def update_cfg_edges(opts)
         opts[:invocation_sites][self].each do |callsite|
+          opts[:invocation_counts][self][callsite] += 1
           if !callsite.has_flag?(start_block, RGL::ControlFlowGraph::EDGE_EXECUTABLE)
-            p "Adding first block call edge from #{callsite.name} -> #{start_block.name}"
             callsite.add_flag(start_block, RGL::ControlFlowGraph::EDGE_EXECUTABLE)
           else
-            p "Adding loopback from #{exit_block.name} -> #{start_block.name}"
             exit_block.add_flag(start_block, RGL::ControlFlowGraph::EDGE_EXECUTABLE)
           end
         end

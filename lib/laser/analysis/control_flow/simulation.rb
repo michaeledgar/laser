@@ -20,7 +20,10 @@ module Laser
           end
         end
         DEFAULT_SIMULATION_OPTS =
-            {on_raise: :annotate, invocation_sites: Hash.new { |h, k| h[k] = Set.new } }
+            {on_raise: :annotate, invocation_sites: Hash.new { |h, k| h[k] = Set.new },
+             invocation_counts: Hash.new do |h1, block|
+               h1[block] = Hash.new { |h2, callsite| h2[callsite] = 0 }
+             end }
         # simulates the CFG, with different possible assumptions about
         # how we should treat the global environment/self object.
         def simulate(formal_vals=[], opts={})
@@ -30,9 +33,9 @@ module Laser
           previous_block = nil
           begin
             loop do
-              next_block = simulate_block(current_block,
+              from, next_block = simulate_block(current_block,
                   opts.merge(:previous_block => previous_block, :current_block => current_block))
-              current_block.add_flag(next_block, ControlFlowGraph::EDGE_EXECUTABLE)
+              from.add_flag(next_block, ControlFlowGraph::EDGE_EXECUTABLE)
               current_block, previous_block = next_block, current_block
             end
           rescue ExitedNormally => err
@@ -46,13 +49,14 @@ module Laser
             Laser.debug_puts "Simulation failed to terminate: #{err.message}"
             Laser.debug_p err.backtrace
           rescue ExitedAbnormally => err
+            p "Terminating simulation due to abnormal exit: #{err.inspect} #{opts.inspect}"
             current_block.add_flag(current_block.exception_successors.first,
                 ControlFlowGraph::EDGE_EXECUTABLE)
             if opts[:on_raise] == :annotate
               msg = LaserObject === err.error ? err.error.laser_simulate('message', []) : err.error.message
               Laser.debug_puts "Simulation exited abnormally: #{msg}"
               @root.add_error(TopLevelSimulationRaised.new(msg, @root, err.error))
-            elsif opts[:on_raise] = :raise
+            elsif opts[:on_raise] == :raise
               raise err
             end
           rescue NotImplementedError => err
@@ -72,7 +76,7 @@ module Laser
             simulate_instruction(insn, opts)
           end
           if block.instructions.empty?
-            block.real_successors.first
+            [opts[:current_block], block.real_successors.first]
           else
             simulate_exit_instruction(block.instructions.last, opts)
           end
@@ -80,21 +84,32 @@ module Laser
         
         def simulate_exit_instruction(insn, opts)
           Laser.debug_puts "Simulating exit insn: #{insn.inspect}"
-          successors = insn.block.real_successors.to_a
+          natural_exit = insn.block.normal_successors.first
           case insn[0]
           when :jump, nil
-            successors.first
+            [opts[:current_block], insn.block.real_successors.first]
           when :branch
             Laser.debug_puts "Branching on: #{insn[1].value.inspect}"
-            insn[1].value ? insn.true_successor : insn.false_successor
+            [opts[:current_block], insn[1].value ? insn.true_successor : insn.false_successor]
           when :call, :call_vararg
             # todo: block edge!
             begin
-              simulate_instruction(insn, opts)
-              insn.block.normal_successors.first
+              simulate_call_instruction(insn, opts)
+              if (call_block = insn[-1][:block])
+                block_proc = call_block.value
+                if opts[:invocation_counts][block_proc][opts[:current_block]] > 0
+                  opts[:current_block].add_flag(block_proc.start_block,
+                      ControlFlowGraph::EDGE_EXECUTABLE)
+                  [block_proc.exit_block, natural_exit]
+                else
+                  [opts[:current_block], natural_exit]
+                end
+              else
+                [opts[:current_block], natural_exit]
+              end
             rescue ExitedAbnormally => err
               Laser.debug_puts "Exception raised by call, taking abnormal edge. Error: #{err.message}"
-              insn.block.exception_successors.first
+              [opts[:current_block], insn.block.exception_successors.first]
             end
           when :return
             raise ExitedNormally.new(insn[1].value)
@@ -160,7 +175,8 @@ module Laser
         def simulate_call_dispatch(receiver, method, args, block, opts)
           Laser.debug_puts("simulate_call(#{receiver.inspect}, #{method.name}, #{args.inspect}, #{block.inspect}, #{opts.inspect})")
           if block
-            opts[:invocation_sites][block] = Set[opts[:current_block]]
+            new_invocation_sites = opts[:invocation_sites].merge(block => opts[:invocation_sites][block] | Set[opts[:current_block]])
+            opts = opts.merge(invocation_sites: new_invocation_sites, on_raise: :raise)
           end
           if method.special
             simulate_special_method(receiver, method, args, block, opts)
@@ -177,6 +193,9 @@ module Laser
               end
             # Extremely unsafe exception handler: assumes my code does not raise
             # exceptions!
+            rescue ExitedAbnormally => abnormal
+              Bootstrap::EXCEPTION_STACK.value.push(abnormal.error)
+              raise abnormal
             rescue Exception => err
               Bootstrap::EXCEPTION_STACK.value.push(err)
               raise ExitedAbnormally.new(err)
