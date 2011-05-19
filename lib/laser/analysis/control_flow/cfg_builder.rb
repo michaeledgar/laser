@@ -253,8 +253,8 @@ module Laser
         
         # Creates a new block that jumps to the given target upon completion.
         # Very useful for building branches.
-        def build_block_with_jump(target = nil)
-          new_block = create_block
+        def build_block_with_jump(target = nil, name = nil)
+          new_block = name ? create_block(name) : create_block
           with_current_basic_block(new_block) do
             yield
             uncond_instruct target if target
@@ -835,14 +835,25 @@ module Laser
         # caller's operations which have the possibility of invoking the block.
         def call_with_explicit_block(block_arg_bindings, block_sexp)
           body_block = create_block
-          body_value = create_block_temporary block_arg_bindings, block_sexp, body_block
+          body_value, body_proc = create_block_temporary block_arg_bindings, block_sexp, body_block
           @graph.add_edge(@current_block, body_block,
               ControlFlowGraph::EDGE_BLOCK_TAKEN | ControlFlowGraph::EDGE_ABNORMAL)
           result = yield(body_value)
           after = @current_block  # new block caused by method call
-          walk_block_body block_arg_bindings, body_block, block_sexp, after
+          block_exit = build_block_exit_block body_block, after
+          body_proc.exit_block = block_exit
+          walk_block_body block_arg_bindings, body_block, block_exit, block_sexp, after
           start_block after
           result
+        end
+        
+        def build_block_exit_block(body_block, after)
+          build_block_with_jump(nil, body_block.name + '-Exit') do
+            @graph.add_edge(@current_block, body_block,
+                RGL::ControlFlowGraph::EDGE_ABNORMAL | RGL::ControlFlowGraph::EDGE_BLOCK_TAKEN)
+            @graph.add_edge(@current_block, after)
+            add_potential_raise_edge(false)
+          end
         end
 
         def call_zsuper_with_block(node, block_arg_bindings, block_sexp, opts={})
@@ -870,16 +881,24 @@ module Laser
         
         # Walks the block with it's new next/etc. boundaries set based on the block's
         # scope
-        def walk_block_body(block_arg_bindings, body_block, body, after)
-          start_block body_block
-          body_result = nil
-          with_self(query_self) do
-            build_formal_args(block_arg_bindings)
-            body_result = walk_body body, value: true
+        def walk_block_body(block_arg_bindings, body_block, block_exit, body, after)
+          block_exception = create_temporary(body_block.name + '_final_exception')
+          rescue_block = build_block_with_jump(nil, body_block.name + '-Failure') do
+            copy_instruct(block_exception, @exception_register)
+            add_instruction(:raise, block_exception)
+            uncond_instruct block_exit, flags: RGL::ControlFlowGraph::EDGE_ABNORMAL, jump_instruct: false
           end
-          add_instruction(:return, body_result)
-          @graph.add_edge(@current_block, current_rescue, RGL::ControlFlowGraph::EDGE_ABNORMAL)
-          cond_instruct(nil, body_block, after, :branch_instruct => false)
+          with_jump_targets(rescue: block_exit) do
+            with_current_basic_block(body_block) do
+              body_result = nil
+              with_self(query_self) do
+                build_formal_args(block_arg_bindings)
+                body_result = walk_body body, value: true
+              end
+              add_instruction(:return, body_result)
+              uncond_instruct(block_exit, jump_instruct: false)
+            end
+          end
         end
 
         # Terminates the current block with a jump to the target block.
@@ -1304,7 +1323,7 @@ module Laser
         def def_instruct(receiver, name, args, body, opts = {})
           opts = {value: false}.merge(opts)
           body.scope = current_scope
-          block = create_block_temporary(args, body)
+          block, _ = create_block_temporary(args, body)
           notes = notes_as_ruby_object(body.parent)
           note_args = notes.flatten.map { |const| const_instruct(const) }
           call_opts = call_instruct(ClassRegistry['Hash'].binding, :[], *note_args, raise: false, value: true)
@@ -1924,14 +1943,14 @@ module Laser
 
         # Adds an edge from the current block to the current rescue target,
         # while creating a new block for the "natural" exit.
-        def add_potential_raise_edge
+        def add_potential_raise_edge(add_success_branch = true)
           fail_block = create_block
           @graph.add_edge(@current_block, fail_block, RGL::ControlFlowGraph::EDGE_ABNORMAL)
           with_current_basic_block(fail_block) do
             reobserve_current_exception
             uncond_instruct current_rescue, flags: RGL::ControlFlowGraph::EDGE_ABNORMAL
           end
-          uncond_instruct create_block, jump_instruct: false
+          uncond_instruct create_block, jump_instruct: false if add_success_branch
         end
 
         # Looks up the value of a variable and assigns it to a new temporary
@@ -2326,7 +2345,7 @@ module Laser
           end
           binding = Bindings::BlockBinding.new(name, nil)
           add_instruction(:assign, binding, new_proc)
-          binding
+          [binding, new_proc]
         end
         
         def lookup_or_create_temporary(*keys)

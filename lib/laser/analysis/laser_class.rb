@@ -78,12 +78,13 @@ module Laser
     end
 
     class LaserProc < LaserObject
-      attr_accessor :ast_node, :arguments, :cfg, :start_block
+      attr_accessor :ast_node, :arguments, :cfg, :start_block, :exit_block, :lexical_self
       def initialize(arguments, ast_node, cfg = nil, start_block = nil)
         @ast_node = ast_node
         @arguments = arguments
         @cfg = cfg
         @start_block = start_block
+        @lexical_self = @exit_block = nil
       end
 
       def inspect
@@ -103,6 +104,24 @@ module Laser
         @ast_node.scope.lexical_target = @ast_node.scope.self_ptr.value.binding
         builder = ControlFlow::GraphBuilder.new(@ast_node, @arguments, @ast_node.scope)
         @cfg = builder.build
+      end
+
+      def simulate(args, block, opts={})
+        update_cfg_edges(opts)
+        self_to_use = opts[:self] || @lexical_self
+        cfg.simulate(args, {self: opts[:self], block: block, start_block: start_block})
+      end
+
+      def update_cfg_edges(opts)
+        opts[:invocation_sites][self].each do |callsite|
+          if !callsite.has_flag?(start_block, RGL::ControlFlowGraph::EDGE_EXECUTABLE)
+            p "Adding first block call edge from #{callsite.name} -> #{start_block.name}"
+            callsite.add_flag(start_block, RGL::ControlFlowGraph::EDGE_EXECUTABLE)
+          else
+            p "Adding loopback from #{exit_block.name} -> #{start_block.name}"
+            exit_block.add_flag(start_block, RGL::ControlFlowGraph::EDGE_EXECUTABLE)
+          end
+        end
       end
 
       def call(*args, &blk)

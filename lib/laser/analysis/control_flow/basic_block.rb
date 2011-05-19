@@ -91,6 +91,14 @@ module Laser
           predecessors.select { |dest| dest.has_flag?(self, ::RGL::ControlFlowGraph::EDGE_ABNORMAL) }
         end
 
+        def block_taken_successors
+          successors.select { |dest| has_flag?(dest, ::RGL::ControlFlowGraph::EDGE_BLOCK_TAKEN) }
+        end
+
+        def block_taken_predecessors
+          predecessors.select { |dest| dest.has_flag?(self, ::RGL::ControlFlowGraph::EDGE_BLOCK_TAKEN) }
+        end
+
         def exception_successors
           successors.select { |dest| has_flag?(dest, ::RGL::ControlFlowGraph::EDGE_ABNORMAL) &&
                                     !has_flag?(dest, ::RGL::ControlFlowGraph::EDGE_BLOCK_TAKEN) }

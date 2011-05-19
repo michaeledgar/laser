@@ -19,7 +19,8 @@ module Laser
             @error = error
           end
         end
-        DEFAULT_SIMULATION_OPTS = {on_raise: :annotate}
+        DEFAULT_SIMULATION_OPTS =
+            {on_raise: :annotate, invocation_sites: Hash.new { |h, k| h[k] = Set.new } }
         # simulates the CFG, with different possible assumptions about
         # how we should treat the global environment/self object.
         def simulate(formal_vals=[], opts={})
@@ -29,12 +30,13 @@ module Laser
           previous_block = nil
           begin
             loop do
-              next_block = simulate_block(current_block, opts.merge(:previous_block => previous_block))
+              next_block = simulate_block(current_block,
+                  opts.merge(:previous_block => previous_block, :current_block => current_block))
               current_block.add_flag(next_block, ControlFlowGraph::EDGE_EXECUTABLE)
               current_block, previous_block = next_block, current_block
             end
           rescue ExitedNormally => err
-            current_block.add_flag(current_block.real_successors.first,
+            current_block.add_flag(current_block.normal_successors.first,
                 ControlFlowGraph::EDGE_EXECUTABLE)
             err.result
           rescue NonDeterminismHappened => err
@@ -44,7 +46,7 @@ module Laser
             Laser.debug_puts "Simulation failed to terminate: #{err.message}"
             Laser.debug_p err.backtrace
           rescue ExitedAbnormally => err
-            current_block.add_flag(current_block.real_successors.first,
+            current_block.add_flag(current_block.exception_successors.first,
                 ControlFlowGraph::EDGE_EXECUTABLE)
             if opts[:on_raise] == :annotate
               msg = LaserObject === err.error ? err.error.laser_simulate('message', []) : err.error.message
@@ -100,42 +102,7 @@ module Laser
             raise ExitedAbnormally.new(insn[1].value)
           end 
         end
-        
-        IGNORED = [:branch, :jump, :resume, :return]
-        def simulate_instruction(insn, opts)
-          Laser.debug_puts "Simulating insn: #{insn.inspect}"
-          return if IGNORED.include?(insn[0])
-          case insn[0]
-          when :assign then simulate_assignment(insn[1], insn[2], opts)
-          when :call, :call_vararg
-            # cases: special method we intercept, builtin we direct-send, and cfg we simulate
-            receiver = insn[2].value
-            klass = if Bindings::ConstantBinding === insn[2]
-                    then receiver.singleton_class
-                    else klass = LaserObject === receiver ? receiver.klass : ClassRegistry[receiver.class.name]
-                    end
-            method = klass.instance_method(insn[3].to_s)
-            if !method
-              error_klass = insn.node.type == :zcall ? 'NameError' : 'NoMethodError'
-              missing_method_error = ClassRegistry[error_klass].laser_simulate(
-                  'new', ["Method missing: #{klass.name}##{insn[3]}", insn[3].to_s])
-              Bootstrap::EXCEPTION_STACK.value.push(missing_method_error)
-              raise ExitedAbnormally.new(missing_method_error)
-            elsif should_simulate_call(method, opts)
-              args = insn[0] == :call ? insn[4..-2].map(&:value) : insn[4].value
-              block_to_use = insn[-1][:block] && insn[-1][:block].value
-              result = simulate_call(receiver, method, args, block_to_use, opts)
-              insn[1].bind! result if insn[1]
-            else
-              raise NonDeterminismHappened.new("Nondeterministic call: #{method.inspect}")
-            end
-          when :super
-            raise NotImplementedError.new("super doesn't work yet")
-          when :super_vararg
-            raise NotImplementedError.new("super_vararg doesn't work yet")
-          end
-        end
-        
+
         def simulate_deterministic_phi_node(node, opts)
           Laser.debug_puts "Simulating #{node.inspect} from #{opts[:previous_block].name}"
           index_of_predecessor = node.block.predecessors.to_a.index(opts[:previous_block])
@@ -150,12 +117,51 @@ module Laser
           end
         end
         
+        IGNORED = [:branch, :jump, :resume, :return]
+        def simulate_instruction(insn, opts)
+          Laser.debug_puts "Simulating insn: #{insn.inspect}"
+          return if IGNORED.include?(insn[0])
+          case insn[0]
+          when :assign then simulate_assignment(insn[1], insn[2], opts)
+          when :call, :call_vararg
+            # cases: special method we intercept, builtin we direct-send, and cfg we simulate
+            simulate_call_instruction(insn, opts)
+          when :super
+            raise NotImplementedError.new("super doesn't work yet")
+          when :super_vararg
+            raise NotImplementedError.new("super_vararg doesn't work yet")
+          end
+        end
+
+        def simulate_call_instruction(insn, opts)
+          receiver = insn[2].value
+          klass = Utilities.klass_for(receiver)
+          method = klass.instance_method(insn[3].to_s)
+          if !method
+            simulate_method_missing(insn, klass)
+          elsif should_simulate_call(method, opts)
+            simulate_call(receiver, method, insn, opts)
+          else
+            raise NonDeterminismHappened.new("Nondeterministic call: #{method.inspect}")
+          end
+        end
+
+        def simulate_call(receiver, method, insn, opts)
+          args = insn[0] == :call ? insn[4..-2].map(&:value) : insn[4].value
+          block_to_use = insn[-1][:block] && insn[-1][:block].value
+          result = simulate_call_dispatch(receiver, method, args, block_to_use, opts)
+          insn[1].bind! result if insn[1]
+        end
+
         def should_simulate_call(method, opts)
           method.predictable && (opts[:mutation] || !method.mutation)
         end
         
-        def simulate_call(receiver, method, args, block, opts)
+        def simulate_call_dispatch(receiver, method, args, block, opts)
           Laser.debug_puts("simulate_call(#{receiver.inspect}, #{method.name}, #{args.inspect}, #{block.inspect}, #{opts.inspect})")
+          if block
+            opts[:invocation_sites][block] = Set[opts[:current_block]]
+          end
           if method.special
             simulate_special_method(receiver, method, args, block, opts)
           elsif method.builtin
@@ -163,11 +169,11 @@ module Laser
               if !block
                 receiver.send(method.name, *args)
               else
-                receiver.send(method.name, *args) do |*given_args, &given_blk|
+                result = receiver.send(method.name, *args) do |*given_args, &given_blk|
                   # self is this because no builtins change self... right?
-                  block.cfg.simulate(given_args,
-                    {self: opts[:self], block: given_blk, start_block: block.start_block})
+                  block.simulate(given_args, given_blk, opts)
                 end
+                result
               end
             # Extremely unsafe exception handler: assumes my code does not raise
             # exceptions!
@@ -181,6 +187,14 @@ module Laser
             Laser.debug_puts "Finished simulating #{method.owner.name}##{method.name} => #{result.inspect}"
             result
           end
+        end
+        
+        def simulate_method_missing(insn, klass)
+          error_klass = insn.node.type == :zcall ? 'NameError' : 'NoMethodError'
+          missing_method_error = ClassRegistry[error_klass].laser_simulate(
+              'new', ["Method missing: #{klass.name}##{insn[3]}", insn[3].to_s])
+          Bootstrap::EXCEPTION_STACK.value.push(missing_method_error)
+          raise ExitedAbnormally.new(missing_method_error)
         end
         
         def simulate_special_method(receiver, method, args, block, opts)
