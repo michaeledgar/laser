@@ -96,6 +96,7 @@ module Laser
           "#<#{desc_part}*#{arg_part}>"
         end
       end
+      alias name inspect
 
       def compiled_cfg
         return @cfg if @cfg
@@ -109,7 +110,7 @@ module Laser
       def simulate(args, block, opts={})
         update_cfg_edges(opts)
         self_to_use = opts[:self] || @lexical_self
-        cfg.simulate(args, opts.merge({self: opts[:self], block: block, start_block: start_block}))
+        cfg.simulate(args, opts.merge({self: self_to_use, block: block, start_block: start_block}))
       end
 
       def update_cfg_edges(opts)

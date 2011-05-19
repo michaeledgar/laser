@@ -49,7 +49,6 @@ module Laser
             Laser.debug_puts "Simulation failed to terminate: #{err.message}"
             Laser.debug_p err.backtrace
           rescue ExitedAbnormally => err
-            p "Terminating simulation due to abnormal exit: #{err.inspect} #{opts.inspect}"
             current_block.add_flag(current_block.exception_successors.first,
                 ControlFlowGraph::EDGE_EXECUTABLE)
             if opts[:on_raise] == :annotate
@@ -228,6 +227,8 @@ module Laser
             LaserModule.new
           when ClassRegistry['Kernel'].instance_method('require')
             simulate_require(args)
+          when ClassRegistry['Module'].instance_method('define_method')
+            simulate_define_method(receiver, args, block)
           when ClassRegistry['Module'].instance_method('module_eval')
             simulate_module_eval(receiver, args, block)
           when ClassRegistry['Laser#Magic'].singleton_class.instance_method('get_global')
@@ -266,6 +267,16 @@ module Laser
             block.successors.each do |succ|
               block.remove_flag(succ, ControlFlowGraph::EDGE_EXECUTABLE)
             end
+          end
+        end
+        
+        def simulate_define_method(receiver, args, block)
+          if args.size == 1 && block
+            receiver.define_method(args.first, block)
+          elsif args.size == 2
+            receiver.define_method(args[0], args[1])
+          else
+            raise ArgumentError.new("wrong number of arguments (#{args.size} for 1..2)")
           end
         end
         

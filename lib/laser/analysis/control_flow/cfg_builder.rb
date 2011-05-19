@@ -836,6 +836,7 @@ module Laser
         def call_with_explicit_block(block_arg_bindings, block_sexp)
           body_block = create_block
           body_value, body_proc = create_block_temporary block_arg_bindings, block_sexp, body_block
+          call_instruct(body_value, :lexical_self=, self_instruct, raise: false, value: false)
           @graph.add_edge(@current_block, body_block,
               ControlFlowGraph::EDGE_BLOCK_TAKEN | ControlFlowGraph::EDGE_ABNORMAL)
           result = yield(body_value)

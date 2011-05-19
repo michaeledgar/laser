@@ -60,7 +60,7 @@ class Module
   # builtin: true
   def ===(other)
   end
-  # builtin: true
+  # special: true
   # mutation: true
   def define_method(name, body=nil)
   end

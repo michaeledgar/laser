@@ -80,4 +80,32 @@ end
       method.arity.should == Arity.new(1..1)
     end
   end
+
+  it 'should simulate blocks being called by builtins' do
+    g = cfg %q{
+input = (1..10).to_a
+output = input.map do |x|
+  x ** x
+end
+}
+
+    expected = (1..10).map { |x| x ** x }
+    g.var_named('output').value.should == expected
+  end
+  
+  it 'should simulate #define_method with a block' do
+    g = cfg %q{
+class Sim6
+  [1, 2].each do |multiplicand|
+    define_method("times_#{multiplicand}") { |x| x * multiplicand }
+  end
+end
+}
+    method = ClassRegistry['Sim6'].instance_method('times_1')
+    method.should be_a(LaserMethod)
+    method.arity.should == Arity.new(1..1)
+    method = ClassRegistry['Sim6'].instance_method('times_1')
+    method.should be_a(LaserMethod)
+    method.arity.should == Arity.new(1..1)
+  end
 end

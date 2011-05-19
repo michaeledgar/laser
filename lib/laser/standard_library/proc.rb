@@ -7,4 +7,9 @@ class Proc
   def to_proc
     self
   end
+  
+  # pure: true
+  # builtin: true
+  def lexical_self=(val)
+  end
 end

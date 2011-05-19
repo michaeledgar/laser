@@ -208,8 +208,6 @@ module Laser
 
           opts = Hash === args.last ? args.pop : {}
           components = [receiver, *args]
-          Laser.debug_puts("constant prop. simulating #{instruction.inspect}")
-          Laser.debug_puts("components #{components.map(&:value).inspect}")
           special_result, special_type, special_raised = apply_special_case(receiver, method_name, *args)
           if special_result != INAPPLICABLE
             new_value = special_result
@@ -329,7 +327,6 @@ module Laser
           possible_dispatches.each do |self_type, methods|
             result |= methods.map do |method|
               cartesian.map do |type_list|
-                Laser.debug_puts "Looking up #{self_type.inspect}.#{method.name}(#{type_list.inspect})"
                 begin
                   method.return_type_for_types(self_type, type_list, Types::NILCLASS)
                 rescue TypeError => err
@@ -342,7 +339,6 @@ module Laser
           if result.empty?
             raise TypeError.new("No methods named #{method_name} with matching types were found.")
           end
-          Laser.debug_puts("Resulting allowed types for #{receiver.inspect}.#{method_name}: #{result.inspect}")
           Types::UnionType.new(result)
         end
 
@@ -395,7 +391,6 @@ module Laser
           end
           if old_type != new_type
             target.inferred_type = new_type
-            Laser.debug_puts "Binding #{target.inspect} <- #{target.value.inspect} #{target.inferred_type.inspect}"
             changed = true
           end
           changed
