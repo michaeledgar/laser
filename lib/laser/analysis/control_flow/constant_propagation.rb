@@ -116,6 +116,7 @@ module Laser
 
         def constant_propagation_for_instruction(instruction, blocklist, worklist)
           return if instruction.type != :phi && instruction.block.executed_predecessors.empty?
+          Laser.debug_p(instruction)
           block = instruction.block
           case instruction.type
           when :branch

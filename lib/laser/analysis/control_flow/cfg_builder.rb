@@ -993,7 +993,7 @@ module Laser
         end
         
         attr_reader :current_break, :current_next, :current_redo
-        attr_reader :current_return, :current_rescue, :current_yield_fail
+        attr_reader :current_return, :current_rescue, :current_yield_fail        
         
         # TODO(adgar): ARGUMENTS
         def break_instruct(args)

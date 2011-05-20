@@ -119,4 +119,21 @@ EOF
         return_type_for_types(
           Utilities.type_for(ClassRegistry['CPSim7']), [], Types::NILCLASS).should == Types::FLOAT
   end
+
+  it 'should handle, via SSA, uninitialized variable types' do
+    g = cfg <<-EOF
+module CPSim8
+  def self.switch
+    if $foo > 10
+      a = 'hello'
+    end
+    b = a
+  end
+end
+EOF
+    ClassRegistry['CPSim8'].singleton_class.instance_method('switch').
+        return_type_for_types(
+          Utilities.type_for(ClassRegistry['CPSim8']), [], Types::NILCLASS).should ==
+            Types::UnionType.new([Types::STRING, Types::NILCLASS])
+  end
 end

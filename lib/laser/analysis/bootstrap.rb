@@ -96,8 +96,8 @@ module Laser
           klass.superclass = object_class
         end
         object_class.const_set('TrueClass', true_class)
-        object_class.const_set('FalseClass', true_class)
-        object_class.const_set('NilClass', true_class)
+        object_class.const_set('FalseClass', false_class)
+        object_class.const_set('NilClass', nil_class)
 
         global.add_binding!(
             Bindings::KeywordBinding.new('true', true_class.get_instance))
