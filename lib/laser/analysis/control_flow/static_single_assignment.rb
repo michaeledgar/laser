@@ -157,7 +157,7 @@ module Laser
           target = renamed ? ssa_name_for(temp) : temp
           assignment = Instruction.new([:assign, target, nil],
               node: reading_ins.node, block: block)
-          target.definition = assignment
+          ssa_name_for(temp).definition = assignment
         end
 
         def ssa_name_for(temp)
