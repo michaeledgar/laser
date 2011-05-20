@@ -135,7 +135,34 @@ module Laser
           end) && (self.edges.sort == other.edges.sort)
         end
         
+        def condense_blocks
+          worklist = vertices.to_a
+          until worklist.empty?
+            node = worklist.pop
+            if @vertices.include?(node) && node.predecessors.size == 1 && node.successors.size == 1 &&
+               node.predecessors.first.successors.size == 1 && node.successors.first.predecessors.size == 1
+              dominator = node.predecessors.first
+              absorbed = node
+              next if dominator == @enter || absorbed == @exit
+
+              dominator.instructions = dominator[0..-2] + absorbed.to_a
+              #dominator.remove_successor(absorbed)
+              absorbed.successors.each do |succ|
+                dominator.successors << succ
+                dominator.set_flag(succ, absorbed.get_flags(succ))
+              end
+              # absorbed.remove_predecessor(dominator)
+              # absorbed.successors.each do |succ|
+              #   succ.remove_predecessor(absorbed)
+              # end
+              remove_vertex absorbed
+              worklist.concat dominator.successors.to_a
+            end
+          end
+        end
+        
         def save_pretty_picture(fmt='png', dotfile='graph', params = {'shape' => 'box'})
+          condense_blocks
           write_to_graphic_file(fmt, dotfile, params)
         end
         
