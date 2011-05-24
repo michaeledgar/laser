@@ -131,6 +131,7 @@ EOF
     ClassRegistry['CPSim8'].instance_method('to_s').
         return_type_for_types(
           Utilities.type_for(ClassRegistry['CPSim8']), [], Types::NILCLASS)  # force calculation
-    ClassRegistry['CPSim8'].instance_method('to_s').proc.ast_node.should have_error(ImproperOverloadTypeError).with_message(/to_s/)
+    ClassRegistry['CPSim8'].instance_method('to_s').proc.ast_node.should(
+        have_error(ImproperOverloadTypeError).with_message(/to_s/))
   end
 end
