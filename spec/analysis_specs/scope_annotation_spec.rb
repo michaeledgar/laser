@@ -377,7 +377,7 @@ describe 'general analyses' do
     tree.all_errors.size.should == 1
     tree.all_errors.first.should be_a(TopLevelSimulationRaised)
     err = tree.all_errors.first
-    err.error.class.should == UselessIncludeError
+    err.error.class.should == DoubleIncludeError
   end
   
   it 'handles module extensions done in the typical method-call fashion' do

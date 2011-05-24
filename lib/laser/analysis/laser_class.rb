@@ -349,7 +349,7 @@ module Laser
           mod = mod.superclass
         end
         unless any_changes
-          raise UselessIncludeError.new("Included #{original_mod.path} into #{self.path}"+
+          raise DoubleIncludeError.new("Included #{original_mod.path} into #{self.path}"+
                                         " but it was already included.", nil)
         end
       end

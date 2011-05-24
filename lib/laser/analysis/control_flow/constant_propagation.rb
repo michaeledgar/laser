@@ -281,7 +281,7 @@ module Laser
           end
           [changed, raised]
         end
-        
+
         def infer_type_and_raising(instruction, methods, receiver, method_name, args)
           begin
             type = return_types_for_normal_call(receiver, method_name, args)

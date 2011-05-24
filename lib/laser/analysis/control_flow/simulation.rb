@@ -19,11 +19,13 @@ module Laser
             @error = error
           end
         end
+        MAX_SIMULATION_BLOCKS = 100_000
         DEFAULT_SIMULATION_OPTS =
             {on_raise: :annotate, invocation_sites: Hash.new { |h, k| h[k] = Set.new },
              invocation_counts: Hash.new do |h1, block|
                h1[block] = Hash.new { |h2, callsite| h2[callsite] = 0 }
-             end }
+             end,
+             remaining_blocks: MAX_SIMULATION_BLOCKS }
         # simulates the CFG, with different possible assumptions about
         # how we should treat the global environment/self object.
         def simulate(formal_vals=[], opts={})
@@ -33,6 +35,7 @@ module Laser
           previous_block = nil
           begin
             loop do
+              simulate_take_step(opts)
               from, next_block = simulate_block(current_block,
                   opts.merge(:previous_block => previous_block, :current_block => current_block))
               from.add_flag(next_block, ControlFlowGraph::EDGE_EXECUTABLE)
@@ -48,6 +51,7 @@ module Laser
           rescue SimulationNonterminationError => err
             Laser.debug_puts "Simulation failed to terminate: #{err.message}"
             Laser.debug_p err.backtrace
+            @root.add_error(TopLevelSimulationRaised.new(err.message, @root, err))
           rescue ExitedAbnormally => err
             current_block.add_flag(current_block.exception_successors.first,
                 ControlFlowGraph::EDGE_EXECUTABLE)
@@ -64,8 +68,15 @@ module Laser
           end
         end
         
+        def simulate_take_step(opts)
+          if (opts[:remaining_blocks] -= 1) <= 0
+            raise SimulationNonterminationError.new('Simulation failed to terminate')
+          end
+        end
+        
         def simulate_block(block, opts)
           return if block.name == 'Exit'
+          
           Laser.debug_puts "Entering block #{block.name}"
           # phi nodes always go first
           block.phi_nodes.each do |node|

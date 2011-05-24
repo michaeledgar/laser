@@ -54,7 +54,7 @@ module Laser
     end
   end
   
-  class UselessIncludeError < Laser::Error
+  class DoubleIncludeError < Laser::Error
     severity MAJOR_WARNING
   end
   
@@ -96,7 +96,7 @@ module Laser
   class UnusedVariableWarning < Laser::Error
     severity WARNING
   end
-  
+
   class TopLevelSimulationRaised < Laser::Error
     attr_reader :error
     def initialize(message, ast_node, detected_error)
@@ -107,5 +107,13 @@ module Laser
 
   class NoMatchingTypeSignature < Laser::Error
     severity MAJOR_ERROR
+  end
+  
+  class MissingBlockError < Laser::Error
+    severity TRICKY_ERROR
+  end
+  
+  class UnnecessaryBlockError < Laser::Error
+    severity TRICKY_ERROR
   end
 end

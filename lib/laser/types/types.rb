@@ -167,5 +167,14 @@ module Laser
         {element_types: element_types}
       end
     end
+    
+    EXPECTATIONS = {'to_s' => Types::STRING,
+                    'to_str' => Types::STRING,
+                    'to_i' => Types::ClassType.new('Integer', :covariant),
+                    'to_int' => Types::ClassType.new('Integer', :covariant),
+                    'to_f' => Types::FLOAT,
+                    'to_a' => Types::ARRAY,
+                    'to_ary' => Types::ARRAY,
+                    '!' => Types::BOOLEAN }
   end
 end
