@@ -119,4 +119,18 @@ EOF
         return_type_for_types(
           Utilities.type_for(ClassRegistry['CPSim7']), [], Types::NILCLASS).should == Types::FLOAT
   end
+  
+  it 'should warn against certain methods with improper return types' do
+    g = cfg <<-EOF
+class CPSim8
+  def to_s
+    gets.strip!  # whoops, ! means nil sometimes
+  end
+end
+EOF
+    ClassRegistry['CPSim8'].instance_method('to_s').
+        return_type_for_types(
+          Utilities.type_for(ClassRegistry['CPSim8']), [], Types::NILCLASS)  # force calculation
+    ClassRegistry['CPSim8'].instance_method('to_s').proc.ast_node.should have_error(ImproperOverloadTypeError).with_message(/to_s/)
+  end
 end

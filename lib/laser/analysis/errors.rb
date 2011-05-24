@@ -116,4 +116,8 @@ module Laser
   class UnnecessaryBlockError < Laser::Error
     severity TRICKY_ERROR
   end
+  
+  class ImproperOverloadTypeError < Laser::Error
+    severity TRICKY_ERROR
+  end
 end

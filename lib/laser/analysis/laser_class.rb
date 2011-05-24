@@ -705,7 +705,18 @@ module Laser
           raise TypeError.new("No overload found for #{self.inspect} with arg types #{arg_types.inspect}")
         end
         return Types::TOP if builtin || special
-        cfg_for_types(self_type, arg_types, block_type).return_type
+        result = cfg_for_types(self_type, arg_types, block_type).return_type
+        check_return_type_against_expectations(result)
+        result
+      end
+
+      def check_return_type_against_expectations(return_type)
+        if (expectation = Types::EXPECTATIONS[self.name]) &&
+            !Types.subtype?(return_type, expectation)
+          @proc.ast_node.add_error(ImproperOverloadTypeError.new(
+            "All methods named #{self.name} should return a subtype of #{expectation.inspect}",
+            @proc.ast_node))
+        end
       end
 
       def master_cfg
