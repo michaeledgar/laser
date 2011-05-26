@@ -242,12 +242,7 @@ class IO
   def read(len=nil)
   end
 end
-# STDERR: IO
-# STDERR = IO.new
-# STDOUT: IO
-# STDOUT = IO.new
-# STDIN: IO
-# STDIN = IO.new
+
 class File < IO
 end
 

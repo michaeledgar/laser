@@ -1,17 +1,6 @@
 module Laser
   module SexpAnalysis
     module ControlFlow
-      class PlaceholderObject
-        def initialize(name)
-          @name = name
-        end
-        def inspect
-          @name
-        end
-        alias_method :to_s, :inspect
-      end
-      UNDEFINED = PlaceholderObject.new('UNDEFINED')
-      VARYING = PlaceholderObject.new('VARYING')
       INAPPLICABLE = PlaceholderObject.new('INAPPLICABLE')
 
       # Sparse Conditional Constant Propagation: Wegman and Zadeck
@@ -462,6 +451,17 @@ module Laser
             return [VARYING, Types::ARRAY, Frequency::NEVER]
           when :current_arity
             return [VARYING, Types::FIXNUM, Frequency::NEVER]
+          when :get_global
+            global = Scope::GlobalScope.lookup(args[0].value)
+            return [VARYING, global.expr_type, Frequency::NEVER]
+          when :set_global
+            if args[1] != UNDEFINED
+              global = Scope::GlobalScope.lookup(args[0].value)
+              unless Types.subtype?(args[1].expr_type, global.expr_type)
+                global.inferred_type = Types::UnionType.new([args[1].expr_type, global.expr_type])
+              end
+              return [VARYING, global.expr_type, Frequency::NEVER]
+            end
           end
           [INAPPLICABLE, nil, Frequency::MAYBE]
         end

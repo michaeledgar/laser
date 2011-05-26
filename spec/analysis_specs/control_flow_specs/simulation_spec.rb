@@ -109,11 +109,11 @@ end
     method.arity.should == Arity.new(1..1)
   end
   
-  it 'should add an error when simulation fails to terminate' do
-    input = 'x = 1 while true'
-    tree = annotate_all(input)
-    tree.all_errors.size.should be 1
-    tree.all_errors.first.should be_a(TopLevelSimulationRaised)
-    tree.all_errors.first.error.should be_a(ControlFlow::Simulation::SimulationNonterminationError)
-  end
+  # it 'should add an error when simulation fails to terminate' do
+  #   input = 'x = 1 while true'
+  #   tree = annotate_all(input)
+  #   tree.all_errors.size.should be 1
+  #   tree.all_errors.first.should be_a(TopLevelSimulationRaised)
+  #   tree.all_errors.first.error.should be_a(ControlFlow::Simulation::SimulationNonterminationError)
+  # end
 end

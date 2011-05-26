@@ -28,16 +28,16 @@ check them off when I'm done.
 
 ## General-Use Information
 1. √ Private Method (P0)
-2. Raisability (P0)
-3. Yielding (P0)
-4. Yield-necessity (P1)
+2. √ Raisability (P0)
+3. √ Yielding (P0)
+4. √ Yield-necessity (P1)
 5. Yield-count (P1)
 6. Method Purity (P1)
 7. Mutation Detection (P1)
-8. Types of arguments/return types/variables
+8. √ Types of arguments/return types/variables
 
 ## Error Detection
-1. NoSuchMethod detection
+1. √ NoSuchMethod detection
 2. Incorrect # of arguments
 3. √ including already-included module
 4. √ extending already-extended module
@@ -52,6 +52,6 @@ check them off when I'm done.
 12. Useless lhs or rhs in mlhs/mrhs
 
 ## Optimization
-1. Dead Code Detection
-2. Useless variable writes/reads detection
-3. Constant Folding
+1. √ Dead Code Detection
+2. √ Useless variable writes/reads detection
+3. √ Constant Folding

@@ -14,6 +14,10 @@ module Laser
       !(t1.possible_classes & t2.possible_classes).empty?
     end
     
+    def self.optional(t1)
+      Types::UnionType.new([t1, Types::NILCLASS])
+    end
+    
     class Base
       extend ActsAsStruct
       

@@ -2,6 +2,9 @@ require 'pp'
 require 'delegate'
 module Laser
   module SexpAnalysis
+    UNDEFINED = PlaceholderObject.new('UNDEFINED')
+    VARYING = PlaceholderObject.new('VARYING')
+
     # This is the path through which objects should be instantiated. It uses
     # case-by-case logic to handle the instantiation of LaserModule/LaserClass
     # when necessary.
