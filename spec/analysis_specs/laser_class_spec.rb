@@ -109,9 +109,9 @@ describe LaserModule do
       @b.ancestors.should == [@b, @a]
       @c.ancestors.should == [@c, @b, @a]
       # verification
-      expect { @b.include_module(@a) }.to raise_error(UselessIncludeError)
+      expect { @b.include_module(@a) }.to raise_error(DoubleIncludeError)
       @b.ancestors.should == [@b, @a]
-      expect { @c.include_module(@a) }.to raise_error(UselessIncludeError)
+      expect { @c.include_module(@a) }.to raise_error(DoubleIncludeError)
       @c.ancestors.should == [@c, @b, @a]
     end
     
@@ -232,7 +232,7 @@ describe LaserClass do
       # verification
       @y.ancestors.should == [@y, @x, @b, @a, ClassRegistry['Object'],
                               ClassRegistry['Kernel'], ClassRegistry['BasicObject']]
-      expect { @y.include_module(@b) }.to raise_error(UselessIncludeError)
+      expect { @y.include_module(@b) }.to raise_error(DoubleIncludeError)
       @y.ancestors.should == [@y, @x, @b, @a, ClassRegistry['Object'],
                               ClassRegistry['Kernel'], ClassRegistry['BasicObject']]
     end

@@ -210,7 +210,7 @@ module Laser
             simulate([], :mutation => true) if opts[:simulate]
           else
             static_single_assignment_form unless @in_ssa
-            debug_dotty
+#            debug_dotty
             Laser.debug_puts('>>> Starting CP <<<')
             perform_constant_propagation
             Laser.debug_puts('>>> Finished CP <<<')

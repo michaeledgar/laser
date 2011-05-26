@@ -14,6 +14,10 @@ module Laser
       !(t1.possible_classes & t2.possible_classes).empty?
     end
     
+    def self.optional(t1)
+      Types::UnionType.new([t1, Types::NILCLASS])
+    end
+    
     class Base
       extend ActsAsStruct
       
@@ -167,5 +171,14 @@ module Laser
         {element_types: element_types}
       end
     end
+    
+    EXPECTATIONS = {'to_s' => Types::STRING,
+                    'to_str' => Types::STRING,
+                    'to_i' => Types::ClassType.new('Integer', :covariant),
+                    'to_int' => Types::ClassType.new('Integer', :covariant),
+                    'to_f' => Types::FLOAT,
+                    'to_a' => Types::ARRAY,
+                    'to_ary' => Types::ARRAY,
+                    '!' => Types::BOOLEAN }
   end
 end

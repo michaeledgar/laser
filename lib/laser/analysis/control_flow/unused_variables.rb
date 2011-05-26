@@ -76,7 +76,7 @@ module Laser
             recv = insn[2]
             if Bindings::ConstantBinding === insn[2]
               true
-            elsif insn[2].value == ControlFlow::UNDEFINED
+            elsif insn[2].value == UNDEFINED
               true
             else
               insn[2].expr_type.matching_methods(insn[3].to_s).all?(&:pure)

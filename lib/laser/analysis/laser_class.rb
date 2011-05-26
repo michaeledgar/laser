@@ -2,6 +2,9 @@ require 'pp'
 require 'delegate'
 module Laser
   module SexpAnalysis
+    UNDEFINED = PlaceholderObject.new('UNDEFINED')
+    VARYING = PlaceholderObject.new('VARYING')
+
     # This is the path through which objects should be instantiated. It uses
     # case-by-case logic to handle the instantiation of LaserModule/LaserClass
     # when necessary.
@@ -349,7 +352,7 @@ module Laser
           mod = mod.superclass
         end
         unless any_changes
-          raise UselessIncludeError.new("Included #{original_mod.path} into #{self.path}"+
+          raise DoubleIncludeError.new("Included #{original_mod.path} into #{self.path}"+
                                         " but it was already included.", nil)
         end
       end
@@ -705,7 +708,18 @@ module Laser
           raise TypeError.new("No overload found for #{self.inspect} with arg types #{arg_types.inspect}")
         end
         return Types::TOP if builtin || special
-        cfg_for_types(self_type, arg_types, block_type).return_type
+        result = cfg_for_types(self_type, arg_types, block_type).return_type
+        check_return_type_against_expectations(result)
+        result
+      end
+
+      def check_return_type_against_expectations(return_type)
+        if (expectation = Types::EXPECTATIONS[self.name]) &&
+            !Types.subtype?(return_type, expectation)
+          @proc.ast_node.add_error(ImproperOverloadTypeError.new(
+            "All methods named #{self.name} should return a subtype of #{expectation.inspect}",
+            @proc.ast_node))
+        end
       end
 
       def master_cfg

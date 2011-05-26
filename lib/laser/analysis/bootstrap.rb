@@ -76,6 +76,8 @@ module Laser
         stub_method(magic_class.singleton_class, 'current_self', special: true)
         stub_method(magic_class.singleton_class, 'get_global', special: true)
         stub_method(magic_class.singleton_class, 'set_global', special: true, mutation: true)
+        
+        stub_global_vars
       end
       
       # Before we analyze any code, we need to create classes for all the
@@ -129,10 +131,8 @@ module Laser
         stub_toplevel_class 'LaserReopenedModuleAsClassError', 'LaserTypeErrorWrapper'
         stub_toplevel_class 'LaserSuperclassMismatchError', 'LaserTypeErrorWrapper'
         
-        global.add_binding!(Bindings::GlobalVariableBinding.new('$:',
-            ['.', File.expand_path(File.join(File.dirname(__FILE__), '..', 'standard_library'))]))
-        global.add_binding!(Bindings::GlobalVariableBinding.new('$"', []))
-        global.add_binding!(VISIBILITY_STACK)
+        stub_toplevel_class 'IO'  # TODO(adgar): includes File::Constants and Enumerable...
+
         stub_core_methods
       end
       
@@ -190,6 +190,21 @@ module Laser
         stub_method(string_class, '+', builtin: true, pure: true)
       end
       
+      def self.stub_global_vars
+        Scope::GlobalScope.add_binding!(Bindings::GlobalVariableBinding.new('$:',
+            ['.', File.expand_path(File.join(File.dirname(__FILE__), '..', 'standard_library'))]))
+        Scope::GlobalScope.add_binding!(Bindings::GlobalVariableBinding.new('$"', []))
+        Scope::GlobalScope.add_binding!(VISIBILITY_STACK)
+
+        stub_global_type('$0', Types::STRING)
+        stub_global_type('$*', Types::ARRAY)
+        stub_global_type('$$', Types::FIXNUM)  # I hope pids fit in a fixnum
+        stub_global_type('$.', Types::FIXNUM)
+        stub_global_type('$&', Types.optional(Types::STRING))
+        stub_global_type('$`', Types.optional(Types::STRING))
+        stub_global_type("$'", Types.optional(Types::STRING))
+      end
+      
       def self.stub_method(klass, name, opts={})
         method = LaserMethod.new(name)
         opts.each { |k, v| method.send("#{k}=", v) }
@@ -210,6 +225,10 @@ module Laser
         mojule = LaserModule.new
         ClassRegistry['Object'].const_set(name, mojule)
         mojule
+      end
+      
+      def self.stub_global_type(name, type)
+        Scope::GlobalScope.lookup(name).inferred_type = type
       end
     end
   end

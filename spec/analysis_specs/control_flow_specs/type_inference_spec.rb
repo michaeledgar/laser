@@ -85,7 +85,7 @@ EOF
     g = cfg <<-EOF
 module CPSim6
   def self.multiply
-    if $foo > 10
+    if $$ > 10
       a = 'hello'
     else
       a = 20
@@ -104,7 +104,7 @@ EOF
     g = cfg <<-EOF
 module CPSim7
   def self.multiply
-    if $foo > 10
+    if $$ > 10
       a = 'hello'
     else
       a = 20
@@ -124,7 +124,7 @@ EOF
     g = cfg <<-EOF
 module CPSim8
   def self.switch
-    if $foo > 10
+    if $$ > 10
       a = 'hello'
     end
     b = a
@@ -135,5 +135,43 @@ EOF
         return_type_for_types(
           Utilities.type_for(ClassRegistry['CPSim8']), [], Types::NILCLASS).should ==
             Types::UnionType.new([Types::STRING, Types::NILCLASS])
+  end
+  
+  it 'should warn against certain methods with improper return types' do
+    g = cfg <<-EOF
+class CPSim10
+  def to_s
+    gets.strip!  # whoops, ! means nil sometimes
+  end
+end
+EOF
+    ClassRegistry['CPSim10'].instance_method('to_s').
+        return_type_for_types(
+          Utilities.type_for(ClassRegistry['CPSim10']), [], Types::NILCLASS)  # force calculation
+    ClassRegistry['CPSim10'].instance_method('to_s').proc.ast_node.should(
+        have_error(ImproperOverloadTypeError).with_message(/to_s/))
+  end
+
+  it 'should collect inferred types in global variables' do
+    g = cfg <<-EOF
+module CPSim9
+  def self.bar
+    $sim9 = x = gets
+    qux(baz(x))
+  end
+  def self.baz(y)
+    $sim9 = y.to_sym.size
+  end
+  def self.qux(z)
+    $sim9
+  end
+end
+EOF
+    expected_type = Types::UnionType.new(
+        [Types::STRING, Types::FIXNUM, Types::BIGNUM, Types::NILCLASS])
+    ClassRegistry['CPSim9'].singleton_class.instance_method('bar').
+        return_type_for_types(
+          Utilities.type_for(ClassRegistry['CPSim9']), [], Types::NILCLASS).should == expected_type
+    Scope::GlobalScope.lookup('$sim9').expr_type.should == expected_type
   end
 end
