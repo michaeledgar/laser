@@ -349,6 +349,7 @@ class String
   # pure: true
   # builtin: true
   # returns: Fixnum= | Bignum=
+  # raises: never
   def size
   end
   # pure: true

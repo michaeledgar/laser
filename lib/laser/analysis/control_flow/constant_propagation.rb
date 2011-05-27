@@ -274,14 +274,14 @@ module Laser
 
         def infer_type_and_raising(instruction, methods, receiver, method_name, args)
           begin
-            type = return_types_for_normal_call(receiver, method_name, args)
+            type, raised = return_types_for_normal_call(receiver, method_name, args, instruction.ignore_privacy)
           rescue TypeError => err
             type = Types::TOP
             raised = Frequency::ALWAYS
             instruction.node.add_error(NoMatchingTypeSignature.new(
                 "No method named #{method_name} with matching types was found", instruction.node))
-          else
-            raised = raiseability_for_instruction(instruction, methods)
+          # else
+          #   raised = raiseability_for_instruction(instruction, methods)
           end
           [type, raised]
         end
@@ -302,18 +302,25 @@ module Laser
           [fails_privacy, raised].max
         end
 
-        def return_types_for_normal_call(receiver, method, args)
-          method_name = method
+        # Calculates the set of methods potentially invoked in dynamic dispatch,
+        # and the set of all possible argument type combinations.
+        def calculate_possible_templates(receiver, method, args)
           possible_dispatches = receiver.expr_type.member_types.map do |type|
             [type, type.matching_methods(method)]
           end
-          result = Set.new
+          
           if args.empty?
             cartesian = [ [] ]
           else
             cartesian_parts = args.map(&:expr_type).map(&:member_types).map(&:to_a)
             cartesian = cartesian_parts[0].product(*cartesian_parts[1..-1])
           end
+          [possible_dispatches, cartesian]
+        end
+
+        # Calculates the CPA-based return type of a dynamic call.
+        def cpa_for_templates(possible_dispatches, cartesian)
+          result = Set.new
           possible_dispatches.each do |self_type, methods|
             result |= methods.map do |method|
               cartesian.map do |type_list|
@@ -326,10 +333,70 @@ module Laser
               end.compact
             end.flatten
           end
-          if result.empty?
-            raise TypeError.new("No methods named #{method_name} with matching types were found.")
+          result
+        end
+        
+        # TODO(adgar): Optimize this. Use lattice-style expression of raisability
+        # until types need to be added too.
+        def raisability_for_templates(possible_dispatches, cartesian, ignore_privacy)
+          seen_public = seen_private = seen_raise = seen_succeed = false
+          seen_any = possible_dispatches.find { |s, m| m.size > 0 }
+          possible_dispatches.each do |self_type, methods|
+            methods.each do |method|
+              cartesian.each do |type_list|
+                Laser.debug_puts "raise for #{method.name}(#{type_list.map(&:inspect).join(', ')})"
+                raise_type = method.raise_type_for_types(self_type, type_list, Types::NILCLASS)
+                Laser.debug_p raise_type
+                seen_raise = raise_type > Frequency::NEVER if !seen_raise
+                seen_succeed = raise_type < Frequency::ALWAYS if !seen_succeed
+                if !ignore_privacy
+                  self_type.possible_classes.each do |self_class|
+                    if !seen_public
+                      seen_public = (self_class.visibility_for(method.name) == :public)
+                    end
+                    if !seen_private
+                      seen_private = (self_class.visibility_for(method.name) != :public)
+                    end
+                  end
+                end
+              end
+            end
           end
-          Types::UnionType.new(result)
+          
+          if seen_any
+            if !ignore_privacy
+              if seen_public && !seen_private
+                fails_privacy = Frequency::NEVER
+              elsif seen_public && seen_private
+                fails_privacy = Frequency::MAYBE
+              else  # !seen_public && seen_private
+                fails_privacy = Frequency::ALWAYS
+              end
+            else
+              fails_privacy = Frequency::NEVER
+            end
+            if seen_succeed && !seen_raise
+              raised = Frequency::NEVER
+            elsif seen_succeed && seen_raise
+              raised = Frequency::MAYBE
+            else  # !seen_succeed && seen_raise
+              raised = Frequency::ALWAYS
+            end
+            [fails_privacy, raised].max
+          else
+            Frequency::ALWAYS  # no method!
+          end
+        end
+
+        # Calculates all possible return types for a method call using CPA.
+        def return_types_for_normal_call(receiver, method, args, ignore_privacy)
+          possible_dispatches, cartesian = calculate_possible_templates(receiver, method, args)
+          result = cpa_for_templates(possible_dispatches, cartesian)
+          raise_result = raisability_for_templates(possible_dispatches, cartesian, ignore_privacy)
+          if result.empty?
+            raise TypeError.new("No methods named #{method} with matching types were found.")
+          end
+          [Types::UnionType.new(result), raise_result]
         end
 
         # Evaluates the instruction, and if the constant value is lowered,

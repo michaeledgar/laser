@@ -83,6 +83,7 @@ class Thread
   def priority=(val)
   end
   
+  # raises: always
   def raise(*args)
   end
   

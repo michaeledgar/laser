@@ -276,6 +276,11 @@ module Laser
         @instance_variables[binding.name] = binding
       end
       
+      def visibility_for(method)
+        return @visibility_table[method] ||
+          (@superclass && @superclass.visibility_for(method))
+      end
+      
       def visibility_table
         if @superclass
         then @superclass.visibility_table.merge(@visibility_table)
@@ -665,6 +670,7 @@ module Laser
       attr_accessor_with_default :pure, false
       attr_accessor_with_default :predictable, true
       attr_accessor_with_default :raises, []
+      attr_accessor_with_default :annotated_raise_type, nil
       attr_accessor_with_default :raise_type, Frequency::MAYBE
 
       # Gets the laser method with the given class and name. Convenience for
@@ -691,6 +697,12 @@ module Laser
           @arity = nil
         end  
         yield self if block_given?
+      end
+      
+      def raise_type_for_types(self_type, arg_types, block_type)
+        return annotated_raise_type if annotated_raise_type
+        return Frequency::MAYBE if builtin || special
+        cfg_for_types(self_type, arg_types, block_type).raise_type
       end
       
       def return_type_for_types(self_type, arg_types, block_type)

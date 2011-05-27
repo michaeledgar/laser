@@ -1373,8 +1373,10 @@ module Laser
                 if !literal
                   result[:raises] = []
                   result[:raise_type] = Frequency::NEVER
+                  result[:annotated_raise_type] = Frequency[literal]
                 elsif ::Symbol === literal
                   result[:raise_type] = Frequency[literal]
+                  result[:annotated_raise_type] = Frequency[literal]
                 end
               end
               if types.any?
