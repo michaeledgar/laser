@@ -28,7 +28,17 @@ module Laser
     def self.[](sym)
       LOOKUP[sym]
     end
-    
+
+    def self.for_samples(yes, no)
+      if no && !yes
+        Frequency::NEVER
+      elsif no && yes
+        Frequency::MAYBE
+      else  # !no && yes
+        Frequency::ALWAYS
+      end
+    end
+
     class << self
       undef new
     end

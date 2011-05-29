@@ -113,10 +113,6 @@ module Laser
           when :jump, :raise, :return
             succ = block.real_successors.first
             constant_propagation_consider_edge block, succ, blocklist
-          when :resume
-            block.successors.each do |succ|
-              constant_propagation_consider_edge block, succ, blocklist
-            end
           when :call
             changed, raised = constant_propagation_for_call instruction
             if changed
@@ -151,11 +147,18 @@ module Laser
         end
 
         def add_target_uses_to_worklist(instruction, worklist)
-          instruction.explicit_targets.each do |target|
-            target.uses.each do |use|
-              worklist.add? use
-            end
-          end
+          uses = if instruction[0] == :call && instruction[2] == ClassRegistry['Laser#Magic'].binding &&
+                    instruction[3] == :set_global
+                   Scope::GlobalScope.lookup(instruction[4].value).uses
+                 elsif instruction[0] == :call && instruction[3] == :instance_variable_set &&
+                    instruction[4] != UNDEFINED && instruction[4] != VARYING
+                   receiver = instruction[2]
+                   klass = LaserObject === receiver.value ? receiver.normal_class : receiver.expr_type.possible_classes.first
+                   klass.instance_variable(instruction[4].value).uses.tap { |x| p x }
+                 else
+                   instruction.explicit_targets.map(&:uses).inject(:|) || []
+                 end
+          uses.each { |use| worklist.add(use) }
         end
         
         # Examines the branch for newly executable edges, and adds them to
@@ -198,7 +201,8 @@ module Laser
 
           opts = Hash === args.last ? args.pop : {}
           components = [receiver, *args]
-          special_result, special_type, special_raised = apply_special_case(receiver, method_name, *args)
+          special_result, special_type, special_raised =
+              apply_special_case(instruction, receiver, method_name, *args)
           if special_result != INAPPLICABLE
             new_value = special_result
             new_type = special_type
@@ -207,6 +211,7 @@ module Laser
             # cannot evaluate unless all args and receiver are defined
             return [false, :unknown]
           else
+
             # check purity
             methods = instruction.possible_methods
             # Require precise resolution
@@ -214,7 +219,7 @@ module Laser
             if methods.empty?
               new_value = UNDEFINED
               new_type = Types::TOP
-              raised = Frequency::ALWAYS
+              raised = Frequency::ALWAYS  # NoMethodError
             elsif method && (@_cp_fixed_methods.has_key?(method))
               result = @_cp_fixed_methods[method]
               new_value = result
@@ -223,7 +228,7 @@ module Laser
             elsif components.any? { |arg| arg.value == VARYING }
               new_value = VARYING
               if components.all? { |arg| arg.value != UNDEFINED }
-                new_type, raised = infer_type_and_raising(instruction, methods, receiver, method_name, args)
+                new_type, raised = infer_type_and_raising(instruction, receiver, method_name, args)
               else
                 new_type = Types::TOP
                 raised = Frequency::MAYBE
@@ -251,7 +256,7 @@ module Laser
                 end
               else
                 new_value = VARYING
-                new_type, raised = infer_type_and_raising(instruction, methods, receiver, method_name, args)
+                new_type, raised = infer_type_and_raising(instruction, receiver, method_name, args)
               end
             else
               # all components constant, nothing changed, shouldn't happen, but okay
@@ -272,7 +277,7 @@ module Laser
           [changed, raised]
         end
 
-        def infer_type_and_raising(instruction, methods, receiver, method_name, args)
+        def infer_type_and_raising(instruction, receiver, method_name, args)
           begin
             type, raised = return_types_for_normal_call(receiver, method_name, args, instruction.ignore_privacy)
           rescue TypeError => err
@@ -280,26 +285,8 @@ module Laser
             raised = Frequency::ALWAYS
             instruction.node.add_error(NoMatchingTypeSignature.new(
                 "No method named #{method_name} with matching types was found", instruction.node))
-          # else
-          #   raised = raiseability_for_instruction(instruction, methods)
           end
           [type, raised]
-        end
-
-        def raiseability_for_instruction(instruction, methods)
-          fails_privacy = Frequency::NEVER
-          if methods.size > 0 && !instruction.ignore_privacy
-            public_methods = instruction.possible_public_methods
-            if public_methods.size.zero?
-              fails_privacy = Frequency::ALWAYS
-            elsif public_methods.size != methods.size
-              fails_privacy = Frequency::MAYBE
-            else
-              fails_privacy = Frequency::NEVER
-            end
-          end
-          raised = methods.empty? ? Frequency::ALWAYS : methods.map(&:raise_type).max
-          [fails_privacy, raised].max
         end
 
         # Calculates the set of methods potentially invoked in dynamic dispatch,
@@ -344,9 +331,7 @@ module Laser
           possible_dispatches.each do |self_type, methods|
             methods.each do |method|
               cartesian.each do |type_list|
-                Laser.debug_puts "raise for #{method.name}(#{type_list.map(&:inspect).join(', ')})"
                 raise_type = method.raise_type_for_types(self_type, type_list, Types::NILCLASS)
-                Laser.debug_p raise_type
                 seen_raise = raise_type > Frequency::NEVER if !seen_raise
                 seen_succeed = raise_type < Frequency::ALWAYS if !seen_succeed
                 if !ignore_privacy
@@ -364,24 +349,11 @@ module Laser
           end
           
           if seen_any
-            if !ignore_privacy
-              if seen_public && !seen_private
-                fails_privacy = Frequency::NEVER
-              elsif seen_public && seen_private
-                fails_privacy = Frequency::MAYBE
-              else  # !seen_public && seen_private
-                fails_privacy = Frequency::ALWAYS
-              end
-            else
-              fails_privacy = Frequency::NEVER
-            end
-            if seen_succeed && !seen_raise
-              raised = Frequency::NEVER
-            elsif seen_succeed && seen_raise
-              raised = Frequency::MAYBE
-            else  # !seen_succeed && seen_raise
-              raised = Frequency::ALWAYS
-            end
+            fails_privacy = if ignore_privacy
+                            then Frequency::NEVER
+                            else Frequency.for_samples(seen_private, seen_public)
+                            end
+            raised = Frequency.for_samples(seen_raise, seen_succeed)
             [fails_privacy, raised].max
           else
             Frequency::ALWAYS  # no method!
@@ -455,7 +427,7 @@ module Laser
         
         def is_numeric?(temp)
           temp.value != UNDEFINED && Types.subtype?(temp.inferred_type, 
-                                              Types::ClassType.new('Numeric', :covariant))
+              Types::ClassType.new('Numeric', :covariant))
         end
         
         def uses_method?(temp, method)
@@ -463,7 +435,7 @@ module Laser
         end
         
         # TODO(adgar): Add typechecking. Forealz.
-        def apply_special_case(receiver, method_name, *args)
+        def apply_special_case(instruction, receiver, method_name, *args)
           if method_name == :*
             # 0 * n == 0
             # n * 0 == 0
@@ -496,8 +468,24 @@ module Laser
                 return [false, Types::FALSECLASS, Frequency::NEVER]
               end
             end
+          elsif method_name == :instance_variable_get
+            if args.first.value != UNDEFINED && args.first.value != VARYING
+              klass = LaserObject === receiver.value ? receiver.normal_class : receiver.expr_type.possible_classes.first
+              ivar = klass.instance_variable(args.first.value)
+              ivar.uses.add(instruction)
+              return [VARYING, ivar.expr_type, Frequency::NEVER]
+            end
+          elsif method_name == :instance_variable_set
+            if args.first.value != UNDEFINED && args.first.value != VARYING
+              klass = LaserObject === receiver.value ? receiver.normal_class : receiver.expr_type.possible_classes.first
+              ivar = klass.instance_variable(args.first.value)
+              unless Types.subtype?(args[1].expr_type, ivar.expr_type)
+                ivar.inferred_type = Types::UnionType.new([args[1].expr_type, ivar.expr_type])
+              end
+              return [args[1].value, ivar.expr_type, Frequency::NEVER]
+            end
           elsif receiver == ClassRegistry['Laser#Magic'].binding
-            magic_result, magic_type, magic_raises = cp_magic(method_name, *args)
+            magic_result, magic_type, magic_raises = cp_magic(instruction, method_name, *args)
             if magic_result != INAPPLICABLE
               return [magic_result, magic_type, magic_raises]
             end
@@ -509,7 +497,7 @@ module Laser
           method == ClassRegistry['Module'].instance_method('const_get')
         end
         
-        def cp_magic(method_name, *args)
+        def cp_magic(instruction, method_name, *args)
           case method_name
           when :current_self
             return [VARYING, real_self_type, Frequency::NEVER]
@@ -521,9 +509,10 @@ module Laser
             return [VARYING, Types::FIXNUM, Frequency::NEVER]
           when :get_global
             global = Scope::GlobalScope.lookup(args[0].value)
+            global.uses.add(instruction)
             return [VARYING, global.expr_type, Frequency::NEVER]
           when :set_global
-            if args[1] != UNDEFINED
+            if args[1].value != UNDEFINED
               global = Scope::GlobalScope.lookup(args[0].value)
               unless Types.subtype?(args[1].expr_type, global.expr_type)
                 global.inferred_type = Types::UnionType.new([args[1].expr_type, global.expr_type])

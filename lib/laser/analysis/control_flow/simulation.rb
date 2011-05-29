@@ -142,7 +142,7 @@ module Laser
           end
         end
         
-        IGNORED = [:branch, :jump, :resume, :return]
+        IGNORED = [:branch, :jump, :return]
         def simulate_instruction(insn, opts)
           Laser.debug_puts "Simulating insn: #{insn.inspect}"
           return if IGNORED.include?(insn[0])

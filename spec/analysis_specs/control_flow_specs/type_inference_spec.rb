@@ -12,12 +12,10 @@ EOF
     method = ClassRegistry['CPSim2'].singleton_class.instance_method('multiply')
     method.return_type_for_types(
         Utilities.type_for(ClassRegistry['CPSim2']), 
-        [Types::FIXNUM, Types::FLOAT], 
-        Types::NILCLASS).should == Types::UnionType.new([Types::FLOAT])
+        [Types::FIXNUM, Types::FLOAT]).should == Types::UnionType.new([Types::FLOAT])
     method.return_type_for_types(
         Utilities.type_for(ClassRegistry['CPSim2']),
-        [Types::FIXNUM, Types::FIXNUM],
-        Types::NILCLASS).should == Types::UnionType.new([Types::FIXNUM, Types::BIGNUM])
+        [Types::FIXNUM, Types::FIXNUM]).should == Types::UnionType.new([Types::FIXNUM, Types::BIGNUM])
   end
 
   it 'should infer type errors on methods with specified overloads' do
@@ -35,7 +33,7 @@ end
 EOF
    ClassRegistry['CPSim3'].singleton_class.instance_method('sim3').
        return_type_for_types(
-         Utilities.type_for(ClassRegistry['CPSim3']), [], Types::NILCLASS).should == nil
+         Utilities.type_for(ClassRegistry['CPSim3'])).should == nil
    g.should have_error(NoMatchingTypeSignature).on_line(8).with_message(/\*/)
   end
 
@@ -56,7 +54,7 @@ end
 EOF
     ClassRegistry['CPSim4'].singleton_class.instance_method('bar').
         return_type_for_types(
-          Utilities.type_for(ClassRegistry['CPSim4']), [], Types::NILCLASS).should == Types::BOOLEAN
+          Utilities.type_for(ClassRegistry['CPSim4'])).should == Types::BOOLEAN
   end
 
   it 'should infer the type resulting from Class#new' do
@@ -77,8 +75,7 @@ EOF
     ClassRegistry['CPSim5'].singleton_class.instance_method('make_a_foo').
         return_type_for_types(
           Utilities.type_for(ClassRegistry['CPSim5']),
-          [Types::FIXNUM, Types::FLOAT],
-          Types::NILCLASS).should == result
+          [Types::FIXNUM, Types::FLOAT]).should == result
   end
 
   it 'should infer types based on SSA, when appropriate' do
@@ -97,7 +94,7 @@ EOF
     result = Types::UnionType.new([Types::FIXNUM, Types::BIGNUM, Types::STRING])
     ClassRegistry['CPSim6'].singleton_class.instance_method('multiply').
         return_type_for_types(
-          Utilities.type_for(ClassRegistry['CPSim6']), [], Types::NILCLASS).should == result
+          Utilities.type_for(ClassRegistry['CPSim6'])).should == result
   end
 
   it 'should improve type inference due to SSA, when appropriate' do
@@ -117,7 +114,7 @@ end
 EOF
     ClassRegistry['CPSim7'].singleton_class.instance_method('multiply').
         return_type_for_types(
-          Utilities.type_for(ClassRegistry['CPSim7']), [], Types::NILCLASS).should == Types::FLOAT
+          Utilities.type_for(ClassRegistry['CPSim7'])).should == Types::FLOAT
   end
 
   it 'should handle, via SSA, uninitialized variable types' do
@@ -133,7 +130,7 @@ end
 EOF
     ClassRegistry['CPSim8'].singleton_class.instance_method('switch').
         return_type_for_types(
-          Utilities.type_for(ClassRegistry['CPSim8']), [], Types::NILCLASS).should ==
+          Utilities.type_for(ClassRegistry['CPSim8'])).should ==
             Types::UnionType.new([Types::STRING, Types::NILCLASS])
   end
   
@@ -147,7 +144,7 @@ end
 EOF
     ClassRegistry['CPSim8'].instance_method('to_s').
         return_type_for_types(
-          Utilities.type_for(ClassRegistry['CPSim8']), [], Types::NILCLASS)  # force calculation
+          Utilities.type_for(ClassRegistry['CPSim8']))  # force calculation
     ClassRegistry['CPSim8'].instance_method('to_s').proc.ast_node.should(
         have_error(ImproperOverloadTypeError).with_message(/to_s/))
   end
@@ -167,11 +164,62 @@ module CPSim9
   end
 end
 EOF
+    # First, qux should give nil
+    ClassRegistry['CPSim9'].singleton_class.instance_method('qux').
+        return_type_for_types(
+          Utilities.type_for(ClassRegistry['CPSim9']), [Types::STRING]).should == Types::NILCLASS
     expected_type = Types::UnionType.new(
         [Types::STRING, Types::FIXNUM, Types::BIGNUM, Types::NILCLASS])
     ClassRegistry['CPSim9'].singleton_class.instance_method('bar').
         return_type_for_types(
-          Utilities.type_for(ClassRegistry['CPSim9']), [], Types::NILCLASS).should == expected_type
+          Utilities.type_for(ClassRegistry['CPSim9'])).should == expected_type
     Scope::GlobalScope.lookup('$sim9').expr_type.should == expected_type
+    ClassRegistry['CPSim9'].singleton_class.instance_method('qux').
+        return_type_for_types(
+          Utilities.type_for(ClassRegistry['CPSim9']), [Types::STRING]).should == expected_type
+  end
+  
+  it 'should collect inferred types in instance variables by class' do
+    g = cfg <<-EOF
+class TI1
+  def set_foo(x)
+    @foo = x
+  end
+  def get_foo
+    @foo
+  end
+end
+class TI2
+  def set_foo(x)
+    @foo = x
+  end
+  def get_foo
+    @foo
+  end
+end
+EOF
+    ClassRegistry['TI1'].instance_method('get_foo').return_type_for_types(
+        Utilities.type_for(ClassRegistry['TI1'])).should == Types::NILCLASS
+    ClassRegistry['TI1'].instance_method('set_foo').return_type_for_types(
+        Utilities.type_for(ClassRegistry['TI1']), [Types::STRING]).should ==
+          Types::STRING
+    ClassRegistry['TI1'].instance_method('get_foo').return_type_for_types(
+        Utilities.type_for(ClassRegistry['TI1'])).should ==
+          Types::UnionType.new([Types::NILCLASS, Types::STRING])
+    ClassRegistry['TI1'].instance_method('set_foo').return_type_for_types(
+        Utilities.type_for(ClassRegistry['TI1']), [Types::FIXNUM]).should ==
+         Types::FIXNUM
+    ClassRegistry['TI1'].instance_method('get_foo').return_type_for_types(
+        Utilities.type_for(ClassRegistry['TI1'])).should ==
+          Types::UnionType.new([Types::NILCLASS, Types::STRING, Types::FIXNUM])
+    
+    ClassRegistry['TI2'].instance_method('get_foo').return_type_for_types(
+        Utilities.type_for(ClassRegistry['TI2'])).should == Types::NILCLASS
+    ClassRegistry['TI2'].instance_method('set_foo').return_type_for_types(
+        Utilities.type_for(ClassRegistry['TI2']), [Types::FIXNUM]).should ==
+          Types::FIXNUM
+    ClassRegistry['TI2'].instance_method('get_foo').return_type_for_types(
+        Utilities.type_for(ClassRegistry['TI2'])).should ==
+          Types::UnionType.new([Types::NILCLASS, Types::FIXNUM])
   end
 end

@@ -30,7 +30,9 @@ module Laser
         @klass = klass
         @scope = scope
         @name = name
-        @instance_variables = {}
+        @instance_variables = Hash.new do |h, k|
+          h[k] = Bindings::InstanceVariableBinding.new(k, nil)
+        end
       end
       
       def add_instance_method!(method)
@@ -72,11 +74,11 @@ module Laser
       end
 
       def instance_variable_get(var)
-        @instance_variables[var]
+        @instance_variables[var].value
       end
 
       def instance_variable_set(var, value)
-        @instance_variables[var] = value
+        @instance_variables[var].bind!(value)
       end
     end
 
@@ -156,11 +158,10 @@ module Laser
         @name_set = :yes unless @name_set == :no
         @path = full_path
         @instance_methods = {}
-        @instance_variables = {}
         @visibility_table = {}
         @constant_table = {}
         @scope = scope
-        @methods = {}
+        @ivar_types = {}
         @superclass ||= nil
         initialize_protocol
         @binding = Bindings::ConstantBinding.new(name, self)
@@ -263,6 +264,18 @@ module Laser
         then @superclass.instance_methods | mine
         else mine
         end
+      end
+      
+      def ivar_type(name)
+        @ivar_types[name] || (@superclass && @superclass.ivar_type(name)) || Types::NILCLASS
+      end
+      
+      def set_ivar_type(name, type)
+        @ivar_types[name] = type
+      end
+      
+      def instance_variable(name)
+        @instance_variables[name] || (@superclass && @superclass.instance_variable(name))
       end
       
       def instance_variables
@@ -699,13 +712,15 @@ module Laser
         yield self if block_given?
       end
       
-      def raise_type_for_types(self_type, arg_types, block_type)
+      def raise_type_for_types(self_type, arg_types = [], block_type = nil)
+        block_type ||= Types::NILCLASS
         return annotated_raise_type if annotated_raise_type
         return Frequency::MAYBE if builtin || special
         cfg_for_types(self_type, arg_types, block_type).raise_type
       end
       
-      def return_type_for_types(self_type, arg_types, block_type)
+      def return_type_for_types(self_type, arg_types = [], block_type = nil)
+        block_type ||= Types::NILCLASS
         return self.annotated_return if annotated_return
         unless overloads.empty?
           overloads.each do |overload_args, proc_type|
@@ -738,7 +753,8 @@ module Laser
         @master_cfg ||= @proc.ssa_cfg
       end
       
-      def cfg_for_types(self_type, arg_types, block_type)
+      def cfg_for_types(self_type, arg_types = [], block_type = nil)
+        block_type ||= Types::NILCLASS
         @type_instantiations[[self_type, *arg_types, block_type]] ||= master_cfg.dup.tap do |cfg|
           cfg.bind_self_type(self_type)
           cfg.bind_formal_types(arg_types)

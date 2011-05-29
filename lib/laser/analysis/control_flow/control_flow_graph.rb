@@ -162,7 +162,7 @@ module Laser
         end
         
         def save_pretty_picture(fmt='png', dotfile='graph', params = {'shape' => 'box'})
-          condense_blocks
+#          condense_blocks
           write_to_graphic_file(fmt, dotfile, params)
         end
         
@@ -210,7 +210,6 @@ module Laser
             simulate([], :mutation => true) if opts[:simulate]
           else
             static_single_assignment_form unless @in_ssa
-#            debug_dotty
             Laser.debug_puts('>>> Starting CP <<<')
             perform_constant_propagation
             Laser.debug_puts('>>> Finished CP <<<')
