@@ -203,69 +203,67 @@ module Laser
           components = [receiver, *args]
           special_result, special_type, special_raised =
               apply_special_case(instruction, receiver, method_name, *args)
-          if special_result != INAPPLICABLE
+          if components.any? { |arg| arg.value == UNDEFINED }
+            # cannot evaluate unless all args and receiver are defined
+            return [false, :unknown]
+          end
+          # check purity
+          methods = instruction.possible_methods
+          # Require precise resolution
+          method = methods.size == 1 ? methods.first : nil
+          if methods.empty?
+            new_value = UNDEFINED
+            new_type = Types::TOP
+            raised = Frequency::ALWAYS  # NoMethodError
+          elsif method && (@_cp_fixed_methods.has_key?(method))
+            result = @_cp_fixed_methods[method]
+            new_value = result
+            new_type = Utilities.type_for(result)
+            raised = Frequency::NEVER
+          elsif special_result != INAPPLICABLE
             new_value = special_result
             new_type = special_type
             raised = special_raised
-          elsif components.any? { |arg| arg.value == UNDEFINED }
-            # cannot evaluate unless all args and receiver are defined
-            return [false, :unknown]
-          else
-
-            # check purity
-            methods = instruction.possible_methods
-            # Require precise resolution
-            method = methods.size == 1 ? methods.first : nil
-            if methods.empty?
-              new_value = UNDEFINED
+          elsif components.any? { |arg| arg.value == VARYING }
+            new_value = VARYING
+            if components.all? { |arg| arg.value != UNDEFINED }
+              new_type, raised = infer_type_and_raising(instruction, receiver, method_name, args)
+            else
               new_type = Types::TOP
-              raised = Frequency::ALWAYS  # NoMethodError
-            elsif method && (@_cp_fixed_methods.has_key?(method))
-              result = @_cp_fixed_methods[method]
-              new_value = result
-              new_type = Utilities.type_for(result)
-              raised = Frequency::NEVER
-            elsif components.any? { |arg| arg.value == VARYING }
-              new_value = VARYING
-              if components.all? { |arg| arg.value != UNDEFINED }
-                new_type, raised = infer_type_and_raising(instruction, receiver, method_name, args)
-              else
-                new_type = Types::TOP
-                raised = Frequency::MAYBE
-              end
-            # All components constant, and never evaluated before.
-            elsif original == UNDEFINED && (!opts || !opts[:block])
-              if method && (method.pure || allow_impure_method?(method))
-                real_receiver = receiver.value
-                begin
-                  if method.builtin
-                    result = real_receiver.send(method_name, *args.map(&:value))
-                  else
-                    result = method.simulate_with_args(real_receiver, args.map(&:value), nil, {mutation: true})
-                  end
-                  new_value = result
-                  new_type = Utilities.type_for(result)
-                  raised = Frequency::NEVER
-                rescue BasicObject => err
-                  # any exception caught - this is an extremely unsafe rescue handler - means my
-                  # simulation *MUST NOT* raise or I will conflate user-level raises
-                  # with my own
-                  new_value = UNDEFINED
-                  new_type = Types::TOP
-                  raised = Frequency::ALWAYS
+              raised = Frequency::MAYBE
+            end
+          # All components constant, and never evaluated before.
+          elsif original == UNDEFINED && (!opts || !opts[:block])
+            if method && (method.pure || allow_impure_method?(method))
+              real_receiver = receiver.value
+              begin
+                if method.builtin
+                  result = real_receiver.send(method_name, *args.map(&:value))
+                else
+                  result = method.simulate_with_args(real_receiver, args.map(&:value), nil, {mutation: true})
                 end
-              else
-                new_value = VARYING
-                new_type, raised = infer_type_and_raising(instruction, receiver, method_name, args)
+                new_value = result
+                new_type = Utilities.type_for(result)
+                raised = Frequency::NEVER
+              rescue BasicObject => err
+                # any exception caught - this is an extremely unsafe rescue handler - means my
+                # simulation *MUST NOT* raise or I will conflate user-level raises
+                # with my own
+                new_value = UNDEFINED
+                new_type = Types::TOP
+                raised = Frequency::ALWAYS
               end
             else
-              # all components constant, nothing changed, shouldn't happen, but okay
-              new_value = original
-              new_type = old_type
-              raised = instruction.raise_type
+              new_value = VARYING
+              new_type, raised = infer_type_and_raising(instruction, receiver, method_name, args)
             end
-            # At this point, we should prune raise edges!
+          else
+            # all components constant, nothing changed, shouldn't happen, but okay
+            new_value = original
+            new_type = old_type
+            raised = instruction.raise_type
           end
+          # At this point, we should prune raise edges!
           if original != new_value
             target.bind! new_value
             changed = true
@@ -347,7 +345,6 @@ module Laser
               end
             end
           end
-          
           if seen_any
             fails_privacy = if ignore_privacy
                             then Frequency::NEVER
@@ -489,6 +486,8 @@ module Laser
             if magic_result != INAPPLICABLE
               return [magic_result, magic_type, magic_raises]
             end
+          elsif receiver.value == ClassRegistry['Proc'] && method_name == :new # and check no block
+            return cp_magic(instruction, :current_block)
           end
           [INAPPLICABLE, Frequency::MAYBE]
         end
@@ -507,6 +506,12 @@ module Laser
             return [VARYING, Types::ARRAY, Frequency::NEVER]
           when :current_arity
             return [VARYING, Types::FIXNUM, Frequency::NEVER]
+          when :current_block
+            if real_block_type == Types::NILCLASS
+              return [nil, Types::NILCLASS, Frequency::NEVER]
+            else
+              return [VARYING, real_block_type, Frequency::NEVER]
+            end
           when :get_global
             global = Scope::GlobalScope.lookup(args[0].value)
             global.uses.add(instruction)

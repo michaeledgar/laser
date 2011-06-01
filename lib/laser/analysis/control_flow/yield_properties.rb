@@ -7,29 +7,36 @@ module Laser
         def find_yield_properties
           without_yield = dup
           with_yield = dup
+          
+          without_yield.bind_block_type(Types::NILCLASS)
+          with_yield.bind_block_type(Types::PROC)
+
           kernel_method_to_fix = ClassRegistry['Kernel'].
               instance_method('block_given?')
+          proc_method_to_fix   = ClassRegistry['Proc'].singleton_class.
+              instance_method('new')
           magic_method_to_fix  = ClassRegistry['Laser#Magic'].singleton_class.
               instance_method('current_block')
           
           fake_block = proc { |*args| }
           without_yield.perform_constant_propagation(
               fixed_methods: { kernel_method_to_fix => false,
-                               magic_method_to_fix => nil})
+                               proc_method_to_fix   => nil })
           with_yield.perform_constant_propagation(
               fixed_methods: { kernel_method_to_fix => true,
-                               magic_method_to_fix => fake_block})
+                               magic_method_to_fix  => fake_block,
+                               proc_method_to_fix   => fake_block})
 
           without_yield.prune_unexecuted_blocks
           with_yield.prune_unexecuted_blocks
-
-          weak_with_calls = with_yield.potential_block_calls
-          ever_yields_with_block = weak_with_calls.size > 0
 
           weak_without_calls = without_yield.potential_block_calls
           has_yield_pd = !!without_yield.vertex_with_name(
               ControlFlowGraph::YIELD_POSTDOMINATOR_NAME)
           yields_without_block = has_yield_pd || weak_without_calls.size > 0
+
+          weak_with_calls = with_yield.potential_block_calls(fake_block)
+          ever_yields_with_block = weak_with_calls.size > 0
 
           @yield_type = case [ever_yields_with_block, yields_without_block]
                         when [true, true] then :required
@@ -51,8 +58,16 @@ module Laser
           yield_arity
         end
 
-        def potential_block_calls
-          aliases = weak_local_aliases_for(block_register)
+        def initial_block_aliases
+          proc_new_calls = find_method_calls(
+              ClassRegistry['Proc'].singleton_class.instance_method('new'))
+          registers = proc_new_calls.map { |insn| insn[1] }
+          initial_aliases = Set.new(registers)
+          initial_aliases.add(block_register)
+        end
+
+        def potential_block_calls(block_value = nil)
+          aliases = weak_local_aliases_for(initial_block_aliases, block_value)
           calls = []
           vertices.each do |block|
             block.instructions.each do |insn|

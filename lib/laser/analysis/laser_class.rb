@@ -659,6 +659,11 @@ module Laser
         return @delegated.instance_method(name.to_s) ||
           (@superclass && @superclass.instance_method(name))
       end
+      
+      def visibility_for(method)
+        return @delegated.visibility_for(method) ||
+          (@superclass && @superclass.visibility_for(method))
+      end
 
       def instance_methods(include_superclass = true)
         if include_superclass && @superclass

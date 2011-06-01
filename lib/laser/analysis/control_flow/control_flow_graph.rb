@@ -187,16 +187,14 @@ module Laser
         end
 
         def bind_formal_types(new_formal_types)
-          raise RuntimeError.new("Attempted to bind formal-types when already bound.") if @formal_types
           @formal_types = new_formal_types
         end
 
         def real_block_type
-          @block_type || Types::TOP
+          @block_type || Types::BLOCK
         end
 
         def bind_block_type(new_block_type)
-          raise RuntimeError.new("Attempted to bind block-type when already bound.") if @block_type
           @block_type = new_block_type
         end
 

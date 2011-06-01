@@ -1,4 +1,10 @@
 class Proc
+  # pure: true
+  # builtin: true
+  # raises: never
+  def self.new(&blk)
+  end
+
   def call(*args)
   end
   alias yield call

@@ -52,7 +52,7 @@ EOF
     g.yield_type.should be :required
     g.yield_arity.should == Set[0]
   end
-  ['block_given?', 'defined?(yield)', 'defined?(yield($., *$*))'].each do |guard|
+  ['block_given?', 'defined?(yield)', 'defined?(yield($., *$*))', 'Proc.new'].each do |guard|
     it "denotes the method optional when yield is guarded by #{guard}" do
       g = cfg_method <<-EOF
   def one
@@ -120,6 +120,60 @@ end
 EOF
     g.yield_type.should be :required
     g.yield_arity.should == Set[2]
+  end
+
+  it 'denotes the method foolish when the explicit block arg is checked vs. nil and called explicitly' do
+    g = cfg_method <<-EOF
+def one(&blk)
+  if blk == nil
+    blk.call(2, 3)
+  end
+  1
+end
+EOF
+    g.yield_type.should be :foolish
+    g.yield_arity.should == Set[]
+  end
+  
+  it 'denotes the method optional when the Proc.new block arg is checked vs. nil and called explicitly' do
+    g = cfg_method <<-EOF
+def one
+  blk = Proc::new
+  if blk != nil
+    blk.call(2, 3)
+  else
+    1
+  end
+end
+EOF
+    g.yield_type.should be :optional
+    g.yield_arity.should == Set[2]
+  end
+
+  it 'denotes the method required when the Proc.new block arg is not checked vs. nil and called explicitly' do
+    g = cfg_method <<-EOF
+def one
+  blk = Proc::new
+  blk.call(2, 3)
+  1
+end
+EOF
+    g.yield_type.should be :required
+    g.yield_arity.should == Set[2]
+  end
+
+  it 'denotes the method foolish when the Proc.new block arg is checked vs. nil and called explicitly' do
+    g = cfg_method <<-EOF
+def one
+  blk = Proc::new
+  if blk == nil
+    blk.call(2, 3)
+  end
+  1
+end
+EOF
+    g.yield_type.should be :foolish
+    g.yield_arity.should == Set[]
   end
 
   it 'denotes the method ignored when the explicit block arg is never called' do
