@@ -432,6 +432,11 @@ module Laser
         opts.each { |name, value| method.send("#{name}=", value) }
       end
 
+      def remove_method(symbol)
+        @instance_methods.delete(symbol.to_s)
+        @visibility_table.delete(symbol.to_s)
+      end
+
       def alias_method(new, old)
         @instance_methods[new.to_s] = @instance_methods[old.to_s]
         @visibility_table[new.to_s] = @visibility_table[old.to_s]

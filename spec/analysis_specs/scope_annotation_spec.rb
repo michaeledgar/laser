@@ -220,6 +220,24 @@ describe 'general analyses' do
     tree.all_errors.should be_empty
   end
 
+  it 'removes methods via #remove_method' do
+    annotate_all('class RM1; def do_xyz(a); end; end')
+    ClassRegistry['RM1'].instance_method('do_xyz').should be_a(LaserMethod)
+    annotate_all('class RM1; remove_method :do_xyz; end')
+    ClassRegistry['RM1'].instance_method('do_xyz').should be nil
+  end
+  
+  it 'passes resolution to superclasses after #remove_method' do
+    annotate_all('class RM2; def do_xyz(a); end; end; class RMSub < RM2; def do_xyz(b); end; end')
+    ClassRegistry['RMSub'].instance_method('do_xyz').should be_a(LaserMethod)
+    ClassRegistry['RMSub'].instance_method('do_xyz').should_not ==
+        ClassRegistry['RM2'].instance_method('do_xyz')
+
+    annotate_all('class RMSub; remove_method :do_xyz; end')
+    ClassRegistry['RMSub'].instance_method('do_xyz').should ==
+        ClassRegistry['RM2'].instance_method('do_xyz')
+  end
+
   # [:program,
   #  [[:def,
   #    [:@ident, "abc", [1, 4]],
@@ -643,80 +661,80 @@ describe 'general analyses' do
       File.should_not_receive(:read)
       annotate_all("require 'foobaz'")
     end
-    
-    it 'should raise a SuperclassMismatchError when an improper superclass is specified' do
-      input = 'class A250 < String; end; class A250 < Fixnum; end'
-      tree = annotate_all(input)
-      tree.all_errors.size.should be 1
-      tree.all_errors.first.should be_a(TopLevelSimulationRaised)
-      tree.all_errors.first.error.normal_class.should == ClassRegistry['LaserSuperclassMismatchError']
-    end
-    
-    it "should not raise a SuperclassMismatchError when BasicObject's superclass is omitted" do
-      input = 'class BasicObject; end'
-      tree = annotate_all(input)
-      tree.all_errors.should be_empty
-    end
-    
-    it "should not raise a SuperclassMismatchError when BasicObject's superclass is nil" do
-      input = 'class BasicObject < nil; end'
-      tree = annotate_all(input)
-      tree.all_errors.should be_empty
-    end
-    
-    it "should raise a SuperclassMismatchError when BasicObject's superclass is specified and not nil" do
-      input = 'class BasicObject < String; end'
-      tree = annotate_all(input)
-      tree.all_errors.size.should be 1
-      tree.all_errors.first.should be_a(TopLevelSimulationRaised)
-      tree.all_errors.first.error.normal_class.should == ClassRegistry['LaserSuperclassMismatchError']
-    end
-    
-    it "should not raise a SuperclassMismatchError when Object's superclass is omitted" do
-      input = 'class Object; end'
-      tree = annotate_all(input)
-      tree.all_errors.should be_empty
-    end
-    
-    it "should not raise a SuperclassMismatchError when Object's superclass is BasicObject" do
-      input = 'class Object < BasicObject; end'
-      tree = annotate_all(input)
-      tree.all_errors.should be_empty
-    end
-    
-    it "should raise a SuperclassMismatchError when Object's superclass is specified and not BasicObject" do
-      input = 'class Object < Array; end'
-      tree = annotate_all(input)
-      tree.all_errors.size.should be 1
-      tree.all_errors.first.should be_a(TopLevelSimulationRaised)
-      tree.all_errors.first.error.normal_class.should == ClassRegistry['LaserSuperclassMismatchError']
-    end
-    
-    it "should not raise a SuperclassMismatchError when Class's superclass is omitted" do
-      input = 'class Class; end'
-      tree = annotate_all(input)
-      tree.all_errors.should be_empty
-    end
-    
-    it "should not raise a SuperclassMismatchError when Class's superclass is Module" do
-      input = 'class Class < Module; end'
-      tree = annotate_all(input)
-      tree.all_errors.should be_empty
-    end
-    
-    it "should raise a SuperclassMismatchError when Class's superclass is specified and not Module" do
-      input = 'class Class < BasicObject; end'
-      tree = annotate_all(input)
-      tree.all_errors.size.should be 1
-      tree.all_errors.first.should be_a(TopLevelSimulationRaised)
-      tree.all_errors.first.error.normal_class.should == ClassRegistry['LaserSuperclassMismatchError']
-    end
-    
-    it "should not raise a SuperclassMismatchError when a class is opened without it's Object superclass" do
-      input = 'class String; end'
-      tree = annotate_all(input)
-      tree.all_errors.should be_empty
-    end
+  end
+
+  it 'should raise a SuperclassMismatchError when an improper superclass is specified' do
+    input = 'class A250 < String; end; class A250 < Fixnum; end'
+    tree = annotate_all(input)
+    tree.all_errors.size.should be 1
+    tree.all_errors.first.should be_a(TopLevelSimulationRaised)
+    tree.all_errors.first.error.normal_class.should == ClassRegistry['LaserSuperclassMismatchError']
+  end
+  
+  it "should not raise a SuperclassMismatchError when BasicObject's superclass is omitted" do
+    input = 'class BasicObject; end'
+    tree = annotate_all(input)
+    tree.all_errors.should be_empty
+  end
+  
+  it "should not raise a SuperclassMismatchError when BasicObject's superclass is nil" do
+    input = 'class BasicObject < nil; end'
+    tree = annotate_all(input)
+    tree.all_errors.should be_empty
+  end
+  
+  it "should raise a SuperclassMismatchError when BasicObject's superclass is specified and not nil" do
+    input = 'class BasicObject < String; end'
+    tree = annotate_all(input)
+    tree.all_errors.size.should be 1
+    tree.all_errors.first.should be_a(TopLevelSimulationRaised)
+    tree.all_errors.first.error.normal_class.should == ClassRegistry['LaserSuperclassMismatchError']
+  end
+  
+  it "should not raise a SuperclassMismatchError when Object's superclass is omitted" do
+    input = 'class Object; end'
+    tree = annotate_all(input)
+    tree.all_errors.should be_empty
+  end
+  
+  it "should not raise a SuperclassMismatchError when Object's superclass is BasicObject" do
+    input = 'class Object < BasicObject; end'
+    tree = annotate_all(input)
+    tree.all_errors.should be_empty
+  end
+  
+  it "should raise a SuperclassMismatchError when Object's superclass is specified and not BasicObject" do
+    input = 'class Object < Array; end'
+    tree = annotate_all(input)
+    tree.all_errors.size.should be 1
+    tree.all_errors.first.should be_a(TopLevelSimulationRaised)
+    tree.all_errors.first.error.normal_class.should == ClassRegistry['LaserSuperclassMismatchError']
+  end
+  
+  it "should not raise a SuperclassMismatchError when Class's superclass is omitted" do
+    input = 'class Class; end'
+    tree = annotate_all(input)
+    tree.all_errors.should be_empty
+  end
+  
+  it "should not raise a SuperclassMismatchError when Class's superclass is Module" do
+    input = 'class Class < Module; end'
+    tree = annotate_all(input)
+    tree.all_errors.should be_empty
+  end
+  
+  it "should raise a SuperclassMismatchError when Class's superclass is specified and not Module" do
+    input = 'class Class < BasicObject; end'
+    tree = annotate_all(input)
+    tree.all_errors.size.should be 1
+    tree.all_errors.first.should be_a(TopLevelSimulationRaised)
+    tree.all_errors.first.error.normal_class.should == ClassRegistry['LaserSuperclassMismatchError']
+  end
+  
+  it "should not raise a SuperclassMismatchError when a class is opened without it's Object superclass" do
+    input = 'class String; end'
+    tree = annotate_all(input)
+    tree.all_errors.should be_empty
   end
 end
   

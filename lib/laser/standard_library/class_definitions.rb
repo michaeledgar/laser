@@ -66,6 +66,10 @@ class Module
   end
   # builtin: true
   # mutation: true
+  def remove_method(name, body=nil)
+  end
+  # builtin: true
+  # mutation: true
   def const_set(sym, val)
   end
   # builtin: true
