@@ -542,7 +542,7 @@ module Laser
             when :string_embexpr
               node[1].each { |elt| walk_node(elt, value: false) }
             when :@CHAR, :@tstring_content, :@int, :@float, :@regexp_end, :symbol,
-                 :@label, :symbol_literal
+                 :@label, :symbol_literal, :defined
               # do nothing
             when :string_literal
               content_nodes = node[1].children
@@ -746,6 +746,8 @@ module Laser
               key_value_paired = pairs.map {|a, b| [walk_node(a, value: true), walk_node(b, value: true)] }.flatten
               receiver = ClassRegistry['Hash'].binding
               call_instruct(receiver, :[], *key_value_paired, block: false, value: true)
+            when :defined
+              defined_op_instruct(node[1])
             else
               raise ArgumentError.new("Unknown AST node type #{node.type.inspect}")
             end
@@ -2293,6 +2295,26 @@ module Laser
           end
           
           start_block after
+        end
+        
+        def defined_op_instruct(expression)
+          case expression.type
+          when :yield0, :yield
+            # give 'yield' if there is a block, otherwise nil
+            result = lookup_or_create_temporary(:defined, :yield)
+            after = create_block
+            with_block_block = build_block_with_jump(after) do
+              copy_instruct(result, const_instruct('yield'))
+            end
+            without_block_block = build_block_with_jump(after) do
+              copy_instruct(result, const_instruct(nil))
+            end
+            cond_instruct(@block_arg, with_block_block, without_block_block)
+            start_block after
+            result
+          else
+            raise NotImplementedError.new("Unimplemented defined? case: #{expression.type}")
+          end
         end
         
         # Takes a set of either :@tstring_content or :string_embexpr nodes

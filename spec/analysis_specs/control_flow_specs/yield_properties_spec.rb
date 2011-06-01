@@ -52,33 +52,34 @@ EOF
     g.yield_type.should be :required
     g.yield_arity.should == Set[0]
   end
+  ['block_given?', 'defined?(yield)', 'defined?(yield($., *$*))'].each do |guard|
+    it "denotes the method optional when yield is guarded by #{guard}" do
+      g = cfg_method <<-EOF
+  def one
+    if #{guard}
+      yield 1
+    else
+      1
+    end
+  end
+  EOF
+      g.yield_type.should be :optional
+      g.yield_arity.should == Set[1]
+    end
 
-  it 'denotes the method optional when yield is guarded by block_given?' do
-    g = cfg_method <<-EOF
-def one
-  if block_given?
-    yield 1
-  else
-    1
+    it "denotes the method foolish when yield is not guarded by #{guard}, but the block is unused when given" do
+      g = cfg_method <<-EOF
+  def one
+    if #{guard}
+      1
+    else
+      yield 1
+    end
   end
-end
-EOF
-    g.yield_type.should be :optional
-    g.yield_arity.should == Set[1]
-  end
-
-  it 'denotes the method foolish when yield is not guarded by block_given?, but the block is unused when given' do
-    g = cfg_method <<-EOF
-def one
-  if block_given?
-    1
-  else
-    yield 1
-  end
-end
-EOF
-    g.yield_type.should be :foolish
-    g.yield_arity.should == Set[]
+  EOF
+      g.yield_type.should be :foolish
+      g.yield_arity.should == Set[]
+    end
   end
 
   it 'denotes the method optional when the explicit block arg is checked vs. nil' do

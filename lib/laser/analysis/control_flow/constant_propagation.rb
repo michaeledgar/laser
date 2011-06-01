@@ -154,7 +154,7 @@ module Laser
                     instruction[4] != UNDEFINED && instruction[4] != VARYING
                    receiver = instruction[2]
                    klass = LaserObject === receiver.value ? receiver.normal_class : receiver.expr_type.possible_classes.first
-                   klass.instance_variable(instruction[4].value).uses.tap { |x| p x }
+                   klass.instance_variable(instruction[4].value).uses
                  else
                    instruction.explicit_targets.map(&:uses).inject(:|) || []
                  end
