@@ -2312,6 +2312,32 @@ module Laser
             cond_instruct(@block_arg, with_block_block, without_block_block)
             start_block after
             result
+          when :assign, :massign
+            const_instruct('assignment')
+          when :var_ref
+            case node[1].type
+            when :@ident
+              const_instruct('local-variable')
+            when :@kw
+              case node[1][1]
+              when 'nil' then const_instruct('nil')
+              when 'self' then const_instruct('self')
+              when 'true' then const_instruct('true')
+              when 'false' then const_instruct('false')
+              when '__FILE__', '__LINE__', '__ENCODING__' then const_instruct('expression')
+              else
+                raise NotImplementedError.new("defined? on keyword #{node[1][1]}")
+              end
+            when :@const
+              
+            when :@ivar
+              
+            when :@cvar
+              
+            when :@gvar
+            end
+          when :string_literal, :and, :or, :@int, :@float, :symbol_literal
+            const_instruct('expression')
           else
             raise NotImplementedError.new("Unimplemented defined? case: #{expression.type}")
           end
