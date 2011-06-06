@@ -53,7 +53,7 @@ module Laser
         block_arg_for_node node
       end
 
-      private
+    private
 
       # Finds the arity of a given argument node.
       def arity_for_node(node)
@@ -92,7 +92,8 @@ module Laser
       # Returns the node representing the argument's block argument.
       def block_arg_for_node(node)
         case node.type
-        when :args_add_block then node[2].binding
+        when :method_add_arg then block_arg_for_node node[2]
+        when :args_add_block then node[2]
         when :arg_paren then block_arg_for_node node[1]
         end
       end

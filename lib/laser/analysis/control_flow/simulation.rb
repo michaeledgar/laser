@@ -238,6 +238,15 @@ module Laser
             LaserModule.new
           when ClassRegistry['Kernel'].instance_method('require')
             simulate_require(args)
+          when ClassRegistry['Kernel'].instance_method('send')
+            method_name, *actual_args = args
+            klass = Utilities.klass_for(receiver)
+            method = klass.instance_method(method_name)
+            if should_simulate_call(method, opts)
+              simulate_call_dispatch(receiver, method, actual_args, block, opts)
+            else
+              raise NonDeterminismHappened.new("Nondeterministic call: #{method.inspect}")
+            end
           when ClassRegistry['Module'].instance_method('define_method')
             simulate_define_method(receiver, args, block)
           when ClassRegistry['Module'].instance_method('module_eval')

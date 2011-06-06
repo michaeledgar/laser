@@ -96,10 +96,9 @@ class Symbol
   # returns: String=
   def swapcase
   end
-  # builtin: true
   # pure: true
-  # returns: Proc=
   def to_proc
+    proc { |x| x.send(self) }
   end
   # builtin: true
   # pure: true

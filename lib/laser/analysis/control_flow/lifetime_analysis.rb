@@ -51,6 +51,7 @@ module Laser
               targets.each { |target| @definition_blocks[target] << block }
               @live_kill[block] |= targets
               exposed = (exposed - targets) | ins.operands
+              exposed << ins.block_operand if ins.block_operand
             end
             @globals |= exposed
             exposed.each do |temp|

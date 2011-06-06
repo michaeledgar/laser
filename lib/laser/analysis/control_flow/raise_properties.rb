@@ -11,9 +11,9 @@ module Laser
         # Finds whether the method raises always, never, or sometimes.
         def find_raise_type
           fail_block = exception_postdominator
-          if fail_block.nil?
+          if fail_block.nil? || fail_block.real_predecessors.empty?
             @raise_type = Frequency::NEVER
-          elsif @exit.normal_predecessors.empty?
+          elsif (@exit.normal_predecessors & @exit.real_predecessors).empty?
             @raise_type = Frequency::ALWAYS
           else
             @raise_type = Frequency::MAYBE

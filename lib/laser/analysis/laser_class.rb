@@ -107,13 +107,17 @@ module Laser
         return @cfg if @cfg
         # since this is lazily compiling, we should update cref to reflect the runtime
         # value before compiling. hackish.
-        @ast_node.scope.lexical_target = @ast_node.scope.self_ptr.value.binding
+        if @ast_node.scope.self_ptr == Scope::GlobalScope.self_ptr
+          @ast_node.scope.lexical_target = Scope::GlobalScope.lookup('self')
+        else
+          @ast_node.scope.lexical_target = @ast_node.scope.self_ptr.value.binding
+        end
         builder = ControlFlow::GraphBuilder.new(@ast_node, @arguments, @ast_node.scope)
         @cfg = builder.build
       end
 
       def simulate(args, block, opts={})
-        update_cfg_edges(opts)
+        update_cfg_edges(opts) if opts[:invocation_sites]
         self_to_use = opts[:self] || @lexical_self
         cfg.simulate(args, opts.merge({self: self_to_use, block: block, start_block: start_block}))
       end
@@ -127,6 +131,10 @@ module Laser
             exit_block.add_flag(start_block, RGL::ControlFlowGraph::EDGE_EXECUTABLE)
           end
         end
+      end
+      
+      def to_proc
+        self
       end
 
       def call(*args, &blk)
@@ -239,33 +247,58 @@ module Laser
         @visibility_table[new] = @visibility_table[old]
       end
 
-      def public_instance_methods
-        methods = instance_methods
-        table = visibility_table
-        methods.select { |name| table[name.to_s] == :public }
-      end
-
       def instance_method(name)
         return @instance_methods[name.to_s] ||
           (@superclass && @superclass.instance_method(name))
       end
-
-      def public_instance_method(name)
-        if (result = @instance_methods[name.to_s])
-          @visibility_table[name.to_s] == :public ? result : nil
-        else
-          @superclass && @superclass.public_instance_method(name)
-        end
+      
+      def method_defined?(name)
+        instance_method(name) && visibility_for(name) != :private
       end
 
-      def instance_methods(include_superclass = true)
+      def public_instance_method(name)
+        result = instance_method(name)
+        visibility_for(name) == :public ? result : nil
+      end
+
+      def __all_instance_methods(include_super = true)
         mine = @instance_methods.keys.map(&:to_sym)
-        if include_superclass && @superclass
+        if include_super && @superclass
         then @superclass.instance_methods | mine
         else mine
         end
       end
+
+      def instance_methods(include_super = true)
+        methods = __all_instance_methods(include_super)
+        table = visibility_table
+        methods.select { |name| table[name.to_s] == :public || table[name.to_s] == :protected }
+      end
+
+      def public_instance_methods(include_super = true)
+        methods = __all_instance_methods(include_super)
+        table = visibility_table
+        methods.select { |name| table[name.to_s] == :public }
+      end
       
+      def protected_instance_methods(include_super = true)
+        methods = __all_instance_methods(include_super)
+        table = visibility_table
+        methods.select { |name| table[name.to_s] == :protected }
+      end
+      
+      def protected_method_defined?(name)
+        methods = __all_instance_methods(include_super)
+        table = visibility_table
+        methods.select { |name| table[name.to_s] == :protected }
+      end
+      
+      def private_instance_methods(include_super = true)
+        methods = __all_instance_methods(include_super)
+        table = visibility_table
+        methods.select { |name| table[name.to_s] == :private }
+      end
+
       def ivar_type(name)
         @ivar_types[name] || (@superclass && @superclass.ivar_type(name)) || Types::NILCLASS
       end
@@ -412,6 +445,10 @@ module Laser
         !!const_get(constant, inherit)
       rescue
         false
+      end
+      
+      def remove_const(sym)
+        @constant_table.delete(sym)
       end
 
       def define_method(name, proc)
@@ -695,6 +732,7 @@ module Laser
       attr_accessor_with_default :raises, []
       attr_accessor_with_default :annotated_raise_type, nil
       attr_accessor_with_default :raise_type, Frequency::MAYBE
+      attr_accessor_with_default :annotated_yield_type, nil
 
       # Gets the laser method with the given class and name. Convenience for
       # debugging/quick access.
@@ -720,6 +758,15 @@ module Laser
           @arity = nil
         end  
         yield self if block_given?
+      end
+      
+      def yield_type
+        @annotated_yield_type || (master_cfg.analyze; master_cfg.yield_type)
+      end
+      
+      def yield_arity
+        master_cfg.analyze
+        master_cfg.yield_arity
       end
       
       def raise_type_for_types(self_type, arg_types = [], block_type = nil)

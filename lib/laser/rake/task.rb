@@ -24,6 +24,7 @@ module Laser
       end
 
       def run
+        require 'laser'
         files = []
         if @settings.libs.any?
           @settings.libs.each do |lib|

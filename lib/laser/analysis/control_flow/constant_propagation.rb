@@ -158,7 +158,7 @@ module Laser
                  else
                    instruction.explicit_targets.map(&:uses).inject(:|) || []
                  end
-          uses.each { |use| worklist.add(use) }
+          uses.each { |use| worklist.add(use) if use }
         end
         
         # Examines the branch for newly executable edges, and adds them to

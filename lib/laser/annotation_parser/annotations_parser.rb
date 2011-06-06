@@ -380,8 +380,56 @@ module Laser
                     r4 = r7
                     r4.extend(Literal3)
                   else
-                    @index = i4
-                    r4 = nil
+                    if has_terminal?('required', false, index)
+                      r8 = instantiate_node(SyntaxNode,input, index...(index + 8))
+                      @index += 8
+                    else
+                      terminal_parse_failure('required')
+                      r8 = nil
+                    end
+                    if r8
+                      r4 = r8
+                      r4.extend(Literal3)
+                    else
+                      if has_terminal?('optional', false, index)
+                        r9 = instantiate_node(SyntaxNode,input, index...(index + 8))
+                        @index += 8
+                      else
+                        terminal_parse_failure('optional')
+                        r9 = nil
+                      end
+                      if r9
+                        r4 = r9
+                        r4.extend(Literal3)
+                      else
+                        if has_terminal?('foolish', false, index)
+                          r10 = instantiate_node(SyntaxNode,input, index...(index + 7))
+                          @index += 7
+                        else
+                          terminal_parse_failure('foolish')
+                          r10 = nil
+                        end
+                        if r10
+                          r4 = r10
+                          r4.extend(Literal3)
+                        else
+                          if has_terminal?('ignored', false, index)
+                            r11 = instantiate_node(SyntaxNode,input, index...(index + 7))
+                            @index += 7
+                          else
+                            terminal_parse_failure('ignored')
+                            r11 = nil
+                          end
+                          if r11
+                            r4 = r11
+                            r4.extend(Literal3)
+                          else
+                            @index = i4
+                            r4 = nil
+                          end
+                        end
+                      end
+                    end
                   end
                 end
               end

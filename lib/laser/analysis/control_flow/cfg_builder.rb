@@ -1351,8 +1351,18 @@ module Laser
               if return_type.type?
                 result[:annotated_return] = return_type.type
               else
-                literal = return_type.literal
                 raise NotImplementedError.new("Literal annotated return types not implemented")
+              end
+            end
+            if annotations['yield_usage'].any?
+              if annotations['yield_usage'].size > 1
+                raise ArgumentError.new("Cannot have more than one 'yield_usage' annotation")
+              end
+              yield_usage = annotations['yield_usage'].first
+              if yield_usage.type?
+                raise ArgumentError.new('yield_usage requires a literal yield usage category')
+              else
+                result[:annotated_yield_type] = yield_usage.literal
               end
             end
 
@@ -1799,8 +1809,14 @@ module Laser
           method_call = node.method_call
           opts = opts.merge(ignore_privacy: true) if method_call.implicit_receiver?
           receiver = receiver_instruct node
+          if (to_proc = method_call.arguments.block_arg)
+            to_proc_val = walk_node(to_proc, value: true)
+            block = rb_check_convert_type(to_proc_val, ClassRegistry['Proc'].binding, :to_proc)
+          else
+            block = nil
+          end
           generic_call_instruct(receiver, method_call.method_name,
-              method_call.arg_node, method_call.arguments.block_arg, opts)
+              method_call.arg_node, block, opts)
         end
         
         def receiver_instruct(node)
@@ -1818,6 +1834,7 @@ module Laser
         def generic_call_instruct(receiver, method, args, block, opts={})
           opts = {value: true}.merge(opts)
           args = [] if args.nil?
+          args = args[1] if args[0] == :args_add_block
           if args[0] == :args_add_star
             arg_array = compute_varargs(args)
             call_vararg_instruct(receiver, method, arg_array, {block: block}.merge(opts))
@@ -1833,6 +1850,7 @@ module Laser
         # value is captured and returned to the superer of this method.
         def generic_super_instruct(args, block, opts={})
           opts = {value: true, raise: true}.merge(opts)
+          args = args[1] if args[0] == :args_add_block
           if args[0] == :args_add_star
             arg_array = compute_varargs(args)
             super_vararg_instruct(arg_array, {block: block}.merge(opts))
@@ -1849,6 +1867,7 @@ module Laser
         def generic_aref_instruct(receiver, args, val, opts={})
           opts = {value: true, raise: true}.merge(opts)
           args = [] if args.nil?
+          args = args[1] if args[0] == :args_add_block
           if args[0] == :args_add_star
             arg_array = compute_varargs(args)
             call_instruct(arg_array, :<<, walk_node(val, value: true), value: false)

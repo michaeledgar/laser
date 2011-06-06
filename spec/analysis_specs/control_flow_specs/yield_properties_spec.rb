@@ -52,7 +52,7 @@ EOF
     g.yield_type.should be :required
     g.yield_arity.should == Set[0]
   end
-  ['block_given?', 'defined?(yield)', 'defined?(yield($., *$*))', 'Proc.new'].each do |guard|
+  ['block_given?', 'defined?(yield)', 'defined?(yield($., *$*))', 'Proc.new', 'iterator?'].each do |guard|
     it "denotes the method optional when yield is guarded by #{guard}" do
       g = cfg_method <<-EOF
   def one
@@ -244,5 +244,20 @@ end
 EOF
     g.yield_type.should be :required
     g.yield_arity.should == Set[1]
+  end
+  
+  it 'infers yield likelihood with to_proc block syntax' do
+    cfg <<-EOF
+class YP1
+  def foo(x)
+    yield x if block_given?
+  end
+  def bar(y, &blk)
+    foo(y, &blk)
+  end
+end
+EOF
+    method = ClassRegistry['YP1'].instance_method('bar')
+    method.yield_type.should be :optional
   end
 end

@@ -207,7 +207,7 @@ module Laser
               end
             end
             if ::Hash === ins.last && ins.last[:block]
-              args << {block: ins.last[:block].name}
+              args << {block: ins.last[:block]}
             end
             [opcode, *args].join(', ')
           end.join('\\n')

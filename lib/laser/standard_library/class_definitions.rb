@@ -60,6 +60,34 @@ class Module
   # builtin: true
   def ===(other)
   end
+  # pure: true
+  # builtin: true
+  def instance_method(name)
+  end
+  # pure: true
+  # builtin: true
+  def method_defined?(name)
+  end
+  # pure: true
+  # builtin: true
+  def instance_methods(include_super = true)
+  end
+  # pure: true
+  # builtin: true
+  def public_instance_method(name)
+  end
+  # pure: true
+  # builtin: true
+  def public_instance_methods(include_super = true)
+  end
+  # pure: true
+  # builtin: true
+  def protected_instance_methods(include_super = true)
+  end
+  # pure: true
+  # builtin: true
+  def private_instance_methods(include_super = true)
+  end
   # special: true
   # mutation: true
   def define_method(name, body=nil)
@@ -145,6 +173,9 @@ module Kernel
   # builtin: true
   def class
   end
+  # special: true
+  def send
+  end
   # pure: true
   # raises: never
   def inspect
@@ -160,6 +191,9 @@ module Kernel
   def instance_variable_set(name, val)
   end
  private
+  def proc(&p)
+    p
+  end
   # special: true
   # predictable: maybe
   def require(path)
@@ -175,6 +209,7 @@ module Kernel
   # raises: always
   def raise(msg_or_instance=nil, message='', callback=caller)
   end
+  alias fail raise
   # predictable: false
   # returns: String=
   def gets(opt_arg_1 = :__unset__, opt_arg_2 = :__unset__)
@@ -185,7 +220,7 @@ module Kernel
   # raises: never
   def block_given?
   end
-  alias fail raise
+  alias iterator? block_given?
 end
 
 require 'basic_object'

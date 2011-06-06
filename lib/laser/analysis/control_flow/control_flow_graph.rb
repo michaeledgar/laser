@@ -135,34 +135,7 @@ module Laser
           end) && (self.edges.sort == other.edges.sort)
         end
         
-        def condense_blocks
-          worklist = vertices.to_a
-          until worklist.empty?
-            node = worklist.pop
-            if @vertices.include?(node) && node.predecessors.size == 1 && node.successors.size == 1 &&
-               node.predecessors.first.successors.size == 1 && node.successors.first.predecessors.size == 1
-              dominator = node.predecessors.first
-              absorbed = node
-              next if dominator == @enter || absorbed == @exit
-
-              dominator.instructions = dominator[0..-2] + absorbed.to_a
-              #dominator.remove_successor(absorbed)
-              absorbed.successors.each do |succ|
-                dominator.successors << succ
-                dominator.set_flag(succ, absorbed.get_flags(succ))
-              end
-              # absorbed.remove_predecessor(dominator)
-              # absorbed.successors.each do |succ|
-              #   succ.remove_predecessor(absorbed)
-              # end
-              remove_vertex absorbed
-              worklist.concat dominator.successors.to_a
-            end
-          end
-        end
-        
         def save_pretty_picture(fmt='png', dotfile='graph', params = {'shape' => 'box'})
-#          condense_blocks
           write_to_graphic_file(fmt, dotfile, params)
         end
         
@@ -171,7 +144,9 @@ module Laser
         end
 
         def return_type
-          @final_return.expr_type unless @exit.normal_predecessors.empty?
+          unless (@exit.normal_predecessors & @exit.real_predecessors).empty?
+            @final_return.expr_type
+          end
         end
         
         def real_self_type
@@ -224,10 +199,6 @@ module Laser
               Laser.debug_puts('>>> Adding Unused Variable Warnings <<<')
               add_unused_variable_warnings
               Laser.debug_puts('>>> Finished Adding Unused Variable Warnings <<<')
-              # Don't need these anymore
-              Laser.debug_puts('>>> Pruning Unexecuted Blocks <<<')
-              prune_unexecuted_blocks
-              Laser.debug_puts('>>> Finished Pruning Unexecuted Blocks <<<')
 
               find_yield_properties if @root.type != :program
               find_raise_properties
@@ -274,6 +245,20 @@ module Laser
         
         def all_failure_postdominator
           vertex_with_name(FAILURE_POSTDOMINATOR_NAME)
+        end
+        
+        # Yields reachable vertices via depth-first-search on real edges
+        def reachable_vertices
+          vertices = Set[]
+          worklist = Set[self.enter]
+          while worklist.any?
+            block = worklist.pop
+            yield block if block_given?
+            block.real_successors.each do |succ|
+              worklist.add(succ) if vertices.add?(succ)
+            end
+          end
+          vertices
         end
         
         # Computes the variables reachable by DFSing the start node.

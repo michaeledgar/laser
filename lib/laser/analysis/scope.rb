@@ -67,28 +67,10 @@ module Laser
           parts = str.split('::')
           final_scope = parts[0..-2].inject(self) { |scope, part| scope.lookup(part).scope }
           final_scope.lookup(parts.last)
-        elsif str =~ /^[A-Z]/ then lookup_constant(str)
         elsif str =~ /^\$/ then lookup_global(str)
         elsif str =~ /^@/ then lookup_ivar(str)
         elsif str =~ /^@@/ then lookup_cvar(str)
         else lookup_local(str)
-        end
-      end
-
-      # Looks up a constant. This resolution algorithm is... complicated. Only part
-      # of it is implemented so far.
-      def lookup_constant(str)
-        if constants[str]
-          constants[str]
-        elsif parent
-          begin
-            parent.lookup_constant(str)
-          rescue ScopeLookupFailure => err
-            err.scope = self
-            raise err
-          end
-        else
-          raise ScopeLookupFailure.new(self, str)
         end
       end
 

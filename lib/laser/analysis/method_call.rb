@@ -31,18 +31,6 @@ module Laser
         end
       end
 
-      # What is the receiver type (assuming this node is a method call)?
-      # returns: Types::Base
-      def receiver_type
-        receiver = case node.type
-                   when :unary then node[2]
-                   when :fcall, :command, :var_ref, :zcall, :zsuper, :super then node.scope.lookup('self')
-                   when :binary, :call, :aref then node[1]
-                   when :command_call then node.scope.lookup(node[1].expanded_identifier)
-                   end
-        receiver.expr_type
-      end
-
       # The receiver node is the node representing the explicit receiver.
       # If nil, then the implicit receiver, self, is used.
       #
@@ -52,21 +40,6 @@ module Laser
         when :method_add_arg, :method_add_block then node[1].method_call.receiver_node
         when :var_ref, :zcall, :command, :fcall, :super, :zsuper, :unary then nil
         when :call, :command_call, :binary, :aref then node[1]        
-        end
-      end
-      
-      # Determines the arity of the method call.
-      #
-      # return: Arity
-      def arity
-        case node.type
-        when :unary, :var_ref, :zcall then Arity::EMPTY
-        when :binary then Arity.new(1..1)
-        when :fcall, :call then Arity::ANY
-        when :command, :method_add_arg then ArgumentExpansion.new(node[2]).arity
-        when :command_call then ArgumentExpansion.new(node[4]).arity
-        when :super then ArgumentExpansion.new(node[1]).arity
-        when :zsuper then node.scope.method.arity
         end
       end
       
@@ -82,7 +55,7 @@ module Laser
       def arg_node
         case node.type
         when :command, :aref then node[2][1]
-        when :method_add_arg then (node[2][1] ? node[2][1][1] : nil)
+        when :method_add_arg then (node[2][1] ? node[2][1] : nil)
         when :method_add_block then node[1].method_call.arg_node
         when :call, :var_ref, :zcall, :command_call, :zsuper then nil
         when :command_call then node[4][1]

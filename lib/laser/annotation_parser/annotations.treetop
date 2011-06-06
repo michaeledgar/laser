@@ -71,7 +71,7 @@ module Laser
           def literal
             nil
           end
-        } / ('never' / 'maybe' / 'always') {
+        } / ('never' / 'maybe' / 'always' / 'required' / 'optional' / 'foolish' / 'ignored') {
           def literal
             text_value.to_sym
           end

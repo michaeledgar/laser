@@ -5,10 +5,16 @@ class Proc
   def self.new(&blk)
   end
 
+  # builtin: true
   def call(*args)
   end
   alias yield call
   alias [] call
+
+  def ===(other)
+    call(other)
+  end
+
   # pure: true
   # raises: never
   def to_proc
