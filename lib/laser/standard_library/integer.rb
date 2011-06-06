@@ -16,6 +16,7 @@ class Integer < Numeric
   end
   # builtin: true
   # pure: true
+  # yield_usage: optional
   def downto(int)
   end
   # builtin: true
@@ -87,6 +88,7 @@ class Integer < Numeric
   # builtin: true
   # pure: true
   # raise: false
+  # yield_usage: optional
   def times
   end
   # builtin: true
@@ -112,6 +114,7 @@ class Integer < Numeric
   # builtin: true
   # pure: true
   # raise: false
+  # yield_usage: optional
   def upto(max)
   end
 end

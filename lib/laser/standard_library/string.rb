@@ -56,6 +56,7 @@ class String
   end
   # pure: true
   # builtin: true
+  # yield_usage: optional
   def bytes
   end
   # pure: true
@@ -85,6 +86,7 @@ class String
   # pure: true
   # builtin: true
   # returns: String=
+  # yield_usage: optional
   def chars
   end
   # pure: true
@@ -117,6 +119,7 @@ class String
   end
   # pure: true
   # builtin: true
+  # yield_usage: optional
   def codepoints
   end
   # pure: true
@@ -156,22 +159,11 @@ class String
   # returns: String=
   def dump
   end
-  # pure: true
-  # builtin: true
-  def each_byte
-  end
-  # pure: true
-  # builtin: true
-  def each_char
-  end
-  # pure: true
-  # builtin: true
-  def each_codepoint
-  end
-  # pure: true
-  # builtin: true
-  def each_line(separator = $/)
-  end
+
+  alias each_byte bytes
+  alias each_char chars
+  alias each_codepoint codepoints
+  alias each_line lines
   # pure: true
   # builtin: true
   # returns: Boolean
@@ -210,10 +202,12 @@ class String
   # pure: true
   # builtin: true
   # returns: String=
+  # yield_usage: optional
   def gsub(pattern, *other_args)
   end
   # pure: true
   # builtin: true
+  # yield_usage: optional
   def gsub!(pattern, *other_args)
   end
   # pure: true
@@ -256,6 +250,7 @@ class String
   end
   # pure: true
   # builtin: true
+  # yield_usage: optional
   def lines(separator = $/)
   end
   # pure: true
@@ -340,6 +335,7 @@ class String
   end
   # pure: true
   # builtin: true
+  # yield_usage: optional
   def scan(pattern)
   end
   # pure: true
@@ -393,10 +389,12 @@ class String
   # pure: true
   # builtin: true
   # returns: String=
+  # yield_usage: optional
   def sub(pattern, *rest)
   end
   # pure: true
   # builtin: true
+  # yield_usage: optional
   def sub!(pattern, *rest)
   end
   # pure: true
@@ -489,6 +487,7 @@ class String
   end
   # pure: true
   # builtin: true
+  # yield_usage: optional
   def upto(other_str, exclusive = false)
   end
   # pure: true

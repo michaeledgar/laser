@@ -6,6 +6,11 @@ class Hash
   end
   # pure: true
   # builtin: true
+  # yield_usage: optional
+  def initialize(default_obj = nil)
+  end
+  # pure: true
+  # builtin: true
   def ==(other)
   end
   # pure: true
@@ -50,26 +55,32 @@ class Hash
   end
   # pure: true
   # builtin: true
+  # yield_usage: optional
   def delete(key)
   end
   # pure: true
   # builtin: true
+  # yield_usage: optional
   def delete_if
   end
   # pure: true
   # builtin: true
+  # yield_usage: optional
   def each
   end
   # pure: true
   # builtin: true
+  # yield_usage: optional
   def each_key
   end
   # pure: true
   # builtin: true
+  # yield_usage: optional
   def each_pair
   end
   # pure: true
   # builtin: true
+  # yield_usage: optional
   def each_value
   end
   # pure: true
@@ -82,6 +93,7 @@ class Hash
   end
   # pure: true
   # builtin: true
+  # yield_usage: optional
   def fetch(key, default=nil)
   end
   # pure: true
@@ -118,6 +130,7 @@ class Hash
   end
   # pure: true
   # builtin: true
+  # yield_usage: optional
   def keep_if
   end
   # pure: true
@@ -142,12 +155,15 @@ class Hash
   end
   # pure: true
   # builtin: true
+  # yield_usage: optional
   def merge(other)
   end
   # pure: true
   # builtin: true
+  # yield_usage: optional
   def merge!(merge)
   end
+  alias update merge!
   # pure: true
   # builtin: true
   def rassoc(key)
@@ -158,10 +174,12 @@ class Hash
   end
   # pure: true
   # builtin: true
+  # yield_usage: optional
   def reject
   end
   # pure: true
   # builtin: true
+  # yield_usage: optional
   def reject!
   end
   # pure: true
@@ -170,10 +188,12 @@ class Hash
   end
   # pure: true
   # builtin: true
+  # yield_usage: optional
   def select
   end
   # pure: true
   # builtin: true
+  # yield_usage: optional
   def select!
   end
   # pure: true
@@ -199,10 +219,6 @@ class Hash
   # pure: true
   # builtin: true
   def to_s
-  end
-  # pure: true
-  # builtin: true
-  def update(other_hash)
   end
   # pure: true
   # builtin: true

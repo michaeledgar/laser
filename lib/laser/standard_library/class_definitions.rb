@@ -90,6 +90,7 @@ class Module
   end
   # special: true
   # mutation: true
+  # yield_usage: optional
   def define_method(name, body=nil)
   end
   # builtin: true
@@ -191,8 +192,12 @@ module Kernel
   def instance_variable_set(name, val)
   end
  private
-  def proc(&p)
-    p
+  # yield_usage: required
+  def proc
+    unless block_given?
+      raise ArgumentError.new('tried to create Proc object without a block')
+    end
+    Proc.new
   end
   # special: true
   # predictable: maybe
@@ -264,14 +269,14 @@ end
 
 class Encoding
 end
-# class Encoding::UndefinedConversionError < EncodingError
-# end
-# class Encoding::InvalidByteSequenceError < EncodingError
-# end
-# class Encoding::ConverterNotFoundError < EncodingError
-# end
-# class Encoding::CompatibilityError < EncodingError
-# end
+class Encoding::UndefinedConversionError < EncodingError
+end
+class Encoding::InvalidByteSequenceError < EncodingError
+end
+class Encoding::ConverterNotFoundError < EncodingError
+end
+class Encoding::CompatibilityError < EncodingError
+end
 
 class Struct
 end

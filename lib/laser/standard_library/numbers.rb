@@ -165,6 +165,7 @@ class Numeric
   end
   # pure: true
   # builtin: true
+  # yield_usage: optional
   def step(limit, step=1)
   end
   # pure: true
@@ -188,3 +189,4 @@ end
 
 require 'integer'
 require 'float'
+require 'complex'

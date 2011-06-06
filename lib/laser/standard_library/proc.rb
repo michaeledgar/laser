@@ -2,6 +2,7 @@ class Proc
   # pure: true
   # builtin: true
   # raises: never
+  # yield_usage: optional
   def self.new(&blk)
   end
 
