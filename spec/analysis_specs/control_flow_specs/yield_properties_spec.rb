@@ -260,4 +260,16 @@ EOF
     method = ClassRegistry['YP1'].instance_method('bar')
     method.yield_type.should be :optional
   end
+  
+  it 'infers yield likelihood with to_proc to a builtin method' do
+    cfg <<-EOF
+class YP2
+  def bar(x, &blk)
+    [1, 2, x].each(&blk)
+  end
+end
+EOF
+    method = ClassRegistry['YP2'].instance_method('bar')
+    method.yield_type.should be :optional
+  end
 end

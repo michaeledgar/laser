@@ -65,14 +65,17 @@ class Array
   end
   # pure: true
   # builtin: true
+  # yield_usage: optional
   def collect
   end
   # pure: true
   # builtin: true
+  # yield_usage: optional
   def collect!
   end
   # pure: true
   # builtin: true
+  # yield_usage: optional
   def combination(n)
   end
   # pure: true
@@ -91,14 +94,17 @@ class Array
   end
   # pure: true
   # builtin: true
+  # yield_usage: optional
   def count(*args)
   end
   # pure: true
   # builtin: true
+  # yield_usage: optional
   def cycle(n=nil)
   end
   # pure: true
   # builtin: true
+  # yield_usage: optional
   def delete(obj)
   end
   # pure: true
@@ -107,6 +113,7 @@ class Array
   end
   # pure: true
   # builtin: true
+  # yield_usage: optional
   def delete_if
   end
   # pure: true
@@ -117,14 +124,17 @@ class Array
   # pure: true
   # builtin: true
   # returns: Array=
+  # yield_usage: optional
   def drop_while
   end
   # pure: true
   # builtin: true
+  # yield_usage: optional
   def each
   end
   # pure: true
   # builtin: true
+  # yield_usage: optional
   def each_index
   end
   # pure: true
@@ -137,14 +147,17 @@ class Array
   end
   # pure: true
   # builtin: true
+  # yield_usage: optional
   def fetch(*args)
   end
   # pure: true
   # builtin: true
+  # yield_usage: optional
   def fill(*args)
   end
   # pure: true
   # builtin: true
+  # yield_usage: optional
   def find_index(*args)
   end
   # pure: true
@@ -190,6 +203,7 @@ class Array
   end
   # pure: true
   # builtin: true
+  # yield_usage: optional
   def keep_if
   end
   # pure: true
@@ -203,10 +217,12 @@ class Array
   # pure: true
   # builtin: true
   # returns: Array=
+  # yield_usage: optional
   def map
   end
   # pure: true
   # builtin: true
+  # yield_usage: optional
   def map!
   end
   # pure: true
@@ -215,6 +231,7 @@ class Array
   end
   # pure: true
   # builtin: true
+  # yield_usage: optional
   def permutation(*arg)
   end
   # pure: true
@@ -224,6 +241,7 @@ class Array
   # pure: true
   # builtin: true
   # returns: Array=
+  # yield_usage: optional
   def product(other_ary, *rest)
   end
   # pure: true
@@ -238,18 +256,22 @@ class Array
   # pure: true
   # builtin: true
   # returns: Array=
+  # yield_usage: optional
   def reject
   end
   # pure: true
   # builtin: true
+  # yield_usage: optional
   def reject!
   end
   # pure: true
   # builtin: true
+  # yield_usage: optional
   def repeated_combination(n)
   end
   # pure: true
   # builtin: true
+  # yield_usage: optional
   def repeated_permutation(n)
   end
   # pure: true
@@ -267,6 +289,7 @@ class Array
   end
   # pure: true
   # builtin: true
+  # yield_usage: optional
   def reverse_each
   end
   # pure: true
@@ -288,10 +311,12 @@ class Array
   # pure: true
   # builtin: true
   # returns: Array=
+  # yield_usage: optional
   def select
   end
   # pure: true
   # builtin: true
+  # yield_usage: optional
   def select!
   end
   # pure: true
@@ -323,14 +348,17 @@ class Array
   # pure: true
   # builtin: true
   # returns: Array=
+  # yield_usage: optional
   def sort
   end
   # pure: true
   # builtin: true
+  # yield_usage: optional
   def sort!
   end
   # pure: true
   # builtin: true
+  # yield_usage: optional
   def sort_by!
   end
   # pure: true
@@ -340,6 +368,7 @@ class Array
   end
   # pure: true
   # builtin: true
+  # yield_usage: optional
   def take_while
   end
   # pure: true
@@ -383,6 +412,7 @@ class Array
   # pure: true
   # builtin: true
   # returns: Array=
+  # yield_usage: optional
   def zip(arg, *args)
   end
 end

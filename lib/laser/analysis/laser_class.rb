@@ -732,7 +732,7 @@ module Laser
       attr_accessor_with_default :raises, []
       attr_accessor_with_default :annotated_raise_type, nil
       attr_accessor_with_default :raise_type, Frequency::MAYBE
-      attr_accessor_with_default :annotated_yield_type, nil
+      attr_accessor_with_default :annotated_yield_usage, nil
 
       # Gets the laser method with the given class and name. Convenience for
       # debugging/quick access.
@@ -761,7 +761,13 @@ module Laser
       end
       
       def yield_type
-        @annotated_yield_type || (master_cfg.analyze; master_cfg.yield_type)
+        return @annotated_yield_usage if @annotated_yield_usage
+        if builtin
+          :ignored
+        else
+          master_cfg.analyze
+          master_cfg.yield_type
+        end
       end
       
       def yield_arity

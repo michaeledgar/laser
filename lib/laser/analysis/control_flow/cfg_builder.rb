@@ -1362,7 +1362,7 @@ module Laser
               if yield_usage.type?
                 raise ArgumentError.new('yield_usage requires a literal yield usage category')
               else
-                result[:annotated_yield_type] = yield_usage.literal
+                result[:annotated_yield_usage] = yield_usage.literal
               end
             end
 
