@@ -519,4 +519,30 @@ EOF
     g2.return_type.should == Types::STRING
     ClassRegistry['CPSim1'].singleton_class.instance_method('make').return_type_for_types(Utilities.type_for(ClassRegistry['CPSim1']), [Types::FIXNUM, Types::STRING], Types::NILCLASS).should == Types::UnionType.new([Types::HASH])
   end
+  
+  it 'should handle the tricky x = y unless defined? x case' do
+    g = cfg_method <<-EOF
+def foo
+  y = 5 unless defined? y
+  z = y
+end
+EOF
+    g.should have_constant('z').with_value(nil)
+  end
+
+  it 'should handle a basic positive defined?(Const) case' do
+    g = cfg <<-EOF
+module CP2
+end
+CP3 = 10 if defined?(CP2)
+EOF
+    ClassRegistry['Object'].const_get('CP3').should == 10
+  end
+
+  it 'should handle a basic negative defined?(Const) case' do
+    g = cfg <<-EOF
+CP4 = 10 unless defined?(CPNone)
+EOF
+    ClassRegistry['Object'].const_get('CP4').should == 10
+  end
 end

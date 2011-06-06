@@ -518,11 +518,7 @@ module Laser
               end
               uncond_instruct after
             when :var_ref
-              if node[1].type == :@const
-                ident = const_instruct(node.expanded_identifier)
-                call_instruct(current_namespace,
-                    :const_get, ident, value: false)
-              end
+              nil
             when :for
               lhs, receiver, body = node.children
               receiver_value = walk_node receiver, value: true
@@ -640,9 +636,7 @@ module Laser
               variable_instruct(node)
             when :var_ref
               if node[1].type == :@const
-                ident = const_instruct(node.expanded_identifier)
-                call_instruct(current_namespace,
-                    :const_get, ident, value: true, ignore_privacy: true)
+                const_lookup(node[1].expanded_identifier)
               elsif node[1].type == :@ident || node[1].expanded_identifier == 'self'
                 variable_instruct(node)
               elsif node[1].type == :@kw
@@ -1986,6 +1980,22 @@ module Laser
           result
         end
         
+        # Performs constant lookup.
+        # TODO(adgar): FULL CONSTANT LOOKUP w/ SUPERCLASS CHECKING ETC
+        def const_lookup(const_name)
+          ident = const_instruct(const_name)
+          call_instruct(current_namespace,
+              :const_get, ident, value: true, ignore_privacy: true)
+        end
+
+        # Performs constant definition checking.
+        # TODO(adgar): FULL CONSTANT LOOKUP w/ SUPERCLASS CHECKING ETC
+        def const_defined?(const_name)
+          ident = const_instruct(const_name)
+          call_instruct(current_namespace,
+              :const_defined?, ident, value: true, ignore_privacy: true)
+        end
+        
         def binary_instruct(lhs, op, rhs, opts={})
           opts = {value: true}.merge(opts)
           if op == :or || op == :"||"
@@ -2334,21 +2344,21 @@ module Laser
           when :assign, :massign
             const_instruct('assignment')
           when :var_ref
-            case node[1].type
+            case expression[1].type
             when :@ident
               const_instruct('local-variable')
             when :@kw
-              case node[1][1]
+              case expression[1][1]
               when 'nil' then const_instruct('nil')
               when 'self' then const_instruct('self')
               when 'true' then const_instruct('true')
               when 'false' then const_instruct('false')
               when '__FILE__', '__LINE__', '__ENCODING__' then const_instruct('expression')
               else
-                raise NotImplementedError.new("defined? on keyword #{node[1][1]}")
+                raise NotImplementedError.new("defined? on keyword #{expression[1][1]}")
               end
             when :@const
-              
+              const_defined?(expression.expanded_identifier)
             when :@ivar
               
             when :@cvar
