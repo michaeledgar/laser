@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Michael Edgar"]
-  s.date = %q{2011-05-04}
+  s.date = %q{2011-06-06}
   s.description = %q{Laser is an advanced static analysis tool for Ruby.}
   s.email = %q{michael.j.edgar@dartmouth.edu}
   s.executables = ["laser"]
@@ -51,17 +51,18 @@ Gem::Specification.new do |s|
     "lib/laser/analysis/annotations/runtime_annotation.rb",
     "lib/laser/analysis/argument_expansion.rb",
     "lib/laser/analysis/arity.rb",
-    "lib/laser/analysis/assignment_expression.rb",
     "lib/laser/analysis/bindings.rb",
     "lib/laser/analysis/bootstrap.rb",
     "lib/laser/analysis/comments.rb",
     "lib/laser/analysis/control_flow.rb",
+    "lib/laser/analysis/control_flow/alias_analysis.rb",
     "lib/laser/analysis/control_flow/basic_block.rb",
     "lib/laser/analysis/control_flow/cfg_builder.rb",
     "lib/laser/analysis/control_flow/cfg_instruction.rb",
     "lib/laser/analysis/control_flow/constant_propagation.rb",
     "lib/laser/analysis/control_flow/control_flow_graph.rb",
     "lib/laser/analysis/control_flow/lifetime_analysis.rb",
+    "lib/laser/analysis/control_flow/method_call_search.rb",
     "lib/laser/analysis/control_flow/raise_properties.rb",
     "lib/laser/analysis/control_flow/simulation.rb",
     "lib/laser/analysis/control_flow/static_single_assignment.rb",
@@ -70,15 +71,14 @@ Gem::Specification.new do |s|
     "lib/laser/analysis/control_flow/yield_properties.rb",
     "lib/laser/analysis/errors.rb",
     "lib/laser/analysis/laser_class.rb",
+    "lib/laser/analysis/laser_utils.rb",
     "lib/laser/analysis/lexical_analysis.rb",
     "lib/laser/analysis/method_call.rb",
     "lib/laser/analysis/protocol_registry.rb",
     "lib/laser/analysis/scope.rb",
-    "lib/laser/analysis/scope_annotation.rb",
     "lib/laser/analysis/sexp.rb",
     "lib/laser/analysis/sexp_analysis.rb",
     "lib/laser/analysis/sexp_extensions/constant_extraction.rb",
-    "lib/laser/analysis/sexp_extensions/method_resolution.rb",
     "lib/laser/analysis/sexp_extensions/source_location.rb",
     "lib/laser/analysis/sexp_extensions/type_inference.rb",
     "lib/laser/analysis/signature.rb",
@@ -87,6 +87,8 @@ Gem::Specification.new do |s|
     "lib/laser/annotation_parser/annotations_parser.rb",
     "lib/laser/annotation_parser/class_annotations.treetop",
     "lib/laser/annotation_parser/class_annotations_parser.rb",
+    "lib/laser/annotation_parser/overload.treetop",
+    "lib/laser/annotation_parser/overload_parser.rb",
     "lib/laser/annotation_parser/parsers.rb",
     "lib/laser/annotation_parser/structural.treetop",
     "lib/laser/annotation_parser/structural_parser.rb",
@@ -120,15 +122,18 @@ Gem::Specification.new do |s|
     "lib/laser/standard_library/laser_magic.rb",
     "lib/laser/standard_library/nil_false_true.rb",
     "lib/laser/standard_library/numbers.rb",
+    "lib/laser/standard_library/proc.rb",
     "lib/laser/standard_library/set.rb",
     "lib/laser/standard_library/string.rb",
     "lib/laser/standard_library/stringio.rb",
+    "lib/laser/standard_library/symbol.rb",
     "lib/laser/standard_library/tsort.rb",
     "lib/laser/support/acts_as_struct.rb",
     "lib/laser/support/frequency.rb",
     "lib/laser/support/inheritable_attributes.rb",
     "lib/laser/support/module_extensions.rb",
     "lib/laser/support/object_regex.rb",
+    "lib/laser/support/placeholder_object.rb",
     "lib/laser/third_party/rgl/adjacency.rb",
     "lib/laser/third_party/rgl/base.rb",
     "lib/laser/third_party/rgl/bidirectional.rb",
@@ -166,14 +171,15 @@ Gem::Specification.new do |s|
     "spec/analysis_specs/annotations_specs/runtime_annotation_spec.rb",
     "spec/analysis_specs/annotations_specs/spec_helper.rb",
     "spec/analysis_specs/argument_expansion_spec.rb",
-    "spec/analysis_specs/assignment_expression_spec.rb",
     "spec/analysis_specs/bindings_spec.rb",
     "spec/analysis_specs/comment_spec.rb",
     "spec/analysis_specs/control_flow_specs/cfg_instruction_spec.rb",
     "spec/analysis_specs/control_flow_specs/constant_propagation_spec.rb",
     "spec/analysis_specs/control_flow_specs/control_flow_graph_spec.rb",
     "spec/analysis_specs/control_flow_specs/raise_properties_spec.rb",
+    "spec/analysis_specs/control_flow_specs/simulation_spec.rb",
     "spec/analysis_specs/control_flow_specs/spec_helper.rb",
+    "spec/analysis_specs/control_flow_specs/type_inference_spec.rb",
     "spec/analysis_specs/control_flow_specs/unreachability_analysis_spec.rb",
     "spec/analysis_specs/control_flow_specs/unused_variable_spec.rb",
     "spec/analysis_specs/control_flow_specs/yield_properties_spec.rb",
@@ -185,16 +191,15 @@ Gem::Specification.new do |s|
     "spec/analysis_specs/scope_spec.rb",
     "spec/analysis_specs/sexp_analysis_spec.rb",
     "spec/analysis_specs/sexp_extension_specs/constant_extraction_spec.rb",
-    "spec/analysis_specs/sexp_extension_specs/method_resolution_spec.rb",
     "spec/analysis_specs/sexp_extension_specs/source_location_spec.rb",
     "spec/analysis_specs/sexp_extension_specs/spec_helper.rb",
     "spec/analysis_specs/sexp_extension_specs/type_inference_spec.rb",
     "spec/analysis_specs/sexp_spec.rb",
-    "spec/analysis_specs/signature_spec.rb",
     "spec/analysis_specs/spec_helper.rb",
     "spec/analysis_specs/visitor_spec.rb",
     "spec/annotation_parser_specs/annotations_parser_spec.rb",
     "spec/annotation_parser_specs/class_annotation_parser_spec.rb",
+    "spec/annotation_parser_specs/overload_parser_spec.rb",
     "spec/annotation_parser_specs/parsers_spec.rb",
     "spec/annotation_parser_specs/spec_helper.rb",
     "spec/annotation_parser_specs/structural_parser_spec.rb",
@@ -312,7 +317,6 @@ Gem::Specification.new do |s|
     "test/third_party_tests/rgl_tests/examples/north/g.14.9.graphml",
     "test/third_party_tests/rgl_tests/test_helper.rb",
     "test/third_party_tests/test_inheritable_attributes.rb",
-    "test/third_party_tests/test_stream.rb",
     "test/third_party_tests/test_trollop.rb"
   ]
   s.homepage = %q{http://github.com/michaeledgar/laser}
@@ -326,14 +330,15 @@ Gem::Specification.new do |s|
     "spec/analysis_specs/annotations_specs/runtime_annotation_spec.rb",
     "spec/analysis_specs/annotations_specs/spec_helper.rb",
     "spec/analysis_specs/argument_expansion_spec.rb",
-    "spec/analysis_specs/assignment_expression_spec.rb",
     "spec/analysis_specs/bindings_spec.rb",
     "spec/analysis_specs/comment_spec.rb",
     "spec/analysis_specs/control_flow_specs/cfg_instruction_spec.rb",
     "spec/analysis_specs/control_flow_specs/constant_propagation_spec.rb",
     "spec/analysis_specs/control_flow_specs/control_flow_graph_spec.rb",
     "spec/analysis_specs/control_flow_specs/raise_properties_spec.rb",
+    "spec/analysis_specs/control_flow_specs/simulation_spec.rb",
     "spec/analysis_specs/control_flow_specs/spec_helper.rb",
+    "spec/analysis_specs/control_flow_specs/type_inference_spec.rb",
     "spec/analysis_specs/control_flow_specs/unreachability_analysis_spec.rb",
     "spec/analysis_specs/control_flow_specs/unused_variable_spec.rb",
     "spec/analysis_specs/control_flow_specs/yield_properties_spec.rb",
@@ -345,16 +350,15 @@ Gem::Specification.new do |s|
     "spec/analysis_specs/scope_spec.rb",
     "spec/analysis_specs/sexp_analysis_spec.rb",
     "spec/analysis_specs/sexp_extension_specs/constant_extraction_spec.rb",
-    "spec/analysis_specs/sexp_extension_specs/method_resolution_spec.rb",
     "spec/analysis_specs/sexp_extension_specs/source_location_spec.rb",
     "spec/analysis_specs/sexp_extension_specs/spec_helper.rb",
     "spec/analysis_specs/sexp_extension_specs/type_inference_spec.rb",
     "spec/analysis_specs/sexp_spec.rb",
-    "spec/analysis_specs/signature_spec.rb",
     "spec/analysis_specs/spec_helper.rb",
     "spec/analysis_specs/visitor_spec.rb",
     "spec/annotation_parser_specs/annotations_parser_spec.rb",
     "spec/annotation_parser_specs/class_annotation_parser_spec.rb",
+    "spec/annotation_parser_specs/overload_parser_spec.rb",
     "spec/annotation_parser_specs/parsers_spec.rb",
     "spec/annotation_parser_specs/spec_helper.rb",
     "spec/annotation_parser_specs/structural_parser_spec.rb",
@@ -402,7 +406,6 @@ Gem::Specification.new do |s|
     "test/third_party_tests/rgl_tests/TestUnDirectedGraph.rb",
     "test/third_party_tests/rgl_tests/test_helper.rb",
     "test/third_party_tests/test_inheritable_attributes.rb",
-    "test/third_party_tests/test_stream.rb",
     "test/third_party_tests/test_trollop.rb"
   ]
 
@@ -491,10 +494,29 @@ Gem::Specification.new do |s|
       s.add_development_dependency(%q<simplecov-gem-adapter>, [">= 1.0.0"])
       s.add_development_dependency(%q<guard>, [">= 0"])
       s.add_development_dependency(%q<guard-rspec>, [">= 0"])
+      s.add_development_dependency(%q<rake>, ["~> 0.8"])
+      s.add_development_dependency(%q<rspec>, ["~> 2.3"])
+      s.add_development_dependency(%q<yard>, [">= 0"])
+      s.add_development_dependency(%q<cucumber>, [">= 0.10.0"])
+      s.add_development_dependency(%q<metric_fu>, [">= 2.0.1"])
+      s.add_development_dependency(%q<simplecov>, [">= 0.3.9"])
+      s.add_development_dependency(%q<simplecov-gem-adapter>, [">= 1.0.0"])
+      s.add_development_dependency(%q<guard>, [">= 0"])
+      s.add_development_dependency(%q<guard-rspec>, [">= 0"])
+      s.add_development_dependency(%q<rake>, ["~> 0.8"])
+      s.add_development_dependency(%q<rspec>, ["~> 2.3"])
+      s.add_development_dependency(%q<yard>, [">= 0"])
+      s.add_development_dependency(%q<cucumber>, [">= 0.10.0"])
+      s.add_development_dependency(%q<metric_fu>, [">= 2.0.1"])
+      s.add_development_dependency(%q<simplecov>, [">= 0.3.9"])
+      s.add_development_dependency(%q<simplecov-gem-adapter>, [">= 1.0.0"])
+      s.add_development_dependency(%q<guard>, [">= 0"])
+      s.add_development_dependency(%q<guard-rspec>, [">= 0"])
       s.add_runtime_dependency(%q<treetop>, ["~> 1.4"])
       s.add_runtime_dependency(%q<ripper-plus>, ["~> 1.2"])
       s.add_runtime_dependency(%q<axiom_of_choice>, [">= 0"])
       s.add_runtime_dependency(%q<stream>, ["= 0.5"])
+      s.add_runtime_dependency(%q<object_regex>, ["~> 1.0"])
       s.add_development_dependency(%q<rake>, ["~> 0.8"])
       s.add_development_dependency(%q<rspec>, ["~> 2.3"])
       s.add_development_dependency(%q<yard>, [">= 0"])
@@ -586,10 +608,29 @@ Gem::Specification.new do |s|
       s.add_dependency(%q<simplecov-gem-adapter>, [">= 1.0.0"])
       s.add_dependency(%q<guard>, [">= 0"])
       s.add_dependency(%q<guard-rspec>, [">= 0"])
+      s.add_dependency(%q<rake>, ["~> 0.8"])
+      s.add_dependency(%q<rspec>, ["~> 2.3"])
+      s.add_dependency(%q<yard>, [">= 0"])
+      s.add_dependency(%q<cucumber>, [">= 0.10.0"])
+      s.add_dependency(%q<metric_fu>, [">= 2.0.1"])
+      s.add_dependency(%q<simplecov>, [">= 0.3.9"])
+      s.add_dependency(%q<simplecov-gem-adapter>, [">= 1.0.0"])
+      s.add_dependency(%q<guard>, [">= 0"])
+      s.add_dependency(%q<guard-rspec>, [">= 0"])
+      s.add_dependency(%q<rake>, ["~> 0.8"])
+      s.add_dependency(%q<rspec>, ["~> 2.3"])
+      s.add_dependency(%q<yard>, [">= 0"])
+      s.add_dependency(%q<cucumber>, [">= 0.10.0"])
+      s.add_dependency(%q<metric_fu>, [">= 2.0.1"])
+      s.add_dependency(%q<simplecov>, [">= 0.3.9"])
+      s.add_dependency(%q<simplecov-gem-adapter>, [">= 1.0.0"])
+      s.add_dependency(%q<guard>, [">= 0"])
+      s.add_dependency(%q<guard-rspec>, [">= 0"])
       s.add_dependency(%q<treetop>, ["~> 1.4"])
       s.add_dependency(%q<ripper-plus>, ["~> 1.2"])
       s.add_dependency(%q<axiom_of_choice>, [">= 0"])
       s.add_dependency(%q<stream>, ["= 0.5"])
+      s.add_dependency(%q<object_regex>, ["~> 1.0"])
       s.add_dependency(%q<rake>, ["~> 0.8"])
       s.add_dependency(%q<rspec>, ["~> 2.3"])
       s.add_dependency(%q<yard>, [">= 0"])
@@ -682,10 +723,29 @@ Gem::Specification.new do |s|
     s.add_dependency(%q<simplecov-gem-adapter>, [">= 1.0.0"])
     s.add_dependency(%q<guard>, [">= 0"])
     s.add_dependency(%q<guard-rspec>, [">= 0"])
+    s.add_dependency(%q<rake>, ["~> 0.8"])
+    s.add_dependency(%q<rspec>, ["~> 2.3"])
+    s.add_dependency(%q<yard>, [">= 0"])
+    s.add_dependency(%q<cucumber>, [">= 0.10.0"])
+    s.add_dependency(%q<metric_fu>, [">= 2.0.1"])
+    s.add_dependency(%q<simplecov>, [">= 0.3.9"])
+    s.add_dependency(%q<simplecov-gem-adapter>, [">= 1.0.0"])
+    s.add_dependency(%q<guard>, [">= 0"])
+    s.add_dependency(%q<guard-rspec>, [">= 0"])
+    s.add_dependency(%q<rake>, ["~> 0.8"])
+    s.add_dependency(%q<rspec>, ["~> 2.3"])
+    s.add_dependency(%q<yard>, [">= 0"])
+    s.add_dependency(%q<cucumber>, [">= 0.10.0"])
+    s.add_dependency(%q<metric_fu>, [">= 2.0.1"])
+    s.add_dependency(%q<simplecov>, [">= 0.3.9"])
+    s.add_dependency(%q<simplecov-gem-adapter>, [">= 1.0.0"])
+    s.add_dependency(%q<guard>, [">= 0"])
+    s.add_dependency(%q<guard-rspec>, [">= 0"])
     s.add_dependency(%q<treetop>, ["~> 1.4"])
     s.add_dependency(%q<ripper-plus>, ["~> 1.2"])
     s.add_dependency(%q<axiom_of_choice>, [">= 0"])
     s.add_dependency(%q<stream>, ["= 0.5"])
+    s.add_dependency(%q<object_regex>, ["~> 1.0"])
     s.add_dependency(%q<rake>, ["~> 0.8"])
     s.add_dependency(%q<rspec>, ["~> 2.3"])
     s.add_dependency(%q<yard>, [">= 0"])
