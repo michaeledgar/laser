@@ -5,9 +5,9 @@ LASER: Lexically- and Semantically-Enriched Ruby
 **IRC**:          [irc.freenode.net / #laser](irc://irc.freenode.net/laser)     
 **Git**:          [http://github.com/michaeledgar/laser](http://github.com/michaeledgar/laser)   
 **Author**:       Michael Edgar    
-**Copyright**:    2011  
-**License**:      Custom, Academic-use only license. See {file:LICENSE}  
-**Latest Version**: 0.1.0    
+**Copyright**:    2011   
+**License**:      AGPL v3.0 w/ Commercial Exceptions    
+**Latest Version**: 0.5.2    
 **Release Date**: None, yet.
 
 Synopsis
@@ -21,12 +21,11 @@ if a method call could require a block, and so on. It provides warnings
 as well as errors for *potentially* error-prone code, such as:
 
     if x = 5
-      # x == 5 here, amirite?
+      # well, x is 5 *now*
     end
 
 Naturally, all warnings can be ignored on a case-by-case basis with inline comments
 and turned off completely via command-line switches.
-
 
 Feature List
 ------------
@@ -55,8 +54,7 @@ provided by RubyParser and co. So I'm sticking with Ripper's AST format. It has 
 I prefer it, and it's part of the standard library. LASER works by creating an Array subclass
 called `Sexp` that wraps the results of a Ripper parse and *does not modify its contents*. So anyone
 expecting a typical Ripper AST can use the results of LASER's analysis. The `Sexp` subclass then
-has a variety of accessor methods created on it that contain the results of static
-analysis.
+has a variety of accessor methods created on it that contain the results of static analysis.
 
 More to come here.
 
@@ -69,7 +67,6 @@ To install LASER, use the following command:
     
 (Add `sudo` if you're installing under a POSIX system as root)
                                                                               
-
 Usage
 -----
 
@@ -81,7 +78,8 @@ Changelog
 
 - **Jan.26.11**: Not publicizing LASER yet, but I figure I need a first entry in
 the changelog.
-
+- **Jun.15.11**: [Thesis](http://www.cs.dartmouth.edu/reports/abstracts/TR2011-686/) published
+based on Laser. License officially switching to AGPLv3 with commercial exceptions.
 
 Copyright
 ---------
