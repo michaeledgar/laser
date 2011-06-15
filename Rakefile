@@ -16,7 +16,7 @@ begin
     gem.add_dependency 'stream', '0.5'
     gem.add_dependency 'object_regex', '~> 1.0'
     gem.add_development_dependency 'rake', '~> 0.8'
-    gem.add_development_dependency 'rspec', '~> 2.3'
+    gem.add_development_dependency 'rspec', '~> 2.3.0'
     gem.add_development_dependency 'yard', '>= 0'
     gem.add_development_dependency 'cucumber', '>= 0.10.0'
     gem.add_development_dependency 'metric_fu', '>= 2.0.1'

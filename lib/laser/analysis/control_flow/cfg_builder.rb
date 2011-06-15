@@ -1072,6 +1072,7 @@ module Laser
           start_block rescue_target
           while rescue_body
             rhs, exception_name, handler_body, rescue_body = rescue_body.children
+            rhs ||= Sexp.new([[:var_ref, [:@const, "Exception", [0, 0]]]])
             handler_block = create_block
 
             # for everything in rescue_body[1]

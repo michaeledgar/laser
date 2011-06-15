@@ -4,9 +4,9 @@ describe ControlFlow::YieldProperties do
   it 'should recognize non-yielding methods' do
     g = cfg_method <<-EOF
 def foo(x)
-y = gets() * 2
-z = y
-c = z * z
+  y = gets() * 2
+  z = y
+  c = z * z
 end
 EOF
     g.yield_type.should be :ignored
@@ -16,12 +16,12 @@ EOF
   it 'should recognize non-yielding methods via CP' do
     g = cfg_method <<-EOF
 def foo(x)
-x = 2 ** 16
-if x == 65536
-  puts x
-else
-  yield
-end
+  x = 2 ** 16
+  if x == 65536
+    puts x
+  else
+    yield
+  end
 end
 EOF
     g.yield_type.should be :ignored
@@ -31,8 +31,8 @@ EOF
   it 'should recognize simple required-yield methods' do
     g = cfg_method <<-EOF
 def tap
-yield self
-self
+  yield self
+  self
 end
 EOF
     g.yield_type.should be :required
@@ -42,11 +42,11 @@ EOF
   it 'denotes the method required when a branch is unprovable' do
     g = cfg_method <<-EOF
 def one
-if gets.size < 0
-  yield
-else
-  1
-end
+  if gets.size < 0
+    yield
+  else
+    1
+  end
 end
 EOF
     g.yield_type.should be :required
@@ -55,28 +55,28 @@ EOF
   ['block_given?', 'defined?(yield)', 'defined?(yield($., *$*))', 'Proc.new', 'iterator?'].each do |guard|
     it "denotes the method optional when yield is guarded by #{guard}" do
       g = cfg_method <<-EOF
-  def one
-    if #{guard}
-      yield 1
-    else
-      1
-    end
+def one
+  if #{guard}
+    yield 1
+  else
+    1
   end
-  EOF
+end
+EOF
       g.yield_type.should be :optional
       g.yield_arity.should == Set[1]
     end
 
     it "denotes the method foolish when yield is not guarded by #{guard}, but the block is unused when given" do
       g = cfg_method <<-EOF
-  def one
-    if #{guard}
-      1
-    else
-      yield 1
-    end
+def one
+  if #{guard}
+    1
+  else
+    yield 1
   end
-  EOF
+end
+EOF
       g.yield_type.should be :foolish
       g.yield_arity.should == Set[]
     end
@@ -222,6 +222,19 @@ EOF
       g.yield_type.should be :optional
       g.yield_arity.should == Set[1]
     end
+  end
+
+  it "denotes the method optional when yield is guarded by rescue with no handlers" do
+    g = cfg_method <<-EOF
+def one
+  yield 1
+  4
+rescue
+  2
+end
+EOF
+    g.yield_type.should be :optional
+    g.yield_arity.should == Set[1]
   end
 
   it 'denotes the method optional when yield is guarded by a rescue modifier' do
