@@ -1,7 +1,8 @@
+require 'rake'
 module Laser
   module Rake
     class LaserTask
-      include Rake::DSL
+      include ::Rake::DSL
 
       Settings = Struct.new(:libs, :extras, :options, :using, :fix) do
         def initialize(*args)

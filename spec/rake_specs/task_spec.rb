@@ -4,11 +4,11 @@ require 'rake'
 require 'tmpdir'
 require 'laser/rake/task'
 
-describe Rake::LaserTask do
+describe Laser::Rake::LaserTask do
   describe '#initialize' do
     it 'yields to allow setting :libs and :extras' do
       task_name = "temptask1-#{rand(65329)}".to_sym
-      task = Rake::LaserTask.new(task_name) do |laser|
+      task = Laser::Rake::LaserTask.new(task_name) do |laser|
         laser.libs = "LOL"
         laser.extras = "hai"
       end
@@ -18,15 +18,15 @@ describe Rake::LaserTask do
 
     it 'creates a Rake task with the given name that calls #run' do
       task_name = "temptask2_#{rand(65000)}".to_sym
-      task = Rake::LaserTask.new(task_name)
-      Rake::Task[task_name].should_not be_nil
+      task = Laser::Rake::LaserTask.new(task_name)
+      Laser::Rake::Task[task_name].should_not be_nil
       task.should_receive(:run)
-      Rake::Task[task_name].invoke
+      Laser::Rake::Task[task_name].invoke
     end
 
     it 'allows you to specify which warnings to use' do
       task_name = "temptask3_#{rand(65000)}".to_sym
-      task = Rake::LaserTask.new(task_name) do |laser|
+      task = Laser::Rake::LaserTask.new(task_name) do |laser|
         laser.using << :one << :two
       end
       task.settings.using.should == [:one, :two]
@@ -34,7 +34,7 @@ describe Rake::LaserTask do
 
     it 'defaults to using all warnings' do
       task_name = "temptask4_#{rand(65000)}".to_sym
-      task = Rake::LaserTask.new(task_name) do |laser|
+      task = Laser::Rake::LaserTask.new(task_name) do |laser|
       end
       task.settings.using.should == [:all]
     end
@@ -44,7 +44,7 @@ describe Rake::LaserTask do
     it 'searches the listed libraries for files' do
       Dir.should_receive(:[]).with('lib/**/*.rb').and_return([])
       Dir.should_receive(:[]).with('spec/**/*.rb').and_return([])
-      task = Rake::LaserTask.new("temptask3-#{rand(65329)}".to_sym) do |laser|
+      task = Laser::Rake::LaserTask.new("temptask3-#{rand(65329)}".to_sym) do |laser|
         laser.libs << 'lib' << 'spec'
       end
       swizzling_io { task.run }
@@ -56,7 +56,7 @@ describe Rake::LaserTask do
       end
       Dir.should_receive(:[]).with('lib/**/*.rb').and_return([File.join(Dir.tmpdir, 'test_input')])
       Dir.should_receive(:[]).with('spec/**/*.rb').and_return([])
-      task = Rake::LaserTask.new("temptask4-#{rand(65329)}".to_sym) do |laser|
+      task = Laser::Rake::LaserTask.new("temptask4-#{rand(65329)}".to_sym) do |laser|
         laser.libs << 'lib' << 'spec'
       end
       printout = swizzling_io { task.run }
