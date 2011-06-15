@@ -79,8 +79,9 @@ module Laser
           calls = []
           reachable_vertices do |block|
             block.instructions.each do |insn|
+              # consider runtime aliases, don't hardcode known ones
               if (insn.type == :call || insn.type == :call_vararg) &&
-                 insn[3] == :call && aliases.include?(insn[2])
+                 (insn[3] == :call || insn[3] == :=== || insn[3] == :[]) && aliases.include?(insn[2])
                 calls << insn
               elsif aliases.include?(insn.block_operand)
                 insn.possible_methods.each do |method|

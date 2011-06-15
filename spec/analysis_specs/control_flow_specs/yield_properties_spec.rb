@@ -96,116 +96,117 @@ EOF
     g.yield_type.should be :optional
     g.yield_arity.should == Set[1, 2]
   end
-
-  it 'denotes the method optional when the explicit block arg is checked vs. nil and called explicitly' do
-    g = cfg_method <<-EOF
+  [['.call(', ')'], ['[', ']'], ['.===(', ')']].each do |prefix, suffix|
+    it "denotes the method optional when the explicit block arg is checked vs. nil and called with #{prefix}#{suffix}" do
+      g = cfg_method <<-EOF
 def one(&blk)
   if blk != nil
-    blk.call(2, 3)
+    blk#{prefix}2, 3#{suffix}
   else
     1
   end
 end
 EOF
-    g.yield_type.should be :optional
-    g.yield_arity.should == Set[2]
-  end
+      g.yield_type.should be :optional
+      g.yield_arity.should == Set[2]
+    end
 
-  it 'denotes the method required when the explicit block arg is not checked vs. nil and called explicitly' do
-    g = cfg_method <<-EOF
+    it "denotes the method required when the explicit block arg is not checked vs. nil and called with #{prefix}#{suffix}" do
+      g = cfg_method <<-EOF
 def one(&blk)
-  blk.call(2, 3)
+  blk#{prefix}2, 3#{suffix}
   1
 end
 EOF
-    g.yield_type.should be :required
-    g.yield_arity.should == Set[2]
-  end
+      g.yield_type.should be :required
+      g.yield_arity.should == Set[2]
+    end
 
-  it 'denotes the method foolish when the explicit block arg is checked vs. nil and called explicitly' do
-    g = cfg_method <<-EOF
+    it "denotes the method foolish when the explicit block arg is checked vs. nil and called with #{prefix}#{suffix}" do
+      g = cfg_method <<-EOF
 def one(&blk)
   if blk == nil
-    blk.call(2, 3)
+    blk#{prefix}2, 3#{suffix}
   end
   1
 end
 EOF
-    g.yield_type.should be :foolish
-    g.yield_arity.should == Set[]
-  end
+      g.yield_type.should be :foolish
+      g.yield_arity.should == Set[]
+    end
   
-  it 'denotes the method optional when the Proc.new block arg is checked vs. nil and called explicitly' do
-    g = cfg_method <<-EOF
+    it "denotes the method optional when the Proc.new block arg is checked vs. nil and called with #{prefix}#{suffix}" do
+      g = cfg_method <<-EOF
 def one
   blk = Proc::new
   if blk != nil
-    blk.call(2, 3)
+    blk#{prefix}2, 3#{suffix}
   else
     1
   end
 end
 EOF
-    g.yield_type.should be :optional
-    g.yield_arity.should == Set[2]
-  end
+      g.yield_type.should be :optional
+      g.yield_arity.should == Set[2]
+    end
 
-  it 'denotes the method required when the Proc.new block arg is not checked vs. nil and called explicitly' do
-    g = cfg_method <<-EOF
+    it "denotes the method required when the Proc.new block arg is not checked vs. nil and called with #{prefix}#{suffix}" do
+      g = cfg_method <<-EOF
 def one
   blk = Proc::new
-  blk.call(2, 3)
+  blk#{prefix}2, 3#{suffix}
   1
 end
 EOF
-    g.yield_type.should be :required
-    g.yield_arity.should == Set[2]
-  end
+      g.yield_type.should be :required
+      g.yield_arity.should == Set[2]
+    end
 
-  it 'denotes the method foolish when the Proc.new block arg is checked vs. nil and called explicitly' do
-    g = cfg_method <<-EOF
+    it "denotes the method foolish when the Proc.new block arg is checked vs. nil and called with #{prefix}#{suffix}" do
+      g = cfg_method <<-EOF
 def one
   blk = Proc::new
   if blk == nil
-    blk.call(2, 3)
+    blk#{prefix}2, 3#{suffix}
   end
   1
 end
 EOF
-    g.yield_type.should be :foolish
-    g.yield_arity.should == Set[]
-  end
+      g.yield_type.should be :foolish
+      g.yield_arity.should == Set[]
+    end
 
-  it 'denotes the method ignored when the explicit block arg is never called' do
-    g = cfg_method <<-EOF
+    it 'denotes the method ignored when the explicit block arg is never called' do
+      g = cfg_method <<-EOF
 def one(&blk)
   result = blk.nil? ? 5 : 10
   result ** result
 end
 EOF
-    g.yield_type.should be :ignored
-    g.yield_arity.should == Set[]
-  end
+      g.yield_type.should be :ignored
+      g.yield_arity.should == Set[]
+    end
 
-  it 'is not confused by sending .call to other arguments' do
-    g = cfg_method <<-EOF
+    it "is not confused by sending #{prefix}#{suffix} to other arguments" do
+      g = cfg_method <<-EOF
 def one(other_arg, &blk)
-  other_arg.call(5)
+  other_arg#{prefix}5#{suffix}
 end
 EOF
-    g.yield_type.should be :ignored
-  end
+      g.yield_type.should be :ignored
+    end
 
-  it 'uses SSA information to find aliases for .call on the block' do
-    g = cfg_method <<-EOF
+    it "uses SSA information to find aliases to the block that receive #{prefix}#{suffix}" do
+      g = cfg_method <<-EOF
 def one(other_arg, &blk)
   if gets.size > 2
     other_arg = blk
   end
-  other_arg.call(2)
+  other_arg#{prefix}2#{suffix}
 end
 EOF
-    g.yield_type.should be :required
+      g.yield_type.should be :required
+    end
   end
 
   %w(LocalJumpError StandardError Exception Object Kernel BasicObject).each do |exc|
