@@ -271,6 +271,9 @@ module Laser
             Bootstrap::EXCEPTION_STACK.value.push args[0]
           when ClassRegistry['Laser#Magic'].singleton_class.instance_method('pop_exception')
             Bootstrap::EXCEPTION_STACK.value.pop
+          when ClassRegistry['Laser#Magic'].singleton_class.instance_method('responds?')
+            receiver, method_name = args
+            Utilities.klass_for(receiver).instance_method(method_name)
           when Scope::GlobalScope.self_ptr.singleton_class.instance_method('private')
             ClassRegistry['Object'].private(*args)
           when Scope::GlobalScope.self_ptr.singleton_class.instance_method('public')

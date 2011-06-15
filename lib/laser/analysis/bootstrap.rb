@@ -42,18 +42,18 @@ module Laser
         module_scope.parent = Scope::GlobalScope
         object_scope.parent = Scope::GlobalScope
         basic_object_scope.parent = Scope::GlobalScope
-        basic_object_class.instance_variable_set("@scope", basic_object_scope)
-        object_class.instance_variable_set("@scope", object_scope)
-        module_class.instance_variable_set("@scope", module_scope)
-        class_class.instance_variable_set("@scope", class_scope)
+        basic_object_class.instance_eval { @scope = basic_object_scope }
+        object_class.instance_eval { @scope = object_scope }
+        module_class.instance_eval { @scope = module_scope }
+        class_class.instance_eval { @scope = class_scope }
         object_class.const_set('BasicObject', basic_object_class)
         object_class.const_set('Object', object_class)
         object_class.const_set('Module', module_class)
         object_class.const_set('Class', class_class)
-        basic_object_class.instance_variable_set("@klass", class_class)
-        object_class.instance_variable_set("@klass", class_class)
-        module_class.instance_variable_set("@klass", class_class)
-        class_class.instance_variable_set("@klass", class_class)
+        basic_object_class.instance_eval { @klass = class_class }
+        object_class.instance_eval { @klass = class_class }
+        module_class.instance_eval { @klass = class_class }
+        class_class.instance_eval { @klass = class_class }
         bootstrap_literals
       rescue StandardError => err
         new_exception = BootstrappingError.new("Bootstrapping failed: #{err.message}")
@@ -76,7 +76,7 @@ module Laser
         stub_method(magic_class.singleton_class, 'current_self', special: true, annotated_raise_type: Frequency::NEVER)
         stub_method(magic_class.singleton_class, 'get_global', special: true, annotated_raise_type: Frequency::NEVER)
         stub_method(magic_class.singleton_class, 'set_global', special: true, mutation: true, annotated_raise_type: Frequency::NEVER)
-        
+        stub_method(magic_class.singleton_class, 'responds?', special: true, annotated_raise_type: Frequency::NEVER)
         stub_global_vars
       end
       

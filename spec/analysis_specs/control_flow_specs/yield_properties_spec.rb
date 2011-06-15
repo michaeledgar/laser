@@ -272,4 +272,53 @@ EOF
     method = ClassRegistry['YP2'].instance_method('bar')
     method.yield_type.should be :optional
   end
+  
+  it 'proves optionality in a complex example of yield likelihood through classes and ivars' do
+    cfg <<-EOF
+class YP3
+  def initialize(data)
+    @data = data
+  end
+  def each(&blk)
+    @data.each(&blk)
+  end
+end
+class YP4
+  def initialize(data)
+    @data = data
+  end
+  def foobar(&blk)
+    @data.each(&blk)
+  end
+end
+YP4Temp1 = YP4.new(YP3.new([1, 2, 3]))
+YP4Temp2 = YP4.new(YP3.new({a: :b, c: :d}))
+YP4Temp3 = YP4.new([5, 6])
+EOF
+    method = ClassRegistry['YP4'].instance_method('foobar')
+    method.yield_type.should be :optional
+  end
+
+  it 'infers a complex example of yield likelihood through classes and ivars' do
+    cfg <<-EOF
+class YP5
+  def each
+    yield 1
+    yield 2
+    yield 3
+  end
+end
+class YP6
+  def initialize(data)
+    @data = data
+  end
+  def foobar(&blk)
+    @data.each(&blk)
+  end
+end
+YP6Temp1 = YP6.new(YP5.new)
+EOF
+    method = ClassRegistry['YP6'].instance_method('foobar')
+    method.yield_type.should be :required
+  end
 end

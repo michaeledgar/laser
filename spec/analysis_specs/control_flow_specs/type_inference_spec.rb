@@ -144,7 +144,7 @@ end
 EOF
     ClassRegistry['CPSim8'].instance_method('to_s').
         return_type_for_types(
-          Utilities.type_for(ClassRegistry['CPSim8']))  # force calculation
+          ClassRegistry['CPSim8'].as_type)  # force calculation
     ClassRegistry['CPSim8'].instance_method('to_s').proc.ast_node.should(
         have_error(ImproperOverloadTypeError).with_message(/to_s/))
   end
@@ -199,27 +199,27 @@ class TI2
 end
 EOF
     ClassRegistry['TI1'].instance_method('get_foo').return_type_for_types(
-        Utilities.type_for(ClassRegistry['TI1'])).should == Types::NILCLASS
+        ClassRegistry['TI1'].as_type).should == Types::NILCLASS
     ClassRegistry['TI1'].instance_method('set_foo').return_type_for_types(
-        Utilities.type_for(ClassRegistry['TI1']), [Types::STRING]).should ==
+        ClassRegistry['TI1'].as_type, [Types::STRING]).should ==
           Types::STRING
     ClassRegistry['TI1'].instance_method('get_foo').return_type_for_types(
-        Utilities.type_for(ClassRegistry['TI1'])).should ==
+        ClassRegistry['TI1'].as_type).should ==
           Types::UnionType.new([Types::NILCLASS, Types::STRING])
     ClassRegistry['TI1'].instance_method('set_foo').return_type_for_types(
-        Utilities.type_for(ClassRegistry['TI1']), [Types::FIXNUM]).should ==
+        ClassRegistry['TI1'].as_type, [Types::FIXNUM]).should ==
          Types::FIXNUM
     ClassRegistry['TI1'].instance_method('get_foo').return_type_for_types(
-        Utilities.type_for(ClassRegistry['TI1'])).should ==
+        ClassRegistry['TI1'].as_type).should ==
           Types::UnionType.new([Types::NILCLASS, Types::STRING, Types::FIXNUM])
     
     ClassRegistry['TI2'].instance_method('get_foo').return_type_for_types(
-        Utilities.type_for(ClassRegistry['TI2'])).should == Types::NILCLASS
+        ClassRegistry['TI2'].as_type).should == Types::NILCLASS
     ClassRegistry['TI2'].instance_method('set_foo').return_type_for_types(
-        Utilities.type_for(ClassRegistry['TI2']), [Types::FIXNUM]).should ==
+        ClassRegistry['TI2'].as_type, [Types::FIXNUM]).should ==
           Types::FIXNUM
     ClassRegistry['TI2'].instance_method('get_foo').return_type_for_types(
-        Utilities.type_for(ClassRegistry['TI2'])).should ==
+        ClassRegistry['TI2'].as_type).should ==
           Types::UnionType.new([Types::NILCLASS, Types::FIXNUM])
   end
 end

@@ -222,6 +222,7 @@ module Kernel
   # predictable: false
   def puts(*to_put)
   end
+  # returns: Boolean
   # raises: never
   def block_given?
   end

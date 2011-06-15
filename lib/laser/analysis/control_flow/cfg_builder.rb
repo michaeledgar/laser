@@ -1783,10 +1783,19 @@ module Laser
           
           comparison_result = call_instruct(klass, :===, value, value: true)
           
-          if_not_klass_block = build_block_with_jump(after) do
+          if_not_klass_block = build_block_with_jump do
             # TODO(adgar): if method does not exist, return nil.
-            conversion_result = call_instruct(value, method, value: true)
-            copy_instruct result, conversion_result
+            has_method = call_instruct(ClassRegistry['Laser#Magic'].binding, :responds?,
+                value, const_instruct(method.to_s), value: true, raise: false)
+
+            if_has_method_block = build_block_with_jump(after) do
+              conversion_result = call_instruct(value, method, value: true)
+              copy_instruct result, conversion_result
+            end
+            if_no_method_block = build_block_with_jump(after) do
+              copy_instruct result, const_instruct(nil)
+            end
+            cond_instruct(has_method, if_has_method_block, if_no_method_block)
           end
           if_klass_block = build_block_with_jump(after) do
             copy_instruct(result, value)

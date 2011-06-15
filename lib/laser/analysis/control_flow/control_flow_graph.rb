@@ -134,7 +134,7 @@ module Laser
             v1.name == v2.name && v1.instructions == v2.instructions
           end) && (self.edges.sort == other.edges.sort)
         end
-        
+
         def save_pretty_picture(fmt='png', dotfile='graph', params = {'shape' => 'box'})
           write_to_graphic_file(fmt, dotfile, params)
         end
@@ -200,8 +200,14 @@ module Laser
               add_unused_variable_warnings
               Laser.debug_puts('>>> Finished Adding Unused Variable Warnings <<<')
 
-              find_yield_properties if @root.type != :program
+              if @root.type != :program
+                Laser.debug_puts('>>> Determining Yield Properties <<<')
+                find_yield_properties
+                Laser.debug_puts('>>> Finished Determining Yield Properties <<<')
+              end
+              Laser.debug_puts('>>> Determining Raise Properties <<<')
               find_raise_properties
+              Laser.debug_puts('>>> Finished Determining Raise Properties <<<')
             end
           end
         end
@@ -231,6 +237,10 @@ module Laser
           all_variables.find { |x| x.name.start_with?(name) }
         end
 
+        def return_postdominator
+          vertex_with_name(RETURN_POSTDOMINATOR_NAME)
+        end
+
         def yield_fail_postdominator
           vertex_with_name(YIELD_POSTDOMINATOR_NAME)
         end
@@ -238,11 +248,7 @@ module Laser
         def exception_postdominator
           vertex_with_name(EXCEPTION_POSTDOMINATOR_NAME)
         end
-        
-        def !=(other)
-          !(self == other)
-        end
-        
+
         def all_failure_postdominator
           vertex_with_name(FAILURE_POSTDOMINATOR_NAME)
         end

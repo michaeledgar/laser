@@ -78,6 +78,9 @@ module Laser
       end
 
       def instance_variable_set(var, value)
+        normal_class.instance_variable(var).inferred_type =
+            Types::UnionType.new([normal_class.instance_variable(var).expr_type, 
+                                  Utilities.normal_class_for(value).as_type])
         @instance_variables[var].bind!(value)
       end
     end
@@ -176,6 +179,10 @@ module Laser
         initialize_scope
         yield self if block_given?
         LaserModule.all_modules << self
+      end
+
+      def as_type
+        Types::ClassType.new(self.path, :invariant)
       end
 
       def name_set?
@@ -813,7 +820,9 @@ module Laser
       end
 
       def master_cfg
-        @master_cfg ||= @proc.ssa_cfg
+        @master_cfg ||= @proc.ssa_cfg.tap do |cfg|
+          cfg.bind_self_type(Types::ClassType.new(owner.path, :covariant))
+        end
       end
       
       def cfg_for_types(self_type, arg_types = [], block_type = nil)

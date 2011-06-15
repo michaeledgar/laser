@@ -21,9 +21,10 @@ module Laser
           without_yield.kill_unexecuted_edges
 
           weak_without_calls = without_yield.potential_block_calls
-          yield_pd = without_yield.vertex_with_name(
-              ControlFlowGraph::YIELD_POSTDOMINATOR_NAME)
+          yield_pd = without_yield.yield_fail_postdominator
           has_yield_pd = yield_pd && yield_pd.real_predecessors.size > 0
+          return_pd = without_yield.return_postdominator
+          has_return_pd = return_pd && return_pd.real_predecessors.size > 0
           yields_without_block = has_yield_pd || weak_without_calls.size > 0
 
           # Calculate the "has block provided" case
@@ -38,6 +39,9 @@ module Laser
           weak_with_calls = with_yield.potential_block_calls(fake_block)
           yields_with_block = weak_with_calls.size > 0
 
+          # if the mere difference in block presence results in no exit path, then
+          # we consider this evidence of failure due to lack of block.
+          yields_without_block = true if yields_with_block && !has_return_pd
           @yield_type = compute_yield_type(yields_with_block, yields_without_block)
           @yield_arity = calculate_yield_arity(weak_with_calls)
         end

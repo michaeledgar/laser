@@ -197,12 +197,11 @@ module Laser
           target = instruction[1] || cp_cell_for(instruction)
           original = target.value
           old_type = target.inferred_type
-          receiver, method_name, *args = instruction[2..-1]
 
+          receiver, method_name, *args = instruction[2..-1]
           opts = Hash === args.last ? args.pop : {}
           components = [receiver, *args]
-          special_result, special_type, special_raised =
-              apply_special_case(instruction, receiver, method_name, *args)
+
           if components.any? { |arg| arg.value == UNDEFINED }
             # cannot evaluate unless all args and receiver are defined
             return [false, :unknown]
@@ -220,7 +219,9 @@ module Laser
             new_value = result
             new_type = Utilities.type_for(result)
             raised = Frequency::NEVER
-          elsif special_result != INAPPLICABLE
+          elsif (special_result, special_type, special_raised =
+                 apply_special_case(instruction, receiver, method_name, *args);
+                 special_result != INAPPLICABLE)
             new_value = special_result
             new_type = special_type
             raised = special_raised
@@ -277,7 +278,8 @@ module Laser
 
         def infer_type_and_raising(instruction, receiver, method_name, args)
           begin
-            type, raised = return_types_for_normal_call(receiver, method_name, args, instruction.ignore_privacy)
+            type, raised = return_types_for_normal_call(receiver, method_name, args,
+                instruction.ignore_privacy, instruction.block_operand)
           rescue TypeError => err
             type = Types::TOP
             raised = Frequency::ALWAYS
@@ -289,15 +291,18 @@ module Laser
 
         # Calculates the set of methods potentially invoked in dynamic dispatch,
         # and the set of all possible argument type combinations.
-        def calculate_possible_templates(receiver, method, args)
+        def calculate_possible_templates(receiver, method, args, block)
           possible_dispatches = receiver.expr_type.member_types.map do |type|
             [type, type.matching_methods(method)]
           end
-          
-          if args.empty?
-            cartesian = [ [] ]
+          if args.empty? && !block
+            cartesian = [ [Types::NILCLASS] ]
           else
             cartesian_parts = args.map(&:expr_type).map(&:member_types).map(&:to_a)
+            if block
+            then cartesian_parts << block.expr_type.member_types.to_a
+            else cartesian_parts << [Types::NILCLASS]
+            end
             cartesian = cartesian_parts[0].product(*cartesian_parts[1..-1])
           end
           [possible_dispatches, cartesian]
@@ -308,9 +313,9 @@ module Laser
           result = Set.new
           possible_dispatches.each do |self_type, methods|
             result |= methods.map do |method|
-              cartesian.map do |type_list|
+              cartesian.map do |*type_list, block_type|
                 begin
-                  method.return_type_for_types(self_type, type_list, Types::NILCLASS)
+                  method.return_type_for_types(self_type, type_list, block_type)
                 rescue TypeError => err
                   Laser.debug_puts("Invalid argument types found.")
                   nil
@@ -324,12 +329,13 @@ module Laser
         # TODO(adgar): Optimize this. Use lattice-style expression of raisability
         # until types need to be added too.
         def raisability_for_templates(possible_dispatches, cartesian, ignore_privacy)
-          seen_public = seen_private = seen_raise = seen_succeed = false
-          seen_any = possible_dispatches.find { |s, m| m.size > 0 }
+          seen_public = seen_private = seen_raise = seen_succeed = seen_any = seen_missing = false
           possible_dispatches.each do |self_type, methods|
+            seen_any = true if methods.size > 0 && !seen_any
+            seen_missing = true if methods.empty? && !seen_missing
             methods.each do |method|
-              cartesian.each do |type_list|
-                raise_type = method.raise_type_for_types(self_type, type_list, Types::NILCLASS)
+              cartesian.each do |*type_list, block_type|
+                raise_type = method.raise_type_for_types(self_type, type_list, block_type)
                 seen_raise = raise_type > Frequency::NEVER if !seen_raise
                 seen_succeed = raise_type < Frequency::ALWAYS if !seen_succeed
                 if !ignore_privacy
@@ -346,20 +352,21 @@ module Laser
             end
           end
           if seen_any
+            fails_lookup = seen_missing ? Frequency::MAYBE : Frequency::NEVER
             fails_privacy = if ignore_privacy
                             then Frequency::NEVER
                             else Frequency.for_samples(seen_private, seen_public)
                             end
             raised = Frequency.for_samples(seen_raise, seen_succeed)
-            [fails_privacy, raised].max
+            [fails_privacy, raised, fails_lookup].max
           else
             Frequency::ALWAYS  # no method!
           end
         end
 
         # Calculates all possible return types for a method call using CPA.
-        def return_types_for_normal_call(receiver, method, args, ignore_privacy)
-          possible_dispatches, cartesian = calculate_possible_templates(receiver, method, args)
+        def return_types_for_normal_call(receiver, method, args, ignore_privacy, block)
+          possible_dispatches, cartesian = calculate_possible_templates(receiver, method, args, block)
           result = cpa_for_templates(possible_dispatches, cartesian)
           raise_result = raisability_for_templates(possible_dispatches, cartesian, ignore_privacy)
           if result.empty?
@@ -486,7 +493,9 @@ module Laser
             if magic_result != INAPPLICABLE
               return [magic_result, magic_type, magic_raises]
             end
-          elsif receiver.value == ClassRegistry['Proc'] && method_name == :new # and check no block
+          elsif (receiver.value == ClassRegistry['Proc'] && method_name == :new) ||
+                ((method_name == :block_given? || method_name == :iterable?) &&
+                 (uses_method?(receiver, ClassRegistry['Kernel'].instance_method('block_given?')))) # and check no block
             return cp_magic(instruction, :current_block)
           end
           [INAPPLICABLE, Frequency::MAYBE]
@@ -523,6 +532,24 @@ module Laser
                 global.inferred_type = Types::UnionType.new([args[1].expr_type, global.expr_type])
               end
               return [VARYING, global.expr_type, Frequency::NEVER]
+            end
+          when :responds?
+            name = args[1].value
+            seen_yes = seen_no = false
+            args[0].expr_type.possible_classes.each do |klass|
+              if klass.instance_method(name)
+              then seen_yes = true; break if seen_no
+              else seen_no = true; break if seen_yes
+              end
+            end
+            if seen_yes && !seen_no
+              return [true, Types::TRUECLASS, Frequency::NEVER]
+            elsif !seen_yes && seen_no
+              return [false, Types::FALSECLASS, Frequency::NEVER]
+            elsif seen_yes && seen_no
+              return [VARYING, Types::BOOLEAN, Frequency::NEVER]
+            else  # receiver's type is empty. YAGNI?
+              return [false, Types::FALSECLASS, Frequency::NEVER]
             end
           end
           [INAPPLICABLE, nil, Frequency::MAYBE]
