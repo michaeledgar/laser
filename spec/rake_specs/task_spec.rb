@@ -19,9 +19,9 @@ describe Laser::Rake::LaserTask do
     it 'creates a Rake task with the given name that calls #run' do
       task_name = "temptask2_#{rand(65000)}".to_sym
       task = Laser::Rake::LaserTask.new(task_name)
-      Laser::Rake::Task[task_name].should_not be_nil
+      Rake::Task[task_name].should_not be_nil
       task.should_receive(:run)
-      Laser::Rake::Task[task_name].invoke
+      Rake::Task[task_name].invoke
     end
 
     it 'allows you to specify which warnings to use' do
