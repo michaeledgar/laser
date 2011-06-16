@@ -95,7 +95,11 @@ class Module
   end
   # builtin: true
   # mutation: true
-  def remove_method(name, body=nil)
+  def remove_method(name)
+  end
+  # builtin: true
+  # mutation: true
+  def undef_method(name)
   end
   # builtin: true
   # mutation: true

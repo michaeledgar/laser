@@ -55,26 +55,6 @@ shared_examples_for 'a Ruby module' do
       x.name.should == 'EverybodysFavoriteClass'
     end
   end
-  
-  describe '#trivial?' do
-    it 'returns true if the module has no methods' do
-      @a.trivial?.should be true
-    end
-    
-    it 'returns false if the module has an instance method' do
-      @b.trivial?.should be false
-    end
-  end
-  
-  describe '#nontrivial?' do
-    it 'returns false if the module has no methods' do
-      @a.nontrivial?.should be false
-    end
-    
-    it 'returns true if the module has an instance method' do
-      @b.nontrivial?.should be true
-    end
-  end
 end
 
 describe LaserModule do

@@ -238,25 +238,18 @@ module Laser
       def name
         self.path.split('::').last
       end
-
-      def trivial?
-        @instance_methods.empty?
-      end
-      opposite_method :nontrivial?, :trivial?
       
       def add_instance_method!(method)
         @instance_methods[method.name] = method
+        @visibility_table[method.name] = :public
         method.owner = self
-      end
-      
-      def alias_instance_method!(new, old)
-        @instance_methods[new] = @instance_methods[old]
-        @visibility_table[new] = @visibility_table[old]
       end
 
       def instance_method(name)
-        return @instance_methods[name.to_s] ||
-          (@superclass && @superclass.instance_method(name))
+        if @instance_methods.has_key?(name.to_s)
+        then @instance_methods[name.to_s]
+        else @superclass && @superclass.instance_method(name)
+        end
       end
       
       def method_defined?(name)
@@ -474,6 +467,11 @@ module Laser
       def define_method_with_annotations(name, proc, opts={})
         method = define_method(name, proc)
         opts.each { |name, value| method.send("#{name}=", value) }
+      end
+
+      def undef_method(symbol)
+        @instance_methods[symbol.to_s] = nil
+        @visibility_table[symbol.to_s] = :undefined
       end
 
       def remove_method(symbol)
