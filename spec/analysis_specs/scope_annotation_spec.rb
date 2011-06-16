@@ -736,6 +736,22 @@ describe 'general analyses' do
     tree = annotate_all(input)
     tree.all_errors.should be_empty
   end
+  
+  it 'observes aliases and sets the corresponding instance methods correctly' do
+    input = 'class SA99; def foo; end; alias silly foo; end'
+    annotate_all(input)
+    ClassRegistry['SA99'].instance_method('silly').should be(
+        ClassRegistry['SA99'].instance_method('foo'))
+  end
+  
+  it 'observes undefs and sets the corresponding instance method to nil' do
+    input = 'class SA100; def foo; end; end; class SA101 < SA100; undef foo, :inspect; end'
+    annotate_all(input)
+    ClassRegistry['SA100'].instance_method('foo').should_not be nil
+    ClassRegistry['SA100'].instance_method('inspect').should_not be nil
+    ClassRegistry['SA101'].instance_method('foo').should be nil
+    ClassRegistry['SA101'].instance_method('inspect').should be nil
+  end
 end
   
 describe 'complete tests' do
@@ -971,16 +987,10 @@ end
       end
       
       generic = ClassRegistry["#{bindings_mod}::Base"]
-      #generic.instance_variables['@name'].should be_a(Bindings::InstanceVariableBinding)
-      #generic.instance_variables['@value'].should be_a(Bindings::InstanceVariableBinding)
       class_binding = ClassRegistry["#{bindings_mod}::ConstantBinding"]
       kw_binding = ClassRegistry["#{bindings_mod}::KeywordBinding"]
       arg_binding = ClassRegistry["#{bindings_mod}::ArgumentBinding"]
-      #arg_binding.instance_variables['@name'].should be generic.instance_variables['@name']
-      #arg_binding.instance_variables['@value'].should be generic.instance_variables['@value']
-      #arg_binding.instance_variables['@kind'].should be_a(Bindings::InstanceVariableBinding)
-      #arg_binding.instance_variables['@default_value_sexp'].should be_a(Bindings::InstanceVariableBinding)
-      
+
       arg_binding.ancestors.should == [arg_binding, generic, ClassRegistry['Comparable'],
                                        ClassRegistry['Object'], ClassRegistry['Kernel'],
                                        ClassRegistry['BasicObject']]

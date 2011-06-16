@@ -313,6 +313,14 @@ module Laser
               rhs_val = const_instruct(rhs[1].expanded_identifier.to_sym)
               call_instruct(current_namespace, :alias_method, lhs_val, rhs_val,
                             value: false, ignore_privacy: true)
+            when :undef
+              undeffed = node.children.first
+              undeffed.each do |method|
+                method_name = const_instruct(method[1].expanded_identifier.to_sym)
+                call_instruct(current_namespace, :undef_method, method_name,
+                    value: false, raise: true)
+              end
+              nil
             when :assign
               lhs, rhs = node.children
               single_assign_instruct(lhs, rhs, opts)
