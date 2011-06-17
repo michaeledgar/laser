@@ -120,7 +120,7 @@ module Laser
                 add_target_uses_to_worklist instruction, worklist
               end
             end
-            if raised != instruction.raise_type && instruction == block.last
+            if raised != instruction.raise_type && instruction == block.instructions.last
               instruction.raise_type = raised
               successors = case raised
                            when :unknown then []

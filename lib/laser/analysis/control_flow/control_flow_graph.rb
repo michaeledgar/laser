@@ -179,10 +179,21 @@ module Laser
           opts = DEFAULT_ANALYSIS_OPTS.merge(opts)
           # kill obvious dead code now.
           perform_dead_code_discovery(true)
+          
           if @root.type == :program
-            simulate([], :mutation => true) if opts[:simulate]
+            Laser.debug_puts('>>> Starting Simulation <<<')
+            begin
+              simulate([], :mutation => true) if opts[:simulate]
+            rescue Simulation::NonDeterminismHappened => err
+              Laser.debug_puts('Note: Simulation was nondeterministic.')
+            rescue Simulation::SimulationNonterminationError => err
+              Laser.debug_puts('Note: Simulation was potentially nonterminating.')
+            end
+            Laser.debug_puts('>>> Finished Simulation <<<')
           else
+            Laser.debug_puts('>>> Starting SSA Transformation <<<')
             static_single_assignment_form unless @in_ssa
+            Laser.debug_puts('>>> Finished SSA Transformation <<<')
             Laser.debug_puts('>>> Starting CP <<<')
             perform_constant_propagation
             Laser.debug_puts('>>> Finished CP <<<')

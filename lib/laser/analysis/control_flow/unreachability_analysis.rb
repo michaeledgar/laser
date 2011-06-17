@@ -17,7 +17,7 @@ module Laser
           # ast nodes.
           # O(V)
           dead_verts.each do |blk|
-            blk.each { |ins| ins.node.reachable = false if ins.node  }
+            blk.instructions.each { |ins| ins.node.reachable = false if ins.node  }
           end
 
           # run through all reachable statements and mark those nodes, and their

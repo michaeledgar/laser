@@ -335,6 +335,7 @@ class Array
   # pure: true
   # raise: false
   # builtin: true
+  # returns: Fixnum=
   def size
   end
   # pure: true

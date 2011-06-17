@@ -109,6 +109,26 @@ end
     method.arity.should == Arity.new(1..1)
   end
   
+  
+  it 'should give up on simulation and turn to constant propagation when unpredictability occurs' do
+    g = cfg %q{
+class Sim7
+  def foo(str)
+    bar(str[0..3]).size
+  end
+  def bar(substr)
+    substr.split(//)
+  end
+end
+SimVal8 = Sim7.new.foo(gets)
+}
+    ClassRegistry['Sim7'].instance_method('bar').return_type_for_types(
+        ClassRegistry['Sim7'].as_type, [Types::STRING]).should == Types::ARRAY
+    ClassRegistry['Sim7'].instance_method('foo').return_type_for_types(
+        ClassRegistry['Sim7'].as_type, [Types::STRING]).should == Types::FIXNUM
+  end
+  
+  # passes, but takes fucking forever
   # it 'should add an error when simulation fails to terminate' do
   #   input = 'x = 1 while true'
   #   tree = annotate_all(input)

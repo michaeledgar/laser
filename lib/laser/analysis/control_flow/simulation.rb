@@ -47,7 +47,10 @@ module Laser
             err.result
           rescue NonDeterminismHappened => err
             Laser.debug_puts "Simulation ended at nondeterminism: #{err.message}"
-            Laser.debug_p err.backtrace
+            Laser.debug_puts '>>> -- Starting Backup CP -- <<<'
+            perform_constant_propagation
+            Laser.debug_puts '>>> -- Finished Backup CP -- <<<'
+            raise err
           rescue SimulationNonterminationError => err
             Laser.debug_puts "Simulation failed to terminate: #{err.message}"
             Laser.debug_p err.backtrace

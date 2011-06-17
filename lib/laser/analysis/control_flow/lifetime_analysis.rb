@@ -40,10 +40,6 @@ module Laser
           @live_kill = Hash.new { |hash, key| hash[key] = Set.new }
           @definition_blocks = Hash.new { |hash, key| hash[key] = Set.new }
 
-          @formals.each do |formal|
-            @definition_blocks[formal] << @enter
-          end
-
           vertices.each do |block|
             exposed.clear
             block.instructions.reverse_each do |ins|
@@ -88,7 +84,8 @@ module Laser
             end
           end
         end
-      end
-    end
-  end
-end
+
+      end  # module LifetimeAnalysis
+    end  # module ControlFlow
+  end  # module SexpAnalysis
+end  # module Laser

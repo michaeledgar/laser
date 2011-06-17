@@ -2452,15 +2452,15 @@ module Laser
         
         # Adds a simple instruction to the current basic block.
         def add_instruction(*args)
-          @current_block << Instruction.new(args, node: @current_node,
-                                                  block: @current_block)
+          @current_block.instructions << Instruction.new(args, node: @current_node,
+                                                               block: @current_block)
         end
 
         # Adds a simple instruction to the current basic block.
         def add_instruction_with_opts(*args, opts)
           opts = {node: @current_node, block: @current_block}.merge(opts)
           i = Instruction.new(args, opts)
-          @current_block << Instruction.new(args, opts)
+          @current_block.instructions << Instruction.new(args, opts)
         end
         
         # Creates the given number of blocks.

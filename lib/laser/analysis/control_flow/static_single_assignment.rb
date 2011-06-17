@@ -7,9 +7,9 @@ module Laser
         # SSA Form
         def static_single_assignment_form
           calculate_live
-          place_phi_nodes
-          ssa_name_formals
           dom_tree = dominator_tree
+          place_phi_nodes(dom_tree)
+          ssa_name_formals
           rename_for_ssa(enter, dom_tree)
           @in_ssa = true
           self
@@ -18,13 +18,13 @@ module Laser
       private
        
         # Places phi nodes, minimally, using DF+
-        def place_phi_nodes
+        def place_phi_nodes(dom_tree)
           @globals.each do |temp|
             set = @definition_blocks[temp] | Set[enter]
-            iterated_dominance_frontier(set).each do |block|
+            iterated_dominance_frontier(set, dom_tree).each do |block|
               if @live[temp].include?(block)
                 n = block.real_predecessors.size
-                block.unshift(Instruction.new([:phi, temp, *([temp] * n)], :block => block))
+                block.instructions.unshift(Instruction.new([:phi, temp, *([temp] * n)], :block => block))
               end
             end
           end
@@ -86,9 +86,9 @@ module Laser
               phi_nodes_with_undefined_ops.each do |phi_node|
                 assign = ssa_uninitialize_fixing_instruction(
                     phi_node[1], phi_node, fixup_block, true)
-                fixup_block << assign
+                fixup_block.instructions << assign
               end
-              fixup_block << Instruction.new([:jump, succ.name], node: nil, block: fixup_block)
+              fixup_block.instructions << Instruction.new([:jump, succ.name], node: nil, block: fixup_block)
             end
             succ.phi_nodes.each do |phi_node|
               replacement = ssa_name_for(phi_node[j + 2])
@@ -100,7 +100,7 @@ module Laser
             end
           end
           # Recurse to dominated blocks
-          dom_tree[block].real_predecessors.each do |pred|
+          dom_tree[block].each_real_predecessors do |pred|
             rename_for_ssa(pred, dom_tree)
           end
           # Update all targets with the current definition
@@ -127,7 +127,7 @@ module Laser
           predecessor.remove_successor block
           predecessor.successors << fixup_block
 
-          jump_insn = predecessor.last
+          jump_insn = predecessor.instructions.last
           if jump_insn && jump_insn.type == :jump
             jump_insn[1] = fixup_block.name
           elsif jump_insn && jump_insn.type == :branch
@@ -148,7 +148,7 @@ module Laser
         # nil. SSA will take over from there.
         def ssa_uninitialize_fix(temp, block, ins)
           assignment = ssa_uninitialize_fixing_instruction(temp, ins, block)
-          block.insert(block.index(ins), assignment)
+          block.instructions.insert(block.instructions.index(ins), assignment)
         end
 
         def ssa_uninitialize_fixing_instruction(temp, reading_ins, block, renamed=false)

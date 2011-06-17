@@ -20,11 +20,10 @@ module RGL
       while changed
         changed = false
         reverse_postorder.each do |b|
-          pred = b.real_predecessors
-          original = pred.find { |node| doms[node] }
+          original = b.each_real_predecessors.find { |node| doms[node] }
           if original
             new_idom = original
-            pred.each do |p|
+            b.each_real_predecessors do |p|
               if doms[p] && p != original
                 new_idom = dominator_set_intersect(p, new_idom, doms) 
               end
@@ -50,16 +49,17 @@ module RGL
     # ControlFlowGraph and has an #enter method.
     #
     # return: Node => Set<Node>
-    def dominance_frontier(start_node = self.enter, dominator_tree)
+    def dominance_frontier(start_node = self.enter, dom_tree)
       vertices.inject(Hash.new { |h, k| h[k] = Set.new }) do |result, b|
-        if b.real_predecessors.size >= 2
-          b.real_predecessors.each do |p|
-            b_dominator = dominator_tree[b].successors.first
+        preds = b.real_predecessors
+        if preds.size >= 2
+          preds.each do |p|
+            b_dominator = dom_tree[b].successors.first
             break unless b_dominator
             runner = p
             while runner && runner != b_dominator
               result[runner] << b
-              runner = dominator_tree[runner].successors.first
+              runner = dom_tree[runner].successors.first
             end
           end
         end
@@ -69,11 +69,11 @@ module RGL
     
     # Computes DF^+: the iterated dominance frontier of a set of blocks.
     # Used in SSA conversion.
-    def iterated_dominance_frontier(set)
+    def iterated_dominance_frontier(set, dom_tree)
       #pp set
       worklist = Set.new(set)
       result = Set.new(set)
-      frontier = dominance_frontier(dominator_tree)
+      frontier = dominance_frontier(dom_tree)
       #pp frontier
 
       until worklist.empty?

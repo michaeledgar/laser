@@ -1,17 +1,18 @@
+require 'enumerator'
 require 'set'
 module Laser
   module SexpAnalysis
     module ControlFlow
       # Can't use the < DelegateClass(Array) syntax because of code reloading.
-      class BasicBlock < BasicObject
+      class BasicBlock
         attr_accessor :name, :instructions, :successors, :predecessors
         attr_accessor :depth_first_order, :post_order_number
         def initialize(name)
           @name = name
           @instructions = []
-          @successors = ::Set.new
-          @predecessors = ::Set.new
-          @edge_flags = ::Hash.new { |hash, key| hash[key] = ::RGL::ControlFlowGraph::EDGE_NORMAL }
+          @successors = Set.new
+          @predecessors = Set.new
+          @edge_flags = Hash.new { |hash, key| hash[key] = RGL::ControlFlowGraph::EDGE_NORMAL }
         end
 
         # Duplicates the block, but *not* the instructions, as that's likely
@@ -36,93 +37,100 @@ module Laser
         end
 
         def get_flags(dest)
-          @edge_flags[dest.name]
+          @edge_flags[dest]
         end
 
         def has_flag?(dest, flag)
-          (get_flags(dest) & flag) > 0
+          (@edge_flags[dest] & flag) > 0
         end
 
         def add_flag(dest, flag)
-          @edge_flags[dest.name] |= flag
+          @edge_flags[dest] |= flag
         end
 
         def set_flag(dest, flag)
-          @edge_flags[dest.name] = flag
+          @edge_flags[dest] = flag
         end
 
         def remove_flag(dest, flag)
-          @edge_flags[dest.name] &= ~flag
+          @edge_flags[dest] &= ~flag
         end
         
         def delete_all_flags(dest)
-          @edge_flags.delete dest.name
+          @edge_flags.delete dest
         end
         
         def is_fake?(dest)
-          has_flag?(dest, ::RGL::ControlFlowGraph::EDGE_FAKE)
+          has_flag?(dest, RGL::ControlFlowGraph::EDGE_FAKE)
         end
         
         def is_executable?(dest)
-          has_flag?(dest, ::RGL::ControlFlowGraph::EDGE_EXECUTABLE)
+          has_flag?(dest, RGL::ControlFlowGraph::EDGE_EXECUTABLE)
         end
 
         def real_successors
-          successors.reject { |dest| has_flag?(dest, ::RGL::ControlFlowGraph::EDGE_FAKE) }
+          successors.reject { |dest| has_flag?(dest, RGL::ControlFlowGraph::EDGE_FAKE) }
+        end
+
+        def each_real_predecessors
+          return ::Enumerator.new(self, :each_real_predecessors) unless block_given?
+          @predecessors.each do |dest|
+            yield dest unless dest.has_flag?(self, RGL::ControlFlowGraph::EDGE_FAKE)
+          end
         end
 
         def real_predecessors
-          predecessors.reject { |dest| dest.has_flag?(self, ::RGL::ControlFlowGraph::EDGE_FAKE) }
+          predecessors.reject { |dest| dest.has_flag?(self, RGL::ControlFlowGraph::EDGE_FAKE) }
         end
         
         def normal_successors
-          successors.reject { |dest| has_flag?(dest, ::RGL::ControlFlowGraph::EDGE_ABNORMAL) }
+          successors.reject { |dest| has_flag?(dest, RGL::ControlFlowGraph::EDGE_ABNORMAL) }
         end
 
         def normal_predecessors
-          predecessors.reject { |dest| dest.has_flag?(self, ::RGL::ControlFlowGraph::EDGE_ABNORMAL) }
+          predecessors.reject { |dest| dest.has_flag?(self, RGL::ControlFlowGraph::EDGE_ABNORMAL) }
         end
 
         def abnormal_successors
-          successors.select { |dest| has_flag?(dest, ::RGL::ControlFlowGraph::EDGE_ABNORMAL) }
+          successors.select { |dest| has_flag?(dest, RGL::ControlFlowGraph::EDGE_ABNORMAL) }
         end
 
         def abnormal_predecessors
-          predecessors.select { |dest| dest.has_flag?(self, ::RGL::ControlFlowGraph::EDGE_ABNORMAL) }
+          predecessors.select { |dest| dest.has_flag?(self, RGL::ControlFlowGraph::EDGE_ABNORMAL) }
         end
 
         def block_taken_successors
-          successors.select { |dest| has_flag?(dest, ::RGL::ControlFlowGraph::EDGE_BLOCK_TAKEN) }
+          successors.select { |dest| has_flag?(dest, RGL::ControlFlowGraph::EDGE_BLOCK_TAKEN) }
         end
 
         def block_taken_predecessors
-          predecessors.select { |dest| dest.has_flag?(self, ::RGL::ControlFlowGraph::EDGE_BLOCK_TAKEN) }
+          predecessors.select { |dest| dest.has_flag?(self, RGL::ControlFlowGraph::EDGE_BLOCK_TAKEN) }
         end
 
         def exception_successors
-          successors.select { |dest| has_flag?(dest, ::RGL::ControlFlowGraph::EDGE_ABNORMAL) &&
-                                    !has_flag?(dest, ::RGL::ControlFlowGraph::EDGE_BLOCK_TAKEN) }
+          successors.select { |dest| has_flag?(dest, RGL::ControlFlowGraph::EDGE_ABNORMAL) &&
+                                    !has_flag?(dest, RGL::ControlFlowGraph::EDGE_BLOCK_TAKEN) }
         end
 
         def exception_predecessors
-          predecessors.select { |dest| dest.has_flag?(self, ::RGL::ControlFlowGraph::EDGE_ABNORMAL) &&
-                                      !dest.has_flag?(self, ::RGL::ControlFlowGraph::EDGE_BLOCK_TAKEN) }
+          predecessors.select { |dest| dest.has_flag?(self, RGL::ControlFlowGraph::EDGE_ABNORMAL) &&
+                                      !dest.has_flag?(self, RGL::ControlFlowGraph::EDGE_BLOCK_TAKEN) }
         end
 
         def executed_successors
-          successors.select { |dest| has_flag?(dest, ::RGL::ControlFlowGraph::EDGE_EXECUTABLE) }
+          successors.select { |dest| has_flag?(dest, RGL::ControlFlowGraph::EDGE_EXECUTABLE) }
         end
 
         def executed_predecessors
-          predecessors.select { |dest| dest.has_flag?(self, ::RGL::ControlFlowGraph::EDGE_EXECUTABLE) }
+          predecessors.select { |dest| dest.has_flag?(self, RGL::ControlFlowGraph::EDGE_EXECUTABLE) }
         end
 
         def unexecuted_successors
-          successors.reject { |dest| has_flag?(dest, ::RGL::ControlFlowGraph::EDGE_EXECUTABLE) }
+          successors.reject { |dest| has_flag?(dest, RGL::ControlFlowGraph::EDGE_EXECUTABLE) }
         end
 
         def unexecuted_predecessors
-          predecessors.reject { |dest| dest.has_flag?(self, ::RGL::ControlFlowGraph::EDGE_EXECUTABLE) }
+          predecessors.reject { |dest| dest.has_flag?(self, RGL::ControlFlowGraph::EDGE_EXECUTABLE) }
         end
 
         # Removes all edges from this block.
@@ -132,24 +140,12 @@ module Laser
           self
         end
 
-        def eql?(other)
-          self == other
-        end
-
-        def ==(other)
-          equal?(other) || name == other.name
-        end
-        
-        def !=(other)
-          !(self == other)
-        end
-
         def hash
-          name.hash
+          @instructions.object_id
         end
 
         def variables
-          ::Set.new(instructions.map(&:explicit_targets).inject(:|))
+          Set.new(instructions.map(&:explicit_targets).inject(:|))
         end
         
         # Gets all SSA Phi nodes that are in the block.
@@ -196,7 +192,7 @@ module Laser
         def to_s
           " | #{name} | \\n" + instructions.map do |ins|
             opcode = ins.first.to_s
-            if ins.method_call? && ::Hash === ins.last
+            if ins.method_call? && Hash === ins.last
             then range = 1..-2
             else range = 1..-1
             end
@@ -211,11 +207,6 @@ module Laser
             end
             [opcode, *args].join(', ')
           end.join('\\n')
-        end
-
-        # Proxies all other methods to the instruction list.
-        def method_missing(meth, *args, &blk)
-          @instructions.send(meth, *args, &blk)
         end
       end
       
