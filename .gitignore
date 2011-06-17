@@ -29,3 +29,6 @@ Guardfile
 ## DEBUGGING
 graph.png
 graph.dot
+
+ext/*/*.bundle
+ext/*/Makefile
