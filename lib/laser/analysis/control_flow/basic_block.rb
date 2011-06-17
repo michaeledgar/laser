@@ -161,22 +161,20 @@ module Laser
           successors.delete u
         end
 
-        def remove_predecessor(u, fixup=true)
-          if fixup
-            last_insn = u.instructions.last
-            if last_insn.type == :branch
-              which_to_keep = last_insn[3] == self.name ? last_insn[2] : last_insn[3]
-              last_insn[1].uses.delete last_insn
-              last_insn.body.replace([:jump, which_to_keep])
-            end
-            # must update phi nodes.
-            unless phi_nodes.empty?
-              which_phi_arg = predecessors.to_a.index(u) + 2
-              phi_nodes.each do |node|
-                node.delete_at(which_phi_arg)
-                if node.size == 3
-                  node.replace([:assign, node[1], node[2]])
-                end
+        def remove_predecessor(u)
+          last_insn = u.instructions.last
+          if last_insn.type == :branch
+            which_to_keep = last_insn[3] == self.name ? last_insn[2] : last_insn[3]
+            last_insn[1].uses.delete last_insn
+            last_insn.body.replace([:jump, which_to_keep])
+          end
+          # must update phi nodes.
+          unless phi_nodes.empty?
+            which_phi_arg = predecessors.to_a.index(u) + 2
+            phi_nodes.each do |node|
+              node.delete_at(which_phi_arg)
+              if node.size == 3
+                node.replace([:assign, node[1], node[2]])
               end
             end
           end
