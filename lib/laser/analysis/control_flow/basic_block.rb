@@ -73,7 +73,7 @@ module Laser
         end
 
         def each_real_predecessors
-          return ::Enumerator.new(self, :each_real_predecessors) unless block_given?
+          return enum_for(:each_real_predecessors) unless block_given?
           @predecessors.each do |dest|
             yield dest unless dest.has_flag?(self, RGL::ControlFlowGraph::EDGE_FAKE)
           end
@@ -138,10 +138,6 @@ module Laser
           @successors.clear
           @predecessors.clear
           self
-        end
-
-        def hash
-          @instructions.object_id
         end
 
         def variables
