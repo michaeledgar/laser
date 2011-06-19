@@ -25,7 +25,7 @@ module RGL
             new_idom = original
             b.each_real_predecessors do |p|
               if doms[p] && p != original
-                new_idom = dominator_set_intersect(p, new_idom, doms) 
+                new_idom = dominator_set_intersect(p, new_idom, doms)
               end
             end
             if doms[b] != new_idom
@@ -38,8 +38,12 @@ module RGL
 
       # doms is IDOM. All outward edges connect an IDom to its dominee.
       d_tree = self.class.new
-      (vertices - [enter, exit]).each { |b| d_tree.add_vertex(b.dup.clear_edges) }
-      doms.each { |src, dest| d_tree.add_edge(src, dest) unless src == enter && dest == enter }
+      (vertices - [enter, exit]).each do |b|
+        copy = Laser::SexpAnalysis::ControlFlow::BasicBlock.new(b.name)
+        copy.instructions = b.instructions
+        d_tree.add_vertex(copy)
+      end
+      doms.each { |src, dest| d_tree.add_edge(d_tree[src], d_tree[dest]) unless src == enter && dest == enter }
       d_tree
     end
 
@@ -56,10 +60,10 @@ module RGL
           preds.each do |p|
             b_dominator = dom_tree[b].successors.first
             break unless b_dominator
-            runner = p
+            runner = dom_tree[p]
             while runner && runner != b_dominator
               result[runner] << b
-              runner = dom_tree[runner].successors.first
+              runner = runner.successors.first
             end
           end
         end
@@ -70,18 +74,17 @@ module RGL
     # Computes DF^+: the iterated dominance frontier of a set of blocks.
     # Used in SSA conversion.
     def iterated_dominance_frontier(set, dom_tree)
-      #pp set
       worklist = Set.new(set)
       result = Set.new(set)
       frontier = dominance_frontier(dom_tree)
-      #pp frontier
 
       until worklist.empty?
         block = worklist.pop
-        frontier[block].each do |candidate|
-          unless result.include?(candidate)
-            result << candidate
-            worklist << candidate
+        frontier[dom_tree[block]].each do |candidate|
+          candidate_in_full_graph = self[candidate]
+          unless result.include?(candidate_in_full_graph)
+            result << candidate_in_full_graph
+            worklist << candidate_in_full_graph
           end
         end
       end

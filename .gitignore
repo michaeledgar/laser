@@ -32,3 +32,4 @@ graph.dot
 
 ext/*/*.bundle
 ext/*/Makefile
+ext/*/*.o

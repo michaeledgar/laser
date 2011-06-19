@@ -64,8 +64,7 @@ module RGL
     
     # Adds the edge to the graph. O(1) amortized.
     def add_edge(u, v, flags = EDGE_NORMAL)
-      self[u].successors << v
-      self[v].predecessors << u
+      u.join(v)
       u.set_flag(v, flags)
     end
 
@@ -95,25 +94,27 @@ module RGL
 
     # Removes the vertex from the graph. O(E) amortized.
     def remove_vertex(u)
+      u.clear_edges
       looked_up = self[u]
-      looked_up.successors.each do |succ|
-        self[succ].remove_predecessor looked_up
-        self[looked_up].delete_all_flags succ
-      end
-      looked_up.predecessors.each do |pred|
-        self[pred].remove_successor looked_up
-        self[pred].delete_all_flags looked_up
-      end
+      # looked_up.successors.each do |succ|
+      #   self[succ].remove_predecessor looked_up
+      #   self[looked_up].delete_all_flags succ
+      # end
+      # looked_up.predecessors.each do |pred|
+      #   self[pred].remove_successor looked_up
+      #   self[pred].delete_all_flags looked_up
+      # end
       @vertex_lookup.delete looked_up.name
       vertices.delete looked_up
     end
     
     # Removes the edge from the graph. O(1) amortized.
     def remove_edge(u, v)
+      
       looked_up_u, looked_up_v = self[u], self[v]
-      looked_up_u.remove_successor looked_up_v
-      looked_up_v.remove_predecessor looked_up_u
-      u.delete_all_flags(looked_up_v)
+      looked_up_u.disconnect(looked_up_v)
+      # looked_up_u.remove_successor looked_up_v
+      # looked_up_v.remove_predecessor looked_up_u
     end
     
     # Counts the number of vertices. O(1).

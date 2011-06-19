@@ -1,3 +1,4 @@
+require 'laser/BasicBlock'
 require 'laser/analysis/control_flow/basic_block'
 require 'laser/analysis/control_flow/cfg_instruction'
 require 'laser/analysis/control_flow/unused_variables'

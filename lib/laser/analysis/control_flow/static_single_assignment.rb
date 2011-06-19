@@ -101,7 +101,7 @@ module Laser
           end
           # Recurse to dominated blocks
           dom_tree[block].each_real_predecessors do |pred|
-            rename_for_ssa(pred, dom_tree)
+            rename_for_ssa(self[pred], dom_tree)
           end
           # Update all targets with the current definition
           block.natural_instructions.reverse_each do |ins|

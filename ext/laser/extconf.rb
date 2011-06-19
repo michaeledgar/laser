@@ -1,3 +1,4 @@
 require 'mkmf'
 
-create_makefile('laser/basic_block')
+have_library("stdc++")
+create_makefile('laser/BasicBlock')

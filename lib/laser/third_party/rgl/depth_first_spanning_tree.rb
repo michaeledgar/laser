@@ -19,7 +19,6 @@ module RGL
       tree = DirectedAdjacencyGraph.new
       visited = Set.new
       build_dfst(tree, start_node, visited)
-      compute_dfo(tree, start_node)
       tree
     end
     
@@ -33,20 +32,6 @@ module RGL
           build_dfst(tree, other, visited)
         end
       end
-    end
-    
-    # Good idea: depth-first ordering. found some slides about it:
-    # http://pages.cs.wisc.edu/~fischer/cs701.f08/lectures/Lecture18.4up.pdf
-    def compute_dfo(tree, start_node)
-      i = tree.vertices.size
-      dfo = proc do |node|
-        tree.each_adjacent(node) do |successor|
-          dfo.call(successor)
-        end
-        node.depth_first_order = i
-        i -= 1
-      end
-      dfo.call(start_node)
     end
   end
 end

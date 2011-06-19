@@ -236,6 +236,7 @@ end
 require 'basic_object'
 require 'nil_false_true'
 require 'exceptions'
+require 'errno'
 require 'comparable'
 require 'enumerable'
 require 'array'

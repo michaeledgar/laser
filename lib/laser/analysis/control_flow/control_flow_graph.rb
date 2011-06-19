@@ -179,7 +179,9 @@ module Laser
           opts = DEFAULT_ANALYSIS_OPTS.merge(opts)
           # kill obvious dead code now.
           perform_dead_code_discovery(true)
-          
+          Laser.debug_puts('>>> Starting SSA Transformation <<<')
+          static_single_assignment_form unless @in_ssa
+          Laser.debug_puts('>>> Finished SSA Transformation <<<')
           if @root.type == :program
             Laser.debug_puts('>>> Starting Simulation <<<')
             begin
@@ -191,9 +193,7 @@ module Laser
             end
             Laser.debug_puts('>>> Finished Simulation <<<')
           else
-            Laser.debug_puts('>>> Starting SSA Transformation <<<')
-            static_single_assignment_form unless @in_ssa
-            Laser.debug_puts('>>> Finished SSA Transformation <<<')
+            
             Laser.debug_puts('>>> Starting CP <<<')
             perform_constant_propagation
             Laser.debug_puts('>>> Finished CP <<<')
