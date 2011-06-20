@@ -193,7 +193,6 @@ module Laser
             end
             Laser.debug_puts('>>> Finished Simulation <<<')
           else
-            
             Laser.debug_puts('>>> Starting CP <<<')
             perform_constant_propagation
             Laser.debug_puts('>>> Finished CP <<<')

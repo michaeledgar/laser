@@ -21,6 +21,9 @@ module Laser
         end
         @parent, @constants, @locals = parent, constants, locals
         @locals['self'] = Bindings::LocalVariableBinding.new('self', self_ptr)
+        if self_ptr && Bindings::Base === self_ptr
+          self_ptr.self_owner = self
+        end
         @lexical_target = self_ptr
         @method = nil
       end

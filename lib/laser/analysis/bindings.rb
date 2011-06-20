@@ -5,13 +5,14 @@ module Laser
       # class, value (if constant!), and a variety of other details.
       class Base
         include Comparable
-        attr_accessor :name, :annotated_type, :inferred_type, :ast_node, :uses, :definition
+        attr_accessor :name, :annotated_type, :inferred_type, :ast_node, :uses
+        attr_accessor :definition, :self_owner
         attr_reader :value
 
         def initialize(name, value)
           @name = name
           @uses = Set.new
-          @definition = nil
+          @definition = @self_owner = nil
           @value = :uninitialized
           bind!(value)
         end

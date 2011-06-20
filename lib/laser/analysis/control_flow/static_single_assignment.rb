@@ -174,6 +174,9 @@ module Laser
             @final_exception = result
           elsif temp == @block_register
             @block_register = result
+          elsif (scope_owner = temp.self_owner)
+            result.self_owner = scope_owner
+            scope_owner.self_ptr = result
           end
           result
         end

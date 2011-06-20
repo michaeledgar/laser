@@ -113,18 +113,23 @@ extern "C" {
 		return Qnil;
 	}
 	
-	static VALUE bb_eql(VALUE self, VALUE other) {
+	static VALUE bb_equal(VALUE self, VALUE other) {
 		BasicBlock *block, *other_block;
 		Data_Get_Struct(self, BasicBlock, block);
 		Data_Get_Struct(other, BasicBlock, other_block);
 		return (block == other_block) ? Qtrue : Qfalse;
 	}
-	
-	static VALUE bb_neq(VALUE self, VALUE other) {
+
+	static VALUE bb_eql(VALUE self, VALUE other) {
 		BasicBlock *block, *other_block;
 		Data_Get_Struct(self, BasicBlock, block);
 		Data_Get_Struct(other, BasicBlock, other_block);
-		return (block != other_block) ? Qtrue : Qfalse;
+		return (block == other_block ||
+		        (rb_str_cmp(block->name(), other_block->name()) == 0)) ? Qtrue : Qfalse;
+	}
+	
+	static VALUE bb_neq(VALUE self, VALUE other) {
+		return (bb_eql(self, other)) ? Qfalse : Qtrue;
 	}
 	
 	static VALUE bb_hash(VALUE self) {
@@ -340,7 +345,7 @@ extern "C" {
 			 it < list.end();
 			 ++it) {
 			if (((*it)->flags & flag) == expectation) {
-				rb_ary_push(result, Data_Wrap_Struct(rb_cBasicBlock, bb_mark, bb_free, (*it)->from));
+				rb_ary_push(result, Data_Wrap_Struct(rb_cBasicBlock, bb_mark, bb_free, (*it)->to));
 			}
 		}
 		return result;
@@ -406,7 +411,7 @@ extern "C" {
 		rb_define_method(rb_cBasicBlock, "===", RUBY_METHOD_FUNC(bb_eql), 1);
 		rb_define_method(rb_cBasicBlock, "==", RUBY_METHOD_FUNC(bb_eql), 1);
 		rb_define_method(rb_cBasicBlock, "!=", RUBY_METHOD_FUNC(bb_neq), 1);
-		rb_define_method(rb_cBasicBlock, "equal?", RUBY_METHOD_FUNC(bb_eql), 1);
+		rb_define_method(rb_cBasicBlock, "equal?", RUBY_METHOD_FUNC(bb_equal), 1);
 		rb_define_method(rb_cBasicBlock, "hash", RUBY_METHOD_FUNC(bb_hash), 0);
 		rb_define_method(rb_cBasicBlock, "clear_edges", RUBY_METHOD_FUNC(bb_clear_edges), 0);
 		rb_define_method(rb_cBasicBlock, "name=", RUBY_METHOD_FUNC(bb_initialize), 1);
