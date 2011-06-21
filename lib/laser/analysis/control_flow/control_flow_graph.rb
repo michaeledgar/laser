@@ -68,7 +68,7 @@ module Laser
           # we'll be duplicating temporaries, and since we need to know how
           # our source data about temps (defs, uses, constants...) corresponds
           # the duplicated temps, we'll need a hash to look them up.
-          temp_lookup = Hash.new
+          temp_lookup = { Bootstrap::VISIBILITY_STACK => Bootstrap::VISIBILITY_STACK }
           block_lookup = { source.enter => @enter, source.exit => @exit }
           insn_lookup = Hash.new
           # copy all vars defined in the body

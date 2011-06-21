@@ -67,9 +67,11 @@ module Laser
             end
             ins.replace_operands(new_operands) unless ins.operands.empty?
             ins.explicit_targets.each do |temp|
-              @name_stack[temp].push(new_ssa_name(temp))
-              ssa_name_for(temp).definition = ins
-              @all_cached_variables << ssa_name_for(temp)
+              if temp != Bootstrap::VISIBILITY_STACK
+                @name_stack[temp].push(new_ssa_name(temp))
+                ssa_name_for(temp).definition = ins
+                @all_cached_variables << ssa_name_for(temp)
+              end
             end
           end
           # Update all phi nodes this block leads to with the name of
@@ -106,7 +108,9 @@ module Laser
           # Update all targets with the current definition
           block.natural_instructions.reverse_each do |ins|
             ins.explicit_targets.each do |target|
-              ins.replace_target(target, @name_stack[target].pop)
+              if target != Bootstrap::VISIBILITY_STACK
+                ins.replace_target(target, @name_stack[target].pop)
+              end
             end
           end
 
