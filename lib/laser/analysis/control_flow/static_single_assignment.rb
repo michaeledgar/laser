@@ -80,24 +80,13 @@ module Laser
           #   on the fact that Set uses Hash, and Hashes in 1.9 are ordered
           block.real_successors.each do |succ|
             j = succ.real_predecessors.to_a.index(block)
-            phi_nodes_with_undefined_ops = succ.phi_nodes.select do |phi_node|
-              ssa_name_for(phi_node[j+2]).nil?
-            end
-            if phi_nodes_with_undefined_ops.any?
-              fixup_block = ssa_phinode_fixup_block(succ, j)
-              phi_nodes_with_undefined_ops.each do |phi_node|
-                assign = ssa_uninitialize_fixing_instruction(
-                    phi_node[1], phi_node, fixup_block, true)
-                fixup_block.instructions << assign
-              end
-              fixup_block.instructions << Instruction.new([:jump, succ.name], node: nil, block: fixup_block)
-            end
+            tweaked_phi_nodes = ssa_uninitialized_phinode_fix(block, succ, j)
             succ.phi_nodes.each do |phi_node|
               replacement = ssa_name_for(phi_node[j + 2])
               phi_node[j + 2] = replacement
               replacement.uses << phi_node
             end
-            phi_nodes_with_undefined_ops.each do |phi_node|
+            tweaked_phi_nodes.each do |phi_node|
               @name_stack[phi_node[1]].pop
             end
           end
@@ -119,18 +108,33 @@ module Laser
           end
         end
 
-        def ssa_phinode_fixup_block(block, index)
-          fixup_block = BasicBlock.new("SSA-FIX-#{block.name}-#{index}")
+        def ssa_uninitialized_phinode_fix(block, succ, j)
+          phi_nodes_with_undefined_ops = succ.phi_nodes.select do |phi_node|
+            ssa_name_for(phi_node[j+2]).nil?
+          end
+          if phi_nodes_with_undefined_ops.any?
+            fixup_block = ssa_phinode_fixup_block(block, succ, j)
+            phi_nodes_with_undefined_ops.each do |phi_node|
+              assign = ssa_uninitialize_fixing_instruction(
+                  phi_node[1], phi_node, fixup_block, true)
+              fixup_block.instructions << assign
+            end
+            fixup_block.instructions << Instruction.new([:jump, succ.name], node: nil, block: fixup_block)
+          end
+          phi_nodes_with_undefined_ops
+        end
+
+        def ssa_phinode_fixup_block(predecessor, block, j)
+          fixup_block = BasicBlock.new("SSA-FIX-#{block.name}-#{j}")
           add_vertex(fixup_block)
 
-          predecessor = block.real_predecessors.to_a[index]
           predecessor.insert_block_on_edge(block, fixup_block)
 
-          jump_insn = predecessor.instructions.last
-          if jump_insn && jump_insn.type == :jump
-            jump_insn[1] = fixup_block.name
-          elsif jump_insn && jump_insn.type == :branch
-            jump_insn[jump_insn.index(block.name)] = fixup_block.name
+          exit_insn = predecessor.instructions.last
+          if exit_insn && exit_insn.type == :jump
+            exit_insn[1] = fixup_block.name
+          elsif exit_insn && exit_insn.type == :branch
+            exit_insn[exit_insn.index(block.name)] = fixup_block.name
           end
 
           fixup_block
