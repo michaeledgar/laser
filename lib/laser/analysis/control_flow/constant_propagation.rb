@@ -187,7 +187,6 @@ module Laser
         end
 
         def constant_propagation_consider_edge(block, succ, blocklist)
-          p [block.name, succ.name]
           if !is_executable?(block, succ) && !is_fake?(block, succ)
             add_flag(block, succ, ControlFlowGraph::EDGE_EXECUTABLE)
             blocklist << succ

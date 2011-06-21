@@ -137,7 +137,7 @@ module Laser
 
         # Gets all bindings that are operands in this instruction
         def operands
-          self[operand_range].select { |x| Bindings::Base === x}
+          self[operand_range].select { |x| Bindings::Base === x && x != Bootstrap::VISIBILITY_STACK }
         end
         
         # Replaces the operands with a new list. Used by SSA renaming.
@@ -145,7 +145,7 @@ module Laser
           # splice in new operands: replace bindings with bindings.
           index = operand_range.begin
           while new_operands.any? && index < @body.size
-            if Bindings::Base === self[index]
+            if Bindings::Base === self[index] && self[index] != Bootstrap::VISIBILITY_STACK 
               self[index] = new_operands.shift
             end
             index += 1
