@@ -120,12 +120,7 @@ module Laser
           add_vertex(fixup_block)
 
           predecessor = block.real_predecessors.to_a[index]
-
-          fixup_block.predecessors = Set[ predecessor ]
-          fixup_block.successors = Set[ block ]
-
-          predecessor.remove_successor block
-          predecessor.successors << fixup_block
+          predecessor.insert_block_on_edge(block, fixup_block)
 
           jump_insn = predecessor.instructions.last
           if jump_insn && jump_insn.type == :jump
@@ -133,10 +128,6 @@ module Laser
           elsif jump_insn && jump_insn.type == :branch
             jump_insn[jump_insn.index(block.name)] = fixup_block.name
           end
-
-          new_predecessors = block.predecessors.to_a
-          new_predecessors[index] = fixup_block
-          block.predecessors = Set.new(new_predecessors)
 
           fixup_block
         end

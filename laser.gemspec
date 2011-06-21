@@ -9,10 +9,11 @@ Gem::Specification.new do |s|
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Michael Edgar"]
-  s.date = %q{2011-06-16}
+  s.date = %q{2011-06-21}
   s.description = %q{Laser is an advanced static analysis tool for Ruby.}
   s.email = %q{michael.j.edgar@dartmouth.edu}
   s.executables = ["laser"]
+  s.extensions = ["ext/laser/extconf.rb"]
   s.extra_rdoc_files = [
     "LICENSE",
     "README.md"
@@ -30,6 +31,10 @@ Gem::Specification.new do |s|
     "design_docs/goals.md",
     "design_docs/object_regex.md",
     "design_docs/type_annotations.md",
+    "ext/laser/BasicBlock.cpp",
+    "ext/laser/BasicBlock.h",
+    "ext/laser/BasicBlock.o",
+    "ext/laser/extconf.rb",
     "features/laser.feature",
     "features/step_definitions/laser_steps.rb",
     "features/support/env.rb",
@@ -115,6 +120,7 @@ Gem::Specification.new do |s|
     "lib/laser/standard_library/comparable.rb",
     "lib/laser/standard_library/complex.rb",
     "lib/laser/standard_library/enumerable.rb",
+    "lib/laser/standard_library/errno.rb",
     "lib/laser/standard_library/exceptions.rb",
     "lib/laser/standard_library/fixnum.rb",
     "lib/laser/standard_library/float.rb",
@@ -413,7 +419,6 @@ Gem::Specification.new do |s|
     s.specification_version = 3
 
     if Gem::Version.new(Gem::VERSION) >= Gem::Version.new('1.2.0') then
-      s.add_runtime_dependency(%q<laser>, [">= 0"])
       s.add_runtime_dependency(%q<treetop>, ["~> 1.4"])
       s.add_runtime_dependency(%q<ripper-plus>, ["~> 1.2"])
       s.add_runtime_dependency(%q<axiom_of_choice>, [">= 0"])
@@ -422,6 +427,7 @@ Gem::Specification.new do |s|
       s.add_development_dependency(%q<rake>, ["~> 0.9.0"])
       s.add_development_dependency(%q<rspec>, ["~> 2.3.0"])
       s.add_development_dependency(%q<yard>, [">= 0"])
+      s.add_development_dependency(%q<fuubar>, [">= 0"])
       s.add_development_dependency(%q<cucumber>, [">= 0.10.0"])
       s.add_development_dependency(%q<metric_fu>, [">= 2.0.1"])
       s.add_development_dependency(%q<simplecov>, [">= 0.3.9"])
@@ -429,7 +435,6 @@ Gem::Specification.new do |s|
       s.add_development_dependency(%q<guard>, [">= 0"])
       s.add_development_dependency(%q<guard-rspec>, [">= 0"])
     else
-      s.add_dependency(%q<laser>, [">= 0"])
       s.add_dependency(%q<treetop>, ["~> 1.4"])
       s.add_dependency(%q<ripper-plus>, ["~> 1.2"])
       s.add_dependency(%q<axiom_of_choice>, [">= 0"])
@@ -438,6 +443,7 @@ Gem::Specification.new do |s|
       s.add_dependency(%q<rake>, ["~> 0.9.0"])
       s.add_dependency(%q<rspec>, ["~> 2.3.0"])
       s.add_dependency(%q<yard>, [">= 0"])
+      s.add_dependency(%q<fuubar>, [">= 0"])
       s.add_dependency(%q<cucumber>, [">= 0.10.0"])
       s.add_dependency(%q<metric_fu>, [">= 2.0.1"])
       s.add_dependency(%q<simplecov>, [">= 0.3.9"])
@@ -446,7 +452,6 @@ Gem::Specification.new do |s|
       s.add_dependency(%q<guard-rspec>, [">= 0"])
     end
   else
-    s.add_dependency(%q<laser>, [">= 0"])
     s.add_dependency(%q<treetop>, ["~> 1.4"])
     s.add_dependency(%q<ripper-plus>, ["~> 1.2"])
     s.add_dependency(%q<axiom_of_choice>, [">= 0"])
@@ -455,6 +460,7 @@ Gem::Specification.new do |s|
     s.add_dependency(%q<rake>, ["~> 0.9.0"])
     s.add_dependency(%q<rspec>, ["~> 2.3.0"])
     s.add_dependency(%q<yard>, [">= 0"])
+    s.add_dependency(%q<fuubar>, [">= 0"])
     s.add_dependency(%q<cucumber>, [">= 0.10.0"])
     s.add_dependency(%q<metric_fu>, [">= 2.0.1"])
     s.add_dependency(%q<simplecov>, [">= 0.3.9"])

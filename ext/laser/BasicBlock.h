@@ -18,9 +18,11 @@ namespace Laser {
 		BasicBlock() : _name(NULL), _instructions(rb_ary_new()), _post_order_number(NULL) {}
 		BasicBlock(BasicBlock& other);
 		// Joins the block as a source to a destination
-		void join(BasicBlock *other);
+		void join(BasicBlock* other);
 		// Disconnects the block as the source in an edge
-		void disconnect(BasicBlock *other);
+		void disconnect(BasicBlock* other);
+		// Adds a block on the given edge
+		void insert_block_on_edge(BasicBlock* successor, BasicBlock* inserted);
 		void clear_edges();
 
 		inline VALUE name() { return _name; }

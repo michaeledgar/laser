@@ -43,6 +43,28 @@ void BasicBlock::disconnect(BasicBlock *other) {
 	throw NoSuchEdgeException();
 }
 
+void BasicBlock::insert_block_on_edge(BasicBlock* successor, BasicBlock* inserted) {
+	using namespace std;
+	vector<Edge*>::iterator it, it2;
+	for (it = _outgoing.begin(); it < _outgoing.end(); ++it) {
+		if ((*it)->to == successor) {
+			for (it2 = successor->_incoming.begin(); it2 < successor->_incoming.end(); ++it2) {
+				if ((*it2)->from == this) {
+					Edge* old_edge = *it;
+					*it = new Edge(this, inserted);
+					*it2 = new Edge(inserted, successor);
+					inserted->predecessors().push_back(*it);
+					inserted->successors().push_back(*it2);
+					delete old_edge;
+					return;
+				}
+			}
+			break;
+		}
+	}
+	throw NoSuchEdgeException();
+}
+
 void BasicBlock::clear_edges() {
 	while (!_outgoing.empty()) {
 		BasicBlock::Edge* edge = _outgoing.back();
@@ -259,6 +281,19 @@ extern "C" {
 		return Qnil;
 	}
 
+	static VALUE bb_insert_block_on_edge(VALUE self, VALUE succ, VALUE inserted) {
+		BasicBlock *block, *succ_block, *inserted_block;
+		Data_Get_Struct(self, BasicBlock, block);
+		Data_Get_Struct(succ, BasicBlock, succ_block);
+		Data_Get_Struct(inserted, BasicBlock, inserted_block);
+		try	{
+			block->insert_block_on_edge(succ_block, inserted_block);
+		} catch (BasicBlock::NoSuchEdgeException e) {
+			rb_raise(rb_eArgError, NO_EDGE_MESSAGE);
+		}
+		return Qnil;
+	}
+
 	static VALUE bb_successors(VALUE self) {
 		BasicBlock *block;
 		Data_Get_Struct(self, BasicBlock, block);
@@ -429,6 +464,7 @@ extern "C" {
 
 		rb_define_method(rb_cBasicBlock, "join", RUBY_METHOD_FUNC(bb_join), 1);
 		rb_define_method(rb_cBasicBlock, "disconnect", RUBY_METHOD_FUNC(bb_disconnect), 1);
+		rb_define_method(rb_cBasicBlock, "insert_block_on_edge", RUBY_METHOD_FUNC(bb_insert_block_on_edge), 2);
 
 		rb_define_method(rb_cBasicBlock, "successors", RUBY_METHOD_FUNC(bb_successors), 0);
 		rb_define_method(rb_cBasicBlock, "predecessors", RUBY_METHOD_FUNC(bb_predecessors), 0);
