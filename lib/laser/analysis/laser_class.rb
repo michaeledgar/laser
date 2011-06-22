@@ -86,13 +86,17 @@ module Laser
     end
 
     class LaserProc < LaserObject
-      attr_accessor :ast_node, :arguments, :cfg, :start_block, :exit_block, :lexical_self
-      def initialize(arguments, ast_node, cfg = nil, start_block = nil)
+      attr_accessor :ast_node, :arguments, :cfg, :exit_block, :lexical_self
+      def initialize(arguments, ast_node, cfg = nil, callsite_block = nil)
         @ast_node = ast_node
         @arguments = arguments
         @cfg = cfg
-        @start_block = start_block
+        @callsite_block = callsite_block
         @lexical_self = @exit_block = nil
+      end
+
+      def start_block
+        @callsite_block && @callsite_block.block_taken_successors.first
       end
 
       def inspect
@@ -128,10 +132,16 @@ module Laser
       def update_cfg_edges(opts)
         opts[:invocation_sites][self].each do |callsite|
           opts[:invocation_counts][self][callsite] += 1
-          if !callsite.has_flag?(start_block, RGL::ControlFlowGraph::EDGE_EXECUTABLE)
-            callsite.add_flag(start_block, RGL::ControlFlowGraph::EDGE_EXECUTABLE)
+          callsite_succ = callsite.successors.find do |b|
+            b.name == start_block.name || b.name.include?("SSA-FIX-#{start_block.name}")
+          end
+          if !callsite.has_flag?(callsite_succ, RGL::ControlFlowGraph::EDGE_EXECUTABLE)
+            callsite.add_flag(callsite_succ, RGL::ControlFlowGraph::EDGE_EXECUTABLE)
           else
-            exit_block.add_flag(start_block, RGL::ControlFlowGraph::EDGE_EXECUTABLE)
+            exit_succ = exit_block.successors.find do |b|
+              b.name == start_block.name || b.name.include?("SSA-FIX-#{start_block.name}")
+            end
+            exit_block.add_flag(exit_succ, RGL::ControlFlowGraph::EDGE_EXECUTABLE)
           end
         end
       end

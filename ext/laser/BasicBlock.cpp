@@ -53,6 +53,9 @@ void BasicBlock::insert_block_on_edge(BasicBlock* successor, BasicBlock* inserte
 					Edge* old_edge = *it;
 					*it = new Edge(this, inserted);
 					*it2 = new Edge(inserted, successor);
+					// we should place the flags of the replaced edge on just the
+					// first new edge
+					(*it)->flags = old_edge->flags;
 					inserted->predecessors().push_back(*it);
 					inserted->successors().push_back(*it2);
 					delete old_edge;

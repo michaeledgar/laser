@@ -9,6 +9,9 @@ module Laser
   def self.debug_p(*args)
     p *args if debug?
   end
+  def self.debug_pp(*args)
+    pp *args if debug?
+  end
   def self.debug_dotty(graph)
     graph.dotty
   end

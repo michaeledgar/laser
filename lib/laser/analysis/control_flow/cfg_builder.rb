@@ -839,7 +839,7 @@ module Laser
         # caller's operations which have the possibility of invoking the block.
         def call_with_explicit_block(block_arg_bindings, block_sexp)
           body_block = create_block
-          body_value, body_proc = create_block_temporary block_arg_bindings, block_sexp, body_block
+          body_value, body_proc = create_block_temporary block_arg_bindings, block_sexp, @current_block
           call_instruct(body_value, :lexical_self=, self_instruct, raise: false, value: false)
           @graph.add_edge(@current_block, body_block,
               ControlFlowGraph::EDGE_BLOCK_TAKEN | ControlFlowGraph::EDGE_ABNORMAL)
@@ -2433,11 +2433,11 @@ module Laser
         end
         
         # Creates a block temporary variable with an unused name.
-        def create_block_temporary(args, body, cfg_built_start=nil)
+        def create_block_temporary(args, body, callsite_block=nil)
           @temporary_counter += 1
           name = current_temporary('B-')
-          if cfg_built_start
-            new_proc = LaserProc.new(args, body, @graph, cfg_built_start)
+          if callsite_block
+            new_proc = LaserProc.new(args, body, @graph, callsite_block)
           else
             new_proc = LaserProc.new(args, body)
           end

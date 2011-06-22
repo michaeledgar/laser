@@ -111,9 +111,10 @@ module Laser
               if (call_block = insn[-1][:block])
                 block_proc = call_block.value
                 if opts[:invocation_counts][block_proc][opts[:current_block]] > 0
-                  opts[:current_block].add_flag(block_proc.start_block,
+                  executed_succ = opts[:current_block].successors.find { |b| b.name == block_proc.start_block.name }
+                  opts[:current_block].add_flag(executed_succ,
                       ControlFlowGraph::EDGE_EXECUTABLE)
-                  [block_proc.exit_block, natural_exit]
+                  [self[block_proc.exit_block], natural_exit]
                 else
                   [opts[:current_block], natural_exit]
                 end
@@ -122,6 +123,7 @@ module Laser
               end
             rescue ExitedAbnormally => err
               Laser.debug_puts "Exception raised by call, taking abnormal edge. Error: #{err.message}"
+              Laser.debug_pp(err.backtrace)
               [opts[:current_block], insn.block.exception_successors.first]
             end
           when :return
@@ -132,7 +134,7 @@ module Laser
         end
 
         def simulate_deterministic_phi_node(node, opts)
-          Laser.debug_puts "Simulating #{node.inspect} from #{opts[:previous_block].name}"
+          #Laser.debug_puts "Simulating #{node.inspect} from #{opts[:previous_block].name}"
           index_of_predecessor = node.block.predecessors.to_a.index(opts[:previous_block])
           simulate_assignment(node[1], node[2 + index_of_predecessor], opts)
         end
@@ -210,6 +212,8 @@ module Laser
               Bootstrap::EXCEPTION_STACK.value.push(abnormal.error)
               raise abnormal
             rescue Exception => err
+              Laser.debug_puts("Internal exception raised: #{err.message}")
+              Laser.debug_pp(err.backtrace)
               Bootstrap::EXCEPTION_STACK.value.push(err)
               raise ExitedAbnormally.new(err)
             end
