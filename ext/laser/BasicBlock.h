@@ -31,6 +31,8 @@ namespace Laser {
 		inline void set_instructions(VALUE instructions) { _instructions = instructions; }
 		inline VALUE post_order_number() { return _post_order_number; }
 		inline void set_post_order_number(VALUE post_order_number) { _post_order_number = post_order_number; }
+		inline VALUE representation() { return _representation; }
+		inline void set_representation(VALUE representation) { _representation = representation; }
 		inline std::vector<Edge*>& predecessors() { return _incoming; }
 		inline std::vector<Edge*>& successors() { return _outgoing; }
 		
@@ -39,6 +41,8 @@ namespace Laser {
 		void add_flag(BasicBlock* dest, uint8_t flag);
 		void set_flag(BasicBlock* dest, uint8_t flag);
 		void remove_flag(BasicBlock* dest, uint8_t flag);
+
+		void mark();
 
 		struct Edge {
 			Edge(BasicBlock * const inFrom, BasicBlock * const inTo) : from(inFrom), to(inTo) {}
@@ -59,7 +63,11 @@ namespace Laser {
 		VALUE _name;
 		VALUE _instructions;
 		VALUE _post_order_number;
+		VALUE _representation;
 	};
+}
+extern "C" {
+	static void bb_mark(void*);
 }
 
 #endif

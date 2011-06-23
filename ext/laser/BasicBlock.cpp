@@ -105,30 +105,49 @@ BasicBlock::Edge& BasicBlock::edge_to(BasicBlock* dest) {
 	throw NoSuchEdgeException();
 }
 
+void BasicBlock::mark() {
+	using namespace std;
+	rb_gc_mark(_instructions);
+	rb_gc_mark(_name);
+	rb_gc_mark(_post_order_number);
+	rb_gc_mark(_representation);
+	for (vector<Edge*>::iterator it = _outgoing.begin(); it < _outgoing.end(); ++it) {
+		BasicBlock *other = (*it)->to;
+		rb_gc_mark(other->representation());
+	}
+	for (vector<Edge*>::iterator it = _incoming.begin(); it < _incoming.end(); ++it) {
+		BasicBlock *other = (*it)->from;
+		rb_gc_mark(other->representation());
+	}
+}
+
 extern "C" {
 	#define NO_EDGE_MESSAGE "The given edge does not exist."
 	static void bb_mark(void* p) {
 		BasicBlock *block = (BasicBlock*)p;
-		rb_gc_mark(block->instructions());
-		rb_gc_mark(block->name());
+		block->mark();
 	}
 
 	static void bb_free(void* p) {
 		BasicBlock *block = (BasicBlock*)p;
-		//block->clear_edges();
-		//delete block;
+		block->clear_edges();
+		delete block;
 	}
 
 	static VALUE bb_alloc(VALUE klass) {
 		BasicBlock *block = new BasicBlock;
-	    return Data_Wrap_Struct(klass, bb_mark, bb_free, block);
+	    VALUE result = Data_Wrap_Struct(klass, bb_mark, bb_free, block);
+		block->set_representation(result);
+		return result;
 	}
 	
 	static VALUE bb_dup(VALUE self) {
 		BasicBlock *block;
 		Data_Get_Struct(self, BasicBlock, block);
-		BasicBlock *result = new BasicBlock(*block);
-		return Data_Wrap_Struct(rb_cBasicBlock, bb_mark, bb_free, result);
+		BasicBlock *result_block = new BasicBlock(*block);
+		VALUE result = Data_Wrap_Struct(rb_cBasicBlock, bb_mark, bb_free, result_block);
+		block->set_representation(result);
+		return result;
 	}
 
 	static VALUE bb_initialize(VALUE self, VALUE name) {
@@ -306,7 +325,7 @@ extern "C" {
 		for (std::vector<BasicBlock::Edge*>::iterator it = list.begin();
 			 it < list.end();
 			 ++it) {
-			rb_ary_push(result, Data_Wrap_Struct(rb_cBasicBlock, bb_mark, bb_free, (*it)->to));
+			rb_ary_push(result, (*it)->to->representation());
 		}
 		return result;
 	}
@@ -320,7 +339,7 @@ extern "C" {
 		for (std::vector<BasicBlock::Edge*>::iterator it = list.begin();
 			 it < list.end();
 			 ++it) {
-			rb_ary_push(result, Data_Wrap_Struct(rb_cBasicBlock, bb_mark, bb_free, (*it)->from));
+			rb_ary_push(result, (*it)->from->representation());
 		}
 		return result;
 	}
@@ -337,7 +356,7 @@ extern "C" {
 			 it < list.end();
 			 ++it) {
 			if (((*it)->flags & flag) == expectation) {
-				rb_ary_push(result, Data_Wrap_Struct(rb_cBasicBlock, bb_mark, bb_free, (*it)->from));
+				rb_ary_push(result, (*it)->from->representation());
 			}
 		}
 		return result;
@@ -383,7 +402,7 @@ extern "C" {
 			 it < list.end();
 			 ++it) {
 			if (((*it)->flags & flag) == expectation) {
-				rb_ary_push(result, Data_Wrap_Struct(rb_cBasicBlock, bb_mark, bb_free, (*it)->to));
+				rb_ary_push(result, (*it)->to->representation());
 			}
 		}
 		return result;
@@ -428,7 +447,7 @@ extern "C" {
 		for (std::vector<BasicBlock::Edge*>::iterator it = list.begin();
 			 it < list.end();
 			 ++it) {
-			rb_yield(Data_Wrap_Struct(rb_cBasicBlock, bb_mark, bb_free, (*it)->from));
+			rb_yield((*it)->from->representation());
 		}
 		return Qnil;
 	}
