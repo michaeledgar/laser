@@ -221,6 +221,7 @@ module Kernel
   alias fail raise
   # predictable: false
   # returns: String=
+  # raises: maybe
   def gets(opt_arg_1 = :__unset__, opt_arg_2 = :__unset__)
   end
   # predictable: false

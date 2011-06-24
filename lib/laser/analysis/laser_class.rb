@@ -835,6 +835,7 @@ module Laser
       
       def cfg_for_types(self_type, arg_types = [], block_type = nil)
         block_type ||= Types::NILCLASS
+        Laser.debug_puts("Calculating CFG(#{owner.name}##{name}, #{self_type.inspect}, #{arg_types.inspect}, #{block_type.inspect})")
         @type_instantiations[[self_type, *arg_types, block_type]] ||= master_cfg.dup.tap do |cfg|
           cfg.bind_self_type(self_type)
           cfg.bind_formal_types(arg_types)

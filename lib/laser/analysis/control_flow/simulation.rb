@@ -31,6 +31,7 @@ module Laser
         def simulate(formal_vals=[], opts={})
           opts = DEFAULT_SIMULATION_OPTS.merge(opts)
           opts[:formals] = formal_vals
+          clear_analyses
           current_block = opts[:start_block] || @enter
           previous_block = nil
           begin
@@ -48,7 +49,7 @@ module Laser
           rescue NonDeterminismHappened => err
             Laser.debug_puts "Simulation ended at nondeterminism: #{err.message}"
             Laser.debug_puts '>>> -- Starting Backup CP -- <<<'
-            perform_constant_propagation
+            perform_constant_propagation(initial_block: current_block, no_wipe: true)
             Laser.debug_puts '>>> -- Finished Backup CP -- <<<'
             raise err
           rescue SimulationNonterminationError => err
@@ -134,7 +135,7 @@ module Laser
         end
 
         def simulate_deterministic_phi_node(node, opts)
-          #Laser.debug_puts "Simulating #{node.inspect} from #{opts[:previous_block].name}"
+          # Laser.debug_puts "Simulating #{node.inspect} from #{opts[:previous_block].name}"
           index_of_predecessor = node.block.predecessors.to_a.index(opts[:previous_block])
           simulate_assignment(node[1], node[2 + index_of_predecessor], opts)
         end
@@ -164,6 +165,10 @@ module Laser
         end
 
         def simulate_call_instruction(insn, opts)
+          if insn.operands.any? { |op| op.value == VARYING || op.value == UNDEFINED }
+            raise NonDeterminismHappened.new(
+                "Nondeterministic operand (#{op.name}=#{op.value} in #{insn.inspect})")
+          end
           receiver = insn[2].value
           klass = Utilities.klass_for(receiver)
           method = klass.instance_method(insn[3].to_s)
@@ -172,7 +177,7 @@ module Laser
           elsif should_simulate_call(method, opts)
             simulate_call(receiver, method, insn, opts)
           else
-            raise NonDeterminismHappened.new("Nondeterministic call: #{method.inspect}")
+            raise NonDeterminismHappened.new("Nondeterministic call: #{method.owner.name}##{method.name}")
           end
         end
 
@@ -235,7 +240,7 @@ module Laser
         
         def simulate_special_method(receiver, method, args, block, opts)
           case method
-          when ClassRegistry['Class'].singleton_class.instance_method('allocate')
+          when ClassRegistry['Class'].instance_method('allocate')
             LaserObject.new(receiver, nil)
           when ClassRegistry['Class'].singleton_class.instance_method('new')
             LaserClass.new(ClassRegistry['Class'], nil) do |klass|

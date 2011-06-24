@@ -135,6 +135,18 @@ module Laser
           end) && (self.edges.sort == other.edges.sort)
         end
 
+        def clear_analyses
+          all_variables.each do |temp|
+            temp.bind! UNDEFINED
+            temp.inferred_type = nil
+          end
+          vertices.each do |block|
+            block.successors.each do |succ|
+              block.remove_flag(succ, ControlFlowGraph::EDGE_EXECUTABLE)
+            end
+          end
+        end
+
         def save_pretty_picture(fmt='png', dotfile='graph', params = {'shape' => 'box'})
           write_to_graphic_file(fmt, dotfile, params)
         end

@@ -123,9 +123,9 @@ end
 SimVal8 = Sim7.new.foo(gets)
 }
     ClassRegistry['Sim7'].instance_method('bar').return_type_for_types(
-        ClassRegistry['Sim7'].as_type, [Types::STRING]).should == Types::ARRAY
+        ClassRegistry['Sim7'].as_type, [Types::STRING]).should == Types::UnionType.new([Types::ARRAY])
     ClassRegistry['Sim7'].instance_method('foo').return_type_for_types(
-        ClassRegistry['Sim7'].as_type, [Types::STRING]).should == Types::FIXNUM
+        ClassRegistry['Sim7'].as_type, [Types::STRING]).should == Types::UnionType.new([Types::FIXNUM])
   end
   
   # passes, but takes fucking forever

@@ -31,7 +31,6 @@ class BasicObject < nil
   
  private
   
-  # builtin: true
   # pure: true
   # raises: false
   def initialize(*args)

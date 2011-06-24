@@ -359,6 +359,7 @@ class String
   end
   # pure: true
   # builtin: true
+  # returns: Array=
   def split(pattern=$;, limit=nil)
   end
   # pure: true

@@ -13,12 +13,12 @@ module Laser
         # one. Each binding will have a value assigned to it afterward: either
         # the constant, as a Ruby object (or a proxy to one), UNDEFINED, or VARYING.
         def perform_constant_propagation(opts={})
-          opts = {:fixed_methods => {}}.merge(opts)
+          opts = {fixed_methods: {}, initial_block: self.enter}.merge(opts)
           
           initialize_constant_propagation(opts)
           visited = Set.new
           worklist = Set.new
-          blocklist = Set[self.enter]
+          blocklist = Set[opts[:initial_block]]
           while worklist.any? || blocklist.any?
             while worklist.any?
               constant_propagation_for_instruction(
@@ -55,15 +55,7 @@ module Laser
             h[k].inferred_type = nil
             h[k]
           end
-          all_variables.each do |temp|
-            temp.bind! UNDEFINED
-            temp.inferred_type = nil
-          end
-          vertices.each do |block|
-            block.successors.each do |succ|
-              block.remove_flag(succ, ControlFlowGraph::EDGE_EXECUTABLE)
-            end
-          end
+          clear_analyses unless opts[:no_wipe]
           @_cp_fixed_methods = opts[:fixed_methods]
         end
 
@@ -401,6 +393,7 @@ module Laser
               new_type  = Types::TOP
             else
               possible_values = components.map(&:value).uniq - [UNDEFINED]
+              Laser.debug_puts("CP_Phi(#{instruction.inspect}, #{possible_values.inspect})")
               if possible_values == []
                 new_value = UNDEFINED
                 new_type  = nil
