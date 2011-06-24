@@ -24,7 +24,7 @@ module Laser
     MAYBE = self.new(:maybe, 1)
     ALWAYS = self.new(:always, 2)
     
-    LOOKUP = {:never => NEVER, :maybe => MAYBE, :always => ALWAYS}
+    LOOKUP = {never: NEVER, maybe: MAYBE, always: ALWAYS}
     def self.[](sym)
       LOOKUP[sym]
     end

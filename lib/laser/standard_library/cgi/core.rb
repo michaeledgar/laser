@@ -741,7 +741,7 @@ class CGI
   attr_reader :accept_charset
   def initialize(options = {},&block)
     @accept_charset_error_block=block if block_given?
-    @options={:accept_charset=>@@accept_charset}
+    @options={accept_charset:@@accept_charset}
     case options
     when Hash
       @options.merge!(options)

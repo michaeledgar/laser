@@ -57,10 +57,10 @@ describe RuntimeAnnotation do
     mod_a = tree[1][0]
     mod_b = mod_a[2][1][1]
     defn = mod_b[2][1][1]
-    expectalot(:runtime => {
-                 :load => [tree, tree[1], mod_a, mod_a[1], mod_a[2], mod_a[2][1],
+    expectalot(runtime: {
+                 load: [tree, tree[1], mod_a, mod_a[1], mod_a[2], mod_a[2][1],
                           mod_a[2][1][0], mod_b, mod_b[1], mod_b[1][1], defn, defn[1]],
-                 :run => [*defn[2].all_subtrees, *defn[3].all_subtrees]
+                 run: [*defn[2].all_subtrees, *defn[3].all_subtrees]
                })
   end
   
@@ -95,10 +95,10 @@ describe RuntimeAnnotation do
     RuntimeAnnotation.new.annotate_with_text(tree, input)
     mod_a = tree[1][0]
     mab_node = mod_a[2][1][1]
-    expectalot(:runtime => {
-                 :load => [tree, tree[1], mod_a, mod_a[1], mod_a[2], mod_a[2][1],
+    expectalot(runtime: {
+                 load: [tree, tree[1], mod_a, mod_a[1], mod_a[2], mod_a[2][1],
                            mab_node, mab_node[1]],
-                 :unknown => mab_node[2].all_subtrees
+                 unknown: mab_node[2].all_subtrees
                })
   end
   
@@ -130,6 +130,6 @@ describe RuntimeAnnotation do
     tree = Sexp.new(Ripper.sexp(input))
     RuntimeAnnotation.new.annotate_with_text(tree, input)
     defn = tree[1][0]
-    expectalot(:runtime => { :run => defn[3].all_subtrees })
+    expectalot(runtime: { run: defn[3].all_subtrees })
   end
 end

@@ -34,7 +34,7 @@ end
 
 RSpec::Matchers.define :parse_to do |output|
   match do |actual|
-    @result = Parsers::AnnotationParser.new.parse(actual, :root => :type)
+    @result = Parsers::AnnotationParser.new.parse(actual, root: :type)
     @result && @result.type == output
   end
   

@@ -30,22 +30,22 @@ describe ControlFlow::Instruction do
     end
 
     it 'should return the target for a call instruction' do
-      ControlFlow::Instruction.new([:call, @call_target, @temp, 'to_i', :block => false]).
+      ControlFlow::Instruction.new([:call, @call_target, @temp, 'to_i', block: false]).
           explicit_targets.should == ::Set[@call_target]
     end
     
     it 'should return the target for a call_vararg instruction' do
-      ControlFlow::Instruction.new([:call_vararg, @call_target, @temp, 'to_i', @ary, :block => false]).
+      ControlFlow::Instruction.new([:call_vararg, @call_target, @temp, 'to_i', @ary, block: false]).
           explicit_targets.should == ::Set[@call_target]
     end
 
     it 'should return the target for a super instruction' do
-      ControlFlow::Instruction.new([:super, @call_target, :block => false]).
+      ControlFlow::Instruction.new([:super, @call_target, block: false]).
           explicit_targets.should == ::Set[@call_target]
     end
     
     it 'should return the target for a super_vararg instruction' do
-      ControlFlow::Instruction.new([:super_vararg, @call_target, @ary, :block => false]).
+      ControlFlow::Instruction.new([:super_vararg, @call_target, @ary, block: false]).
           explicit_targets.should == ::Set[@call_target]
     end
     
@@ -84,22 +84,22 @@ describe ControlFlow::Instruction do
     end
 
     it 'should return the receiver and arguments for a call instruction' do
-      ControlFlow::Instruction.new([:call, @call_target, @temp, 'to_i', @temp_2, :block => false]).
+      ControlFlow::Instruction.new([:call, @call_target, @temp, 'to_i', @temp_2, block: false]).
           operands.should == [@temp, @temp_2]
     end
     
     it 'should return the receiver and arguments for a call_vararg instruction' do
-      ControlFlow::Instruction.new([:call_vararg, @call_target, @temp, 'to_i', @ary, :block => false]).
+      ControlFlow::Instruction.new([:call_vararg, @call_target, @temp, 'to_i', @ary, block: false]).
           operands.should == [@temp, @ary]
     end
 
     it 'should return the arguments for a super instruction' do
-      ControlFlow::Instruction.new([:super, @call_target, @temp_2, :block => false]).
+      ControlFlow::Instruction.new([:super, @call_target, @temp_2, block: false]).
           operands.should == [@temp_2]
     end
     
     it 'should return the arguments for a super_vararg instruction' do
-      ControlFlow::Instruction.new([:super_vararg, @call_target, @ary, :block => false]).
+      ControlFlow::Instruction.new([:super_vararg, @call_target, @ary, block: false]).
           operands.should == [@ary]
     end
     

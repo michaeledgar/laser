@@ -1,7 +1,7 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 
 describe InlineCommentSpaceWarning do
-  SETTINGS = {InlineCommentSpaceWarning::OPTION_KEY => 2, :indent_size => 2}
+  SETTINGS = {InlineCommentSpaceWarning::OPTION_KEY => 2, indent_size: 2}
   it 'is a line-based warning' do
     InlineCommentSpaceWarning.new('(stdin)', 'hello').should be_a(LineWarning)
   end

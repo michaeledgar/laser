@@ -142,7 +142,7 @@ module Laser
             @block_arg.name = 't#current_block'
             @graph.block_register = @block_arg
             reobserve_current_exception
-            build_formal_args(@formals, :block_arg => @block_arg) unless @formals.empty?
+            build_formal_args(@formals, block_arg: @block_arg) unless @formals.empty?
           end
         end
         
@@ -879,8 +879,8 @@ module Laser
           opts = {value: true, raise: true}.merge(opts)
           # TODO(adgar): blocks in args & style
           if is_vararg
-          then super_vararg_instruct(args, {:block => body_block}.merge(opts))
-          else super_instruct(*args, {:block => body_block}.merge(opts))
+          then super_vararg_instruct(args, {block: body_block}.merge(opts))
+          else super_instruct(*args, {block: body_block}.merge(opts))
           end
         end
         
@@ -908,7 +908,7 @@ module Laser
 
         # Terminates the current block with a jump to the target block.
         def uncond_instruct(target, opts = {})
-          opts = {:jump_instruct => true, :flags => RGL::ControlFlowGraph::EDGE_NORMAL}.merge(opts)
+          opts = {jump_instruct: true, flags: RGL::ControlFlowGraph::EDGE_NORMAL}.merge(opts)
           add_instruction(:jump, target.name) if opts[:jump_instruct]
           @graph.add_edge(@current_block, target, opts[:flags])
           start_block target
@@ -916,7 +916,7 @@ module Laser
         
         # Creates an unconditional branch from the current block, based on the given
         # value, to either the true block or the false block.
-        def cond_instruct(val, true_block, false_block, opts = {:branch_instruct => true})
+        def cond_instruct(val, true_block, false_block, opts = {branch_instruct: true})
           if opts[:branch_instruct]
             add_instruction(:branch, val, true_block.name, false_block.name)
           end
@@ -1033,9 +1033,9 @@ module Laser
 
             # Generate the body with redirects to the ensure block, so no jumps get away without
             # running the ensure block
-            with_jumps_redirected(:break => ensure_body[1], :redo => ensure_body[1], :next => ensure_body[1],
-                                  :return => ensure_body[1], :rescue => ensure_body[1],
-                                  :yield_fail => ensure_body[1]) do
+            with_jumps_redirected(break: ensure_body[1], redo: ensure_body[1], next: ensure_body[1],
+                                  return: ensure_body[1], rescue: ensure_body[1],
+                                  yield_fail: ensure_body[1]) do
               rescue_target, yield_fail_target =
                   build_rescue_target(node, result, rescue_body, ensure_block,
                                       current_rescue, current_yield_fail)
@@ -1067,7 +1067,7 @@ module Laser
 
         # Walks the body of code with its result copied and its rescue target set.
         def walk_body_with_rescue_target(result, body, body_block, rescue_target, yield_fail_target)
-          with_jump_targets(:rescue => rescue_target, :yield_fail => yield_fail_target) do
+          with_jump_targets(rescue: rescue_target, yield_fail: yield_fail_target) do
             start_block body_block
             body_result = walk_body body, value: true
             copy_instruct(result, body_result)
@@ -1149,7 +1149,7 @@ module Laser
                                    @exception_register, value: true, raise: false)
             cond_instruct(caught, is_caught_block, current_rescue)
           end
-          with_jump_targets(:rescue => rescue_check_block, :yield_fail => is_caught_block) do
+          with_jump_targets(rescue: rescue_check_block, yield_fail: is_caught_block) do
             normal_result = walk_node(guarded_expr, opts)
             copy_instruct(result_temporary, normal_result) if opts[:value]
             uncond_instruct(after)
@@ -1333,7 +1333,7 @@ module Laser
           notes = notes_as_ruby_object(body.parent)
           note_args = notes.flatten.map { |const| const_instruct(const) }
           call_opts = call_instruct(ClassRegistry['Hash'].binding, :[], *note_args, raise: false, value: true)
-          call_instruct(receiver, 'define_method_with_annotations', name, block, call_opts, :raise => false)
+          call_instruct(receiver, 'define_method_with_annotations', name, block, call_opts, raise: false)
           const_instruct(nil) if opts[:value]
         end
 
@@ -2064,7 +2064,7 @@ module Laser
           opts = {value: true}.merge(opts)
           body_block, after_block, precond_block = create_blocks 3
 
-          with_jump_targets(:break => after_block, :redo => body_block, :next => precond_block) do
+          with_jump_targets(break: after_block, redo: body_block, next: precond_block) do
             uncond_instruct precond_block
             start_block precond_block
             
@@ -2087,7 +2087,7 @@ module Laser
           opts = {value: true}.merge(opts)
           body_block, after_block, precond_block = create_blocks 3
 
-          with_jump_targets(:break => after_block, :redo => body_block, :next => precond_block) do
+          with_jump_targets(break: after_block, redo: body_block, next: precond_block) do
             uncond_instruct precond_block
             start_block precond_block
             

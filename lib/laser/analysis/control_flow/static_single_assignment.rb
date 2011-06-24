@@ -24,7 +24,7 @@ module Laser
             iterated_dominance_frontier(set, dom_tree).each do |block|
               if @live[temp].include?(block)
                 n = block.real_predecessors.size
-                block.instructions.unshift(Instruction.new([:phi, temp, *([temp] * n)], :block => block))
+                block.instructions.unshift(Instruction.new([:phi, temp, *([temp] * n)], block: block))
               end
             end
           end

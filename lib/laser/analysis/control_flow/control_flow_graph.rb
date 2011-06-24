@@ -197,7 +197,7 @@ module Laser
           if @root.type == :program
             Laser.debug_puts('>>> Starting Simulation <<<')
             begin
-              simulate([], :mutation => true) if opts[:simulate]
+              simulate([], mutation: true) if opts[:simulate]
             rescue Simulation::NonDeterminismHappened => err
               Laser.debug_puts('Note: Simulation was nondeterministic.')
             rescue Simulation::SimulationNonterminationError => err

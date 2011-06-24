@@ -38,7 +38,7 @@ module Laser
             loop do
               simulate_take_step(opts)
               from, next_block = simulate_block(current_block,
-                  opts.merge(:previous_block => previous_block, :current_block => current_block))
+                  opts.merge(previous_block: previous_block, current_block: current_block))
               from.add_flag(next_block, ControlFlowGraph::EDGE_EXECUTABLE)
               current_block, previous_block = next_block, current_block
             end

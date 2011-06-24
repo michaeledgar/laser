@@ -269,7 +269,7 @@ describe Sexp do
         tree = annotate_all(input)
         list = tree[1]
         list[0][2].is_constant.should be true
-        list[0][2].constant_value.should == {:a => :c, 3 => 2, "hi" => "world"}
+        list[0][2].constant_value.should == {a: :c, 3 => 2, "hi" => "world"}
       end
 
       it 'gives up on obviously non-constant hashes' do
@@ -284,7 +284,7 @@ describe Sexp do
         tree = annotate_all(input)
         list = tree[1]
         list[0][2][2][1][1][0].is_constant.should be true
-        list[0][2][2][1][1][0].constant_value.should == {:a => :c, 3 => 2, "hi" => "world"}
+        list[0][2][2][1][1][0].constant_value.should == {a: :c, 3 => 2, "hi" => "world"}
       end
     end
 
