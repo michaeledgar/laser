@@ -1,197 +1,197 @@
 
 module Errno
-end
-class Errno::NOERROR < SystemCallError
-end
-class Errno::EPERM < SystemCallError
-end
-class Errno::ENOENT < SystemCallError
-end
-class Errno::ESRCH < SystemCallError
-end
-class Errno::EINTR < SystemCallError
-end
-class Errno::EIO < SystemCallError
-end
-class Errno::ENXIO < SystemCallError
-end
-class Errno::E2BIG < SystemCallError
-end
-class Errno::ENOEXEC < SystemCallError
-end
-class Errno::EBADF < SystemCallError
-end
-class Errno::ECHILD < SystemCallError
-end
-class Errno::EAGAIN < SystemCallError
-end
-class Errno::ENOMEM < SystemCallError
-end
-class Errno::EACCES < SystemCallError
-end
-class Errno::EFAULT < SystemCallError
-end
-class Errno::ENOTBLK < SystemCallError
-end
-class Errno::EBUSY < SystemCallError
-end
-class Errno::EEXIST < SystemCallError
-end
-class Errno::EXDEV < SystemCallError
-end
-class Errno::ENODEV < SystemCallError
-end
-class Errno::ENOTDIR < SystemCallError
-end
-class Errno::EISDIR < SystemCallError
-end
-class Errno::EINVAL < SystemCallError
-end
-class Errno::ENFILE < SystemCallError
-end
-class Errno::EMFILE < SystemCallError
-end
-class Errno::ENOTTY < SystemCallError
-end
-class Errno::ETXTBSY < SystemCallError
-end
-class Errno::EFBIG < SystemCallError
-end
-class Errno::ENOSPC < SystemCallError
-end
-class Errno::ESPIPE < SystemCallError
-end
-class Errno::EROFS < SystemCallError
-end
-class Errno::EMLINK < SystemCallError
-end
-class Errno::EPIPE < SystemCallError
-end
-class Errno::EDOM < SystemCallError
-end
-class Errno::ERANGE < SystemCallError
-end
-class Errno::EDEADLK < SystemCallError
-end
-class Errno::ENAMETOOLONG < SystemCallError
-end
-class Errno::ENOLCK < SystemCallError
-end
-class Errno::ENOSYS < SystemCallError
-end
-class Errno::ENOTEMPTY < SystemCallError
-end
-class Errno::ELOOP < SystemCallError
-end
-class Errno::ENOMSG < SystemCallError
-end
-class Errno::EIDRM < SystemCallError
-end
-class Errno::ENOSTR < SystemCallError
-end
-class Errno::ENODATA < SystemCallError
-end
-class Errno::ETIME < SystemCallError
-end
-class Errno::ENOSR < SystemCallError
-end
-class Errno::EREMOTE < SystemCallError
-end
-class Errno::ENOLINK < SystemCallError
-end
-class Errno::EPROTO < SystemCallError
-end
-class Errno::EMULTIHOP < SystemCallError
-end
-class Errno::EBADMSG < SystemCallError
-end
-class Errno::EOVERFLOW < SystemCallError
-end
-class Errno::EILSEQ < SystemCallError
-end
-class Errno::EUSERS < SystemCallError
-end
-class Errno::ENOTSOCK < SystemCallError
-end
-class Errno::EDESTADDRREQ < SystemCallError
-end
-class Errno::EMSGSIZE < SystemCallError
-end
-class Errno::EPROTOTYPE < SystemCallError
-end
-class Errno::ENOPROTOOPT < SystemCallError
-end
-class Errno::EPROTONOSUPPORT < SystemCallError
-end
-class Errno::ESOCKTNOSUPPORT < SystemCallError
-end
-class Errno::EOPNOTSUPP < SystemCallError
-end
-class Errno::EPFNOSUPPORT < SystemCallError
-end
-class Errno::EAFNOSUPPORT < SystemCallError
-end
-class Errno::EADDRINUSE < SystemCallError
-end
-class Errno::EADDRNOTAVAIL < SystemCallError
-end
-class Errno::ENETDOWN < SystemCallError
-end
-class Errno::ENETUNREACH < SystemCallError
-end
-class Errno::ENETRESET < SystemCallError
-end
-class Errno::ECONNABORTED < SystemCallError
-end
-class Errno::ECONNRESET < SystemCallError
-end
-class Errno::ENOBUFS < SystemCallError
-end
-class Errno::EISCONN < SystemCallError
-end
-class Errno::ENOTCONN < SystemCallError
-end
-class Errno::ESHUTDOWN < SystemCallError
-end
-class Errno::ETOOMANYREFS < SystemCallError
-end
-class Errno::ETIMEDOUT < SystemCallError
-end
-class Errno::ECONNREFUSED < SystemCallError
-end
-class Errno::EHOSTDOWN < SystemCallError
-end
-class Errno::EHOSTUNREACH < SystemCallError
-end
-class Errno::EALREADY < SystemCallError
-end
-class Errno::EINPROGRESS < SystemCallError
-end
-class Errno::ESTALE < SystemCallError
-end
-class Errno::EDQUOT < SystemCallError
-end
-class Errno::ECANCELED < SystemCallError
-end
-class Errno::EAUTH < SystemCallError
-end
-class Errno::EBADRPC < SystemCallError
-end
-class Errno::EFTYPE < SystemCallError
-end
-class Errno::ENEEDAUTH < SystemCallError
-end
-class Errno::ENOATTR < SystemCallError
-end
-class Errno::ENOTSUP < SystemCallError
-end
-class Errno::EPROCLIM < SystemCallError
-end
-class Errno::EPROCUNAVAIL < SystemCallError
-end
-class Errno::EPROGMISMATCH < SystemCallError
-end
-class Errno::EPROGUNAVAIL < SystemCallError
-end
-class Errno::ERPCMISMATCH < SystemCallError
+  class NOERROR < SystemCallError
+  end
+  class EPERM < SystemCallError
+  end
+  class ENOENT < SystemCallError
+  end
+  class ESRCH < SystemCallError
+  end
+  class EINTR < SystemCallError
+  end
+  class EIO < SystemCallError
+  end
+  class ENXIO < SystemCallError
+  end
+  class E2BIG < SystemCallError
+  end
+  class ENOEXEC < SystemCallError
+  end
+  class EBADF < SystemCallError
+  end
+  class ECHILD < SystemCallError
+  end
+  class EAGAIN < SystemCallError
+  end
+  class ENOMEM < SystemCallError
+  end
+  class EACCES < SystemCallError
+  end
+  class EFAULT < SystemCallError
+  end
+  class ENOTBLK < SystemCallError
+  end
+  class EBUSY < SystemCallError
+  end
+  class EEXIST < SystemCallError
+  end
+  class EXDEV < SystemCallError
+  end
+  class ENODEV < SystemCallError
+  end
+  class ENOTDIR < SystemCallError
+  end
+  class EISDIR < SystemCallError
+  end
+  class EINVAL < SystemCallError
+  end
+  class ENFILE < SystemCallError
+  end
+  class EMFILE < SystemCallError
+  end
+  class ENOTTY < SystemCallError
+  end
+  class ETXTBSY < SystemCallError
+  end
+  class EFBIG < SystemCallError
+  end
+  class ENOSPC < SystemCallError
+  end
+  class ESPIPE < SystemCallError
+  end
+  class EROFS < SystemCallError
+  end
+  class EMLINK < SystemCallError
+  end
+  class EPIPE < SystemCallError
+  end
+  class EDOM < SystemCallError
+  end
+  class ERANGE < SystemCallError
+  end
+  class EDEADLK < SystemCallError
+  end
+  class ENAMETOOLONG < SystemCallError
+  end
+  class ENOLCK < SystemCallError
+  end
+  class ENOSYS < SystemCallError
+  end
+  class ENOTEMPTY < SystemCallError
+  end
+  class ELOOP < SystemCallError
+  end
+  class ENOMSG < SystemCallError
+  end
+  class EIDRM < SystemCallError
+  end
+  class ENOSTR < SystemCallError
+  end
+  class ENODATA < SystemCallError
+  end
+  class ETIME < SystemCallError
+  end
+  class ENOSR < SystemCallError
+  end
+  class EREMOTE < SystemCallError
+  end
+  class ENOLINK < SystemCallError
+  end
+  class EPROTO < SystemCallError
+  end
+  class EMULTIHOP < SystemCallError
+  end
+  class EBADMSG < SystemCallError
+  end
+  class EOVERFLOW < SystemCallError
+  end
+  class EILSEQ < SystemCallError
+  end
+  class EUSERS < SystemCallError
+  end
+  class ENOTSOCK < SystemCallError
+  end
+  class EDESTADDRREQ < SystemCallError
+  end
+  class EMSGSIZE < SystemCallError
+  end
+  class EPROTOTYPE < SystemCallError
+  end
+  class ENOPROTOOPT < SystemCallError
+  end
+  class EPROTONOSUPPORT < SystemCallError
+  end
+  class ESOCKTNOSUPPORT < SystemCallError
+  end
+  class EOPNOTSUPP < SystemCallError
+  end
+  class EPFNOSUPPORT < SystemCallError
+  end
+  class EAFNOSUPPORT < SystemCallError
+  end
+  class EADDRINUSE < SystemCallError
+  end
+  class EADDRNOTAVAIL < SystemCallError
+  end
+  class ENETDOWN < SystemCallError
+  end
+  class ENETUNREACH < SystemCallError
+  end
+  class ENETRESET < SystemCallError
+  end
+  class ECONNABORTED < SystemCallError
+  end
+  class ECONNRESET < SystemCallError
+  end
+  class ENOBUFS < SystemCallError
+  end
+  class EISCONN < SystemCallError
+  end
+  class ENOTCONN < SystemCallError
+  end
+  class ESHUTDOWN < SystemCallError
+  end
+  class ETOOMANYREFS < SystemCallError
+  end
+  class ETIMEDOUT < SystemCallError
+  end
+  class ECONNREFUSED < SystemCallError
+  end
+  class EHOSTDOWN < SystemCallError
+  end
+  class EHOSTUNREACH < SystemCallError
+  end
+  class EALREADY < SystemCallError
+  end
+  class EINPROGRESS < SystemCallError
+  end
+  class ESTALE < SystemCallError
+  end
+  class EDQUOT < SystemCallError
+  end
+  class ECANCELED < SystemCallError
+  end
+  class EAUTH < SystemCallError
+  end
+  class EBADRPC < SystemCallError
+  end
+  class EFTYPE < SystemCallError
+  end
+  class ENEEDAUTH < SystemCallError
+  end
+  class ENOATTR < SystemCallError
+  end
+  class ENOTSUP < SystemCallError
+  end
+  class EPROCLIM < SystemCallError
+  end
+  class EPROCUNAVAIL < SystemCallError
+  end
+  class EPROGMISMATCH < SystemCallError
+  end
+  class EPROGUNAVAIL < SystemCallError
+  end
+  class ERPCMISMATCH < SystemCallError
+  end
 end

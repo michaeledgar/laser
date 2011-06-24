@@ -13,9 +13,12 @@ BasicBlock::BasicBlock(BasicBlock& other) {
 	_instructions = other.instructions();
 	_incoming = other.predecessors();
 	_outgoing = other.successors();
+	_cache_flags = 0;
 }
 
 void BasicBlock::join(BasicBlock *other) {
+	clear_cache();
+	other->clear_cache();
 	Edge *new_edge = new Edge(this, other);
 	_outgoing.push_back(new_edge);
 	other->_incoming.push_back(new_edge);
@@ -34,6 +37,9 @@ void BasicBlock::disconnect(BasicBlock *other) {
 					_outgoing.erase(it);
 					other->_incoming.erase(it2);
 					delete ptr;
+					
+					clear_cache();
+					other->clear_cache();
 					return;
 				}
 			}
@@ -59,6 +65,10 @@ void BasicBlock::insert_block_on_edge(BasicBlock* successor, BasicBlock* inserte
 					inserted->predecessors().push_back(*it);
 					inserted->successors().push_back(*it2);
 					delete old_edge;
+					
+					clear_cache();
+					inserted->clear_cache();
+					successor->clear_cache();
 					return;
 				}
 			}
@@ -86,12 +96,18 @@ bool BasicBlock::has_flag(BasicBlock* dest, uint8_t flag) {
 	return ((edge_to(dest).flags & flag) != 0);
 }
 void BasicBlock::add_flag(BasicBlock* dest, uint8_t flag) {
+	clear_cache();
+	dest->clear_cache();
 	edge_to(dest).flags |= flag;
 }
 void BasicBlock::set_flag(BasicBlock* dest, uint8_t flag) {
+	clear_cache();
+	dest->clear_cache();
 	edge_to(dest).flags = flag;
 }
 void BasicBlock::remove_flag(BasicBlock* dest, uint8_t flag) {
+	clear_cache();
+	dest->clear_cache();
 	edge_to(dest).flags &= ~flag;
 }
 
@@ -118,6 +134,18 @@ void BasicBlock::mark() {
 	for (vector<Edge*>::iterator it = _incoming.begin(); it < _incoming.end(); ++it) {
 		BasicBlock *other = (*it)->from;
 		rb_gc_mark(other->representation());
+	}
+	if (_cache_flags & EDGE_ALL_SUCC) {
+		rb_gc_mark(_cached_successors);
+	}
+	if (_cache_flags & EDGE_REAL_SUCC) {
+		rb_gc_mark(_cached_real_successors);
+	}
+	if (_cache_flags & EDGE_ALL_PRED) {
+		rb_gc_mark(_cached_predecessors);
+	}
+	if (_cache_flags & EDGE_REAL_PRED) {
+		rb_gc_mark(_cached_real_predecessors);
 	}
 }
 
@@ -319,28 +347,38 @@ extern "C" {
 	static VALUE bb_successors(VALUE self) {
 		BasicBlock *block;
 		Data_Get_Struct(self, BasicBlock, block);
+		VALUE result;
+		if ((result = block->cached_successors()) && result != Qnil) {
+			return result;
+		}
 		std::vector<BasicBlock::Edge*>& list = block->successors();
 
-		VALUE result = rb_ary_new();
+		result = rb_ary_new();
 		for (std::vector<BasicBlock::Edge*>::iterator it = list.begin();
 			 it < list.end();
 			 ++it) {
 			rb_ary_push(result, (*it)->to->representation());
 		}
+		block->set_cached_successors(result);
 		return result;
 	}
 	
 	static VALUE bb_predecessors(VALUE self) {
 		BasicBlock *block;
 		Data_Get_Struct(self, BasicBlock, block);
+		VALUE result;
+		if ((result = block->cached_predecessors()) && result != Qnil) {
+			return result;
+		}
 		std::vector<BasicBlock::Edge*>& list = block->predecessors();
 		
-		VALUE result = rb_ary_new();
+		result = rb_ary_new();
 		for (std::vector<BasicBlock::Edge*>::iterator it = list.begin();
 			 it < list.end();
 			 ++it) {
 			rb_ary_push(result, (*it)->from->representation());
 		}
+		block->set_cached_predecessors(result);
 		return result;
 	}
 
@@ -363,7 +401,15 @@ extern "C" {
 	}
 
 	static VALUE bb_real_predecessors(VALUE self) {
-		return bb_filtered_predecessors(self, EDGE_FAKE, 0);
+		BasicBlock *block;
+		Data_Get_Struct(self, BasicBlock, block);
+		VALUE result;
+		if ((result = block->cached_real_predecessors()) && result != Qnil) {
+			return result;
+		}
+		result = bb_filtered_predecessors(self, EDGE_FAKE, 0);
+		block->set_cached_real_predecessors(result);
+		return result;
 	}
 	
 	static VALUE bb_normal_predecessors(VALUE self) {
@@ -409,7 +455,15 @@ extern "C" {
 	}
 
 	static VALUE bb_real_successors(VALUE self) {
-		return bb_filtered_successors(self, EDGE_FAKE, 0);
+		VALUE result;
+		BasicBlock *block;
+		Data_Get_Struct(self, BasicBlock, block);
+		if ((result = block->cached_real_successors()) && result != Qnil) {
+			return result;
+		}
+		result = bb_filtered_successors(self, EDGE_FAKE, 0);
+		block->set_cached_real_successors(result);
+		return result;
 	}
 	
 	static VALUE bb_normal_successors(VALUE self) {
@@ -442,12 +496,18 @@ extern "C" {
 		RETURN_ENUMERATOR(self, 0, 0);
 		BasicBlock *block;
 		Data_Get_Struct(self, BasicBlock, block);
+		VALUE result;
+		if ((result = block->cached_real_predecessors()) && result != Qnil) {
+			return rb_ary_each(result);
+		}
 		std::vector<BasicBlock::Edge*>& list = block->predecessors();
 
 		for (std::vector<BasicBlock::Edge*>::iterator it = list.begin();
 			 it < list.end();
 			 ++it) {
-			rb_yield((*it)->from->representation());
+			if (((*it)->flags & EDGE_FAKE) == 0) {
+				rb_yield((*it)->from->representation());
+			}
 		}
 		return Qnil;
 	}

@@ -11,7 +11,7 @@ module Laser
     #
     # @param [Hash] settings the settings to use to customize this scanner's
     #   scanning behavior
-    def initialize(settings = DEFAULT_SETTINGS)
+    def initialize(settings = {})
       @settings = DEFAULT_SETTINGS.merge(settings)
       @settings[:__scanner__] = self
       self.indent_stack = []
