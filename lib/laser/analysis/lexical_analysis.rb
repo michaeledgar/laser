@@ -28,9 +28,9 @@ module Laser
     #   [[1, token_position], token_type, token_text]. I'm not exactly clear on
     #   why the 1 is always there. At any rate - the result is an array of those
     #   tokens.
-    def lex(body = self.body)
+    def lex(body = self.body, token_class = Token)
       return [] if body =~ /^#.*encoding.*/
-      Ripper.lex(body).map {|token| Token.new(token) }
+      Ripper.lex(body).map {|token| token_class.new(token) }
     end
 
     # Returns the text between two token positions. The token positions are

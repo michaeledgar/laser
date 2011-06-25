@@ -6,7 +6,7 @@ class Laser::RescueExceptionWarning < Laser::FileWarning
   desc 'The line rescues "Exception" or "Object", which is too broad. Rescue StandardError instead.'
   setting_accessor :position
 
-  def match?(file = self.body)
+  def match?(body = self.body)
     find_sexps(:rescue).map do |_, types, name|
       case types[0]
       when :mrhs_new_from_args
