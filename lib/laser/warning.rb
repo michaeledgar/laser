@@ -17,6 +17,11 @@ module Laser
     def self.all_warnings
       @all_warnings ||= [self]
     end
+    
+    def self.warning_set(named='default')
+      list = YAML.load_file(File.join(File.dirname(__FILE__), 'warning_sets', named+'.yml'))
+      list.map { |name| Laser.const_get(name) }
+    end
 
     # Returns all "concrete" warnings, that is, those that have an actual
     # implementation. No meta-warnings like FileWarning/LineWarning.

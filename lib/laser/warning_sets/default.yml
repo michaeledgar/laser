@@ -1,0 +1,12 @@
+---
+- "AssignmentInConditionWarning"
+- "InlineCommentSpaceWarning"
+- "ExtraBlankLinesWarning"
+- "ExtraWhitespaceWarning"
+- "MisalignedUnindentationWarning"
+- "OperatorSpacing"
+- "ParensOnDeclarationWarning"
+- "RescueExceptionWarning"
+- "SemicolonWarning"
+- "UselessDoubleQuotesWarning"
+- "SexpErrorWarning"

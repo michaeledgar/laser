@@ -4,8 +4,8 @@ module Laser
     attr_accessor :indent_stack
 
     DEFAULT_SETTINGS = {fix: false, output: STDOUT, indent_size: 2,
-                        __using__: Laser::Warning.all_warnings,
-                        __fix__: Laser::Warning.all_warnings}
+                        __using__: Laser::Warning.warning_set,
+                        __fix__: Laser::Warning.warning_set}
 
     # Initializes the scanner with the given settings
     #
