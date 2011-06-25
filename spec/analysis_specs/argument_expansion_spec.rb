@@ -1,4 +1,4 @@
-require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
+require_relative 'spec_helper'
 
 describe SexpAnalysis::ArgumentExpansion do
   describe '#arity' do

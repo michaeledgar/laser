@@ -1,4 +1,4 @@
-require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
+require_relative 'spec_helper'
 
 describe ControlFlow::ConstantPropagation do
   it 'should propagate simple constants along linear code' do

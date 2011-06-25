@@ -1,4 +1,4 @@
-require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
+require_relative 'spec_helper'
 
 describe ControlFlow::Simulation do
   it 'should create classes during toplevel simulation' do

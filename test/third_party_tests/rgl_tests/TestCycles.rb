@@ -1,7 +1,7 @@
 $LOAD_PATH << "../lib"
 require 'test/unit'
 require 'laser/third_party/rgl/adjacency'
-require File.expand_path(File.join(File.dirname(__FILE__), 'test_helper'))
+require_relative 'test_helper'
 
 include RGL
 

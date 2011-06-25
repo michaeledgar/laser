@@ -1,4 +1,4 @@
-require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
+require_relative 'spec_helper'
 
 describe ControlFlow::RaiseProperties do
   it 'should recognize simple methods that raise no exceptions due to constants' do

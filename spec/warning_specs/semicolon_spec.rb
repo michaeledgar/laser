@@ -1,4 +1,4 @@
-require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
+require_relative 'spec_helper'
 
 describe SemicolonWarning do
   it 'is a line-based warning' do

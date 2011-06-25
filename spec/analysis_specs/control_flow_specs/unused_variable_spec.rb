@@ -1,4 +1,4 @@
-require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
+require_relative 'spec_helper'
 
 describe ControlFlow::UnusedVariables do
   it 'should find a simple unused variable' do

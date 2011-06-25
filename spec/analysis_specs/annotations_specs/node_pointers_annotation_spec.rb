@@ -1,4 +1,4 @@
-require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
+require_relative 'spec_helper'
 require 'set'
 describe NodePointersAnnotation do
   it_should_behave_like 'an annotator'

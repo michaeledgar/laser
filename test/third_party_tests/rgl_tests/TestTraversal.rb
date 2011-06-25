@@ -4,7 +4,7 @@ require 'laser/third_party/rgl/traversal'
 require 'laser/third_party/rgl/topsort'
 require 'laser/third_party/rgl/implicit'
 
-require File.expand_path(File.join(File.dirname(__FILE__), 'test_helper'))
+require_relative 'test_helper'
 
 include RGL
 

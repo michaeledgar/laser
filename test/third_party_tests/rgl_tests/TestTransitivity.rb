@@ -1,6 +1,6 @@
 require 'test/unit'
 require 'laser/third_party/rgl/transitivity'
-require File.expand_path(File.join(File.dirname(__FILE__), 'test_helper'))
+require_relative 'test_helper'
 
 include RGL
 

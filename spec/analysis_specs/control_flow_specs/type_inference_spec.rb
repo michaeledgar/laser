@@ -1,4 +1,4 @@
-require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
+require_relative 'spec_helper'
 
 describe 'CFG-based type inference' do
   it 'should infer types based on specified overloads' do

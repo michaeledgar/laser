@@ -1,4 +1,4 @@
-require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
+require_relative '../spec_helper'
 
 # Runs a shit-ton of expectations common among annotations. Since an annotaiton
 # just adds an attribute to a Sexp, we have a very common set of examples o

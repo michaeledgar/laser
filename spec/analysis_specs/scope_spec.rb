@@ -1,4 +1,4 @@
-require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
+require_relative 'spec_helper'
 
 module ScopeSpecHelpers
   def add_scope_instance_variables(klass)
