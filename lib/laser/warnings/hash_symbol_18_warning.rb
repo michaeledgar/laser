@@ -4,6 +4,7 @@ class Laser::HashSymbol18Warning < Laser::FileWarning
   type :style
   short_desc 'symbol hash key in 1.8 style'
   desc { "The Hash key :#{tokens[1][1]} is used in a Hash literal in 1.8 style." }
+  fixable true
   setting_accessor :tokens
   setting_accessor :line_adjustments
   
@@ -37,9 +38,11 @@ class Laser::HashSymbol18Warning < Laser::FileWarning
     matches = MATCH_18.all_matches(tokens)
     line_adjustments = Hash.new(0)
     matches.map do |match_tokens|
-      HashSymbol18Warning.new(file, body,
+      result = Laser::HashSymbol18Warning.new(file, body,
           tokens: match_tokens,
           line_adjustments: line_adjustments)
+      result.line_number = match_tokens[0].line
+      result
     end
   end
 

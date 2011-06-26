@@ -6,6 +6,7 @@ class Laser::InlineCommentSpaceWarning < Laser::LineWarning
   short_desc 'Inline comment spacing error'
   desc { "Inline comments must be at least #{@settings[OPTION_KEY]} spaces from code." }
   opt OPTION_KEY, 'Number of spaces between code and inline comments', default: DEFAULT_SPACE
+  fixable true
 
   def match?(line = self.body)
     return false unless comment_token = find_token(:on_comment)

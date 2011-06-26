@@ -3,6 +3,7 @@ class Laser::UselessDoubleQuotesWarning < Laser::FileWarning
   type :style
   severity 1
   short_desc 'Useless double quotes'
+  fixable true
   setting_accessor :quoted_string, :uses_q_braces
   desc do
     if uses_q_braces

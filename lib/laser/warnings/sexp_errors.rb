@@ -2,7 +2,6 @@
 class Laser::SexpErrorWarning < Laser::FileWarning
   type :dangerous
   short_desc "Error"
-    
   desc { error.message }
   setting_accessor :error
 

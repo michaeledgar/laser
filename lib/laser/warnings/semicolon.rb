@@ -3,6 +3,7 @@ class Laser::SemicolonWarning < Laser::LineWarning
   type :style
   short_desc 'Semicolon for multiple statements'
   desc 'The line uses a semicolon to separate multiple statements outside of a class declaration.'
+  fixable true
 
   def initialize(*args)
     super

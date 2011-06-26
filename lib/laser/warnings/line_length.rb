@@ -3,6 +3,7 @@ class Laser::GenericLineLengthWarning < Laser::LineWarning
   type :style
   short_desc 'Line too long'
   desc { "Line length: #{line.size} > #{self.class.line_length_limit} (max)" }
+  fixable true
 
   def self.inspect
     "Laser::GenericLineLengthWarning<#{line_length_limit}>"

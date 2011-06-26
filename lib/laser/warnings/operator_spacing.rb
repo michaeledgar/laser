@@ -6,6 +6,7 @@ class Laser::OperatorSpacing < Laser::LineWarning
   severity 5
   short_desc 'No operator spacing'
   desc { "Insufficient spacing around #{self.match?(self.line).body}" }
+  fixable true
 
   def match?(line = self.body)
     working_line = ignore_block_params line

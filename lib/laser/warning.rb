@@ -6,7 +6,7 @@ module Laser
 
     cattr_accessor :short_name
     cattr_accessor_with_default :match_filters, []
-    cattr_get_and_setter :severity, :short_desc, :desc
+    cattr_get_and_setter :severity, :short_desc, :desc, :fixable
     attr_accessor :settings
 
     desc { "#{self.class.name} #{file}:#{line_number} (#{severity})" }
@@ -100,7 +100,7 @@ module Laser
     end
 
     def fixable?
-      self.fix != self.body rescue false
+      self.class.fixable
     end
 
     def desc

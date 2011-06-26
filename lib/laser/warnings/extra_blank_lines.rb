@@ -5,6 +5,7 @@ class Laser::ExtraBlankLinesWarning < Laser::FileWarning
   severity 1
   short_desc 'Extra blank lines'
   desc { "This file has #{count_extra_lines} blank lines at the end of it." }
+  fixable true
 
   def match?(body = self.body)
     body =~ EXTRA_LINE

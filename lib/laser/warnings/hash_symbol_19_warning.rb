@@ -4,6 +4,7 @@ class Laser::HashSymbol19Warning < Laser::FileWarning
   type :style
   short_desc 'symbol hash key in 1.9 style'
   desc { "The Hash key #{token[1]} is used in a Hash literal in 1.9 style." }
+  fixable true
   setting_accessor :token
   setting_accessor :line_adjustments
 
@@ -11,7 +12,7 @@ class Laser::HashSymbol19Warning < Laser::FileWarning
     line_adjustments = Hash.new(0)
     lex.map do |token|
       if token.type == :on_label
-        HashSymbol19Warning.new(file, body,
+        Laser::HashSymbol19Warning.new(file, body,
             token: token,
             line_adjustments: line_adjustments)
       end

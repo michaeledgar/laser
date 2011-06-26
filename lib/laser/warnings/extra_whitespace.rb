@@ -4,6 +4,7 @@ class Laser::ExtraWhitespaceWarning < Laser::LineWarning
   severity 2
   short_desc 'Extra Whitespace'
   desc 'The line has trailing whitespace.'
+  fixable true
 
   def match?(body = self.body)
     /\s+$/ === line

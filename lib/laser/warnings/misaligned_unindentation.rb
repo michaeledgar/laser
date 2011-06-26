@@ -4,6 +4,7 @@ class Laser::MisalignedUnindentationWarning < Laser::LineWarning
   severity 2
   short_desc 'Misaligned Unindentation'
   desc { "Expected #{@expectation} spaces, but instead found #{get_indent.size}" }
+  fixable true
 
   def initialize(file, line, expectation)
     super(file, line)
