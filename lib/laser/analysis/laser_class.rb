@@ -763,7 +763,7 @@ module Laser
         end
       end
 
-      def initialize(name, base_proc=nil)
+      def initialize(name, base_proc)
         @name = name
         @type_instantiations = {}
         @proc = base_proc
@@ -857,7 +857,7 @@ module Laser
       end
 
       def dup
-        result = LaserMethod.new(name)
+        result = LaserMethod.new(name, proc)
         result.body_ast = self.body_ast
         result.owner = self.owner
         result.arity = self.arity

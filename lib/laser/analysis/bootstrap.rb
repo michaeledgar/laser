@@ -208,7 +208,7 @@ module Laser
       end
       
       def self.stub_method(klass, name, opts={})
-        method = LaserMethod.new(name)
+        method = LaserMethod.new(name, nil)
         opts.each { |k, v| method.send("#{k}=", v) }
         klass.add_instance_method!(method)
         method

@@ -11,7 +11,7 @@ describe LaserObject do
   
   describe '#add_instance_method!' do
     it 'should add the method to its singleton class' do
-      @instance.add_instance_method!(LaserMethod.new('abcdef'))
+      @instance.add_instance_method!(LaserMethod.new('abcdef', nil))
     end
   end
   
@@ -32,9 +32,9 @@ shared_examples_for 'a Ruby module' do
             end
     @a = described_class.new(ClassRegistry[@name], Scope::GlobalScope, 'A')
     @b = described_class.new(ClassRegistry[@name], Scope::GlobalScope, 'B') do |b|
-      b.add_instance_method!(LaserMethod.new('foo') do |method|
+      b.add_instance_method!(LaserMethod.new('foo', nil) do |method|
       end)
-      b.add_instance_method!(LaserMethod.new('bar') do |method|
+      b.add_instance_method!(LaserMethod.new('bar', nil) do |method|
       end)
     end
   end
@@ -311,7 +311,7 @@ describe LaserMethod do
   before do
     @a = LaserClass.new(ClassRegistry['Class'], Scope::GlobalScope, 'A')
     @b = LaserClass.new(ClassRegistry['Class'], Scope::GlobalScope, 'B')
-    @method = LaserMethod.new('foobar')
+    @method = LaserMethod.new('foobar', nil)
   end
   
   describe '#name' do
