@@ -1387,11 +1387,11 @@ module Laser
               literals.map(&:literal).each do |literal|
                 if !literal
                   result[:raises] = []
-                  result[:raise_type] = Frequency::NEVER
-                  result[:annotated_raise_type] = Frequency[literal]
+                  result[:raise_frequency] = Frequency::NEVER
+                  result[:annotated_raise_frequency] = Frequency[literal]
                 elsif ::Symbol === literal
-                  result[:raise_type] = Frequency[literal]
-                  result[:annotated_raise_type] = Frequency[literal]
+                  result[:raise_frequency] = Frequency[literal]
+                  result[:annotated_raise_frequency] = Frequency[literal]
                 end
               end
               if types.any?

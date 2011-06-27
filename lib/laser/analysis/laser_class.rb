@@ -745,8 +745,8 @@ module Laser
       attr_accessor_with_default :pure, false
       attr_accessor_with_default :predictable, true
       attr_accessor_with_default :raises, []
-      attr_accessor_with_default :annotated_raise_type, nil
-      attr_accessor_with_default :raise_type, Frequency::MAYBE
+      attr_accessor_with_default :annotated_raise_frequency, nil
+      attr_accessor_with_default :raise_frequency, Frequency::MAYBE
       attr_accessor_with_default :annotated_yield_usage, nil
 
       # Gets the laser method with the given class and name. Convenience for
@@ -790,11 +790,11 @@ module Laser
         master_cfg.yield_arity
       end
       
-      def raise_type_for_types(self_type, arg_types = [], block_type = nil)
+      def raise_frequency_for_types(self_type, arg_types = [], block_type = nil)
         block_type ||= Types::NILCLASS
-        return annotated_raise_type if annotated_raise_type
+        return annotated_raise_frequency if annotated_raise_frequency
         return Frequency::MAYBE if builtin || special
-        cfg_for_types(self_type, arg_types, block_type).raise_type
+        cfg_for_types(self_type, arg_types, block_type).raise_frequency
       end
       
       def return_type_for_types(self_type, arg_types = [], block_type = nil)

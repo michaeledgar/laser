@@ -112,8 +112,8 @@ module Laser
                 add_target_uses_to_worklist instruction, worklist
               end
             end
-            if raised != instruction.raise_type && instruction == block.instructions.last
-              instruction.raise_type = raised
+            if raised != instruction.raise_frequency && instruction == block.instructions.last
+              instruction.raise_frequency = raised
               successors = case raised
                            when :unknown then []
                            when Frequency::MAYBE then block.successors
@@ -254,7 +254,7 @@ module Laser
             # all components constant, nothing changed, shouldn't happen, but okay
             new_value = original
             new_type = old_type
-            raised = instruction.raise_type
+            raised = instruction.raise_frequency
           end
           # At this point, we should prune raise edges!
           if original != new_value
@@ -327,9 +327,9 @@ module Laser
             seen_missing = true if methods.empty? && !seen_missing
             methods.each do |method|
               cartesian.each do |*type_list, block_type|
-                raise_type = method.raise_type_for_types(self_type, type_list, block_type)
-                seen_raise = raise_type > Frequency::NEVER if !seen_raise
-                seen_succeed = raise_type < Frequency::ALWAYS if !seen_succeed
+                raise_frequency = method.raise_frequency_for_types(self_type, type_list, block_type)
+                seen_raise = raise_frequency > Frequency::NEVER if !seen_raise
+                seen_succeed = raise_frequency < Frequency::ALWAYS if !seen_succeed
                 if !ignore_privacy
                   self_type.possible_classes.each do |self_class|
                     if !seen_public

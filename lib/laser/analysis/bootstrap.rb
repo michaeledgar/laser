@@ -66,17 +66,17 @@ module Laser
         magic_class = LaserClass.new(
             class_class, Scope::GlobalScope, 'Laser#Magic')
         ClassRegistry['Object'].const_set('Laser#Magic', magic_class)
-        stub_method(magic_class.singleton_class, 'current_block', special: true, annotated_raise_type: Frequency::NEVER)
-        stub_method(magic_class.singleton_class, 'current_arity', special: true, annotated_raise_type: Frequency::NEVER)
-        stub_method(magic_class.singleton_class, 'current_argument', special: true, annotated_raise_type: Frequency::NEVER)
-        stub_method(magic_class.singleton_class, 'current_argument_range', special: true, annotated_raise_type: Frequency::NEVER)
-        stub_method(magic_class.singleton_class, 'current_exception', special: true, annotated_raise_type: Frequency::NEVER)
-        stub_method(magic_class.singleton_class, 'push_exception', special: true, mutation: true, annotated_raise_type: Frequency::NEVER)
-        stub_method(magic_class.singleton_class, 'pop_exception', special: true, mutation: true, annotated_raise_type: Frequency::NEVER)
-        stub_method(magic_class.singleton_class, 'current_self', special: true, annotated_raise_type: Frequency::NEVER)
-        stub_method(magic_class.singleton_class, 'get_global', special: true, annotated_raise_type: Frequency::NEVER)
-        stub_method(magic_class.singleton_class, 'set_global', special: true, mutation: true, annotated_raise_type: Frequency::NEVER)
-        stub_method(magic_class.singleton_class, 'responds?', special: true, annotated_raise_type: Frequency::NEVER)
+        stub_method(magic_class.singleton_class, 'current_block', special: true, annotated_raise_frequency: Frequency::NEVER)
+        stub_method(magic_class.singleton_class, 'current_arity', special: true, annotated_raise_frequency: Frequency::NEVER)
+        stub_method(magic_class.singleton_class, 'current_argument', special: true, annotated_raise_frequency: Frequency::NEVER)
+        stub_method(magic_class.singleton_class, 'current_argument_range', special: true, annotated_raise_frequency: Frequency::NEVER)
+        stub_method(magic_class.singleton_class, 'current_exception', special: true, annotated_raise_frequency: Frequency::NEVER)
+        stub_method(magic_class.singleton_class, 'push_exception', special: true, mutation: true, annotated_raise_frequency: Frequency::NEVER)
+        stub_method(magic_class.singleton_class, 'pop_exception', special: true, mutation: true, annotated_raise_frequency: Frequency::NEVER)
+        stub_method(magic_class.singleton_class, 'current_self', special: true, annotated_raise_frequency: Frequency::NEVER)
+        stub_method(magic_class.singleton_class, 'get_global', special: true, annotated_raise_frequency: Frequency::NEVER)
+        stub_method(magic_class.singleton_class, 'set_global', special: true, mutation: true, annotated_raise_frequency: Frequency::NEVER)
+        stub_method(magic_class.singleton_class, 'responds?', special: true, annotated_raise_frequency: Frequency::NEVER)
         stub_global_vars
       end
       
@@ -162,7 +162,7 @@ module Laser
         end
         string_class = ClassRegistry['String']
         stub_method(class_class.singleton_class, 'new', builtin: true, pure: true)
-        stub_method(class_class, 'superclass', builtin: true, pure: true, annotated_raise_type: Frequency::NEVER)
+        stub_method(class_class, 'superclass', builtin: true, pure: true, annotated_raise_frequency: Frequency::NEVER)
         stub_method(class_class, 'new')
         allocate_method = stub_method(class_class, 'allocate', special: true, pure: true)
         def allocate_method.return_type_for_types(self_type, arg_types, block_type)
@@ -174,22 +174,22 @@ module Laser
         stub_method(module_class, 'define_method', builtin: true, pure: true, mutation: true)
         stub_method(module_class, 'define_method_with_annotations', builtin: true, pure: true, mutation: true)
         stub_method(module_class.singleton_class, 'new', builtin: true, pure: true)
-        stub_method(module_class, 'const_defined?', builtin: true, annotated_raise_type: Frequency::NEVER)
+        stub_method(module_class, 'const_defined?', builtin: true, annotated_raise_frequency: Frequency::NEVER)
         stub_method(module_class, 'const_set', builtin: true, mutation: true)
         stub_method(module_class, 'const_get', builtin: true)
-        stub_method(module_class, '===', builtin: true, pure: true, annotated_raise_type: Frequency::NEVER)
+        stub_method(module_class, '===', builtin: true, pure: true, annotated_raise_frequency: Frequency::NEVER)
         stub_method(kernel_module, 'eql?', builtin: true, pure: true,
-            annotated_raise_type: Frequency::NEVER)
+            annotated_raise_frequency: Frequency::NEVER)
         stub_method(kernel_module, 'equal?', builtin: true, pure: true,
-            annotated_raise_type: Frequency::NEVER)
+            annotated_raise_frequency: Frequency::NEVER)
         stub_method(kernel_module, 'singleton_class', builtin: true, pure: true,
-            annotated_raise_type: Frequency::NEVER)
-        stub_method(array_class, 'push', builtin: true, mutation: true, annotated_raise_type: Frequency::NEVER)
-        stub_method(array_class, 'pop', builtin: true, mutation: true, annotated_raise_type: Frequency::NEVER)
-        stub_method(array_class.singleton_class, '[]', builtin: true, pure: true, annotated_raise_type: Frequency::NEVER)
+            annotated_raise_frequency: Frequency::NEVER)
+        stub_method(array_class, 'push', builtin: true, mutation: true, annotated_raise_frequency: Frequency::NEVER)
+        stub_method(array_class, 'pop', builtin: true, mutation: true, annotated_raise_frequency: Frequency::NEVER)
+        stub_method(array_class.singleton_class, '[]', builtin: true, pure: true, annotated_raise_frequency: Frequency::NEVER)
         stub_method(hash_class.singleton_class, '[]', builtin: true, pure: true)
         stub_method(string_class, '+', builtin: true, pure: true)
-        stub_method(proc_class, 'lexical_self=', builtin: true, mutation: true, annotated_raise_type: Frequency::NEVER)
+        stub_method(proc_class, 'lexical_self=', builtin: true, mutation: true, annotated_raise_frequency: Frequency::NEVER)
       end
       
       def self.stub_global_vars

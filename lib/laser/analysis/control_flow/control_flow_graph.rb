@@ -23,7 +23,7 @@ module Laser
 
         attr_accessor :root, :block_register, :final_exception, :final_return
         attr_reader :formals, :uses, :definition, :constants, :live, :globals
-        attr_reader :yield_type, :raise_type, :in_ssa, :yield_arity
+        attr_reader :yield_type, :raise_frequency, :in_ssa, :yield_arity
         attr_reader :self_type, :formal_types, :block_type
         attr_reader :all_cached_variables
         # postdominator blocks for: all non-failed-yield exceptions, yield-failing
@@ -49,7 +49,7 @@ module Laser
           @formals = formal_arguments
           @yield_type = :required
           @yield_arity = Set.new([Arity::ANY])
-          @raise_type = Frequency::MAYBE
+          @raise_frequency = Frequency::MAYBE
           super()
         end
         
@@ -197,7 +197,7 @@ module Laser
           if @root.type == :program
             Laser.debug_puts('>>> Starting Simulation <<<')
             begin
-              simulate([], mutation: true) if opts[:simulate]
+              simulate([], :mutation => true) if opts[:simulate]
             rescue Simulation::NonDeterminismHappened => err
               Laser.debug_puts('Note: Simulation was nondeterministic.')
             rescue Simulation::SimulationNonterminationError => err

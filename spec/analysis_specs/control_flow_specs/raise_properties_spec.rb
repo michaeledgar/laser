@@ -9,7 +9,7 @@ def foo(x)
   y.singleton_class
 end
 EOF
-    g.raise_type.should be Frequency::NEVER
+    g.raise_frequency.should be Frequency::NEVER
   end
 
   it 'should recognize simple methods that unconditionally raise' do
@@ -18,7 +18,7 @@ def foo(x)
   raise SomeError.new(x)
 end
 EOF
-    g.raise_type.should be Frequency::ALWAYS
+    g.raise_frequency.should be Frequency::ALWAYS
   end
 
   it 'should recognize raiseability via aliases' do
@@ -27,7 +27,7 @@ def foo(x)
   fail SomeError.new(x)
 end
 EOF
-    g.raise_type.should be Frequency::ALWAYS
+    g.raise_frequency.should be Frequency::ALWAYS
   end
 
   it 'should recognize simple methods that might raise' do
@@ -40,7 +40,7 @@ def foo(x)
   end
 end
 EOF
-    g.raise_type.should be Frequency::MAYBE
+    g.raise_frequency.should be Frequency::MAYBE
   end
 
   it 'should recognize when private methods are called' do
@@ -49,7 +49,7 @@ def foo(x)
   String.alias_method(:bar, :<<)
 end
 EOF
-    g.raise_type.should be Frequency::ALWAYS
+    g.raise_frequency.should be Frequency::ALWAYS
   end
   
   it 'should use types to improve raising inference on user code' do
@@ -68,11 +68,11 @@ module RInfer1
 end
 EOF
     method = ClassRegistry['RInfer1'].singleton_class.instance_method('multiply')
-    method.raise_type_for_types(
+    method.raise_frequency_for_types(
         Utilities.type_for(ClassRegistry['RInfer1']), 
         [Types::FIXNUM], 
         Types::NILCLASS).should == Frequency::NEVER
-    method.raise_type_for_types(
+    method.raise_frequency_for_types(
         Utilities.type_for(ClassRegistry['RInfer1']),
         [Types::STRING],
         Types::NILCLASS).should == Frequency::ALWAYS
