@@ -28,9 +28,9 @@ require 'ripper-plus'
 require 'axiom_of_choice'
 require 'stream'
 require 'object_regex'
+require 'trollop'
 $:.unshift(File.expand_path(File.dirname(__FILE__)))
 $:.unshift(File.join(File.expand_path(File.dirname(__FILE__)), '..', 'ext'))
-require 'laser/third_party/trollop'
 require 'laser/third_party/rgl/dot'  # KILLME
 require 'laser/third_party/rgl/bidirectional'
 require 'laser/third_party/rgl/depth_first_spanning_tree'

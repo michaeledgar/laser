@@ -15,6 +15,7 @@ begin
     gem.add_dependency 'axiom_of_choice'
     gem.add_dependency 'stream', '0.5'
     gem.add_dependency 'object_regex', '~> 1.0'
+    gem.add_dependency 'trollop', '~> 1.16.2'
     gem.add_development_dependency 'rake', '~> 0.9.0'
     gem.add_development_dependency 'rspec', '~> 2.3.0'
     gem.add_development_dependency 'yard', '>= 0'
