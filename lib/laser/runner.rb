@@ -65,11 +65,11 @@ module Laser
         banner 'LASER: Lexically- and Semantically-Enriched Ruby'
         opt :fix, 'Should errors be fixed in-line?', short: '-f'
         opt :display, 'Should errors be displayed?', short: '-b', default: true
-        opt :"report-fixed", 'Should fixed errors be reported anyway?', short: '-r'
-        opt :"line-length", 'Warn at the given line length', short: '-l', type: :int
+        opt :'report-fixed', 'Should fixed errors be reported anyway?', short: '-r'
+        opt :'line-length', 'Warn at the given line length', short: '-l', type: :int
         opt :only, 'Only consider the given warning (by short or full name)', short: '-O', type: :string
         opt :stdin, 'Read Ruby code from standard input', short: '-s'
-        opt :"list-modules", 'Print the discovered, loaded modules'
+        opt :'list-modules', 'Print the discovered, loaded modules'
         opt :profile, 'Run the profiler during execution'
         warning_opts.each { |warning| opt(*warning) }
       end
