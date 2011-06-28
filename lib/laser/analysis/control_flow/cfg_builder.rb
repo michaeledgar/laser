@@ -1386,21 +1386,15 @@ module Laser
               literals, types = annotations['raises'].partition { |x| x.literal? }
               literals.map(&:literal).each do |literal|
                 if !literal
-                  result[:raises] = []
-                  result[:raise_frequency] = Frequency::NEVER
                   result[:annotated_raise_frequency] = Frequency[literal]
                 elsif ::Symbol === literal
-                  result[:raise_frequency] = Frequency[literal]
                   result[:annotated_raise_frequency] = Frequency[literal]
                 end
               end
               if types.any?
-                result[:raises] = []
-                types.each { |note| result[:raises] << note.type }
+                result[:raises] = types.map { |note| note.type }
               end
-            else result[:raises] = [Types::TOP]
             end
-          else result[:raises] = [Types::TOP]
           end
           result
         end

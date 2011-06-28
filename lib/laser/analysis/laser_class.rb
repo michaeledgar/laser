@@ -744,9 +744,8 @@ module Laser
       attr_accessor_with_default :mutation, false
       attr_accessor_with_default :pure, false
       attr_accessor_with_default :predictable, true
-      attr_accessor_with_default :raises, []
+      attr_accessor_with_default :raises, nil
       attr_accessor_with_default :annotated_raise_frequency, nil
-      attr_accessor_with_default :raise_frequency, Frequency::MAYBE
       attr_accessor_with_default :annotated_yield_usage, nil
 
       # Gets the laser method with the given class and name. Convenience for
@@ -795,6 +794,13 @@ module Laser
         return annotated_raise_frequency if annotated_raise_frequency
         return Frequency::MAYBE if builtin || special
         cfg_for_types(self_type, arg_types, block_type).raise_frequency
+      end
+      
+      def raise_type_for_types(self_type, arg_types = [], block_type = nil)
+        block_type ||= Types::NILCLASS
+        return self.raises if raises
+        return Types::TOP if builtin || special
+        cfg_for_types(self_type, arg_types, block_type).raise_type
       end
       
       def return_type_for_types(self_type, arg_types = [], block_type = nil)

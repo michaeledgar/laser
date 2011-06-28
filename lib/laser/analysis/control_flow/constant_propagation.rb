@@ -390,7 +390,7 @@ module Laser
             components = instruction[2..-1]
             if components.any? { |var| var.value == VARYING }
               new_value = VARYING
-              new_type  = Types::TOP
+              new_type  = Types::UnionType.new(components.select { |c| c.value != UNDEFINED }.map(&:inferred_type).compact.uniq)
             else
               possible_values = components.map(&:value).uniq - [UNDEFINED]
               Laser.debug_puts("CP_Phi(#{instruction.inspect}, #{possible_values.inspect})")
@@ -402,7 +402,7 @@ module Laser
                 new_type  = Utilities.type_for(new_value)
               else
                 new_value = VARYING
-                new_type  = Types::UnionType.new(components.map(&:inferred_type).compact.uniq)
+                new_type  = Types::UnionType.new(components.select { |c| c.value != UNDEFINED }.map(&:inferred_type).compact.uniq)
               end
             end
           when :call_vararg, :super, :super_vararg
@@ -514,6 +514,8 @@ module Laser
             else
               return [VARYING, real_block_type, Frequency::NEVER]
             end
+          when :current_exception
+            return [VARYING, Types::EMPTY, Frequency::NEVER]
           when :get_global
             global = Scope::GlobalScope.lookup(args[0].value)
             global.uses.add(instruction)

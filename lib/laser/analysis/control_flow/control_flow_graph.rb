@@ -155,6 +155,14 @@ module Laser
           super
         end
 
+        def raise_type
+          if all_failure_postdominator.real_predecessors.empty?
+            Types::EMPTY
+          else
+            @final_exception.expr_type
+          end
+        end
+
         def return_type
           unless (@exit.normal_predecessors & @exit.real_predecessors).empty?
             @final_return.expr_type

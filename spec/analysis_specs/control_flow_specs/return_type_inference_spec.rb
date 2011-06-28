@@ -1,6 +1,6 @@
 require_relative 'spec_helper'
 
-describe 'CFG-based type inference' do
+describe 'CFG-based return type inference' do
   it 'should infer types based on specified overloads' do
     g = cfg <<-EOF
 module CPSim2

@@ -1,6 +1,9 @@
 require 'set'
 module Laser
   module Types
+    # All these relations are very inefficient, but they don't show up in
+    # profiling, yet.
+    #
     # Subtype relation. Extremely important. Don't mess it up.
     def self.subtype?(sub, top)
       sub.possible_classes.subset?(top.possible_classes)
@@ -57,7 +60,7 @@ module Laser
       end
       
       def possible_classes
-        member_types.map { |type| type.possible_classes }.inject(:|)
+        member_types.map { |type| type.possible_classes }.inject(:|) || Set[]
       end
 
       def public_matching_methods(name)
@@ -142,6 +145,7 @@ module Laser
     FALSY = UnionType.new([FALSECLASS, NILCLASS])
     BOOLEAN = UnionType.new([TRUECLASS, FALSECLASS])
     BLOCK = UnionType.new([PROC, NILCLASS])
+    EMPTY = UnionType.new([])
 
     class GenericType < Base
       acts_as_struct :base_type, :subtypes
