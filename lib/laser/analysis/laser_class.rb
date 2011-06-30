@@ -191,6 +191,28 @@ module Laser
         LaserModule.all_modules << self
       end
 
+      def <=>(other)
+        if self == other
+          return 0
+        elsif ancestors.include?(other)
+          return -1
+        elsif other.ancestors.include?(self)
+          return 1
+        else
+          return nil
+        end
+      end
+      
+      # including Comparable is having issues due to override of include. Do it
+      # ourselves.
+      %w(< <= >= >).each do |op|
+        class_eval %Q{
+          def #{op}(other)
+            (self <=> other) #{op} 0
+          end
+        }
+      end
+
       def as_type
         Types::ClassType.new(self.path, :invariant)
       end

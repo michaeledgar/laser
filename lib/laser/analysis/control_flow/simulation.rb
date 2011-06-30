@@ -277,7 +277,8 @@ module Laser
             opts[:formals][args.first]
           when ClassRegistry['Laser#Magic'].singleton_class.instance_method('current_argument_range')
             opts[:formals][args[0], args[1]]
-          when ClassRegistry['Laser#Magic'].singleton_class.instance_method('current_exception')
+          when ClassRegistry['Laser#Magic'].singleton_class.instance_method('current_exception'),
+               ClassRegistry['Laser#Magic'].singleton_class.instance_method('get_just_raised_exception')
             Bootstrap::EXCEPTION_STACK.value.last
           when ClassRegistry['Laser#Magic'].singleton_class.instance_method('push_exception')
             Bootstrap::EXCEPTION_STACK.value.push args[0]

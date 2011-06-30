@@ -4,12 +4,13 @@ module Laser
     module ControlFlow
       class Instruction < BasicObject
         attr_reader :node, :block, :body, :ignore_privacy
-        attr_accessor :raise_frequency
+        attr_accessor :raise_frequency, :raise_type
         def initialize(body, opts={})
           @body = body
           @node = opts[:node]
           @block = opts[:block]
           @raise_frequency = :unknown
+          @raise_type = Types::EMPTY
           @ignore_privacy = opts[:ignore_privacy]
           @true_successor = @false_successor = nil
         end

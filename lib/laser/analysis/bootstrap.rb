@@ -71,6 +71,7 @@ module Laser
         stub_method(magic_class.singleton_class, 'current_argument', special: true, annotated_raise_frequency: Frequency::NEVER)
         stub_method(magic_class.singleton_class, 'current_argument_range', special: true, annotated_raise_frequency: Frequency::NEVER)
         stub_method(magic_class.singleton_class, 'current_exception', special: true, annotated_raise_frequency: Frequency::NEVER)
+        stub_method(magic_class.singleton_class, 'get_just_raised_exception', special: true, annotated_raise_frequency: Frequency::NEVER)
         stub_method(magic_class.singleton_class, 'push_exception', special: true, mutation: true, annotated_raise_frequency: Frequency::NEVER)
         stub_method(magic_class.singleton_class, 'pop_exception', special: true, mutation: true, annotated_raise_frequency: Frequency::NEVER)
         stub_method(magic_class.singleton_class, 'current_self', special: true, annotated_raise_frequency: Frequency::NEVER)
@@ -184,6 +185,21 @@ module Laser
             annotated_raise_frequency: Frequency::NEVER)
         stub_method(kernel_module, 'singleton_class', builtin: true, pure: true,
             annotated_raise_frequency: Frequency::NEVER)
+        raise_method = stub_method(kernel_module, 'raise', builtin: true, pure: true,
+            annotated_raise_frequency: Frequency::ALWAYS)
+        def raise_method.raise_type_for_types(self_type, arg_types, block_type)
+          Types::UnionType.new(arg_types[0].possible_classes.map do |arg_class|
+            if arg_class <= ClassRegistry['String']
+              ClassRegistry['RuntimeError'].as_type
+            elsif LaserSingletonClass === arg_class && arg_class < ClassRegistry['Class']
+              arg_class.get_instance.as_type
+            elsif arg_class <= ClassRegistry['Exception']
+              arg_class.as_type
+            elsif arg_class.instance_method_defined?('exception')
+              arg_class.instance_method('exception').return_type_for_types(arg_class.as_type)
+            end
+          end)
+        end
         stub_method(array_class, 'push', builtin: true, mutation: true, annotated_raise_frequency: Frequency::NEVER)
         stub_method(array_class, 'pop', builtin: true, mutation: true, annotated_raise_frequency: Frequency::NEVER)
         stub_method(array_class.singleton_class, '[]', builtin: true, pure: true, annotated_raise_frequency: Frequency::NEVER)

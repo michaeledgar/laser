@@ -23,7 +23,11 @@ module Laser
     
     class Base
       extend ActsAsStruct
-      
+
+      def |(other)
+        UnionType.new([self, other])
+      end
+
       def hash
         signature.values.map(&:hash).inject(:+)
       end

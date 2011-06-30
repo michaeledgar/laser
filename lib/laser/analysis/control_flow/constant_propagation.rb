@@ -106,11 +106,16 @@ module Laser
             succ = block.real_successors.first
             constant_propagation_consider_edge block, succ, blocklist
           when :call
-            changed, raised = constant_propagation_for_call instruction
+            changed, raised, raise_changed = constant_propagation_for_call instruction
             if changed
               if instruction[1] && instruction[1].value != UNDEFINED
                 add_target_uses_to_worklist instruction, worklist
               end
+            end
+            if raise_changed && instruction == block.instructions.last
+              raise_capture_insn = instruction.block.exception_successors.first.instructions.first
+              raise_capture_insn[1].inferred_type = instruction.raise_type
+              add_target_uses_to_worklist raise_capture_insn, worklist
             end
             if raised != instruction.raise_frequency && instruction == block.instructions.last
               instruction.raise_frequency = raised
@@ -189,6 +194,7 @@ module Laser
           target = instruction[1] || cp_cell_for(instruction)
           original = target.value
           old_type = target.inferred_type
+          old_raise_type = instruction.raise_type
 
           receiver, method_name, *args = instruction[2..-1]
           opts = Hash === args.last ? args.pop : {}
@@ -206,24 +212,28 @@ module Laser
             new_value = UNDEFINED
             new_type = Types::TOP
             raised = Frequency::ALWAYS  # NoMethodError
+            raise_type = Types::UnionType.new([Types::ClassType.new('NoMethodError', :invariant)])
           elsif method && (@_cp_fixed_methods.has_key?(method))
             result = @_cp_fixed_methods[method]
             new_value = result
             new_type = Utilities.type_for(result)
             raised = Frequency::NEVER
-          elsif (special_result, special_type, special_raised =
+            raise_type = Types::EMPTY
+          elsif (special_result, special_type =
                  apply_special_case(instruction, receiver, method_name, *args);
                  special_result != INAPPLICABLE)
             new_value = special_result
             new_type = special_type
-            raised = special_raised
+            raised = Frequency::NEVER
+            raise_type = Types::EMPTY
           elsif components.any? { |arg| arg.value == VARYING }
             new_value = VARYING
             if components.all? { |arg| arg.value != UNDEFINED }
-              new_type, raised = infer_type_and_raising(instruction, receiver, method_name, args)
+              new_type, raised, raise_type = infer_type_and_raising(instruction, receiver, method_name, args)
             else
               new_type = Types::TOP
               raised = Frequency::MAYBE
+              raise_type = Types::EMPTY
             end
           # All components constant, and never evaluated before.
           elsif original == UNDEFINED && (!opts || !opts[:block])
@@ -238,6 +248,7 @@ module Laser
                 new_value = result
                 new_type = Utilities.type_for(result)
                 raised = Frequency::NEVER
+                raise_type = Types::EMPTY
               rescue BasicObject => err
                 # any exception caught - this is an extremely unsafe rescue handler - means my
                 # simulation *MUST NOT* raise or I will conflate user-level raises
@@ -245,16 +256,18 @@ module Laser
                 new_value = UNDEFINED
                 new_type = Types::TOP
                 raised = Frequency::ALWAYS
+                raise_type = Types::UnionType.new([Types::ClassType.new(err.class.name, :invariant)])
               end
             else
               new_value = VARYING
-              new_type, raised = infer_type_and_raising(instruction, receiver, method_name, args)
+              new_type, raised, raise_type = infer_type_and_raising(instruction, receiver, method_name, args)
             end
           else
             # all components constant, nothing changed, shouldn't happen, but okay
             new_value = original
             new_type = old_type
             raised = instruction.raise_frequency
+            raise_type = instruction.raise_type
           end
           # At this point, we should prune raise edges!
           if original != new_value
@@ -265,20 +278,25 @@ module Laser
             target.inferred_type = new_type
             changed = true
           end
-          [changed, raised]
+          if raise_type != old_raise_type
+            instruction.raise_type = raise_type
+            raise_changed = true
+          end
+          [changed, raised, raise_changed]
         end
 
         def infer_type_and_raising(instruction, receiver, method_name, args)
           begin
-            type, raised = return_types_for_normal_call(receiver, method_name, args,
+            type, raise_freq, raise_type = return_types_for_normal_call(receiver, method_name, args,
                 instruction.ignore_privacy, instruction.block_operand)
           rescue TypeError => err
             type = Types::TOP
-            raised = Frequency::ALWAYS
+            raise_freq = Frequency::ALWAYS
+            raise_type = Types::UnionType.new([Types::ClassType.new('TypeError', :invariant)])
             instruction.node.add_error(NoMatchingTypeSignature.new(
                 "No method named #{method_name} with matching types was found", instruction.node))
           end
-          [type, raised]
+          [type, raise_freq, raise_type]
         end
 
         # Calculates the set of methods potentially invoked in dynamic dispatch,
@@ -321,6 +339,7 @@ module Laser
         # TODO(adgar): Optimize this. Use lattice-style expression of raisability
         # until types need to be added too.
         def raisability_for_templates(possible_dispatches, cartesian, ignore_privacy)
+          raise_type = Types::UnionType.new([])
           seen_public = seen_private = seen_raise = seen_succeed = seen_any = seen_missing = false
           possible_dispatches.each do |self_type, methods|
             seen_any = true if methods.size > 0 && !seen_any
@@ -328,7 +347,10 @@ module Laser
             methods.each do |method|
               cartesian.each do |*type_list, block_type|
                 raise_frequency = method.raise_frequency_for_types(self_type, type_list, block_type)
-                seen_raise = raise_frequency > Frequency::NEVER if !seen_raise
+                if raise_frequency > Frequency::NEVER
+                  seen_raise = true
+                  raise_type = raise_type | method.raise_type_for_types(self_type, type_list, block_type)
+                end
                 seen_succeed = raise_frequency < Frequency::ALWAYS if !seen_succeed
                 if !ignore_privacy
                   self_type.possible_classes.each do |self_class|
@@ -350,21 +372,22 @@ module Laser
                             else Frequency.for_samples(seen_private, seen_public)
                             end
             raised = Frequency.for_samples(seen_raise, seen_succeed)
-            [fails_privacy, raised, fails_lookup].max
+            raise_freq = [fails_privacy, raised, fails_lookup].max
           else
-            Frequency::ALWAYS  # no method!
+            raise_freq = Frequency::ALWAYS  # no method!
           end
+          [raise_freq, raise_type]
         end
 
         # Calculates all possible return types for a method call using CPA.
         def return_types_for_normal_call(receiver, method, args, ignore_privacy, block)
           possible_dispatches, cartesian = calculate_possible_templates(receiver, method, args, block)
           result = cpa_for_templates(possible_dispatches, cartesian)
-          raise_result = raisability_for_templates(possible_dispatches, cartesian, ignore_privacy)
+          raise_result, raise_type = raisability_for_templates(possible_dispatches, cartesian, ignore_privacy)
           if result.empty?
             raise TypeError.new("No methods named #{method} with matching types were found.")
           end
-          [Types::UnionType.new(result), raise_result]
+          [Types::UnionType.new(result), raise_result, raise_type]
         end
 
         # Evaluates the instruction, and if the constant value is lowered,
@@ -438,21 +461,21 @@ module Laser
             # n * 0 == 0
             if (receiver.value == 0 && is_numeric?(args.first)) ||
                (args.first.value == 0 && is_numeric?(receiver))
-              return [0, Types::FIXNUM, Frequency::NEVER]
+              return [0, Types::FIXNUM]
             elsif (args.first.value == 0 &&
                    uses_method?(receiver, ClassRegistry['String'].instance_method('*')))
-              return ['', Types::STRING, Frequency::NEVER]
+              return ['', Types::STRING]
             elsif (args.first.value == 0 &&
                    uses_method?(receiver, ClassRegistry['Array'].instance_method('*')))
-              return [[], Types::ARRAY, Frequency::NEVER]
+              return [[], Types::ARRAY]
             end
           elsif method_name == :**
             # n ** 0 == 1
             if args.first.value == 0 && is_numeric?(receiver)
-              return [1, Types::FIXNUM, Frequency::NEVER]
+              return [1, Types::FIXNUM]
             # 1 ** n == 1
             elsif receiver.value == 1 && is_numeric?(args.first)
-              return [1, Types::FIXNUM, Frequency::NEVER]
+              return [1, Types::FIXNUM]
             end
           elsif method_name == :===
             if LaserModule === receiver.value && args.first != UNDEFINED
@@ -460,9 +483,9 @@ module Laser
               module_type = Types::ClassType.new(receiver.value.path, :covariant)
               result = Types.subtype?(instance_type, module_type)
               if result
-                return [true, Types::TRUECLASS, Frequency::NEVER]
+                return [true, Types::TRUECLASS]
               elsif !(Types.overlap?(instance_type, module_type))
-                return [false, Types::FALSECLASS, Frequency::NEVER]
+                return [false, Types::FALSECLASS]
               end
             end
           elsif method_name == :instance_variable_get
@@ -470,7 +493,7 @@ module Laser
               klass = LaserObject === receiver.value ? receiver.normal_class : receiver.expr_type.possible_classes.first
               ivar = klass.instance_variable(args.first.value)
               ivar.uses.add(instruction)
-              return [VARYING, ivar.expr_type, Frequency::NEVER]
+              return [VARYING, ivar.expr_type]
             end
           elsif method_name == :instance_variable_set
             if args.first.value != UNDEFINED && args.first.value != VARYING
@@ -479,7 +502,7 @@ module Laser
               unless Types.subtype?(args[1].expr_type, ivar.expr_type)
                 ivar.inferred_type = Types::UnionType.new([args[1].expr_type, ivar.expr_type])
               end
-              return [args[1].value, ivar.expr_type, Frequency::NEVER]
+              return [args[1].value, ivar.expr_type]
             end
           elsif receiver == ClassRegistry['Laser#Magic'].binding
             magic_result, magic_type, magic_raises = cp_magic(instruction, method_name, *args)
@@ -491,7 +514,7 @@ module Laser
                  (uses_method?(receiver, ClassRegistry['Kernel'].instance_method('block_given?')))) # and check no block
             return cp_magic(instruction, :current_block)
           end
-          [INAPPLICABLE, Frequency::MAYBE]
+          [INAPPLICABLE, Types::EMPTY]
         end
         
         def allow_impure_method?(method)
@@ -501,32 +524,37 @@ module Laser
         def cp_magic(instruction, method_name, *args)
           case method_name
           when :current_self
-            return [VARYING, real_self_type, Frequency::NEVER]
+            return [VARYING, real_self_type]
           when :current_argument
-            return [VARYING, real_formal_type(args[0].value), Frequency::NEVER]
+            return [VARYING, real_formal_type(args[0].value)]
           when :current_argument_range
-            return [VARYING, Types::ARRAY, Frequency::NEVER]
+            return [VARYING, Types::ARRAY]
           when :current_arity
-            return [VARYING, Types::FIXNUM, Frequency::NEVER]
+            return [VARYING, Types::FIXNUM]
           when :current_block
             if real_block_type == Types::NILCLASS
-              return [nil, Types::NILCLASS, Frequency::NEVER]
+              return [nil, Types::NILCLASS]
             else
-              return [VARYING, real_block_type, Frequency::NEVER]
+              return [VARYING, real_block_type]
             end
           when :current_exception
-            return [VARYING, Types::EMPTY, Frequency::NEVER]
+            return [VARYING, Types::EMPTY]
+          when :get_just_raised_exception
+            # Actually assigned to by the call's raisability-inference.
+            # return current state.
+            result_holder = instruction[1]
+            return [result_holder.value, result_holder.expr_type]
           when :get_global
             global = Scope::GlobalScope.lookup(args[0].value)
             global.uses.add(instruction)
-            return [VARYING, global.expr_type, Frequency::NEVER]
+            return [VARYING, global.expr_type]
           when :set_global
             if args[1].value != UNDEFINED
               global = Scope::GlobalScope.lookup(args[0].value)
               unless Types.subtype?(args[1].expr_type, global.expr_type)
                 global.inferred_type = Types::UnionType.new([args[1].expr_type, global.expr_type])
               end
-              return [VARYING, global.expr_type, Frequency::NEVER]
+              return [VARYING, global.expr_type]
             end
           when :responds?
             name = args[1].value
@@ -538,16 +566,16 @@ module Laser
               end
             end
             if seen_yes && !seen_no
-              return [true, Types::TRUECLASS, Frequency::NEVER]
+              return [true, Types::TRUECLASS]
             elsif !seen_yes && seen_no
-              return [false, Types::FALSECLASS, Frequency::NEVER]
+              return [false, Types::FALSECLASS]
             elsif seen_yes && seen_no
-              return [VARYING, Types::BOOLEAN, Frequency::NEVER]
+              return [VARYING, Types::BOOLEAN]
             else  # receiver's type is empty. YAGNI?
-              return [false, Types::FALSECLASS, Frequency::NEVER]
+              return [false, Types::FALSECLASS]
             end
           end
-          [INAPPLICABLE, nil, Frequency::MAYBE]
+          [INAPPLICABLE, nil]
         end
       end  # ConstantPropagation
     end  # ControlFlow

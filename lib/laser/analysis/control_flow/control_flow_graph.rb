@@ -156,7 +156,7 @@ module Laser
         end
 
         def raise_type
-          if all_failure_postdominator.real_predecessors.empty?
+          if !all_failure_postdominator || all_failure_postdominator.real_predecessors.empty?
             Types::EMPTY
           else
             @final_exception.expr_type

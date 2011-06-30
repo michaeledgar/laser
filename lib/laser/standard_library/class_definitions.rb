@@ -215,9 +215,6 @@ module Kernel
   end
   def autoload(sym, path)
   end
-  # raises: always
-  def raise(msg_or_instance=nil, message='', callback=caller)
-  end
   alias fail raise
   # predictable: false
   # returns: String=

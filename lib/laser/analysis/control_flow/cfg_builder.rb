@@ -92,6 +92,12 @@ module Laser
               :current_exception, value: true, raise: false)
           copy_instruct(@exception_register, cur_exception)
         end
+        
+        def observe_just_raised_exception
+          cur_exception = call_instruct(ClassRegistry['Laser#Magic'].binding,
+              :get_just_raised_exception, value: true, raise: false)
+          copy_instruct(@exception_register, cur_exception)
+        end
 
         def build_exception_blocks
           @return_register = create_temporary('t#return_value')
@@ -1977,7 +1983,7 @@ module Laser
           fail_block = create_block
           @graph.add_edge(@current_block, fail_block, RGL::ControlFlowGraph::EDGE_ABNORMAL)
           with_current_basic_block(fail_block) do
-            reobserve_current_exception
+            observe_just_raised_exception
             uncond_instruct current_rescue, flags: RGL::ControlFlowGraph::EDGE_ABNORMAL
           end
           uncond_instruct create_block, jump_instruct: false if add_success_branch
