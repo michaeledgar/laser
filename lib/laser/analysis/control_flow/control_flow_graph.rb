@@ -177,6 +177,14 @@ module Laser
           @self_type = new_self_type
         end
 
+        def bound_argument_types?
+          !!@formal_types
+        end
+
+        def bound_arity
+          @formal_types.size
+        end
+
         def real_formal_type(idx)
           (@formal_types && @formal_types[idx]) || Types::TOP
         end

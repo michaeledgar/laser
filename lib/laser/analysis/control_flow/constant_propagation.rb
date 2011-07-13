@@ -623,9 +623,20 @@ module Laser
           when :current_argument
             return [VARYING, real_formal_type(args[0].value)]
           when :current_argument_range
-            return [VARYING, Types::ARRAY]
+            if bound_argument_types?
+              tuple_args = ((args[0].value)...(args[0].value + args[1].value)).map do |num|
+                real_formal_type(num)
+              end
+              return [VARYING, Types::TupleType.new(tuple_args)]
+            else
+              return [VARYING, Types::ARRAY]
+            end
           when :current_arity
-            return [VARYING, Types::FIXNUM]
+            if bound_argument_types?
+              return [bound_arity, Types::FIXNUM]
+            else
+              return [VARYING, Types::FIXNUM]
+            end
           when :current_block
             if real_block_type == Types::NILCLASS
               return [nil, Types::NILCLASS]

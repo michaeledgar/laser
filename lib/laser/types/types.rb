@@ -222,6 +222,22 @@ module Laser
         element_types[idx]
       end
       
+      def possible_classes
+        ::Set[ClassRegistry['Array']]
+      end
+
+      def member_types
+        [self]
+      end
+      
+      def public_matching_methods(name)
+        Types::ARRAY.public_matching_methods(name)
+      end
+      
+      def matching_methods(name)
+        Types::ARRAY.matching_methods(name)
+      end
+      
       def signature
         {element_types: element_types}
       end
