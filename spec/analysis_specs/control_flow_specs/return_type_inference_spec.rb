@@ -12,10 +12,10 @@ EOF
     method = ClassRegistry['CPSim2'].singleton_class.instance_method('multiply')
     method.return_type_for_types(
         Utilities.type_for(ClassRegistry['CPSim2']), 
-        [Types::FIXNUM, Types::FLOAT]).should == Types::UnionType.new([Types::FLOAT])
+        [Types::FIXNUM, Types::FLOAT]).should equal_type Types::UnionType.new([Types::FLOAT])
     method.return_type_for_types(
         Utilities.type_for(ClassRegistry['CPSim2']),
-        [Types::FIXNUM, Types::FIXNUM]).should == Types::UnionType.new([Types::FIXNUM, Types::BIGNUM])
+        [Types::FIXNUM, Types::FIXNUM]).should equal_type Types::UnionType.new([Types::FIXNUM, Types::BIGNUM])
   end
 
   it 'should infer type errors on methods with specified overloads' do
@@ -54,7 +54,7 @@ end
 EOF
     ClassRegistry['CPSim4'].singleton_class.instance_method('bar').
         return_type_for_types(
-          Utilities.type_for(ClassRegistry['CPSim4'])).should == Types::BOOLEAN
+          Utilities.type_for(ClassRegistry['CPSim4'])).should equal_type Types::BOOLEAN
   end
 
   it 'should infer the type resulting from Class#new' do
@@ -75,7 +75,7 @@ EOF
     ClassRegistry['CPSim5'].singleton_class.instance_method('make_a_foo').
         return_type_for_types(
           Utilities.type_for(ClassRegistry['CPSim5']),
-          [Types::FIXNUM, Types::FLOAT]).should == result
+          [Types::FIXNUM, Types::FLOAT]).should equal_type result
   end
 
   it 'should infer types based on SSA, when appropriate' do
@@ -94,7 +94,7 @@ EOF
     result = Types::UnionType.new([Types::FIXNUM, Types::BIGNUM, Types::STRING])
     ClassRegistry['CPSim6'].singleton_class.instance_method('multiply').
         return_type_for_types(
-          Utilities.type_for(ClassRegistry['CPSim6'])).should == result
+          Utilities.type_for(ClassRegistry['CPSim6'])).should equal_type result
   end
 
   it 'should improve type inference due to SSA, when appropriate' do
@@ -114,7 +114,7 @@ end
 EOF
     ClassRegistry['CPSim7'].singleton_class.instance_method('multiply').
         return_type_for_types(
-          Utilities.type_for(ClassRegistry['CPSim7'])).should == Types::FLOAT
+          Utilities.type_for(ClassRegistry['CPSim7'])).should equal_type Types::FLOAT
   end
 
   it 'should handle, via SSA, uninitialized variable types' do
@@ -130,8 +130,8 @@ end
 EOF
     ClassRegistry['CPSim8'].singleton_class.instance_method('switch').
         return_type_for_types(
-          Utilities.type_for(ClassRegistry['CPSim8'])).should ==
-            Types::UnionType.new([Types::STRING, Types::NILCLASS])
+          Utilities.type_for(ClassRegistry['CPSim8'])).should equal_type(
+            Types::UnionType.new([Types::STRING, Types::NILCLASS]))
   end
   
   it 'should warn against certain methods with improper return types' do
@@ -167,16 +167,16 @@ EOF
     # First, qux should give nil
     ClassRegistry['CPSim9'].singleton_class.instance_method('qux').
         return_type_for_types(
-          Utilities.type_for(ClassRegistry['CPSim9']), [Types::STRING]).should == Types::NILCLASS
+          Utilities.type_for(ClassRegistry['CPSim9']), [Types::STRING]).should equal_type Types::NILCLASS
     expected_type = Types::UnionType.new(
         [Types::STRING, Types::FIXNUM, Types::BIGNUM, Types::NILCLASS])
     ClassRegistry['CPSim9'].singleton_class.instance_method('bar').
         return_type_for_types(
-          Utilities.type_for(ClassRegistry['CPSim9'])).should == expected_type
-    Scope::GlobalScope.lookup('$sim9').expr_type.should == expected_type
+          Utilities.type_for(ClassRegistry['CPSim9'])).should equal_type expected_type
+    Scope::GlobalScope.lookup('$sim9').expr_type.should equal_type expected_type
     ClassRegistry['CPSim9'].singleton_class.instance_method('qux').
         return_type_for_types(
-          Utilities.type_for(ClassRegistry['CPSim9']), [Types::STRING]).should == expected_type
+          Utilities.type_for(ClassRegistry['CPSim9']), [Types::STRING]).should equal_type expected_type
   end
   
   it 'should collect inferred types in instance variables by class' do
@@ -199,27 +199,24 @@ class TI2
 end
 EOF
     ClassRegistry['TI1'].instance_method('get_foo').return_type_for_types(
-        ClassRegistry['TI1'].as_type).should == Types::NILCLASS
+        ClassRegistry['TI1'].as_type).should equal_type Types::NILCLASS
     ClassRegistry['TI1'].instance_method('set_foo').return_type_for_types(
-        ClassRegistry['TI1'].as_type, [Types::STRING]).should ==
-          Types::STRING
+        ClassRegistry['TI1'].as_type, [Types::STRING]).should equal_type Types::STRING
     ClassRegistry['TI1'].instance_method('get_foo').return_type_for_types(
-        ClassRegistry['TI1'].as_type).should ==
-          Types::UnionType.new([Types::NILCLASS, Types::STRING])
+        ClassRegistry['TI1'].as_type).should equal_type(
+          Types::UnionType.new([Types::NILCLASS, Types::STRING]))
     ClassRegistry['TI1'].instance_method('set_foo').return_type_for_types(
-        ClassRegistry['TI1'].as_type, [Types::FIXNUM]).should ==
-         Types::FIXNUM
+        ClassRegistry['TI1'].as_type, [Types::FIXNUM]).should equal_type Types::FIXNUM
     ClassRegistry['TI1'].instance_method('get_foo').return_type_for_types(
-        ClassRegistry['TI1'].as_type).should ==
-          Types::UnionType.new([Types::NILCLASS, Types::STRING, Types::FIXNUM])
+        ClassRegistry['TI1'].as_type).should equal_type(
+          Types::UnionType.new([Types::NILCLASS, Types::STRING, Types::FIXNUM]))
     
     ClassRegistry['TI2'].instance_method('get_foo').return_type_for_types(
-        ClassRegistry['TI2'].as_type).should == Types::NILCLASS
+        ClassRegistry['TI2'].as_type).should equal_type Types::NILCLASS
     ClassRegistry['TI2'].instance_method('set_foo').return_type_for_types(
-        ClassRegistry['TI2'].as_type, [Types::FIXNUM]).should ==
-          Types::FIXNUM
+        ClassRegistry['TI2'].as_type, [Types::FIXNUM]).should equal_type Types::FIXNUM
     ClassRegistry['TI2'].instance_method('get_foo').return_type_for_types(
-        ClassRegistry['TI2'].as_type).should ==
-          Types::UnionType.new([Types::NILCLASS, Types::FIXNUM])
+        ClassRegistry['TI2'].as_type).should equal_type(
+          Types::UnionType.new([Types::NILCLASS, Types::FIXNUM]))
   end
 end

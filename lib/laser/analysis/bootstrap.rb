@@ -54,7 +54,10 @@ module Laser
         object_class.instance_eval { @klass = class_class }
         module_class.instance_eval { @klass = class_class }
         class_class.instance_eval { @klass = class_class }
+        
+        # Bootstrap order: core classes, then methods
         bootstrap_literals
+        stub_core_methods
       rescue StandardError => err
         new_exception = BootstrappingError.new("Bootstrapping failed: #{err.message}")
         new_exception.set_backtrace(err.backtrace)
@@ -133,8 +136,6 @@ module Laser
         stub_toplevel_class 'LaserSuperclassMismatchError', 'LaserTypeErrorWrapper'
         
         stub_toplevel_class 'IO'  # TODO(adgar): includes File::Constants and Enumerable...
-
-        stub_core_methods
       end
       
       def self.stub_core_methods
@@ -165,12 +166,12 @@ module Laser
         stub_method(class_class.singleton_class, 'new', builtin: true, pure: true)
         stub_method(class_class, 'superclass', builtin: true, pure: true, annotated_raise_frequency: Frequency::NEVER)
         stub_method(class_class, 'new')
-        allocate_method = stub_method(class_class, 'allocate', special: true, pure: true)
+        allocate_method = stub_method(class_class, 'allocate', special: true, pure: true, annotated_raise_frequency: Frequency::NEVER)
         def allocate_method.return_type_for_types(self_type, arg_types, block_type)
           unless arg_types.empty? && block_type == Types::NILCLASS
             raise TypeError.new("Class#allocate takes no arguments and no block")
           end
-          Types::ClassType.new(self_type.possible_classes.first.get_instance.path, :invariant)
+          Types::ClassObjectType.new(self_type.possible_classes.first.get_instance)
         end
         stub_method(module_class, 'define_method', builtin: true, pure: true, mutation: true)
         stub_method(module_class, 'define_method_with_annotations', builtin: true, pure: true, mutation: true)

@@ -12,8 +12,8 @@ end
 EOF
     method = ClassRegistry['RI1'].instance_method('tap_10')
     method.raise_type_for_types(
-        Utilities.type_for(ClassRegistry['RI1'])).should ==
-          Types::UnionType.new([Types::ClassType.new('LocalJumpError', :invariant)])
+        Utilities.type_for(ClassRegistry['RI1'])).should equal_type(
+          Types::UnionType.new([Types::ClassType.new('LocalJumpError', :invariant)]))
   end
   
   it 'should infer types based on raising a string' do
@@ -26,8 +26,8 @@ end
 EOF
     method = ClassRegistry['RI2'].instance_method('raise_string')
     method.raise_type_for_types(
-        Utilities.type_for(ClassRegistry['RI2'])).should ==
-          Types::UnionType.new([Types::ClassType.new('RuntimeError', :invariant)])
+        Utilities.type_for(ClassRegistry['RI2'])).should equal_type(
+          Types::UnionType.new([Types::ClassType.new('RuntimeError', :invariant)]))
   end
 
   it 'should infer types based on raising an Exception class' do
@@ -40,8 +40,8 @@ end
 EOF
     method = ClassRegistry['RI3'].instance_method('raise_class')
     method.raise_type_for_types(
-        Utilities.type_for(ClassRegistry['RI3'])).should ==
-          Types::UnionType.new([Types::ClassType.new('TypeError', :invariant)])
+        Utilities.type_for(ClassRegistry['RI3'])).should equal_type(
+          Types::UnionType.new([Types::ClassType.new('TypeError', :invariant)]))
   end
 
   it 'should infer types based on raising an Exception instance' do
@@ -54,7 +54,7 @@ end
 EOF
     method = ClassRegistry['RI4'].instance_method('raise_instance')
     method.raise_type_for_types(
-        Utilities.type_for(ClassRegistry['RI4'])).should ==
-          Types::UnionType.new([Types::ClassType.new('ArgumentError', :invariant)])
+        Utilities.type_for(ClassRegistry['RI4'])).should equal_type(
+          Types::UnionType.new([Types::ClassType.new('ArgumentError', :invariant)]))
   end
 end

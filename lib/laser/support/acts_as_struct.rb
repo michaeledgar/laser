@@ -52,7 +52,15 @@ module Laser
       define_method(:values) { keys.map { |member| send member } }
       define_method(:keys) { all_members }
       define_method(:each) { |&blk| keys_and_values.each { |k, v| blk.call([k, v]) } }
-      define_method(:"<=>") { |other| values <=> other.values }
+      define_method(:'<=>') do |other|
+        each do |key, value|
+          res = (value <=> other.send(key))
+          if res != 0
+            return res
+          end
+        end
+        0
+      end
     end
   end
 end

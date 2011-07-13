@@ -495,7 +495,7 @@ def foo(x)
 end
 EOF
     g.should have_constant('c').with_value(5)
-    g.return_type.should == Types::FIXNUM
+    g.return_type.should equal_type Types::FIXNUM
   end
 
   it 'should always simulate annotated-pure methods' do
@@ -516,8 +516,10 @@ end
 EOF
     g2.should have_constant('z1').with_value(3)
     g2.should have_constant('z2').with_value('foo')
-    g2.return_type.should == Types::STRING
-    ClassRegistry['CPSim1'].singleton_class.instance_method('make').return_type_for_types(Utilities.type_for(ClassRegistry['CPSim1']), [Types::FIXNUM, Types::STRING], Types::NILCLASS).should == Types::UnionType.new([Types::HASH])
+    g2.return_type.should equal_type Types::STRING
+    ClassRegistry['CPSim1'].singleton_class.instance_method('make').
+        return_type_for_types(Utilities.type_for(ClassRegistry['CPSim1']),
+          [Types::FIXNUM, Types::STRING], Types::NILCLASS).should equal_type(Types::UnionType.new([Types::HASH]))
   end
   
   it 'should handle the tricky x = y unless defined? x case' do

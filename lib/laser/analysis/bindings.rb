@@ -71,7 +71,7 @@ module Laser
         end
         
         def expr_type
-          Types::ClassType.new('Proc', :invariant)
+          Types::ClassObjectType.new('Proc')
         end
       end
 

@@ -7,7 +7,7 @@ module Laser
       end
 
       def type_for(arg, variance=:invariant)
-        Types::ClassType.new(klass_for(arg).path, variance)
+        Types::ClassObjectType.new(klass_for(arg))
       end
       
       def normal_class_for(arg)

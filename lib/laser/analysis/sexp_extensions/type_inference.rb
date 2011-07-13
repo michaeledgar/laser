@@ -7,33 +7,33 @@ module Laser::SexpAnalysis
         case self.type
         when :string_literal, :@CHAR, :@tstring_content, :string_embexpr, :string_content,
              :xstring_literal
-          Types::ClassType.new('String', :invariant)
+          Types::ClassObjectType.new('String')
         when :@int
           Types::ClassType.new('Integer', :covariant)
         when :@float
-          Types::ClassType.new('Float', :invariant)
+          Types::ClassObjectType.new('Float')
         when :regexp_literal
-          @expr_type ||= Types::ClassType.new('Regexp', :invariant)
+          @expr_type ||= Types::ClassObjectType.new('Regexp')
         when :hash, :bare_assoc_hash
-          @expr_type ||= Types::ClassType.new('Hash', :invariant)
+          @expr_type ||= Types::ClassObjectType.new('Hash')
         when :symbol_literal, :dyna_symbol, :@label
-          Types::ClassType.new('Symbol', :invariant)
+          Types::ClassObjectType.new('Symbol')
         when :array
-          Types::ClassType.new('Array', :invariant)
+          Types::ClassObjectType.new('Array')
         when :dot2, :dot3 
-          Types::ClassType.new('Range', :invariant)
+          Types::ClassObjectType.new('Range')
         when :lambda 
-          Types::ClassType.new('Proc', :invariant)
+          Types::ClassObjectType.new('Proc')
         when :var_ref
           ref = self[1]
           if ref.type == :@kw && ref.expanded_identifier != 'self'
             case ref[1]
-            when 'nil' then Types::ClassType.new('NilClass', :invariant)
-            when 'true' then Types::ClassType.new('TrueClass', :invariant)
-            when 'false' then Types::ClassType.new('FalseClass', :invariant)
-            when '__FILE__' then Types::ClassType.new('String', :invariant)
-            when '__LINE__' then Types::ClassType.new('Fixnum', :invariant)
-            when '__ENCODING__' then Types::ClassType.new('Encoding', :invariant)
+            when 'nil' then Types::ClassObjectType.new('NilClass')
+            when 'true' then Types::ClassObjectType.new('TrueClass')
+            when 'false' then Types::ClassObjectType.new('FalseClass')
+            when '__FILE__' then Types::ClassObjectType.new('String')
+            when '__LINE__' then Types::ClassObjectType.new('Fixnum')
+            when '__ENCODING__' then Types::ClassObjectType.new('Encoding')
             end
           else
             self.scope.lookup(expanded_identifier).expr_type rescue Types::TOP

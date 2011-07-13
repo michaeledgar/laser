@@ -114,6 +114,7 @@ module Laser
             end
             if raise_changed && instruction == block.instructions.last
               raise_capture_insn = instruction.block.exception_successors.first.instructions.first
+              raise_capture_insn[1].bind!(VARYING)
               raise_capture_insn[1].inferred_type = instruction.raise_type
               add_target_uses_to_worklist raise_capture_insn, worklist
             end
@@ -212,7 +213,7 @@ module Laser
             new_value = UNDEFINED
             new_type = Types::TOP
             raised = Frequency::ALWAYS  # NoMethodError
-            raise_type = Types::UnionType.new([Types::ClassType.new('NoMethodError', :invariant)])
+            raise_type = Types::UnionType.new([Types::ClassObjectType.new('NoMethodError')])
           elsif method && (@_cp_fixed_methods.has_key?(method))
             result = @_cp_fixed_methods[method]
             new_value = result
@@ -256,7 +257,101 @@ module Laser
                 new_value = UNDEFINED
                 new_type = Types::TOP
                 raised = Frequency::ALWAYS
-                raise_type = Types::UnionType.new([Types::ClassType.new(err.class.name, :invariant)])
+                raise_type = Types::UnionType.new([Types::ClassObjectType.new(err.class.name)])
+              end
+            else
+              new_value = VARYING
+              new_type, raised, raise_type = infer_type_and_raising(instruction, receiver, method_name, args)
+            end
+          else
+            # all components constant, nothing changed, shouldn't happen, but okay
+            new_value = original
+            new_type = old_type
+            raised = instruction.raise_frequency
+            raise_type = instruction.raise_type
+          end
+          # At this point, we should prune raise edges!
+          if original != new_value
+            target.bind! new_value
+            changed = true
+          end
+          if old_type != new_type
+            target.inferred_type = new_type
+            changed = true
+          end
+          if raise_type != old_raise_type
+            instruction.raise_type = raise_type
+            raise_changed = true
+          end
+          [changed, raised, raise_changed]
+        end
+        
+        def constant_propagation_for_call_vararg(instruction)
+          target = instruction[1] || cp_cell_for(instruction)
+          original = target.value
+          old_type = target.inferred_type
+          old_raise_type = instruction.raise_type
+
+          receiver, method_name, args, opts = instruction[2..-1]
+          components = [receiver, args]
+
+          if components.any? { |arg| arg.value == UNDEFINED }
+            # cannot evaluate unless all args and receiver are defined
+            return [false, :unknown]
+          end
+          # check purity
+          methods = instruction.possible_methods
+          # Require precise resolution
+          method = methods.size == 1 ? methods.first : nil
+          if methods.empty?
+            new_value = UNDEFINED
+            new_type = Types::TOP
+            raised = Frequency::ALWAYS  # NoMethodError
+            raise_type = Types::UnionType.new([Types::ClassObjectType.new('NoMethodError')])
+          elsif method && (@_cp_fixed_methods.has_key?(method))
+            result = @_cp_fixed_methods[method]
+            new_value = result
+            new_type = Utilities.type_for(result)
+            raised = Frequency::NEVER
+            raise_type = Types::EMPTY
+          elsif (special_result, special_type =
+                 apply_special_case(instruction, receiver, method_name, *args);
+                 special_result != INAPPLICABLE)
+            new_value = special_result
+            new_type = special_type
+            raised = Frequency::NEVER
+            raise_type = Types::EMPTY
+          elsif components.any? { |arg| arg.value == VARYING }
+            new_value = VARYING
+            if components.all? { |arg| arg.value != UNDEFINED }
+              new_type, raised, raise_type = infer_type_and_raising(instruction, receiver, method_name, args)
+            else
+              new_type = Types::TOP
+              raised = Frequency::MAYBE
+              raise_type = Types::EMPTY
+            end
+          # All components constant, and never evaluated before.
+          elsif original == UNDEFINED && (!opts || !opts[:block])
+            if method && (method.pure || allow_impure_method?(method))
+              real_receiver = receiver.value
+              begin
+                if method.builtin
+                  result = real_receiver.send(method_name, *args.value)
+                else
+                  result = method.simulate_with_args(real_receiver, args.value, nil, {mutation: true})
+                end
+                new_value = result
+                new_type = Utilities.type_for(result)
+                raised = Frequency::NEVER
+                raise_type = Types::EMPTY
+              rescue BasicObject => err
+                # any exception caught - this is an extremely unsafe rescue handler - means my
+                # simulation *MUST NOT* raise or I will conflate user-level raises
+                # with my own
+                new_value = UNDEFINED
+                new_type = Types::TOP
+                raised = Frequency::ALWAYS
+                raise_type = Types::UnionType.new([Types::ClassObjectType.new(err.class.name)])
               end
             else
               new_value = VARYING
@@ -292,7 +387,7 @@ module Laser
           rescue TypeError => err
             type = Types::TOP
             raise_freq = Frequency::ALWAYS
-            raise_type = Types::UnionType.new([Types::ClassType.new('TypeError', :invariant)])
+            raise_type = Types::UnionType.new([Types::ClassObjectType.new('TypeError')])
             instruction.node.add_error(NoMatchingTypeSignature.new(
                 "No method named #{method_name} with matching types was found", instruction.node))
           end

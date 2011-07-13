@@ -95,6 +95,53 @@ module Laser
       end
     end
     
+    class ClassObjectType < Base
+      attr_reader :class_object
+      def initialize(class_object)
+        if String === class_object
+          @class_object = SexpAnalysis::ClassRegistry[class_object]
+        else
+          @class_object = class_object
+        end
+      end
+
+      def ==(other)
+        Types::equal?(self, other)
+      end
+
+      def inspect
+        "#<ClassObjectType: #{class_object.name}>"
+      end
+      
+      def member_types
+        [self]
+      end
+      
+      def possible_classes
+        Set[class_object]
+      end
+      
+      def matching_methods(name)
+        [*class_object.instance_method(name)]
+      end
+      
+      def public_matching_methods(name)
+        [*class_object.public_instance_method(name)]
+      end
+      
+      def class_name
+        class_object.name
+      end
+      
+      def variance
+        :invariant
+      end
+      
+      def signature
+        {class_name: class_object.name, variance: :invariant}
+      end
+    end
+    
     class ClassType < Base
       acts_as_struct :class_name, :variance
       def inspect
@@ -136,16 +183,16 @@ module Laser
     end
 
     TOP = ClassType.new('BasicObject', :covariant)
-    STRING = ClassType.new('String', :invariant)
-    FIXNUM = ClassType.new('Fixnum', :invariant)
-    BIGNUM = ClassType.new('Bignum', :invariant)
-    FLOAT = ClassType.new('Float', :invariant)
-    ARRAY = ClassType.new('Array', :invariant)
-    HASH = ClassType.new('Hash', :invariant)
-    PROC = ClassType.new('Proc', :invariant)
-    NILCLASS = ClassType.new('NilClass', :invariant)
-    TRUECLASS = ClassType.new('TrueClass', :invariant)
-    FALSECLASS = ClassType.new('FalseClass', :invariant)
+    STRING = ClassObjectType.new('String')
+    FIXNUM = ClassObjectType.new('Fixnum')
+    BIGNUM = ClassObjectType.new('Bignum')
+    FLOAT = ClassObjectType.new('Float')
+    ARRAY = ClassObjectType.new('Array')
+    HASH = ClassObjectType.new('Hash')
+    PROC = ClassObjectType.new('Proc')
+    NILCLASS = ClassObjectType.new('NilClass')
+    TRUECLASS = ClassObjectType.new('TrueClass')
+    FALSECLASS = ClassObjectType.new('FalseClass')
     FALSY = UnionType.new([FALSECLASS, NILCLASS])
     BOOLEAN = UnionType.new([TRUECLASS, FALSECLASS])
     BLOCK = UnionType.new([PROC, NILCLASS])

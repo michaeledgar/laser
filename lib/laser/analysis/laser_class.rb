@@ -208,13 +208,14 @@ module Laser
       %w(< <= >= >).each do |op|
         class_eval %Q{
           def #{op}(other)
-            (self <=> other) #{op} 0
+            cmp = self <=> other
+            cmp && cmp #{op} 0
           end
         }
       end
 
       def as_type
-        Types::ClassType.new(self.path, :invariant)
+        Types::ClassObjectType.new(self)
       end
 
       def name_set?
@@ -820,9 +821,24 @@ module Laser
       
       def raise_type_for_types(self_type, arg_types = [], block_type = nil)
         block_type ||= Types::NILCLASS
-        return self.raises if raises
-        return Types::TOP if builtin || special
-        cfg_for_types(self_type, arg_types, block_type).raise_type
+        Laser.debug_puts("Calculating raise type for #{owner.name}##{name} with types "+
+                         "#{self_type.inspect} #{arg_types.inspect} #{block_type.inspect}")
+        if raises
+          Laser.debug_puts("Raise type is annotated: #{self.raises.inspect}")
+          return self.raises 
+        end
+        if builtin || special
+          if annotated_raise_frequency == Frequency::NEVER
+            self.raises = Types::EMPTY
+            Laser.debug_puts("Raise type is annotated: #{self.raises.inspect}")
+            return self.raises
+          end
+          Laser.debug_puts("Builtin/special: Types::TOP")
+          return Types::TOP
+        end
+        cfg_for_types(self_type, arg_types, block_type).raise_type.tap do |result|
+          Laser.debug_puts("Calculating from CFG: #{result.inspect}")
+        end
       end
       
       def return_type_for_types(self_type, arg_types = [], block_type = nil)

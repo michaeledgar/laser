@@ -18,6 +18,13 @@ module Laser
 end
 
 include Laser::SexpAnalysis
+
+RSpec::Matchers.define :equal_type do |type|
+  match do |orig|
+    Types::equal?(orig, type)
+  end
+end
+
 RSpec::Matchers.define :see_var do |name|
   match do |node|
     node.scope.sees_var?(name)
@@ -35,7 +42,7 @@ end
 RSpec::Matchers.define :parse_to do |output|
   match do |actual|
     @result = Parsers::AnnotationParser.new.parse(actual, root: :type)
-    @result && @result.type == output
+    @result && (@result.type == output)
   end
   
   failure_message_for_should do |actual|
