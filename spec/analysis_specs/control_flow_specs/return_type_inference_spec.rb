@@ -3,24 +3,24 @@ require_relative 'spec_helper'
 describe 'CFG-based return type inference' do
   it 'should infer types based on specified overloads' do
     g = cfg <<-EOF
-module CPSim2
+module RTI2
   def self.multiply(x, y)
     x * y
   end
 end
 EOF
-    method = ClassRegistry['CPSim2'].singleton_class.instance_method('multiply')
+    method = ClassRegistry['RTI2'].singleton_class.instance_method('multiply')
     method.return_type_for_types(
-        Utilities.type_for(ClassRegistry['CPSim2']), 
+        Utilities.type_for(ClassRegistry['RTI2']), 
         [Types::FIXNUM, Types::FLOAT]).should equal_type Types::UnionType.new([Types::FLOAT])
     method.return_type_for_types(
-        Utilities.type_for(ClassRegistry['CPSim2']),
+        Utilities.type_for(ClassRegistry['RTI2']),
         [Types::FIXNUM, Types::FIXNUM]).should equal_type Types::UnionType.new([Types::FIXNUM, Types::BIGNUM])
   end
 
   it 'should infer type errors on methods with specified overloads' do
     g = cfg <<-EOF
-module CPSim3
+module RTI3
   def self.sim3
     if gets.size > 2
       x = 'hi'
@@ -31,15 +31,15 @@ module CPSim3
   end
 end
 EOF
-   ClassRegistry['CPSim3'].singleton_class.instance_method('sim3').
+   ClassRegistry['RTI3'].singleton_class.instance_method('sim3').
        return_type_for_types(
-         Utilities.type_for(ClassRegistry['CPSim3'])).should == nil
+         Utilities.type_for(ClassRegistry['RTI3'])).should == nil
    g.should have_error(NoMatchingTypeSignature).on_line(8).with_message(/\*/)
   end
 
   it 'should infer the type resulting from a simple chain of standard-library methods' do
     g = cfg <<-EOF
-module CPSim4
+module RTI4
   def self.bar
     x = gets
     qux(baz(x))
@@ -52,14 +52,14 @@ module CPSim4
   end
 end
 EOF
-    ClassRegistry['CPSim4'].singleton_class.instance_method('bar').
+    ClassRegistry['RTI4'].singleton_class.instance_method('bar').
         return_type_for_types(
-          Utilities.type_for(ClassRegistry['CPSim4'])).should equal_type Types::BOOLEAN
+          Utilities.type_for(ClassRegistry['RTI4'])).should equal_type Types::BOOLEAN
   end
 
   it 'should infer the type resulting from Class#new' do
     g = cfg <<-EOF
-module CPSim5
+module RTI5
   class Foo
     def initialize(x, y)
       @x = x
@@ -71,16 +71,16 @@ module CPSim5
   end
 end
 EOF
-    result = Types::UnionType.new([Types::ClassType.new('CPSim5::Foo', :invariant)])
-    ClassRegistry['CPSim5'].singleton_class.instance_method('make_a_foo').
+    result = Types::UnionType.new([Types::ClassType.new('RTI5::Foo', :invariant)])
+    ClassRegistry['RTI5'].singleton_class.instance_method('make_a_foo').
         return_type_for_types(
-          Utilities.type_for(ClassRegistry['CPSim5']),
+          Utilities.type_for(ClassRegistry['RTI5']),
           [Types::FIXNUM, Types::FLOAT]).should equal_type result
   end
 
   it 'should infer types based on SSA, when appropriate' do
     g = cfg <<-EOF
-module CPSim6
+module RTI6
   def self.multiply
     if $$ > 10
       a = 'hello'
@@ -92,14 +92,14 @@ module CPSim6
 end
 EOF
     result = Types::UnionType.new([Types::FIXNUM, Types::BIGNUM, Types::STRING])
-    ClassRegistry['CPSim6'].singleton_class.instance_method('multiply').
+    ClassRegistry['RTI6'].singleton_class.instance_method('multiply').
         return_type_for_types(
-          Utilities.type_for(ClassRegistry['CPSim6'])).should equal_type result
+          Utilities.type_for(ClassRegistry['RTI6'])).should equal_type result
   end
 
   it 'should improve type inference due to SSA, when appropriate' do
     g = cfg <<-EOF
-module CPSim7
+module RTI7
   def self.multiply
     if $$ > 10
       a = 'hello'
@@ -112,14 +112,14 @@ module CPSim7
   end
 end
 EOF
-    ClassRegistry['CPSim7'].singleton_class.instance_method('multiply').
+    ClassRegistry['RTI7'].singleton_class.instance_method('multiply').
         return_type_for_types(
-          Utilities.type_for(ClassRegistry['CPSim7'])).should equal_type Types::FLOAT
+          Utilities.type_for(ClassRegistry['RTI7'])).should equal_type Types::FLOAT
   end
 
   it 'should handle, via SSA, uninitialized variable types' do
     g = cfg <<-EOF
-class CPSim8
+class RTI8
   def self.switch
     if $$ > 10
       a = 'hello'
@@ -128,30 +128,30 @@ class CPSim8
   end
 end
 EOF
-    ClassRegistry['CPSim8'].singleton_class.instance_method('switch').
+    ClassRegistry['RTI8'].singleton_class.instance_method('switch').
         return_type_for_types(
-          Utilities.type_for(ClassRegistry['CPSim8'])).should equal_type(
+          Utilities.type_for(ClassRegistry['RTI8'])).should equal_type(
             Types::UnionType.new([Types::STRING, Types::NILCLASS]))
   end
   
   it 'should warn against certain methods with improper return types' do
     g = cfg <<-EOF
-class CPSim8
+class RTI8
   def to_s
     gets.strip!  # whoops, ! means nil sometimes
   end
 end
 EOF
-    ClassRegistry['CPSim8'].instance_method('to_s').
+    ClassRegistry['RTI8'].instance_method('to_s').
         return_type_for_types(
-          ClassRegistry['CPSim8'].as_type)  # force calculation
-    ClassRegistry['CPSim8'].instance_method('to_s').proc.ast_node.should(
+          ClassRegistry['RTI8'].as_type)  # force calculation
+    ClassRegistry['RTI8'].instance_method('to_s').proc.ast_node.should(
         have_error(ImproperOverloadTypeError).with_message(/to_s/))
   end
 
   it 'should collect inferred types in global variables' do
     g = cfg <<-EOF
-module CPSim9
+module RTI9
   def self.bar
     $sim9 = x = gets
     qux(baz(x))
@@ -165,18 +165,18 @@ module CPSim9
 end
 EOF
     # First, qux should give nil
-    ClassRegistry['CPSim9'].singleton_class.instance_method('qux').
+    ClassRegistry['RTI9'].singleton_class.instance_method('qux').
         return_type_for_types(
-          Utilities.type_for(ClassRegistry['CPSim9']), [Types::STRING]).should equal_type Types::NILCLASS
+          Utilities.type_for(ClassRegistry['RTI9']), [Types::STRING]).should equal_type Types::NILCLASS
     expected_type = Types::UnionType.new(
         [Types::STRING, Types::FIXNUM, Types::BIGNUM, Types::NILCLASS])
-    ClassRegistry['CPSim9'].singleton_class.instance_method('bar').
+    ClassRegistry['RTI9'].singleton_class.instance_method('bar').
         return_type_for_types(
-          Utilities.type_for(ClassRegistry['CPSim9'])).should equal_type expected_type
+          Utilities.type_for(ClassRegistry['RTI9'])).should equal_type expected_type
     Scope::GlobalScope.lookup('$sim9').expr_type.should equal_type expected_type
-    ClassRegistry['CPSim9'].singleton_class.instance_method('qux').
+    ClassRegistry['RTI9'].singleton_class.instance_method('qux').
         return_type_for_types(
-          Utilities.type_for(ClassRegistry['CPSim9']), [Types::STRING]).should equal_type expected_type
+          Utilities.type_for(ClassRegistry['RTI9']), [Types::STRING]).should equal_type expected_type
   end
   
   it 'should collect inferred types in instance variables by class' do
@@ -218,5 +218,22 @@ EOF
     ClassRegistry['TI2'].instance_method('get_foo').return_type_for_types(
         ClassRegistry['TI2'].as_type).should equal_type(
           Types::UnionType.new([Types::NILCLASS, Types::FIXNUM]))
+  end
+  
+  it 'should extract argument types from rest arguments' do
+    g = cfg <<-EOF
+class RTI11
+  def foo(*args)
+    args[0]
+  end
+  def bar(*args)
+    args[1]
+  end
+end
+EOF
+    ClassRegistry['RTI11'].instance_method('foo').return_type_for_types(
+      ClassRegistry['RTI11'].as_type, [Types::FIXNUM, Types::PROC]).should equal_type Types::FIXNUM
+    ClassRegistry['RTI11'].instance_method('bar').return_type_for_types(
+      ClassRegistry['RTI11'].as_type, [Types::FIXNUM, Types::PROC]).should equal_type Types::PROC
   end
 end

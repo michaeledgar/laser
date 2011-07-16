@@ -85,8 +85,8 @@ describe Types do
   describe Types::ClassType do
     describe '#possible_classes' do
       it 'should find subclasses if the ClassType is covariant and is a Class' do
-        Types::ClassType.new('Integer', :covariant).possible_classes.should ==
-            ::Set[ClassRegistry['Integer'], ClassRegistry['Fixnum'], ClassRegistry['Bignum']]
+        Types::ClassType.new('Integer', :covariant).possible_classes.should be_superset(
+            ::Set[ClassRegistry['Integer'], ClassRegistry['Fixnum'], ClassRegistry['Bignum']])
       end
       
       it 'should find the exact class ClassType is invariant and is a Class' do

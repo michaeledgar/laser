@@ -21,7 +21,13 @@ include Laser::SexpAnalysis
 
 RSpec::Matchers.define :equal_type do |type|
   match do |orig|
-    Types::equal?(orig, type)
+    Types::subtype?(orig, type) || begin
+      orig.possible_classes.all? { |klass|
+        type.possible_classes.any? { |potential_super|
+          klass <= potential_super
+        }
+      }
+    end
   end
 end
 

@@ -127,7 +127,7 @@ describe LaserModule do
       silly_mod_subclass = LaserClass.new(ClassRegistry['Class'], Scope::GlobalScope, 'SillyModSubclass') do |klass|
         klass.superclass = ClassRegistry['Module']
       end
-      instance = silly_mod_subclass.get_instance
+      instance = LaserModule.new(silly_mod_subclass)
       @a.include_module(instance)
       @a.ancestors.should == [@a, instance]
     end

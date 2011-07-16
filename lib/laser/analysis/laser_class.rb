@@ -5,17 +5,21 @@ module Laser
     UNDEFINED = PlaceholderObject.new('UNDEFINED')
     VARYING = PlaceholderObject.new('VARYING')
 
-    # This is the path through which objects should be instantiated. It uses
-    # case-by-case logic to handle the instantiation of LaserModule/LaserClass
-    # when necessary.
-    module LiveObjectRepresentation
-      def self.new(klass, *args, &blk)
-        if klass == ClassRegistry['Class']
-          LaserClass.new(klass, *args, &blk)
-        elsif klass.ancestors.include?(ClassRegistry['Module'])
-          LaserModule.new(klass, *args, &blk)
+    module SingletonClassFactory
+      def self.create_for(ruby_obj)
+        if nil == ruby_obj
+          return ClassRegistry['NilClass']
+        elsif true == ruby_obj
+          return ClassRegistry['TrueClass']
+        elsif false == ruby_obj
+          return ClassRegistry['FalseClass']
         else
-          LaserObject.new(klass, *args, &blk)
+          name = "Instance:#{ruby_obj}"
+          existing = ProtocolRegistry[name].first
+          existing || LaserSingletonClass.new(
+              ClassRegistry['Class'], Scope::GlobalScope, name, ruby_obj) do |new_singleton_class|
+            new_singleton_class.superclass = ClassRegistry[ruby_obj.class.name]
+          end
         end
       end
     end
@@ -371,10 +375,6 @@ module Laser
         @visibility_table[method] = visibility
       end
       
-      def get_instance(scope = self.scope)
-        LiveObjectRepresentation.new(self, scope)
-      end
-      
       def superclass=(new_superclass)
         @superclass = new_superclass
       end
@@ -622,7 +622,7 @@ module Laser
       # Sets the superclass, which handles registering/unregistering subclass
       # ownership elsewhere in the inheritance tree
       def superclass=(other)
-        if LaserModuleCopy === other
+        if LaserModuleCopy === other # || LaserSingletonClass === self
           @superclass = other
         else
           superclass.remove_subclass! self if superclass

@@ -69,12 +69,12 @@ module Laser
 
       def public_matching_methods(name)
         name = name.to_s
-        member_types.map { |type| type.public_matching_methods(name) }.flatten
+        member_types.map { |type| type.public_matching_methods(name) }.flatten.uniq
       end
 
       def matching_methods(name)
         name = name.to_s
-        member_types.map { |type| type.matching_methods(name) }.flatten
+        member_types.map { |type| type.matching_methods(name) }.flatten.uniq
       end
     end
 
@@ -231,15 +231,83 @@ module Laser
       end
       
       def public_matching_methods(name)
-        Types::ARRAY.public_matching_methods(name)
+        if name == '[]'
+          return ::Set[TupleIndexMethod.new(self)]
+        else
+          Types::ARRAY.public_matching_methods(name)
+        end
       end
       
       def matching_methods(name)
-        Types::ARRAY.matching_methods(name)
+        if name.to_s == '[]'
+          return ::Set[TupleIndexMethod.new(self)]
+        else
+          Types::ARRAY.matching_methods(name)
+        end
       end
       
       def signature
         {element_types: element_types}
+      end
+      
+      class TupleMethod
+        attr_reader :tuple_type
+
+        def initialize(tuple_type)
+          @tuple_type = tuple_type
+        end
+
+        def method_missing(method, *args, &blk)
+          ClassRegistry['Array'].instance_method(name).send(method, *args, &blk)
+        end
+      end
+      
+      class TupleIndexMethod < TupleMethod
+        def name
+          '[]'
+        end
+        
+        def return_type_for_types(self_type, arg_types = [], block_type = nil)
+          resulting_choices = Set.new
+          element_types = tuple_type.element_types
+          if arg_types.size == 1
+            Laser.debug_puts "computing return type of tuple#[]"
+            arg_types[0].member_types.each do |member_type|
+              member_type.possible_classes.each do |klass|
+                Laser.debug_puts "potential arg klass: #{klass.inspect}"
+                if LaserSingletonClass === klass && klass < ClassRegistry['Fixnum']
+                  Laser.debug_puts "specific fixnum: #{klass.get_instance}"
+                  Laser.debug_puts "indexes into #{tuple_type.inspect} to get #{element_types[klass.get_instance].inspect}"
+                  resulting_choices << element_types[klass.get_instance]
+                elsif LaserSingletonClass === klass && klass < ClassRegistry['Range']
+                  Laser.debug_puts 'specific range'
+                  resulting_choices << TupleType.new(element_types[klass.get_instance])
+                elsif klass == ClassRegistry['Fixnum']
+                  Laser.debug_puts 'unknown fixnum'
+                  resulting_choices.merge(element_types)
+                  resulting_choices << Types::NILCLASS
+                elsif klass == ClassRegistry['Range']
+                  Laser.debug_puts 'unknown range'
+                  # no idea, just say "all arrays"
+                  resulting_choices << Types::ARRAY
+                end
+              end
+            end
+          elsif arg_types.size == 2  # start, length
+            
+          else
+            # error, should never reach
+          end
+          Types::UnionType.new(resulting_choices)
+        end
+        
+        def raise_frequency_for_types(self_type, arg_types = [], block_type = nil)
+          Frequency::NEVER
+        end
+        
+        def raise_type_for_types(self_type, arg_types = [], block_type = nil)
+          Types::EMPTY
+        end
       end
     end
     
