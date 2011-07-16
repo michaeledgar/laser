@@ -10,6 +10,7 @@ begin
     gem.email = 'michael.j.edgar@dartmouth.edu'
     gem.homepage = 'http://github.com/michaeledgar/laser'
     gem.authors = ['Michael Edgar']
+    gem.extensions    = ['ext/laser/extconf.rb']
     gem.add_dependency 'treetop', '~> 1.4'
     gem.add_dependency 'ripper-plus', '~> 1.2'
     gem.add_dependency 'axiom_of_choice'
