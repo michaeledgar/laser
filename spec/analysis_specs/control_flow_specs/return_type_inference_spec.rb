@@ -220,7 +220,7 @@ EOF
           Types::UnionType.new([Types::NILCLASS, Types::FIXNUM]))
   end
   
-  it 'should extract argument types from rest arguments' do
+  it 'should extract argument types from rest arguments by index' do
     g = cfg <<-EOF
 class RTI11
   def foo(*args)
@@ -235,5 +235,36 @@ EOF
       ClassRegistry['RTI11'].as_type, [Types::FIXNUM, Types::PROC]).should equal_type Types::FIXNUM
     ClassRegistry['RTI11'].instance_method('bar').return_type_for_types(
       ClassRegistry['RTI11'].as_type, [Types::FIXNUM, Types::PROC]).should equal_type Types::PROC
+  end
+  
+  it 'should extract argument types from rest arguments by range index' do
+    g = cfg <<-EOF
+class RTI12
+  def foo(*args)
+    args[0..1]
+  end
+  def bar(*args)
+    args[1..3]
+  end
+  def baz(*args)
+    args[-3..4]
+  end
+  def qux(*args)
+    args[-4..4]
+  end
+end
+EOF
+    ClassRegistry['RTI12'].instance_method('foo').return_type_for_types(
+      ClassRegistry['RTI12'].as_type, [Types::FIXNUM, Types::PROC, Types::TRUECLASS]).should equal_type(
+        Types::TupleType.new([Types::FIXNUM, Types::PROC]))
+    ClassRegistry['RTI12'].instance_method('bar').return_type_for_types(
+      ClassRegistry['RTI12'].as_type, [Types::STRING, Types::FLOAT, Types::HASH]).should equal_type(
+        Types::TupleType.new([Types::FLOAT, Types::HASH]))
+    ClassRegistry['RTI12'].instance_method('baz').return_type_for_types(
+      ClassRegistry['RTI12'].as_type, [Types::STRING, Types::FLOAT, Types::HASH]).should equal_type(
+        Types::TupleType.new([Types::STRING, Types::FLOAT, Types::HASH]))
+    ClassRegistry['RTI12'].instance_method('qux').return_type_for_types(
+      ClassRegistry['RTI12'].as_type, [Types::STRING, Types::FLOAT, Types::HASH]).should equal_type(
+        Types::NILCLASS)
   end
 end

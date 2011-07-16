@@ -281,7 +281,11 @@ module Laser
                   resulting_choices << element_types[klass.get_instance]
                 elsif LaserSingletonClass === klass && klass < ClassRegistry['Range']
                   Laser.debug_puts 'specific range'
-                  resulting_choices << TupleType.new(element_types[klass.get_instance])
+                  if element_types[klass.get_instance]  
+                    resulting_choices << TupleType.new(element_types[klass.get_instance])
+                  else  # invalid ranges (arr = [1, 2]; arr[-3..3]) return nil
+                    resulting_choices << Types::NILCLASS
+                  end
                 elsif klass == ClassRegistry['Fixnum']
                   Laser.debug_puts 'unknown fixnum'
                   resulting_choices.merge(element_types)
