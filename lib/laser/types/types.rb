@@ -231,16 +231,24 @@ module Laser
       end
       
       def public_matching_methods(name)
-        if name == '[]'
-          return ::Set[TupleIndexMethod.new(self)]
+        name = name.to_s
+        case name
+        when '[]'
+          [TupleIndexMethod.new(self)]
+        when 'to_a', 'to_ary'
+          [TupleSelfMethod.new(self, name)]
         else
           Types::ARRAY.public_matching_methods(name)
         end
       end
       
       def matching_methods(name)
-        if name.to_s == '[]'
-          return ::Set[TupleIndexMethod.new(self)]
+        name = name.to_s
+        case name
+        when '[]'
+          [TupleIndexMethod.new(self)]
+        when 'to_a', 'to_ary'
+          [TupleSelfMethod.new(self, name)]
         else
           Types::ARRAY.matching_methods(name)
         end
@@ -262,6 +270,27 @@ module Laser
         end
       end
       
+      class TupleSelfMethod < TupleMethod
+        attr_reader :name
+
+        def initialize(tuple_type, name)
+          @name = name
+          super(tuple_type)
+        end
+      
+        def return_type_for_types(self_type, arg_types = [], block_type = nil)
+          tuple_type
+        end
+        
+        def raise_frequency_for_types(self_type, arg_types = [], block_type = nil)
+          Frequency::NEVER
+        end
+        
+        def raise_type_for_types(self_type, arg_types = [], block_type = nil)
+          Types::EMPTY
+        end
+      end
+      
       class TupleIndexMethod < TupleMethod
         def name
           '[]'
@@ -278,7 +307,7 @@ module Laser
                 if LaserSingletonClass === klass && klass < ClassRegistry['Fixnum']
                   Laser.debug_puts "specific fixnum: #{klass.get_instance}"
                   Laser.debug_puts "indexes into #{tuple_type.inspect} to get #{element_types[klass.get_instance].inspect}"
-                  resulting_choices << element_types[klass.get_instance]
+                  resulting_choices << (element_types[klass.get_instance] || Types::NILCLASS)
                 elsif LaserSingletonClass === klass && klass < ClassRegistry['Range']
                   Laser.debug_puts 'specific range'
                   if element_types[klass.get_instance]  

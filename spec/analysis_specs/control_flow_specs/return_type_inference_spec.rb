@@ -267,4 +267,35 @@ EOF
       ClassRegistry['RTI12'].as_type, [Types::STRING, Types::FLOAT, Types::HASH]).should equal_type(
         Types::NILCLASS)
   end
+  
+  it 'infers tuple types during expansion' do
+    g = cfg <<-EOF
+class RTI13
+  def foo(*args)
+    a, b, c = args
+    a
+  end
+  def bar(*args)
+    a, b, c = args
+    b
+  end
+  def baz(*args)
+    a, b, c = args
+    c
+  end
+end
+EOF
+    ClassRegistry['RTI13'].instance_method('foo').return_type_for_types(
+      ClassRegistry['RTI13'].as_type, [Types::FIXNUM, Types::PROC, Types::TRUECLASS]).should equal_type(
+        Types::FIXNUM)
+    ClassRegistry['RTI13'].instance_method('bar').return_type_for_types(
+      ClassRegistry['RTI13'].as_type, [Types::FIXNUM, Types::PROC, Types::TRUECLASS]).should equal_type(
+        Types::PROC)
+    ClassRegistry['RTI13'].instance_method('baz').return_type_for_types(
+      ClassRegistry['RTI13'].as_type, [Types::FIXNUM, Types::PROC, Types::TRUECLASS]).should equal_type(
+        Types::TRUECLASS)
+    ClassRegistry['RTI13'].instance_method('baz').return_type_for_types(
+       ClassRegistry['RTI13'].as_type, [Types::FIXNUM, Types::PROC]).should equal_type(
+         Types::NILCLASS)
+  end
 end
