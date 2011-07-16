@@ -342,4 +342,32 @@ EOF
       ClassRegistry['RTI15'].as_type, [Types::FIXNUM, Types::PROC, Types::TRUECLASS]).should equal_type(
         Types::TupleType.new([Types::FIXNUM, Types::PROC, Types::TRUECLASS]))
   end
+  
+  it 'infers tuple types from array literals' do
+    g = cfg <<-EOF
+class RTI16
+  def foo
+    [1, :foo, 'string', {}]
+  end
+end
+EOF
+    ClassRegistry['RTI16'].instance_method('foo').return_type_for_types(
+      ClassRegistry['RTI16'].as_type).should equal_type(
+        Types::TupleType.new([Types::FIXNUM, ClassRegistry['Symbol'].as_type,
+                              Types::STRING, Types::HASH]))
+  end
+
+  it 'infers tuple types from array literals with varying components' do
+    g = cfg <<-EOF
+class RTI17
+  def foo(x)
+    [x, :foo, 'string', {}]
+  end
+end
+EOF
+    ClassRegistry['RTI17'].instance_method('foo').return_type_for_types(
+      ClassRegistry['RTI17'].as_type, [Types::FIXNUM]).should equal_type(
+        Types::TupleType.new([Types::FIXNUM, ClassRegistry['Symbol'].as_type,
+                              Types::STRING, Types::HASH]))
+  end
 end

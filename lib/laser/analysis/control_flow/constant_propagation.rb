@@ -514,6 +514,15 @@ module Laser
                 ((method_name == :block_given? || method_name == :iterable?) &&
                  (uses_method?(receiver, ClassRegistry['Kernel'].instance_method('block_given?')))) # and check no block
             return cp_magic(instruction, :current_block)
+          elsif receiver.value == ClassRegistry['Array'] && method_name == :[]
+            if args.all? { |arg| arg.value != UNDEFINED }
+              tuple_type = Types::TupleType.new(args.map(&:expr_type))
+              if args.all? { |arg| arg.value != VARYING }
+                return [args.map(&:value), tuple_type]
+              else
+                return [VARYING, tuple_type]
+              end
+            end
           elsif receiver.expr_type.member_types.size == 1 &&
                 Types::TupleType === receiver.expr_type.member_types.first
             tuple_type = receiver.expr_type.member_types.first
