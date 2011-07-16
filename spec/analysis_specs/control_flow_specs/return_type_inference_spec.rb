@@ -329,4 +329,17 @@ EOF
       ClassRegistry['RTI14'].as_type, [Types::FIXNUM, Types::PROC, Types::TRUECLASS]).should equal_type(
         Types::TRUECLASS)
   end
+  
+  it 'infers the type of #to_a/ary on tuples' do
+    g = cfg <<-EOF
+class RTI15
+  def foo(*args)
+    args.to_a.to_ary.to_a.to_a
+  end
+end
+EOF
+    ClassRegistry['RTI15'].instance_method('foo').return_type_for_types(
+      ClassRegistry['RTI15'].as_type, [Types::FIXNUM, Types::PROC, Types::TRUECLASS]).should equal_type(
+        Types::TupleType.new([Types::FIXNUM, Types::PROC, Types::TRUECLASS]))
+  end
 end
