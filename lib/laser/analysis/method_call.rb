@@ -10,7 +10,7 @@ module Laser
       def implicit_receiver?
         case node.type
         when :call, :aref, :unary, :binary, :super, :zsuper then false
-        when :fcall, :command, :command_call, :var_ref, :zcall then true
+        when :fcall, :command, :command_call, :var_ref, :vcall then true
         when :method_add_block, :method_add_arg then node[1].method_call.implicit_receiver?
         end
       end
@@ -24,7 +24,7 @@ module Laser
         when :aref then '[]'
         when :unary then node[1].to_s
         when :binary then node[2].to_s
-        when :fcall, :command, :zcall then node[1].expanded_identifier
+        when :fcall, :command, :vcall then node[1].expanded_identifier
         when :call, :command_call then node[3].expanded_identifier
         when :var_ref then node.expanded_identifier
         when :method_add_block, :method_add_arg then node[1].method_call.method_name
@@ -38,7 +38,7 @@ module Laser
       def receiver_node
         case node.type
         when :method_add_arg, :method_add_block then node[1].method_call.receiver_node
-        when :var_ref, :zcall, :command, :fcall, :super, :zsuper, :unary then nil
+        when :var_ref, :vcall, :command, :fcall, :super, :zsuper, :unary then nil
         when :call, :command_call, :binary, :aref then node[1]        
         end
       end
@@ -57,7 +57,7 @@ module Laser
         when :command, :aref then node[2][1]
         when :method_add_arg then (node[2][1] ? node[2][1] : nil)
         when :method_add_block then node[1].method_call.arg_node
-        when :call, :var_ref, :zcall, :command_call, :zsuper then nil
+        when :call, :var_ref, :vcall, :command_call, :zsuper then nil
         when :command_call then node[4][1]
         when :super then node[1]
         end

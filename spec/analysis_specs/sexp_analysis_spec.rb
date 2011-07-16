@@ -14,7 +14,7 @@ describe SexpAnalysis do
   describe '#parse' do
     it 'parses its body' do
       @class.new('a').parse.should ==
-          [:program, [[:zcall, [:@ident, "a", [1, 0]]]]]
+          [:program, [[:vcall, [:@ident, "a", [1, 0]]]]]
     end
   end
 

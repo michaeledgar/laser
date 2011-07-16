@@ -231,7 +231,7 @@ module Laser
         end
         
         def simulate_method_missing(insn, klass)
-          error_klass = insn.node.type == :zcall ? 'NameError' : 'NoMethodError'
+          error_klass = insn.node.type == :vcall ? 'NameError' : 'NoMethodError'
           missing_method_error = ClassRegistry[error_klass].laser_simulate(
               'new', ["Method missing: #{klass.name}##{insn[3]}", insn[3].to_s])
           Bootstrap::EXCEPTION_STACK.value.push(missing_method_error)

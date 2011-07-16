@@ -12,7 +12,7 @@ begin
     gem.authors = ['Michael Edgar']
     gem.extensions    = ['ext/laser/extconf.rb']
     gem.add_dependency 'treetop', '~> 1.4'
-    gem.add_dependency 'ripper-plus', '~> 1.2'
+    gem.add_dependency 'ripper-plus', '~> 1.3.0'
     gem.add_dependency 'axiom_of_choice'
     gem.add_dependency 'stream', '0.5'
     gem.add_dependency 'object_regex', '~> 1.0'
@@ -78,20 +78,41 @@ task rebuild: [:gemspec, :build, :install] do
   %x(rake laser)
 end
 
+#################### Parser rake tasks #####################
+
 SRC = FileList['lib/laser/annotation_parser/*.treetop']
 OBJ = SRC.sub(/.treetop$/, '_parser.rb')
 
 SRC.each do |source|
   result = source.sub(/.treetop$/, '_parser.rb')
-  file result => source do |t|
+  file result => [source] do |t|
     sh "tt #{source} -o #{result}"
   end
 end
 
 task build_parsers: OBJ
 
+#################### C++ Extension Rake Tasks ##############
+
+require 'rbconfig'
+file 'ext/laser/Makefile' => ['ext/laser/extconf.rb'] do |t|
+  Dir.chdir('ext/laser') do
+    ruby 'extconf.rb'
+  end
+end
+
+dylib_name = "ext/laser/BasicBlock.#{RbConfig::CONFIG['DLEXT']}"
+file dylib_name => ['ext/laser/Makefile'] do
+  Dir.chdir('ext/laser') do
+    sh 'make'
+  end
+end
+
+desc 'Guarantees build-readiness'
+task build_components: [:build_parsers, dylib_name]
+
 # Alias for script/console from rails world lawlz
-task sc: :build_parsers do
+task sc: :build_components do
   system("irb -r./lib/laser")
 end
 
