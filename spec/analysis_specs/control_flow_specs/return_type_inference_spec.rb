@@ -298,4 +298,35 @@ EOF
        ClassRegistry['RTI13'].as_type, [Types::FIXNUM, Types::PROC]).should equal_type(
          Types::NILCLASS)
   end
+  
+  it 'infers the result of #size on tuples' do
+    g = cfg <<-EOF
+class RTI14
+  def foo(*args)
+    args[args.size - 2]
+  end
+  def bar(*args)
+    args[args.length - 2]
+  end
+  def baz(*args)
+    args[args.size - 4]
+  end
+end
+EOF
+    ClassRegistry['RTI14'].instance_method('foo').return_type_for_types(
+      ClassRegistry['RTI14'].as_type, [Types::FIXNUM, Types::PROC, Types::TRUECLASS]).should equal_type(
+        Types::PROC)
+    ClassRegistry['RTI14'].instance_method('bar').return_type_for_types(
+      ClassRegistry['RTI14'].as_type, [Types::FIXNUM, Types::PROC, Types::TRUECLASS]).should equal_type(
+        Types::PROC)
+    ClassRegistry['RTI14'].instance_method('foo').return_type_for_types(
+      ClassRegistry['RTI14'].as_type, [Types::FIXNUM, Types::PROC]).should equal_type(
+        Types::FIXNUM)
+    ClassRegistry['RTI14'].instance_method('bar').return_type_for_types(
+      ClassRegistry['RTI14'].as_type, [Types::FIXNUM, Types::PROC]).should equal_type(
+        Types::FIXNUM)
+    ClassRegistry['RTI14'].instance_method('baz').return_type_for_types(
+      ClassRegistry['RTI14'].as_type, [Types::FIXNUM, Types::PROC, Types::TRUECLASS]).should equal_type(
+        Types::TRUECLASS)
+  end
 end

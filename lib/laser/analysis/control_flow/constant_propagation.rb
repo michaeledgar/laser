@@ -506,14 +506,23 @@ module Laser
               return [args[1].value, ivar.expr_type]
             end
           elsif receiver == ClassRegistry['Laser#Magic'].binding
-            magic_result, magic_type, magic_raises = cp_magic(instruction, method_name, *args)
+            magic_result, magic_type = cp_magic(instruction, method_name, *args)
             if magic_result != INAPPLICABLE
-              return [magic_result, magic_type, magic_raises]
+              return [magic_result, magic_type]
             end
           elsif (receiver.value == ClassRegistry['Proc'] && method_name == :new) ||
                 ((method_name == :block_given? || method_name == :iterable?) &&
                  (uses_method?(receiver, ClassRegistry['Kernel'].instance_method('block_given?')))) # and check no block
             return cp_magic(instruction, :current_block)
+          elsif receiver.expr_type.member_types.size == 1 &&
+                Types::TupleType === receiver.expr_type.member_types.first
+            tuple_type = receiver.expr_type.member_types.first
+            # switch on method name
+            case tuple_type.matching_methods(method_name.to_s)[0]
+            when ClassRegistry['Array'].instance_method('size')
+              size = tuple_type.size
+              return [size, Utilities.type_for(size)]
+            end
           end
           [INAPPLICABLE, Types::EMPTY]
         end

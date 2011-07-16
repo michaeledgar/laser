@@ -3,7 +3,7 @@ module Laser
     module Utilities
      module_function
       def klass_for(arg)
-        LaserObject === arg ? arg.singleton_class : SingletonClassFactory.create_for(arg) # ClassRegistry[arg.class.name]
+        LaserObject === arg ? arg.singleton_class : SingletonClassFactory.create_for(arg)
       end
 
       def type_for(arg, variance=:invariant)
