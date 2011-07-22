@@ -5,7 +5,7 @@ class Class < Module
   end
   def new(*args)
     result = allocate
-    result.initialize(*args)
+    result.send(:initialize, *args)
     result
   end
   # pure: true
@@ -19,7 +19,8 @@ class Symbol
 end
 class Array
   # builtin: true
-  def self.new(arg)
+  # returns: Array
+  def self.new(arg1=0, val=nil)
   end
 end
 class Proc
@@ -177,9 +178,6 @@ module Kernel
   # raises: never
   # builtin: true
   def class
-  end
-  # special: true
-  def send
   end
   # pure: true
   # raises: never

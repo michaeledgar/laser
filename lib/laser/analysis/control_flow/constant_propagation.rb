@@ -105,8 +105,12 @@ module Laser
           when :jump, :raise, :return
             succ = block.real_successors.first
             constant_propagation_consider_edge block, succ, blocklist
-          when :call
-            changed, raised, raise_changed = constant_propagation_for_call instruction
+          when :call, :call_vararg
+            if instruction.type == :call
+              changed, raised, raise_changed = constant_propagation_for_call(instruction, true)
+            elsif instruction.type == :call_vararg
+              changed, raised, raise_changed = constant_propagation_for_call(instruction, false)
+            end
             if changed
               if instruction[1] && instruction[1].value != UNDEFINED
                 add_target_uses_to_worklist instruction, worklist
@@ -129,13 +133,6 @@ module Laser
               successors.each do |succ|
                 constant_propagation_consider_edge block, succ, blocklist
               end
-            end
-          when :call_vararg
-            if constant_propagation_evaluate(instruction)
-              add_target_uses_to_worklist instruction, worklist
-            end
-            block.successors.each do |succ|
-              constant_propagation_consider_edge block, succ, blocklist
             end
           else
             if constant_propagation_evaluate(instruction)
@@ -191,15 +188,20 @@ module Laser
           end
         end
 
-        def constant_propagation_for_call(instruction)
+        def constant_propagation_for_call(instruction, fixed_arity)
           target = instruction[1] || cp_cell_for(instruction)
           original = target.value
           old_type = target.inferred_type
           old_raise_type = instruction.raise_type
 
-          receiver, method_name, *args = instruction[2..-1]
-          opts = Hash === args.last ? args.pop : {}
-          components = [receiver, *args]
+          if fixed_arity
+            receiver, method_name, *args = instruction[2..-1]
+            opts = Hash === args.last ? args.pop : {}
+            components = [receiver, *args]
+          else
+            receiver, method_name, args, opts = instruction[2..-1]
+            components = [receiver, args]
+          end
 
           if components.any? { |arg| arg.value == UNDEFINED }
             # cannot evaluate unless all args and receiver are defined
@@ -220,7 +222,8 @@ module Laser
             new_type = Utilities.type_for(result)
             raised = Frequency::NEVER
             raise_type = Types::EMPTY
-          elsif (special_result, special_type =
+          elsif fixed_arity &&
+                (special_result, special_type =
                  apply_special_case(instruction, receiver, method_name, *args);
                  special_result != INAPPLICABLE)
             new_value = special_result
@@ -240,11 +243,12 @@ module Laser
           elsif original == UNDEFINED && (!opts || !opts[:block])
             if method && (method.pure || allow_impure_method?(method))
               real_receiver = receiver.value
+              arg_array = fixed_arity ? args.map(&:value) : args.value
               begin
                 if method.builtin
-                  result = real_receiver.send(method_name, *args.map(&:value))
+                  result = real_receiver.send(method_name, *arg_array)
                 else
-                  result = method.simulate_with_args(real_receiver, args.map(&:value), nil, {mutation: true})
+                  result = method.simulate_with_args(real_receiver, arg_array, nil, {mutation: true})
                 end
                 new_value = result
                 new_type = Utilities.type_for(result)
@@ -276,10 +280,13 @@ module Laser
             changed = true
           end
           if old_type != new_type
+            Laser.debug_puts "-> Return type: #{new_type.inspect}"
             target.inferred_type = new_type
             changed = true
           end
+          Laser.debug_puts "-> Raise freq: #{raised.inspect}"
           if raise_type != old_raise_type
+            Laser.debug_puts "-> Raise Type: #{raise_type.inspect}"
             instruction.raise_type = raise_type
             raise_changed = true
           end
@@ -306,10 +313,20 @@ module Laser
           possible_dispatches = receiver.expr_type.member_types.map do |type|
             [type, type.matching_methods(method)]
           end
-          if args.empty? && !block
-            cartesian = [ [Types::NILCLASS] ]
+          if Bindings::Base === args && Types::TupleType === args.expr_type
+            cartesian_parts = args.element_types
+            empty = cartesian_parts.empty?
+          elsif Bindings::Base === args && Types::UnionType === args.expr_type &&
+                Types::TupleType === args.expr_type.member_types.first
+            cartesian_parts = args.expr_type.member_types.first.element_types.map { |x| [x] }
+            empty = cartesian_parts.empty?
           else
             cartesian_parts = args.map(&:expr_type).map(&:member_types).map(&:to_a)
+            empty = args.empty?
+          end
+          if empty && !block
+            cartesian = [ [Types::NILCLASS] ]
+          else
             if block
             then cartesian_parts << block.expr_type.member_types.to_a
             else cartesian_parts << [Types::NILCLASS]
@@ -429,11 +446,13 @@ module Laser
                 new_type  = Types::UnionType.new(components.select { |c| c.value != UNDEFINED }.map(&:inferred_type).compact.uniq)
               end
             end
-          when :call_vararg, :super, :super_vararg
+          when :super, :super_vararg
             new_value = VARYING
             new_type = Types::TOP
           when :return, :raise
             return false  # not applicable
+          else
+            raise ArgumentError("Unknown instruction evaluation type: #{instruction.type}")
           end
           if original != new_value
             target.bind! new_value
@@ -523,14 +542,42 @@ module Laser
                 return [VARYING, tuple_type]
               end
             end
+          elsif receiver.value == ClassRegistry['Array'] && method_name == :new
+            if args.all? { |arg| arg.value != UNDEFINED }
+              if args.size == 0
+                return [[], Types::TupleType.new([])]
+              elsif args.size == 1 && Types::equal(Types::ARRAY, args.first.expr_type)
+                return [args.first.value, args.first.expr_type]
+              else
+                # TODO(adgar): add integer, val, and integer, block case
+              end
+            end
           elsif receiver.expr_type.member_types.size == 1 &&
                 Types::TupleType === receiver.expr_type.member_types.first
             tuple_type = receiver.expr_type.member_types.first
-            # switch on method name
+            # switch on method object
             case tuple_type.matching_methods(method_name.to_s)[0]
             when ClassRegistry['Array'].instance_method('size')
               size = tuple_type.size
               return [size, Utilities.type_for(size)]
+            end
+          elsif method_name == :+
+            if receiver.value != VARYING && receiver.value != UNDEFINED &&
+               Utilities.normal_class_for(receiver.value) == ClassRegistry['Array'] &&
+               args[0].value == VARYING && args[0].expr_type.member_types.all? { |t| Types::TupleType === t }
+              constant, tuple = receiver, args[0]
+            elsif args[0].value != VARYING && args[0].value != UNDEFINED &&
+                  Utilities.normal_class_for(args[0].value) == ClassRegistry['Array'] &&
+                  receiver.value == VARYING && 
+                  receiver.expr_type.member_types.all? { |t| Types::TupleType === t }
+              constant, tuple = args[0], receiver
+            end
+            if constant
+              constant_types = constant.value.map { |v| Utilities.type_for(v) }
+              new_types = tuple.expr_type.member_types.map do |tuple_type|
+                Types::TupleType.new(constant_types + tuple_type.element_types)
+              end
+              return [VARYING, Types::UnionType.new(new_types)]
             end
           end
           [INAPPLICABLE, Types::EMPTY]

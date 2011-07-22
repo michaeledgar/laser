@@ -836,9 +836,7 @@ module Laser
           Laser.debug_puts("Builtin/special: Types::TOP")
           return Types::TOP
         end
-        cfg_for_types(self_type, arg_types, block_type).raise_type.tap do |result|
-          Laser.debug_puts("Calculating from CFG: #{result.inspect}")
-        end
+        cfg_for_types(self_type, arg_types, block_type).raise_type
       end
       
       def return_type_for_types(self_type, arg_types = [], block_type = nil)

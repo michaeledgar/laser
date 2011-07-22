@@ -1953,7 +1953,8 @@ module Laser
         def call_vararg_instruct(receiver, method, args, opts={})
           opts = {raise: true, value: true}.merge(opts)
           result = create_result_if_needed opts
-          add_instruction(:call_vararg, result, receiver, method.to_sym, args, opts)
+          call_opts = { ignore_privacy: opts[:ignore_privacy] }
+          add_instruction_with_opts(:call_vararg, result, receiver, method.to_sym, args, opts, call_opts)
           add_potential_raise_edge if opts[:raise]
           result
         end

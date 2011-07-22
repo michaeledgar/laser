@@ -61,6 +61,10 @@ require 'laser/analysis/protocol_registry'
 require 'laser/analysis/scope'
 require 'laser/analysis/comments'
 require 'laser/analysis/control_flow'
+Dir[File.join(File.dirname(__FILE__), 'laser/analysis/special_methods/*.rb')].each do |file|
+  require file
+end
+
 require 'laser/analysis/bootstrap'
 # Liftoff Instructions:
 # 1. Tuck in your shirt

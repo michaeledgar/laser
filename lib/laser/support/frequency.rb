@@ -29,13 +29,22 @@ module Laser
       LOOKUP[sym]
     end
 
+    def self.combine_samples(samples)
+      return NEVER if samples.empty?
+      base = samples.first
+      samples[1..-1].each do |sample|
+        return MAYBE if sample > base || sample < base
+      end
+      base
+    end   
+
     def self.for_samples(yes, no)
       if no && !yes
-        Frequency::NEVER
+        NEVER
       elsif no && yes
-        Frequency::MAYBE
+        MAYBE
       else  # !no && yes
-        Frequency::ALWAYS
+        ALWAYS
       end
     end
 

@@ -237,6 +237,8 @@ module Laser
           [TupleIndexMethod.new(self)]
         when 'to_a', 'to_ary'
           [TupleSelfMethod.new(self, name)]
+        when '+'
+          [TuplePlusMethod.new(self)]
         else
           Types::ARRAY.public_matching_methods(name)
         end
@@ -249,6 +251,8 @@ module Laser
           [TupleIndexMethod.new(self)]
         when 'to_a', 'to_ary'
           [TupleSelfMethod.new(self, name)]
+        when '+'
+          [TuplePlusMethod.new(self)]
         else
           Types::ARRAY.matching_methods(name)
         end
@@ -288,6 +292,31 @@ module Laser
         
         def raise_type_for_types(self_type, arg_types = [], block_type = nil)
           Types::EMPTY
+        end
+      end
+      
+      class TuplePlusMethod < TupleMethod
+        def name
+          '+'
+        end
+        
+        def return_type_for_types(self_type, arg_types = [], block_type = nil)
+          if arg_types.first.member_types.one?
+            other_type = arg_types.first.member_types.first
+          end
+          if Types::TupleType === arg_types.first
+            Types::TupleType.new(tuple_type.element_types + arg_types.first.element_types)
+          else
+            Types::ARRAY
+          end
+        end
+        
+        def raise_frequency_for_types(self_type, arg_types = [], block_type = nil)
+          Frequency::MAYBE
+        end
+        
+        def raise_type_for_types(self_type, arg_types = [], block_type = nil)
+          Types::UnionType.new([Types::ClassType.new('ArgumentError', :invariant)])
         end
       end
       

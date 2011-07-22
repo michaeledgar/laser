@@ -20,8 +20,7 @@ module RGL
       while changed
         changed = false
         reverse_postorder.each do |b|
-          original = b.each_real_predecessors.find { |node| doms[node] }
-          if original
+          if (original = b.each_real_predecessors.find { |node| doms[node] })
             new_idom = original
             b.each_real_predecessors do |p|
               if doms[p] && p != original

@@ -186,6 +186,8 @@ module Laser
             annotated_raise_frequency: Frequency::NEVER)
         stub_method(kernel_module, 'singleton_class', builtin: true, pure: true,
             annotated_raise_frequency: Frequency::NEVER)
+        send_method = stub_custom_method(kernel_module, SpecialMethods::SendMethod, 'send', :any, special: true)
+
         raise_method = stub_method(kernel_module, 'raise', builtin: true, pure: true,
             annotated_raise_frequency: Frequency::ALWAYS)
         def raise_method.raise_type_for_types(self_type, arg_types, block_type)
@@ -225,7 +227,11 @@ module Laser
       end
       
       def self.stub_method(klass, name, opts={})
-        method = LaserMethod.new(name, nil)
+        stub_custom_method(klass, LaserMethod, name, nil, opts)
+      end
+      
+      def self.stub_custom_method(klass, custom_class, *init_args, opts)
+        method = custom_class.new(*init_args)
         opts.each { |k, v| method.send("#{k}=", v) }
         klass.add_instance_method!(method)
         method
