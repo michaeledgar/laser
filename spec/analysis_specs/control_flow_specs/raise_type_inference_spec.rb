@@ -57,4 +57,31 @@ EOF
         Utilities.type_for(ClassRegistry['RI4'])).should equal_type(
           Types::UnionType.new([Types::ClassType.new('ArgumentError', :invariant)]))
   end
+  
+  it 'should infer raises from #initialize when calling Class.new' do
+    g = cfg <<-EOF
+class RTInfer2
+  def initialize(x)
+    raise TypeError.new("I don't like integers") if Integer === x
+  end
+end
+def make_rtinfer_2(x)
+  RTInfer2.new(x)
+end
+EOF
+    method = ClassRegistry['Object'].instance_method('make_rtinfer_2')
+    # call make_rinfer_2 should raise for a fixnum
+    method.raise_type_for_types(
+        Utilities.type_for(ClassRegistry['String']),  # doesn't matter
+        [Types::FIXNUM], 
+        Types::NILCLASS).should equal_type(ClassRegistry['TypeError'].as_type)
+    method.raise_type_for_types(
+        Utilities.type_for(ClassRegistry['String']),  # doesn't matter
+        [ClassRegistry['Bignum'].as_type], 
+        Types::NILCLASS).should equal_type(ClassRegistry['TypeError'].as_type)
+    method.raise_type_for_types(
+        Utilities.type_for(ClassRegistry['String']),  # doesn't matter
+        [ClassRegistry['String'].as_type], 
+        Types::NILCLASS).should equal_type(Types::EMPTY)
+  end
 end

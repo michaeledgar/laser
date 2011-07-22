@@ -77,4 +77,31 @@ EOF
         [Types::STRING],
         Types::NILCLASS).should == Frequency::ALWAYS
   end
+  
+  it 'should infer raises from #initialize when calling Class.new' do
+    g = cfg <<-EOF
+class RInfer2
+  def initialize(x)
+    raise TypeError.new("I don't like integers") if Integer === x
+  end
+end
+def make_rinfer_2(x)
+  RInfer2.new(x)
+end
+EOF
+    method = ClassRegistry['Object'].instance_method('make_rinfer_2')
+    # call make_rinfer_2 should raise for a fixnum
+    method.raise_frequency_for_types(
+        Utilities.type_for(ClassRegistry['String']),  # doesn't matter
+        [Types::FIXNUM], 
+        Types::NILCLASS).should == Frequency::ALWAYS
+    method.raise_frequency_for_types(
+        Utilities.type_for(ClassRegistry['String']),  # doesn't matter
+        [ClassRegistry['Bignum'].as_type], 
+        Types::NILCLASS).should == Frequency::ALWAYS
+    method.raise_frequency_for_types(
+        Utilities.type_for(ClassRegistry['String']),  # doesn't matter
+        [Types::STRING], 
+        Types::NILCLASS).should == Frequency::NEVER
+  end
 end
