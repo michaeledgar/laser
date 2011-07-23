@@ -81,7 +81,49 @@ EOF
         Types::NILCLASS).should equal_type(ClassRegistry['TypeError'].as_type)
     method.raise_type_for_types(
         Utilities.type_for(ClassRegistry['String']),  # doesn't matter
-        [ClassRegistry['String'].as_type], 
+        [Types::STRING], 
+        Types::NILCLASS).should equal_type(Types::EMPTY)
+  end
+  
+  it 'should infer a number of potential raises via ivars' do
+    g = cfg <<-EOF
+class RTInfer3
+  def initialize(x)
+    try_to_foo(x) if x != 0
+  end
+  
+  def try_to_foo(x)
+    case x
+    when Integer
+      raise ArgumentError.new('no negative numbers') if x < 0
+    when Float
+      raise TypeError.new('no floats at all')
+    else
+      x.ljust
+    end
+  end
+end
+def make_rtinfer_3(x)
+  RTInfer3.new(x)
+end
+EOF
+    method = ClassRegistry['Object'].instance_method('make_rtinfer_3')
+    # call make_rinfer_2 should raise for a fixnum
+    method.raise_type_for_types(
+        Utilities.type_for(ClassRegistry['String']),  # doesn't matter
+        [Types::FLOAT], 
+        Types::NILCLASS).should equal_type(ClassRegistry['TypeError'].as_type)
+    method.raise_type_for_types(
+        Utilities.type_for(ClassRegistry['String']),  # doesn't matter
+        [ClassRegistry['Bignum'].as_type], 
+        Types::NILCLASS).should equal_type(ClassRegistry['ArgumentError'].as_type)
+    method.raise_type_for_types(
+        Utilities.type_for(ClassRegistry['String']),  # doesn't matter
+        [Types::ARRAY], 
+        Types::NILCLASS).should equal_type(ClassRegistry['NoMethodError'].as_type)
+    method.raise_type_for_types(
+        Utilities.type_for(ClassRegistry['String']),  # doesn't matter
+        [Types::STRING], 
         Types::NILCLASS).should equal_type(Types::EMPTY)
   end
 end

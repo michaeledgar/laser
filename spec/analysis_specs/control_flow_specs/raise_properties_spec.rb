@@ -104,4 +104,46 @@ EOF
         [Types::STRING], 
         Types::NILCLASS).should == Frequency::NEVER
   end
+
+  it 'should infer a number of potential raises via ivars' do
+    g = cfg <<-EOF
+class RTInfer3
+  def initialize(x)
+    try_to_foo(x) if x != 0
+  end
+
+  def try_to_foo(x)
+    case x
+    when Integer
+      raise ArgumentError.new('no negative numbers') if x < 0
+    when Float
+      raise TypeError.new('no floats at all')
+    else
+      x.ljust
+    end
+  end
+end
+def make_rtinfer_3(x)
+  RTInfer3.new(x)
+end
+EOF
+    method = ClassRegistry['Object'].instance_method('make_rtinfer_3')
+    # call make_rinfer_2 should raise for a fixnum
+    method.raise_frequency_for_types(
+        Utilities.type_for(ClassRegistry['String']),  # doesn't matter
+        [Types::FLOAT], 
+        Types::NILCLASS).should == Frequency::MAYBE
+    method.raise_frequency_for_types(
+        Utilities.type_for(ClassRegistry['String']),  # doesn't matter
+        [ClassRegistry['Bignum'].as_type], 
+        Types::NILCLASS).should == Frequency::MAYBE
+    method.raise_frequency_for_types(
+        Utilities.type_for(ClassRegistry['String']),  # doesn't matter
+        [Types::ARRAY], 
+        Types::NILCLASS).should == Frequency::MAYBE   # not smart enough to prove != 0 yet
+    method.raise_frequency_for_types(
+        Utilities.type_for(ClassRegistry['String']),  # doesn't matter
+        [Types::STRING], 
+        Types::NILCLASS).should == Frequency::NEVER
+  end
 end
