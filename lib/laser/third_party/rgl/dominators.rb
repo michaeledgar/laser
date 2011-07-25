@@ -38,7 +38,7 @@ module RGL
       # doms is IDOM. All outward edges connect an IDom to its dominee.
       d_tree = self.class.new
       (vertices - [enter, exit]).each do |b|
-        copy = Laser::SexpAnalysis::ControlFlow::BasicBlock.new(b.name)
+        copy = Laser::Analysis::ControlFlow::BasicBlock.new(b.name)
         copy.instructions = b.instructions
         d_tree.add_vertex(copy)
       end

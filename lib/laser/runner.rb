@@ -92,9 +92,9 @@ module Laser
 
     # Prints the known modules after analysis.
     def print_modules
-      SexpAnalysis::LaserModule.all_modules.map do |mod|
+      Analysis::LaserModule.all_modules.map do |mod|
         result = []
-        result << if SexpAnalysis::LaserClass === mod && mod.superclass
+        result << if Analysis::LaserClass === mod && mod.superclass
                   then "#{mod.path} < #{mod.superclass.path}"
                   else mod.name
                   end

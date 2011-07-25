@@ -1,5 +1,5 @@
 module Laser
-  module SexpAnalysis
+  module Analysis
     module ControlFlow
       # Methods for computing the static single assignment form of a
       # Control Flow Graph.

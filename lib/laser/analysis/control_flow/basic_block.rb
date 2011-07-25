@@ -1,7 +1,7 @@
 require 'enumerator'
 require 'set'
 module Laser
-  module SexpAnalysis
+  module Analysis
     module ControlFlow
       # Can't use the < DelegateClass(Array) syntax because of code reloading.
       class BasicBlock

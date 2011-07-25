@@ -1,5 +1,5 @@
 module Laser
-  module SexpAnalysis
+  module Analysis
     module ControlFlow
       # Methods for computing the lifetime of the variables in
       # the control flow graph.
@@ -87,5 +87,5 @@ module Laser
 
       end  # module LifetimeAnalysis
     end  # module ControlFlow
-  end  # module SexpAnalysis
+  end  # module Analysis
 end  # module Laser

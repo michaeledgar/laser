@@ -1,9 +1,9 @@
 require_relative 'spec_helper'
 
-describe SexpAnalysis do  
+describe Analysis do  
   before do
     @class = Class.new do
-      include SexpAnalysis
+      include Analysis
       attr_accessor :body
       def initialize(body)
         self.body = body

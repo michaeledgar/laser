@@ -1,5 +1,5 @@
 module Laser
-  module SexpAnalysis
+  module Analysis
     module ControlFlow
       # Finds unused variables in the control-flow graph. See thesis for
       # the algorithm and proof of correctness.
@@ -87,5 +87,5 @@ module Laser
         end
       end
     end  # ControlFlow
-  end  # SexpAnalysis
+  end  # Analysis
 end  #

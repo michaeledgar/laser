@@ -84,7 +84,7 @@ RSpec::Matchers.define :have_constant do |name|
 end
 
 
-include Laser::SexpAnalysis
+include Laser::Analysis
 def annotate_all_cfg(body)
   inputs = [['(stdin)', body]]
   inputs.map! do |filename, text|

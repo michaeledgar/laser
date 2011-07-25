@@ -1,9 +1,9 @@
 module Laser
-  module SexpAnalysis
+  module Analysis
     # This module contains bootstrapping code. This initializes the first classes
     # and modules that build up the meta-model (Class, Module, Object).
     module Bootstrap
-      extend SexpAnalysis
+      extend Analysis
       VISIBILITY_STACK_NAME = '$#visibility_stack'
       VISIBILITY_STACK = Bindings::GlobalVariableBinding.new(VISIBILITY_STACK_NAME, [:private])
       EXCEPTION_STACK_NAME = '$#exception_stack'

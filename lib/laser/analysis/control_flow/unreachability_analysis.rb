@@ -1,5 +1,5 @@
 module Laser
-  module SexpAnalysis
+  module Analysis
     module ControlFlow
       module UnreachabilityAnalysis
         # Dead Code Discovery: O(|V| + |E|)!

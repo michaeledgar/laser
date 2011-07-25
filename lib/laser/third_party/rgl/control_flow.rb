@@ -19,8 +19,8 @@ module RGL
     attr_reader :vertices, :vertex_lookup
     
     def initialize
-      @enter = Laser::SexpAnalysis::ControlFlow::TerminalBasicBlock.new('Enter')
-      @exit = Laser::SexpAnalysis::ControlFlow::TerminalBasicBlock.new('Exit')
+      @enter = Laser::Analysis::ControlFlow::TerminalBasicBlock.new('Enter')
+      @exit = Laser::Analysis::ControlFlow::TerminalBasicBlock.new('Exit')
       @vertices = Set[@enter, @exit]
       @vertex_lookup = {'Enter' => @enter, 'Exit' => @exit}
     end

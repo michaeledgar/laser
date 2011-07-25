@@ -1,5 +1,5 @@
 module Laser
-  module SexpAnalysis
+  module Analysis
     class MethodCall
       attr_reader :node
       

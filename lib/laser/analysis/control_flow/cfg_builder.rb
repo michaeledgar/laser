@@ -1,5 +1,5 @@
 module Laser
-  module SexpAnalysis
+  module Analysis
     module ControlFlow
       # This class builds a control flow graph. The algorithm used is
       # derived from Robert Morgan's "Building an Optimizing Compiler".

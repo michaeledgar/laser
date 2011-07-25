@@ -17,7 +17,7 @@ module Laser
   const_set(:TESTS_ACTIVATED, true)
 end
 
-include Laser::SexpAnalysis
+include Laser::Analysis
 
 RSpec::Matchers.define :equal_type do |type|
   match do |orig|

@@ -1,5 +1,5 @@
 module Laser
-  module SexpAnalysis
+  module Analysis
     module ControlFlow
       INAPPLICABLE = PlaceholderObject.new('INAPPLICABLE')
 
@@ -657,5 +657,5 @@ module Laser
         end
       end  # ConstantPropagation
     end  # ControlFlow
-  end  # SexpAnalysis
+  end  # Analysis
 end  #

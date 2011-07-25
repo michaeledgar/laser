@@ -1,5 +1,5 @@
 module Laser
-  module SexpAnalysis
+  module Analysis
     # This annotation attempts to attach each comment in the program to the
     # first node in the AST that follows the comment, as well as all subnodes with
     # the same source location.

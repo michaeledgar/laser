@@ -2,7 +2,7 @@ require 'laser/third_party/rgl/adjacency'
 require 'laser/third_party/rgl/transitivity'
 require 'laser/third_party/rgl/dominators'
 module Laser
-  module SexpAnalysis
+  module Analysis
     module ControlFlow
       class ControlFlowGraph < RGL::ControlFlowGraph
         include ConstantPropagation

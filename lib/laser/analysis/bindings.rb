@@ -1,5 +1,5 @@
 module Laser
-  module SexpAnalysis
+  module Analysis
     module Bindings
       # This class represents a Base in Ruby. It may have a known type,
       # class, value (if constant!), and a variety of other details.

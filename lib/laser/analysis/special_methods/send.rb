@@ -1,5 +1,5 @@
 module Laser
-  module SexpAnalysis
+  module Analysis
     module SpecialMethods
       # Provides precise analysis of send methods. This is necessary for the
       # analyzer to be able to tell where to look for semantic information when

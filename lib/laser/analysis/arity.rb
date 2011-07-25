@@ -1,5 +1,5 @@
 module Laser
-  module SexpAnalysis
+  module Analysis
     # The arity of a method is an instance of Arity. It's basically a range
     # with some helper methods.
     class Arity < Range

@@ -863,7 +863,7 @@ EOF
     before do
       @input = %q{
 module Laser
-  module SexpAnalysis
+  module Analysis
     module Bindings
       # This class represents a Base in Ruby. It may have a known protocol (type),
       # class, value (if constant!), and a variety of other details.
@@ -966,9 +966,9 @@ end
     it 'correctly resolves many bindings, creates new modules and classes, and defines methods' do
       tree = annotate_all(@input)      
       
-      bindings_mod = 'Laser::SexpAnalysis::Bindings'
+      bindings_mod = 'Laser::Analysis::Bindings'
       ClassRegistry['Laser'].should be_a(LaserModule)
-      ClassRegistry['Laser::SexpAnalysis'].should be_a(LaserModule)
+      ClassRegistry['Laser::Analysis'].should be_a(LaserModule)
       ClassRegistry[bindings_mod].should be_a(LaserModule)
       ClassRegistry["#{bindings_mod}::Base"].should be_a(LaserClass)
       ClassRegistry["#{bindings_mod}::KeywordBinding"].should be_a(LaserClass)

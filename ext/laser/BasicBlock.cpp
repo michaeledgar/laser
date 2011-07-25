@@ -2,7 +2,7 @@
 #include "ruby.h"
 
 VALUE rb_mLaser;
-VALUE rb_mSexpAnalysis;
+VALUE rb_mAnalysis;
 VALUE rb_mControlFlow;
 VALUE rb_cBasicBlock;
 
@@ -517,8 +517,8 @@ extern "C" {
     VALUE Init_BasicBlock()
     {
         rb_mLaser = rb_define_module("Laser");
-		rb_mSexpAnalysis = rb_define_module_under(rb_mLaser, "SexpAnalysis");
-		rb_mControlFlow = rb_define_module_under(rb_mSexpAnalysis, "ControlFlow");
+		rb_mAnalysis = rb_define_module_under(rb_mLaser, "Analysis");
+		rb_mControlFlow = rb_define_module_under(rb_mAnalysis, "ControlFlow");
         rb_cBasicBlock = rb_define_class_under(rb_mControlFlow, "BasicBlock", rb_cObject);
         
         rb_define_alloc_func(rb_cBasicBlock, bb_alloc);

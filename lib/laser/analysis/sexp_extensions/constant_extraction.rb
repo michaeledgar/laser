@@ -1,4 +1,4 @@
-module Laser::SexpAnalysis
+module Laser::Analysis
   module SexpExtensions
     module ConstantExtraction
       

@@ -1,5 +1,5 @@
 module Laser
-  module SexpAnalysis
+  module Analysis
     # Visitor: a set of methods for visiting an AST. The
     # default implementations visit each child and do no
     # other processing. By including this module, and

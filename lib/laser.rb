@@ -71,10 +71,10 @@ require 'laser/analysis/bootstrap'
 # 2. Remove spurs
 # 3. Bend at the waist
 # 4. PULL UP ON THEM BOOTSTRAPS!
-Laser::SexpAnalysis::Bootstrap.bootstrap
+Laser::Analysis::Bootstrap.bootstrap
 # Load the type engine
 require 'laser/types/types'
-Laser::SexpAnalysis::Bootstrap.bootstrap_magic
+Laser::Analysis::Bootstrap.bootstrap_magic
 require 'laser/annotation_parser/parsers'
 
 require 'laser/analysis/visitor'
@@ -91,7 +91,7 @@ require 'laser/scanner'
   [path, File.read(path)]
 end.tap do |tuples|
   begin
-    trees = Laser::SexpAnalysis::Annotations.annotate_inputs(tuples, optimize: false)
+    trees = Laser::Analysis::Annotations.annotate_inputs(tuples, optimize: false)
     trees.each do |filename, tree|
       if tree.all_errors != []
         $stderr.puts "Default file #{filename} had these errors:"

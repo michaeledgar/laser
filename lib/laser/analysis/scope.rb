@@ -1,5 +1,5 @@
 module Laser
-  module SexpAnalysis
+  module Analysis
     # This class models a scope in Ruby. It has a constant table,
     # a self pointer, and a parent pointer to the enclosing scope.
     # It also has a local variable table.

@@ -1,5 +1,5 @@
 module Laser
-  module SexpAnalysis
+  module Analysis
     module ControlFlow
       # Simulation of a CFG. Requires values for the formal arguments, if any.
       # Stops as soon as an unpredictable statement is reached.
@@ -354,5 +354,5 @@ module Laser
         end
       end  # Simulation
     end  # ControlFlow
-  end  # SexpAnalysis
+  end  # Analysis
 end  # Laser

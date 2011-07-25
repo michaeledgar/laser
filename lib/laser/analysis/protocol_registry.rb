@@ -1,5 +1,5 @@
 module Laser
-  module SexpAnalysis
+  module Analysis
     # The ProtocolRegistry module handles negotiating instantiated protocols at
     # compile-time, such as the automatically-generated protocols created by a
     # class creation (as each class has a corresponding protocol, though some

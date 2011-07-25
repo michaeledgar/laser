@@ -2,7 +2,7 @@ module Laser
   Warning = Struct.new(:name, :file, :body, :line_number, :severity) do
     extend ModuleExtensions
     include LexicalAnalysis
-    include SexpAnalysis
+    include Analysis
 
     cattr_accessor :short_name
     cattr_accessor_with_default :match_filters, []

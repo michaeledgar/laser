@@ -1,5 +1,5 @@
 module Laser
-  module SexpAnalysis
+  module Analysis
     # Replaces the ParseTree Sexps by adding a few handy-dandy methods.
     class Sexp < Array
       include SexpExtensions::ConstantExtraction      
@@ -41,7 +41,7 @@ module Laser
       #
       # @return Boolean
       def is_sexp?(sexp)
-        SexpAnalysis::Sexp === sexp
+        Analysis::Sexp === sexp
       end
 
       def lines

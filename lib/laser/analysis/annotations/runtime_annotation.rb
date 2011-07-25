@@ -1,5 +1,5 @@
 module Laser
-  module SexpAnalysis
+  module Analysis
     # This is a simple inherited attribute that specifies whether a given node
     # will be executed when at load-time or at run-time. In short, method bodies
     # and not-run blocks at the top-level are not run, and everything else is.

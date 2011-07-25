@@ -1,7 +1,7 @@
 module Laser
   # This is a set of methods that get provided to Warnings so they can perform
   # parse-tree analysis of their bodies.
-  module SexpAnalysis
+  module Analysis
     extend ModuleExtensions
     
     # inputs: Array<(String, String)>
@@ -18,7 +18,7 @@ module Laser
     # @return [Sexp, NilClass] the sexp representing the input text.
     def parse(body = self.body)
       return PARSING_CACHE[body] if PARSING_CACHE[body]
-      pairs = SexpAnalysis.analyze_inputs([['(stdin)', body]])
+      pairs = Analysis.analyze_inputs([['(stdin)', body]])
       PARSING_CACHE[body] = pairs[0][1]
     end
     

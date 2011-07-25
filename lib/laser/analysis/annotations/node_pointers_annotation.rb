@@ -1,5 +1,5 @@
 module Laser
-  module SexpAnalysis
+  module Analysis
     # This is a simple inherited attribute applied to each node,
     # giving a pointer to that node's parent. That way AST traversal
     # is easier.
@@ -24,7 +24,7 @@ module Laser
       def default_visit(node)
         children = node.children
         children.each_with_index do |elt, idx|
-          next unless SexpAnalysis::Sexp === elt
+          next unless Analysis::Sexp === elt
           elt.parent = node
           elt.next = children[idx+1]
           elt.prev = children[idx-1] if idx >= 1

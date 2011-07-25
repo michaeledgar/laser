@@ -1,4 +1,4 @@
-module Laser::SexpAnalysis
+module Laser::Analysis
   module SexpExtensions
     module TypeInference
       # Finds the type of the AST node. This depends on the node's scope sometimes,

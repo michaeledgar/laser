@@ -1,7 +1,7 @@
 require 'pp'
 require 'delegate'
 module Laser
-  module SexpAnalysis
+  module Analysis
     UNDEFINED = PlaceholderObject.new('UNDEFINED')
     VARYING = PlaceholderObject.new('VARYING')
 

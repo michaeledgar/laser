@@ -25,7 +25,7 @@ describe BasicAnnotation do
   
   describe '#add_property' do
     selectors = [:aaa, :aaa=, :bbb, :bbb=]
-    it 'adds accessors to SexpAnalysis::Sexp in a very intrusive manner' do
+    it 'adds accessors to Analysis::Sexp in a very intrusive manner' do
       @class.add_property :aaa, :bbb
       sexp = Sexp.new([:program, []])
       selectors.each {|sel| sexp.should respond_to(sel)}

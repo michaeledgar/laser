@@ -1,6 +1,6 @@
 require 'yaml'
 module Laser
-  module SexpAnalysis
+  module Analysis
     module Annotations
       extend ModuleExtensions
       # Global annotations are only run once, at the root. 
@@ -81,10 +81,10 @@ module Laser
         Annotations.global_annotations.concat args.map(&:new)
       end
       def self.add_property(*args)
-        SexpAnalysis::Sexp.__send__(:attr_accessor, *args)
+        Analysis::Sexp.__send__(:attr_accessor, *args)
       end
       def self.add_computed_property(name, &blk)
-        SexpAnalysis::Sexp.__send__(:define_method, name, &blk)
+        Analysis::Sexp.__send__(:define_method, name, &blk)
       end
     end
   end

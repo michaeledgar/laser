@@ -1,6 +1,6 @@
 require_relative 'spec_helper'
 
-describe SexpAnalysis::ArgumentExpansion do
+describe Analysis::ArgumentExpansion do
   describe '#arity' do
     it 'can figure out the arity of a simple method call with no arguments' do
       tree = annotate_all('foo(  )')[1][0][2]

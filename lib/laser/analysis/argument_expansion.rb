@@ -1,5 +1,5 @@
 module Laser
-  module SexpAnalysis
+  module Analysis
     # This class handles the interpretation and expansion of arguments being
     # passed to a method call.
     class ArgumentExpansion

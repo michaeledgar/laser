@@ -1,5 +1,5 @@
 module Laser
-  module SexpAnalysis
+  module Analysis
     module ControlFlow
       # Finds the properties of how the code yields to a block argument.
       # Should not be used on top-level code, naturally.

@@ -1,5 +1,5 @@
 module Laser
-  module SexpAnalysis
+  module Analysis
     module ArgumentListHandling
       # Returns the hash representing the arguments in a signature, based on an
       # argument list (:params) from the parser.

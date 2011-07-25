@@ -1,6 +1,6 @@
 require 'set'
 module Laser
-  module SexpAnalysis
+  module Analysis
     module ControlFlow
       class Instruction < BasicObject
         attr_reader :node, :block, :body, :ignore_privacy

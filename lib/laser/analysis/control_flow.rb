@@ -16,7 +16,7 @@ require 'laser/analysis/control_flow/cfg_builder'
 require 'laser/analysis/control_flow/control_flow_graph'
 
 module Laser
-  module SexpAnalysis
+  module Analysis
     module ControlFlow
       def self.perform_cfg_analysis(tree, text, opts={})
         graph = GraphBuilder.new(tree).build

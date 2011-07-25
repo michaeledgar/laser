@@ -1,5 +1,5 @@
 require_relative '../spec_helper'
-include SexpAnalysis
+include Analysis
 
 module AnalysisHelpers
   def clean_registry

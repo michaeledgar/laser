@@ -119,7 +119,7 @@ module Laser
       attr_reader :class_object
       def initialize(class_object)
         if String === class_object
-          @class_object = SexpAnalysis::ClassRegistry[class_object]
+          @class_object = Analysis::ClassRegistry[class_object]
         else
           @class_object = class_object
         end
@@ -185,11 +185,11 @@ module Laser
       end
       
       def possible_classes
-        klass = SexpAnalysis::ClassRegistry[class_name]
+        klass = Analysis::ClassRegistry[class_name]
         case variance
         when :invariant then ::Set[klass]
         when :covariant
-          if SexpAnalysis::LaserClass === klass
+          if Analysis::LaserClass === klass
           then ::Set.new klass.subset
           else ::Set.new klass.classes_including.map(&:subset).flatten  # module
           end

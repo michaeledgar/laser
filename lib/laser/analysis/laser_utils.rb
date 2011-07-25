@@ -1,5 +1,5 @@
 module Laser
-  module SexpAnalysis
+  module Analysis
     module Utilities
      module_function
       def klass_for(arg)
