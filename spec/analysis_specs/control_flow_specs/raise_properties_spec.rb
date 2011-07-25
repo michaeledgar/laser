@@ -105,7 +105,7 @@ EOF
         Types::NILCLASS).should == Frequency::NEVER
   end
 
-  it 'should infer a number of potential raises via ivars' do
+  it 'should infer a potential raises by argument type' do
     g = cfg <<-EOF
 class RTInfer3
   def initialize(x)

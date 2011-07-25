@@ -206,24 +206,19 @@ module Laser
       end
       
       def overloads
-        overloads = {}
-        if annotations['overload'].any?
-          annotations['overload'].each do |overload|
-            raise ArgumentError.new('overload must be a type') unless overload.type?
-            proc_type = overload.type
-            unless Types::GenericType === proc_type && proc_type.base_type == Types::PROC
-              raise ArgumentError.new('overload must be a function type')
-            end
-            overloads[proc_type.subtypes[0].element_types] = proc_type
+        Hash[*(annotations['overload'].map do |overload|
+          raise ArgumentError.new('overload must be a type') unless overload.type?
+          proc_type = overload.type
+          unless Types::GenericType === proc_type && proc_type.base_type == Types::PROC
+            raise ArgumentError.new('overload must be a function type')
           end
-        end
-        overloads
+          [proc_type.subtypes[0].element_types, proc_type]
+        end.flatten(1))]
       end
       
       def annotated_raise_frequency
         if annotations['raises'].any?
-          literals = annotations['raises'].select(&:literal?)
-          literals.map(&:literal).each do |literal|
+          annotations['raises'].select(&:literal?).map(&:literal).each do |literal|
             return Frequency[literal] if !literal || Symbol === literal
           end
         end
@@ -232,9 +227,7 @@ module Laser
       def raises
         if annotations['raises'].any?
           types = annotations['raises'].select(&:type?)
-          if types.any?
-            types.map { |note| note.type }
-          end
+          types.map { |note| note.type } if types.any?
         end
       end
     end
