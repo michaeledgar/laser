@@ -40,6 +40,8 @@ class Fixnum < Integer
   # pure: true
   # builtin: true
   # returns: Boolean
+  # num: Numeric
+  # raises: never
   def <(num)
   end
   # pure: true
@@ -54,7 +56,6 @@ class Fixnum < Integer
   end
   # pure: true
   # builtin: true
-  # returns: NilClass | Fixnum
   def <=>(num)
   end
   # pure: true

@@ -33,7 +33,7 @@ end
 EOF
    ClassRegistry['RTI3'].singleton_class.instance_method('sim3').
        return_type_for_types(
-         Utilities.type_for(ClassRegistry['RTI3'])).should == nil
+         Utilities.type_for(ClassRegistry['RTI3'])).should == Types::EMPTY
    g.should have_error(NoMatchingTypeSignature).on_line(8).with_message(/\*/)
   end
 

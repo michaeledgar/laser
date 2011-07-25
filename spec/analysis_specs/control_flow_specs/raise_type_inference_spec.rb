@@ -99,7 +99,7 @@ class RTInfer3
     when Float
       raise TypeError.new('no floats at all')
     else
-      x.ljust
+      x.ljust(20)
     end
   end
 end

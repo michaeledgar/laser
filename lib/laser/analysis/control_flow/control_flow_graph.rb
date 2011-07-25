@@ -164,7 +164,9 @@ module Laser
         end
 
         def return_type
-          unless (@exit.normal_predecessors & @exit.real_predecessors).empty?
+          if (@exit.normal_predecessors & @exit.real_predecessors).empty?
+            Types::EMPTY
+          else
             @final_return.expr_type
           end
         end

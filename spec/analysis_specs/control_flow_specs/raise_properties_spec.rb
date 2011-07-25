@@ -33,7 +33,7 @@ EOF
   it 'should recognize simple methods that might raise' do
     g = cfg_method <<-EOF
 def foo(x)
-  if x > 2  # may raise
+  if gets  # may raise
     'hi'
   else
     'there'
@@ -119,7 +119,7 @@ class RTInfer3
     when Float
       raise TypeError.new('no floats at all')
     else
-      x.ljust
+      x.ljust(20)
     end
   end
 end

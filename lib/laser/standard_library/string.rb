@@ -256,7 +256,10 @@ class String
   # pure: true
   # builtin: true
   # returns: String=
-  def ljust(integer, padstr='')
+  # amt: Fixnum= | Bignum=
+  # padstr: String
+  # raises: never
+  def ljust(amt, padstr='')
   end
   # pure: true
   # builtin: true

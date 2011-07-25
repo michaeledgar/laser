@@ -6,7 +6,27 @@ module Laser
     #
     # Subtype relation. Extremely important. Don't mess it up.
     def self.subtype?(sub, top)
-      sub.possible_classes.subset?(top.possible_classes)
+      case top
+      when ClassObjectType
+        sub.possible_classes.all? { |sub_class| sub_class <= top.class_object }
+      when ClassType
+        if top.variance == :invariant
+          klass = top.possible_classes.first
+          sub.possible_classes.all? do |sub_class|
+            if LaserSingletonClass === sub_class
+              sub_class <= klass
+            else
+              sub_class == klass
+            end
+          end
+        else
+          sub.possible_classes.subset?(top.possible_classes)
+        end
+      when UnionType
+        top.member_types.any? { |member| subtype?(sub, member) }
+      else
+        sub.possible_classes.subset?(top.possible_classes)
+      end
     end
     
     def self.equal?(t1, t2)

@@ -1,17 +1,19 @@
 class BasicObject < nil
   # pure: true
-  # raises: false
+  # raises: never
   # builtin: true
   def !
   end
   # pure: true
-  # raises: false
+  # raises: never
   # builtin: true
+  # returns: Boolean
   def ==(other)
   end
   # pure: true
-  # raises: false
+  # raises: never
   # builtin: true
+  # returns: Boolean
   def !=(other)
   end
   # builtin: true

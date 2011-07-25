@@ -163,12 +163,20 @@ end
 module Kernel
   # pure: true
   # builtin: true
+  # raises: never
   def eql?(other)
   end
   # pure: true
   # builtin: true
+  # raises: never
   def equal?(other)
   end
+  # builtin: true
+  # klass: Module
+  # raises: never
+  def is_a?(klass)
+  end
+  alias kind_of? is_a?
   # pure: true
   # raises: never
   # builtin: true

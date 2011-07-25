@@ -301,6 +301,7 @@ module Laser
             type = Types::TOP
             raise_freq = Frequency::ALWAYS
             raise_type = Types::UnionType.new([Types::ClassObjectType.new('TypeError')])
+            Laser.debug_puts("No method named #{method_name} with matching types was found")
             instruction.node.add_error(NoMatchingTypeSignature.new(
                 "No method named #{method_name} with matching types was found", instruction.node))
           end

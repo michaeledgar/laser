@@ -42,6 +42,7 @@ module Laser
           # if the mere difference in block presence results in no exit path, then
           # we consider this evidence of failure due to lack of block.
           yields_without_block = true if yields_with_block && !has_return_pd
+
           @yield_type = compute_yield_type(yields_with_block, yields_without_block)
           @yield_arity = calculate_yield_arity(weak_with_calls)
         end
