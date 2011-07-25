@@ -91,12 +91,14 @@ module Laser
 
     class LaserProc < LaserObject
       attr_accessor :ast_node, :arguments, :cfg, :exit_block, :lexical_self
+      attr_accessor :annotations
       def initialize(arguments, ast_node, cfg = nil, callsite_block = nil)
         @ast_node = ast_node
         @arguments = arguments
         @cfg = cfg
         @callsite_block = callsite_block
         @lexical_self = @exit_block = nil
+        @annotations = Hash.new { |h, k| h[k] = [] }
       end
 
       def start_block
@@ -162,6 +164,78 @@ module Laser
 
       def klass
         ClassRegistry['Proc']
+      end
+      
+      %w(special pure builtin predictable mutation).each do |attr|
+        define_method(attr) do
+          default = attr == 'predictable'
+          note = self.annotations[attr]
+          which_value = note && note.first(&:literal?)
+          which_value ? which_value.literal : default
+        end
+      end
+
+      def annotated_return
+        notes = annotations['returns']
+        if notes.any?
+          if notes.size > 1
+            raise ArgumentError.new("Cannot have more than one 'returns' annotation")
+          end
+          return_type = notes.first
+          if return_type.type?
+            return_type.type
+          else
+            raise NotImplementedError.new('Literal annotated return types not implemented')
+          end
+        end
+      end
+      
+      def annotated_yield_usage
+        notes = annotations['yield_usage']
+        if notes.any?
+          if notes.size > 1
+            raise ArgumentError.new("Cannot have more than one 'yield_usage' annotation")
+          end
+          yield_usage = notes.first
+          if yield_usage.type?
+            raise ArgumentError.new('yield_usage requires a literal yield usage category')
+          else
+            yield_usage.literal
+          end
+        end
+      end
+      
+      def overloads
+        overloads = {}
+        if annotations['overload'].any?
+          annotations['overload'].each do |overload|
+            raise ArgumentError.new('overload must be a type') unless overload.type?
+            proc_type = overload.type
+            unless Types::GenericType === proc_type && proc_type.base_type == Types::PROC
+              raise ArgumentError.new('overload must be a function type')
+            end
+            overloads[proc_type.subtypes[0].element_types] = proc_type
+          end
+        end
+        overloads
+      end
+      
+      def annotated_raise_frequency
+        if annotations['raises'].any?
+          literals = annotations['raises'].select(&:literal?)
+          literals.map(&:literal).each do |literal|
+            return Frequency[literal] if !literal || Symbol === literal
+          end
+        end
+      end
+      
+      def raises
+        if annotations['raises'].any?
+          types = annotations['raises'].select(&:type?)
+          if types.any?
+            types.map { |note| note.type }
+          end
+        end
       end
     end
     
@@ -758,22 +832,12 @@ module Laser
       attr_reader :name
       attr_reader :proc
       attr_accessor :body_ast, :owner, :arity
-      attr_accessor_with_default :overloads, {}
-      attr_accessor_with_default :annotated_return, nil
-      attr_accessor_with_default :special, false
-      attr_accessor_with_default :builtin, false
-      attr_accessor_with_default :mutation, false
-      attr_accessor_with_default :pure, false
-      attr_accessor_with_default :predictable, true
-      attr_accessor_with_default :raises, nil
-      attr_accessor_with_default :annotated_raise_frequency, nil
-      attr_accessor_with_default :annotated_yield_usage, nil
 
       def initialize(name, base_proc)
         @name = name
         @type_instantiations = {}
         @proc = base_proc
-        if base_proc
+        if base_proc  # always true except some ugly test cases
           @arity = Arity.for_arglist(base_proc.arguments)
         else
           @arity = nil
@@ -781,8 +845,26 @@ module Laser
         yield self if block_given?
       end
       
+      %w(special pure builtin predictable mutation annotated_return annotated_yield_usage
+         overloads annotated_raise_frequency raises).each do |attr|
+        define_method(attr) do
+          instance_variable_get("@#{attr}") || (self.proc ? self.proc.send(attr) : nil)
+        end
+        define_method("#{attr}=") do |val|
+          instance_variable_set("@#{attr}", val)
+        end
+      end
+
+      def overloads
+        @overloads || (self.proc ? self.proc.overloads : {})
+      end
+
+      def predictable
+        @predictable || (self.proc ? self.proc.predictable : true)
+      end
+
       def yield_type
-        return @annotated_yield_usage if @annotated_yield_usage
+        return annotated_yield_usage if annotated_yield_usage
         if builtin
           :ignored
         else
@@ -825,7 +907,7 @@ module Laser
       
       def return_type_for_types(self_type, arg_types = [], block_type = nil)
         block_type ||= Types::NILCLASS
-        return self.annotated_return if annotated_return
+        return annotated_return if annotated_return
         unless overloads.empty?
           overloads.each do |overload_args, proc_type|
             # compatible arg count

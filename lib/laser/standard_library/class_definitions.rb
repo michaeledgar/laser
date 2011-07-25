@@ -202,7 +202,6 @@ module Kernel
     Proc.new
   end
   # special: true
-  # predictable: maybe
   def require(path)
   end
   # raises: never

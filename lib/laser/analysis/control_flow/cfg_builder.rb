@@ -1335,74 +1335,10 @@ module Laser
         def def_instruct(receiver, name, args, body, opts = {})
           opts = {value: false}.merge(opts)
           body.scope = current_scope
-          block, _ = create_block_temporary(args, body)
-          notes = notes_as_ruby_object(body.parent)
-          note_args = notes.flatten.map { |const| const_instruct(const) }
-          call_opts = call_instruct(ClassRegistry['Hash'].binding, :[], *note_args, raise: false, value: true)
-          call_instruct(receiver, 'define_method_with_annotations', name, block, call_opts, raise: false)
+          block, new_proc = create_block_temporary(args, body)
+          new_proc.annotations = body.parent.comment.annotation_map if body.parent.comment
+          call_instruct(receiver, 'define_method', name, block, raise: false)
           const_instruct(nil) if opts[:value]
-        end
-
-        BOOLEAN_ANNOTATIONS = %w(special pure builtin predictable mutation)
-        def notes_as_ruby_object(node)
-          result = {}
-          if node.comment && (annotations = node.comment.annotation_map)
-            BOOLEAN_ANNOTATIONS.each do |note_name|
-              annotations[note_name].each do |note|
-                result[note_name.to_sym] = note.literal if note.literal?
-              end
-            end
-            if annotations['returns'].any?
-              if annotations['returns'].size > 1
-                raise ArgumentError.new("Cannot have more than one 'returns' annotation")
-              end
-              return_type = annotations['returns'].first
-              if return_type.type?
-                result[:annotated_return] = return_type.type
-              else
-                raise NotImplementedError.new("Literal annotated return types not implemented")
-              end
-            end
-            if annotations['yield_usage'].any?
-              if annotations['yield_usage'].size > 1
-                raise ArgumentError.new("Cannot have more than one 'yield_usage' annotation")
-              end
-              yield_usage = annotations['yield_usage'].first
-              if yield_usage.type?
-                raise ArgumentError.new('yield_usage requires a literal yield usage category')
-              else
-                result[:annotated_yield_usage] = yield_usage.literal
-              end
-            end
-
-            if annotations['overload'].any?
-              overloads = {}
-              annotations['overload'].each do |overload|
-                raise ArgumentError.new('overload must be a type') unless overload.type?
-                proc_type = overload.type
-                unless Types::GenericType === proc_type && proc_type.base_type == Types::PROC
-                  raise ArgumentError.new('overload must be a function type')
-                end
-                overloads[proc_type.subtypes[0].element_types] = proc_type
-              end
-              result[:overloads] = overloads
-            end
-
-            if annotations['raises'].any?
-              literals, types = annotations['raises'].partition { |x| x.literal? }
-              literals.map(&:literal).each do |literal|
-                if !literal
-                  result[:annotated_raise_frequency] = Frequency[literal]
-                elsif ::Symbol === literal
-                  result[:annotated_raise_frequency] = Frequency[literal]
-                end
-              end
-              if types.any?
-                result[:raises] = types.map { |note| note.type }
-              end
-            end
-          end
-          result
         end
 
         # Creates a temporary, assigns it a constant value, and returns it.
