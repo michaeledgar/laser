@@ -769,20 +769,6 @@ module Laser
       attr_accessor_with_default :annotated_raise_frequency, nil
       attr_accessor_with_default :annotated_yield_usage, nil
 
-      # Gets the laser method with the given class and name. Convenience for
-      # debugging/quick access.
-      def self.for(name)
-        if name.include?('.')
-          klass, method = name.split('.', 2)
-          Scope::GlobalScope.lookup(klass).value.singleton_class.instance_method(method)
-        elsif name.include?('#')
-          klass, method = name.split('#', 2)
-          Scope::GlobalScope.lookup(klass).value.instance_method(method)
-        else
-          raise ArgumentError.new("method '#{name}' should be in the form Class#instance_method or Class.singleton_method.")
-        end
-      end
-
       def initialize(name, base_proc)
         @name = name
         @type_instantiations = {}
