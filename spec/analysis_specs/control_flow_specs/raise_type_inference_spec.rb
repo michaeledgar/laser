@@ -183,4 +183,41 @@ EOF
         Utilities.type_for(ClassRegistry['RTInfer6'])).should(
           equal_type(ClassRegistry['NoMethodError'].as_type))
   end
+  
+  it 'can infer an ArgumentError when invalid arities are given' do
+    g = cfg <<-EOF
+class RTInfer7
+  def foo(*args)
+    bar(*args)
+  end
+  def bar(a, b=1, c=2, d)
+    a
+  end
+end
+EOF
+    method = ClassRegistry['RTInfer7'].instance_method('foo')
+    method.raise_type_for_types(
+        ClassRegistry['RTInfer7'].as_type).should(
+          equal_type(ClassRegistry['ArgumentError'].as_type))
+    method.raise_type_for_types(
+        ClassRegistry['RTInfer7'].as_type,
+        [Types::STRING]).should(
+          equal_type(ClassRegistry['ArgumentError'].as_type))
+    method.raise_type_for_types(
+        ClassRegistry['RTInfer7'].as_type,
+        [Types::STRING, Types::FIXNUM]).should(
+          equal_type(Types::EMPTY))
+    method.raise_type_for_types(
+        ClassRegistry['RTInfer7'].as_type,
+        [Types::STRING, Types::FIXNUM, Types::BIGNUM]).should(
+          equal_type(Types::EMPTY))
+    method.raise_type_for_types(
+        ClassRegistry['RTInfer7'].as_type,
+        [Types::STRING, Types::FIXNUM, Types::BIGNUM, Types::ARRAY]).should(
+          equal_type(Types::EMPTY))
+    method.raise_type_for_types(
+        ClassRegistry['RTInfer7'].as_type,
+        [Types::STRING, Types::FIXNUM, Types::BIGNUM, Types::ARRAY, Types::HASH]).should(
+          equal_type(ClassRegistry['ArgumentError'].as_type))
+  end
 end

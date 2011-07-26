@@ -362,12 +362,21 @@ module Laser
         # TODO(adgar): Optimize this. Use lattice-style expression of raisability
         # until types need to be added too.
         def raisability_for_templates(possible_dispatches, cartesian, ignore_privacy)
-          raise_type = Types::UnionType.new([])
+          raise_type = Types::EMPTY
           seen_public = seen_private = seen_raise = seen_succeed = seen_any = seen_missing = false
+          seen_valid_arity = seen_invalid_arity = false
+          arity = cartesian.first.size - 1  # -1 for block arg
           possible_dispatches.each do |self_type, methods|
             seen_any = true if methods.size > 0 && !seen_any
             seen_missing = true if methods.empty? && !seen_missing
             methods.each do |method|
+              if !seen_valid_arity && method.valid_arity?(arity)
+                seen_valid_arity = true
+              end
+              if !seen_invalid_arity && !method.valid_arity?(arity)
+                seen_invalid_arity = true
+              end
+                
               cartesian.each do |*type_list, block_type|
                 raise_frequency = method.raise_frequency_for_types(self_type, type_list, block_type)
                 if raise_frequency > Frequency::NEVER
@@ -388,20 +397,28 @@ module Laser
               end
             end
           end
+
           if seen_any
             fails_lookup = seen_missing ? Frequency::MAYBE : Frequency::NEVER
             fails_privacy = if ignore_privacy
                             then Frequency::NEVER
                             else Frequency.for_samples(seen_private, seen_public)
                             end
+            failed_arity = Frequency.for_samples(seen_invalid_arity, seen_valid_arity)
             if fails_privacy == Frequency::ALWAYS
               raise_type = ClassRegistry['NoMethodError'].as_type
-            end
-            if fails_lookup > Frequency::NEVER
-              raise_type |= ClassRegistry['NoMethodError'].as_type
+            elsif failed_arity == Frequency::ALWAYS
+              raise_type = ClassRegistry['ArgumentError'].as_type
+            else
+              if fails_lookup > Frequency::NEVER || fails_privacy > Frequency::NEVER
+                raise_type |= ClassRegistry['NoMethodError'].as_type
+              end
+              if failed_arity > Frequency::NEVER
+                raise_type |= ClassRegistry['ArgumentError'].as_type
+              end
             end
             raised = Frequency.for_samples(seen_raise, seen_succeed)
-            raise_freq = [fails_privacy, raised, fails_lookup].max
+            raise_freq = [fails_privacy, raised, fails_lookup, failed_arity].max
           else
             raise_freq = Frequency::ALWAYS  # no method!
             raise_type = ClassRegistry['NoMethodError'].as_type

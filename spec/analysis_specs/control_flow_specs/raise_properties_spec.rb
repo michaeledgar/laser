@@ -200,5 +200,39 @@ EOF
     method.raise_frequency_for_types(
         Utilities.type_for(ClassRegistry['RInfer6'])).should == Frequency::MAYBE
   end
+
+  it 'can infer an ArgumentError when invalid arities are given' do
+    g = cfg <<-EOF
+class RInfer7
+  def foo(*args)
+    bar(*args)
+  end
+  def bar(a, b=1, c=2, d)
+    a
+  end
+end
+EOF
+    method = ClassRegistry['RInfer7'].instance_method('foo')
+    method.raise_frequency_for_types(
+        ClassRegistry['RInfer7'].as_type).should == Frequency::ALWAYS
+    method.raise_frequency_for_types(
+        ClassRegistry['RInfer7'].as_type,
+        [Types::STRING]).should == Frequency::ALWAYS
+    method.raise_frequency_for_types(
+        ClassRegistry['RInfer7'].as_type,
+        [Types::STRING, Types::FIXNUM]).should == Frequency::NEVER
+    method.raise_frequency_for_types(
+        ClassRegistry['RInfer7'].as_type,
+        [Types::STRING, Types::FIXNUM,
+         Types::BIGNUM]).should == Frequency::NEVER
+    method.raise_frequency_for_types(
+        ClassRegistry['RInfer7'].as_type,
+        [Types::STRING, Types::FIXNUM,
+         Types::BIGNUM, Types::ARRAY]).should == Frequency::NEVER
+    method.raise_frequency_for_types(
+        ClassRegistry['RInfer7'].as_type,
+        [Types::STRING, Types::FIXNUM, Types::BIGNUM,
+         Types::ARRAY, Types::HASH]).should == Frequency::ALWAYS
+  end
 end
     

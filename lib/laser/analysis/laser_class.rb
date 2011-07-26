@@ -870,6 +870,10 @@ module Laser
         result
       end
 
+      def valid_arity?(num_args)
+        @arity ? @arity.include?(num_args) : true
+      end
+
       def overload_for_arg_types(arg_types)
         overloads.each do |overload_args, proc_type|
           # compatible arg count
