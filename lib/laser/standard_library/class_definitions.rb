@@ -234,6 +234,15 @@ module Kernel
   def block_given?
   end
   alias iterator? block_given?
+  # builtin: true
+  # raises: never
+  # pure: false
+  # predictable: false
+  # overload: () -> Float
+  # overload: Fixnum= -> Fixnum= | Bignum=
+  # overload: Bignum= -> Fixnum= | Bignum=
+  def rand(n=nil)
+  end
 end
 
 require 'basic_object'

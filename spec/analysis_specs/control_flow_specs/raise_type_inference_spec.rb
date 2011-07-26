@@ -72,15 +72,15 @@ EOF
     method = ClassRegistry['Object'].instance_method('make_rtinfer_2')
     # call make_rinfer_2 should raise for a fixnum
     method.raise_type_for_types(
-        Utilities.type_for(ClassRegistry['String']),  # doesn't matter
+        Types::STRING,  # doesn't matter
         [Types::FIXNUM], 
         Types::NILCLASS).should equal_type(ClassRegistry['TypeError'].as_type)
     method.raise_type_for_types(
-        Utilities.type_for(ClassRegistry['String']),  # doesn't matter
+        Types::STRING,  # doesn't matter
         [ClassRegistry['Bignum'].as_type], 
         Types::NILCLASS).should equal_type(ClassRegistry['TypeError'].as_type)
     method.raise_type_for_types(
-        Utilities.type_for(ClassRegistry['String']),  # doesn't matter
+        Types::STRING,  # doesn't matter
         [Types::STRING], 
         Types::NILCLASS).should equal_type(Types::EMPTY)
   end
@@ -110,20 +110,40 @@ EOF
     method = ClassRegistry['Object'].instance_method('make_rtinfer_3')
     # call make_rinfer_2 should raise for a fixnum
     method.raise_type_for_types(
-        Utilities.type_for(ClassRegistry['String']),  # doesn't matter
+        Types::STRING,  # doesn't matter
         [Types::FLOAT], 
         Types::NILCLASS).should equal_type(ClassRegistry['TypeError'].as_type)
     method.raise_type_for_types(
-        Utilities.type_for(ClassRegistry['String']),  # doesn't matter
+        Types::STRING,  # doesn't matter
         [ClassRegistry['Bignum'].as_type], 
         Types::NILCLASS).should equal_type(ClassRegistry['ArgumentError'].as_type)
     method.raise_type_for_types(
-        Utilities.type_for(ClassRegistry['String']),  # doesn't matter
+        Types::STRING,  # doesn't matter
         [Types::ARRAY], 
         Types::NILCLASS).should equal_type(ClassRegistry['NoMethodError'].as_type)
     method.raise_type_for_types(
-        Utilities.type_for(ClassRegistry['String']),  # doesn't matter
+        Types::STRING,  # doesn't matter
         [Types::STRING], 
         Types::NILCLASS).should equal_type(Types::EMPTY)
+  end
+  
+  it 'can infer raises from calls to the annotated String class' do
+    g = cfg <<-EOF
+class RTInfer4
+  def silly(x)
+    x.getbyte(x.size * 2)
+  end
+end
+EOF
+    method = ClassRegistry['RTInfer4'].instance_method('silly')
+    method.raise_type_for_types(
+        Utilities.type_for(ClassRegistry['RTInfer4']),
+        [Types::STRING],
+        Types::NILCLASS).should equal_type(ClassRegistry['IndexError'].as_type |
+                                           ClassRegistry['TypeError'].as_type)
+    method.raise_type_for_types(
+        Utilities.type_for(ClassRegistry['RTInfer4']),
+        [Types::FIXNUM],
+        Types::NILCLASS).should equal_type(ClassRegistry['NoMethodError'].as_type)
   end
 end

@@ -86,10 +86,8 @@ module Laser
               elsif aliases.include?(insn.block_operand)
                 insn.possible_methods.each do |method|
                   yield_type = method.yield_type
-                  if block_value.nil? && (yield_type == :required || yield_type == :foolish)
-                    calls << insn
-                    break
-                  elsif !block_value.nil? && (yield_type == :required || yield_type == :optional)
+                  if  block_value.nil? && (yield_type == :required || yield_type == :foolish) ||
+                     !block_value.nil? && (yield_type == :required || yield_type == :optional)
                     calls << insn
                     break
                   end

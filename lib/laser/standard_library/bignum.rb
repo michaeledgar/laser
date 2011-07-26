@@ -14,6 +14,7 @@ class Bignum < Integer
   # overload: (Float) -> Float=
   # overload: (Fixnum) -> Fixnum= | Bignum=
   # overload: (Bignum) -> Fixnum= | Bignum=
+  # raises: never
   def *(num)
   end
   # pure: true
@@ -31,6 +32,7 @@ class Bignum < Integer
   # pure: true
   # builtin: true
   # returns: Fixnum= | Bignum=
+  # raises: never
   def -@
   end
   # pure: true
@@ -97,6 +99,7 @@ class Bignum < Integer
   # pure: true
   # builtin: true
   # returns: Fixnum= | Bignum=
+  # raises: never
   def abs
   end
   # pure: true
@@ -120,6 +123,7 @@ class Bignum < Integer
   # pure: true
   # builtin: true
   # returns: Boolean
+  # raises: never
   def even?
   end
   # pure: true
@@ -129,6 +133,7 @@ class Bignum < Integer
   # pure: true
   # builtin: true
   # returns: Fixnum= | Bignum=
+  # raises: never
   def magnitude
   end
   # pure: true
@@ -139,6 +144,7 @@ class Bignum < Integer
   # pure: true
   # builtin: true
   # returns: Boolean
+  # raises: never
   def odd?
   end
   # pure: true
@@ -148,16 +154,19 @@ class Bignum < Integer
   # pure: true
   # builtin: true
   # returns: Fixnum= | Bignum=
+  # raises: never
   def size
   end
   # pure: true
   # builtin: true
   # returns: Float
+  # raises: never
   def to_f
   end
   # pure: true
   # builtin: true
   # returns: String
+  # raises: never
   def to_s
   end
   # pure: true
@@ -168,6 +177,7 @@ class Bignum < Integer
   # pure: true
   # builtin: true
   # returns: Fixnum= | Bignum=
+  # raises: never
   def ~
   end
 end

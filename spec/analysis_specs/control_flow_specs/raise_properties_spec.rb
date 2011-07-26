@@ -92,22 +92,22 @@ EOF
     method = ClassRegistry['Object'].instance_method('make_rinfer_2')
     # call make_rinfer_2 should raise for a fixnum
     method.raise_frequency_for_types(
-        Utilities.type_for(ClassRegistry['String']),  # doesn't matter
+        Types::STRING,  # doesn't matter
         [Types::FIXNUM], 
         Types::NILCLASS).should == Frequency::ALWAYS
     method.raise_frequency_for_types(
-        Utilities.type_for(ClassRegistry['String']),  # doesn't matter
+        Types::STRING,  # doesn't matter
         [ClassRegistry['Bignum'].as_type], 
         Types::NILCLASS).should == Frequency::ALWAYS
     method.raise_frequency_for_types(
-        Utilities.type_for(ClassRegistry['String']),  # doesn't matter
+        Types::STRING,  # doesn't matter
         [Types::STRING], 
         Types::NILCLASS).should == Frequency::NEVER
   end
 
   it 'should infer a potential raises by argument type' do
     g = cfg <<-EOF
-class RTInfer3
+class RInfer3
   def initialize(x)
     try_to_foo(x) if x != 0
   end
@@ -123,27 +123,47 @@ class RTInfer3
     end
   end
 end
-def make_rtinfer_3(x)
-  RTInfer3.new(x)
+def make_RInfer_3(x)
+  RInfer3.new(x)
 end
 EOF
-    method = ClassRegistry['Object'].instance_method('make_rtinfer_3')
+    method = ClassRegistry['Object'].instance_method('make_RInfer_3')
     # call make_rinfer_2 should raise for a fixnum
     method.raise_frequency_for_types(
-        Utilities.type_for(ClassRegistry['String']),  # doesn't matter
+        Types::STRING,  # doesn't matter
         [Types::FLOAT], 
         Types::NILCLASS).should == Frequency::MAYBE
     method.raise_frequency_for_types(
-        Utilities.type_for(ClassRegistry['String']),  # doesn't matter
+        Types::STRING,  # doesn't matter
         [ClassRegistry['Bignum'].as_type], 
         Types::NILCLASS).should == Frequency::MAYBE
     method.raise_frequency_for_types(
-        Utilities.type_for(ClassRegistry['String']),  # doesn't matter
+        Types::STRING,  # doesn't matter
         [Types::ARRAY], 
         Types::NILCLASS).should == Frequency::MAYBE   # not smart enough to prove != 0 yet
     method.raise_frequency_for_types(
-        Utilities.type_for(ClassRegistry['String']),  # doesn't matter
+        Types::STRING,  # doesn't matter
         [Types::STRING], 
         Types::NILCLASS).should == Frequency::NEVER
   end
+  
+  it 'can infer raises from calls to the annotated String class' do
+    g = cfg <<-EOF
+class RInfer4
+  def silly(x)
+    x.getbyte(x.size * 2)
+  end
 end
+EOF
+    method = ClassRegistry['RInfer4'].instance_method('silly')
+    method.raise_frequency_for_types(
+        Utilities.type_for(ClassRegistry['RInfer4']),
+        [Types::STRING],
+        Types::NILCLASS).should == Frequency::MAYBE
+    method.raise_frequency_for_types(
+        Utilities.type_for(ClassRegistry['RInfer4']),
+        [Types::FIXNUM],
+        Types::NILCLASS).should == Frequency::ALWAYS
+  end
+end
+    

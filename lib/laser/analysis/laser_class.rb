@@ -221,13 +221,16 @@ module Laser
           annotations['raises'].select(&:literal?).map(&:literal).each do |literal|
             return Frequency[literal] if !literal || Symbol === literal
           end
+          nil
         end
       end
       
       def raises
         if annotations['raises'].any?
           types = annotations['raises'].select(&:type?)
-          types.map { |note| note.type } if types.any?
+          if types.any?
+            Types::UnionType.new(types.map { |note| note.type })
+          end
         end
       end
     end
