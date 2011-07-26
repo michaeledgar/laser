@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{laser}
-  s.version = "0.5.2"
+  s.version = "0.6.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = [%q{Michael Edgar}]
-  s.date = %q{2011-07-16}
+  s.date = %q{2011-07-26}
   s.description = %q{Laser is an advanced static analysis tool for Ruby.}
   s.email = %q{michael.j.edgar@dartmouth.edu}
   s.executables = [%q{laser}]
@@ -25,7 +25,6 @@ Gem::Specification.new do |s|
     "LICENSE",
     "README.md",
     "Rakefile",
-    "TODO.md",
     "VERSION",
     "bin/laser",
     "design_docs/goals.md",
@@ -86,6 +85,7 @@ Gem::Specification.new do |s|
     "lib/laser/analysis/sexp_extensions/source_location.rb",
     "lib/laser/analysis/sexp_extensions/type_inference.rb",
     "lib/laser/analysis/signature.rb",
+    "lib/laser/analysis/special_methods/send.rb",
     "lib/laser/analysis/visitor.rb",
     "lib/laser/annotation_parser/annotations.treetop",
     "lib/laser/annotation_parser/annotations_parser.rb",
@@ -338,56 +338,35 @@ Gem::Specification.new do |s|
 
     if Gem::Version.new(Gem::VERSION) >= Gem::Version.new('1.2.0') then
       s.add_runtime_dependency(%q<treetop>, ["~> 1.4"])
-      s.add_runtime_dependency(%q<ripper-plus>, ["~> 1.2"])
+      s.add_runtime_dependency(%q<ripper-plus>, ["~> 1.3.0"])
       s.add_runtime_dependency(%q<axiom_of_choice>, [">= 0"])
       s.add_runtime_dependency(%q<stream>, ["= 0.5"])
       s.add_runtime_dependency(%q<object_regex>, ["~> 1.0"])
       s.add_runtime_dependency(%q<trollop>, ["~> 1.16.2"])
       s.add_development_dependency(%q<rake>, ["~> 0.9.0"])
       s.add_development_dependency(%q<rspec>, ["~> 2.3.0"])
-      s.add_development_dependency(%q<yard>, [">= 0"])
-      s.add_development_dependency(%q<fuubar>, [">= 0"])
       s.add_development_dependency(%q<cucumber>, [">= 0.10.0"])
-      s.add_development_dependency(%q<metric_fu>, [">= 2.0.1"])
-      s.add_development_dependency(%q<simplecov>, [">= 0.3.9"])
-      s.add_development_dependency(%q<simplecov-gem-adapter>, [">= 1.0.0"])
-      s.add_development_dependency(%q<guard>, [">= 0"])
-      s.add_development_dependency(%q<guard-rspec>, [">= 0"])
     else
       s.add_dependency(%q<treetop>, ["~> 1.4"])
-      s.add_dependency(%q<ripper-plus>, ["~> 1.2"])
+      s.add_dependency(%q<ripper-plus>, ["~> 1.3.0"])
       s.add_dependency(%q<axiom_of_choice>, [">= 0"])
       s.add_dependency(%q<stream>, ["= 0.5"])
       s.add_dependency(%q<object_regex>, ["~> 1.0"])
       s.add_dependency(%q<trollop>, ["~> 1.16.2"])
       s.add_dependency(%q<rake>, ["~> 0.9.0"])
       s.add_dependency(%q<rspec>, ["~> 2.3.0"])
-      s.add_dependency(%q<yard>, [">= 0"])
-      s.add_dependency(%q<fuubar>, [">= 0"])
       s.add_dependency(%q<cucumber>, [">= 0.10.0"])
-      s.add_dependency(%q<metric_fu>, [">= 2.0.1"])
-      s.add_dependency(%q<simplecov>, [">= 0.3.9"])
-      s.add_dependency(%q<simplecov-gem-adapter>, [">= 1.0.0"])
-      s.add_dependency(%q<guard>, [">= 0"])
-      s.add_dependency(%q<guard-rspec>, [">= 0"])
     end
   else
     s.add_dependency(%q<treetop>, ["~> 1.4"])
-    s.add_dependency(%q<ripper-plus>, ["~> 1.2"])
+    s.add_dependency(%q<ripper-plus>, ["~> 1.3.0"])
     s.add_dependency(%q<axiom_of_choice>, [">= 0"])
     s.add_dependency(%q<stream>, ["= 0.5"])
     s.add_dependency(%q<object_regex>, ["~> 1.0"])
     s.add_dependency(%q<trollop>, ["~> 1.16.2"])
     s.add_dependency(%q<rake>, ["~> 0.9.0"])
     s.add_dependency(%q<rspec>, ["~> 2.3.0"])
-    s.add_dependency(%q<yard>, [">= 0"])
-    s.add_dependency(%q<fuubar>, [">= 0"])
     s.add_dependency(%q<cucumber>, [">= 0.10.0"])
-    s.add_dependency(%q<metric_fu>, [">= 2.0.1"])
-    s.add_dependency(%q<simplecov>, [">= 0.3.9"])
-    s.add_dependency(%q<simplecov-gem-adapter>, [">= 1.0.0"])
-    s.add_dependency(%q<guard>, [">= 0"])
-    s.add_dependency(%q<guard-rspec>, [">= 0"])
   end
 end
 

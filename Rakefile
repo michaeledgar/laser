@@ -10,23 +10,8 @@ begin
     gem.email = 'michael.j.edgar@dartmouth.edu'
     gem.homepage = 'http://github.com/michaeledgar/laser'
     gem.authors = ['Michael Edgar']
-    gem.extensions    = ['ext/laser/extconf.rb']
-    gem.add_dependency 'treetop', '~> 1.4'
-    gem.add_dependency 'ripper-plus', '~> 1.3.0'
-    gem.add_dependency 'axiom_of_choice'
-    gem.add_dependency 'stream', '0.5'
-    gem.add_dependency 'object_regex', '~> 1.0'
-    gem.add_dependency 'trollop', '~> 1.16.2'
-    gem.add_development_dependency 'rake', '~> 0.9.0'
-    gem.add_development_dependency 'rspec', '~> 2.3.0'
-    gem.add_development_dependency 'yard', '>= 0'
-    gem.add_development_dependency 'fuubar', '>= 0'
-    gem.add_development_dependency 'cucumber', '>= 0.10.0'
-    gem.add_development_dependency 'metric_fu', '>= 2.0.1'
-    gem.add_development_dependency 'simplecov', '>= 0.3.9'
-    gem.add_development_dependency 'simplecov-gem-adapter', '>= 1.0.0'
-    gem.add_development_dependency 'guard'
-    gem.add_development_dependency 'guard-rspec'
+    gem.extensions = ['ext/laser/extconf.rb']
+    
     # gem is a Gem::Specification... see http://www.rubygems.org/read/chapter/20 for additional settings
   end
   Jeweler::GemcutterTasks.new
@@ -54,8 +39,6 @@ require 'cucumber/rake/task'
 Cucumber::Rake::Task.new(:features) do |t|
   t.cucumber_opts = "features --format pretty"
 end
-
-require 'metric_fu'
 
 # switch to false if the gem can't load
 if false
@@ -117,12 +100,3 @@ task sc: :build_components do
 end
 
 task default: [:spec, :test]
-
-begin
-  require 'yard'
-  YARD::Rake::YardocTask.new
-rescue LoadError
-  task :yardoc do
-    abort 'YARD is not available. In order to run yardoc, you must: sudo gem install yard'
-  end
-end
