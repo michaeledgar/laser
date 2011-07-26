@@ -146,4 +146,41 @@ EOF
         [Types::FIXNUM],
         Types::NILCLASS).should equal_type(ClassRegistry['NoMethodError'].as_type)
   end
+  
+  it 'can infer a guaranteed NoMethodError from privacy violations' do
+    g = cfg <<-EOF
+class RTInfer5
+  def foo
+  end
+  private :foo
+  
+  def bar
+    self.foo  # error!
+  end
+end
+EOF
+    method = ClassRegistry['RTInfer5'].instance_method('bar')
+    method.raise_type_for_types(
+        Utilities.type_for(ClassRegistry['RTInfer5'])).should(
+          equal_type(ClassRegistry['NoMethodError'].as_type))
+  end
+  
+  it 'can infer a potential lookup failure when a successful one exists' do
+    g = cfg <<-EOF
+class RTInfer6
+  def bar
+    if gets.size > 0
+      x = 'hello'
+    else
+      x = 5
+    end
+    x.intern  # error sometimes
+  end
+end
+EOF
+    method = ClassRegistry['RTInfer6'].instance_method('bar')
+    method.raise_type_for_types(
+        Utilities.type_for(ClassRegistry['RTInfer6'])).should(
+          equal_type(ClassRegistry['NoMethodError'].as_type))
+  end
 end

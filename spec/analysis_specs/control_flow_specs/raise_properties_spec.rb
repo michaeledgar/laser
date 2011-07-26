@@ -165,5 +165,40 @@ EOF
         [Types::FIXNUM],
         Types::NILCLASS).should == Frequency::ALWAYS
   end
+
+  it 'can infer a guaranteed NoMethodError from privacy violations' do
+    g = cfg <<-EOF
+class RInfer5
+  def foo
+  end
+  private :foo
+
+  def bar
+    self.foo  # error!
+  end
+end
+EOF
+    method = ClassRegistry['RInfer5'].instance_method('bar')
+    method.raise_frequency_for_types(
+        Utilities.type_for(ClassRegistry['RInfer5'])).should == Frequency::ALWAYS
+  end
+
+  it 'can infer a potential lookup failure when a successful one exists' do
+    g = cfg <<-EOF
+class RInfer6
+  def bar
+    if gets.size > 0
+      x = 'hello'
+    else
+      x = 5
+    end
+    x.intern  # error sometimes
+  end
+end
+EOF
+    method = ClassRegistry['RInfer6'].instance_method('bar')
+    method.raise_frequency_for_types(
+        Utilities.type_for(ClassRegistry['RInfer6'])).should == Frequency::MAYBE
+  end
 end
     

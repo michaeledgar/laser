@@ -394,10 +394,17 @@ module Laser
                             then Frequency::NEVER
                             else Frequency.for_samples(seen_private, seen_public)
                             end
+            if fails_privacy == Frequency::ALWAYS
+              raise_type = ClassRegistry['NoMethodError'].as_type
+            end
+            if fails_lookup > Frequency::NEVER
+              raise_type |= ClassRegistry['NoMethodError'].as_type
+            end
             raised = Frequency.for_samples(seen_raise, seen_succeed)
             raise_freq = [fails_privacy, raised, fails_lookup].max
           else
             raise_freq = Frequency::ALWAYS  # no method!
+            raise_type = ClassRegistry['NoMethodError'].as_type
           end
           [raise_freq, raise_type]
         end

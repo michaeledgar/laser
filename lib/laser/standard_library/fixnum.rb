@@ -73,6 +73,8 @@ class Fixnum < Integer
   # pure: true
   # builtin: true
   # returns: Boolean
+  # num: Numeric
+  # raises: never
   def >(num)
   end
   # pure: true
