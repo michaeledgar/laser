@@ -11,7 +11,7 @@ module Laser
               instance_method('new')
           magic_method_to_fix  = ClassRegistry['Laser#Magic'].singleton_class.
               instance_method('current_block')
-          
+
           # Calculate the "no block provided" case
           without_yield = dup
           without_yield.bind_block_type(Types::NILCLASS)
@@ -38,7 +38,6 @@ module Laser
           with_yield.kill_unexecuted_edges
           weak_with_calls = with_yield.potential_block_calls(fake_block)
           yields_with_block = weak_with_calls.size > 0
-
           # if the mere difference in block presence results in no exit path, then
           # we consider this evidence of failure due to lack of block.
           yields_without_block = true if yields_with_block && !has_return_pd

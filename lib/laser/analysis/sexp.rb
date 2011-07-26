@@ -139,8 +139,7 @@ module Laser
       
       def is_method_call?
         [:command, :method_add_arg, :method_add_block, :vcall, :var_ref, :call,
-         :fcall, :command_call, :binary, :unary, :super, :zsuper, :aref].include?(type) &&
-            !(type == :var_ref && (binding || self[1].type == :@kw))
+         :fcall, :command_call, :binary, :unary, :super, :zsuper, :aref].include?(type)
       end
       
       # Returns the MethodCall wrapping up all the method call information about this

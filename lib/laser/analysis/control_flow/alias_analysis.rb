@@ -11,9 +11,12 @@ module Laser
           worklist = aliases.map(&:uses).inject(:|)
           until worklist.empty?
             use = worklist.pop
-            # target of insn is always insn[1]
-            if use[1] && good_blocks.include?(use.block) && aliases.add?(use[1])
-              worklist.merge(use[1].uses)
+            if use[1] && good_blocks.include?(use.block)
+              if use[1] != :alias && aliases.add?(use[1])
+                worklist.merge(use[1].uses)
+              elsif use[1] == :alias && aliases.add?(use[2])
+                worklist.merge(use[2].uses)
+              end
             end
           end
           aliases

@@ -148,10 +148,8 @@ module Laser
           end
         end
         
-        IGNORED = [:branch, :jump, :return]
         def simulate_instruction(insn, opts)
           Laser.debug_puts "Simulating insn: #{insn.inspect}"
-          return if IGNORED.include?(insn[0])
           case insn[0]
           when :assign then simulate_assignment(insn[1], insn[2], opts)
           when :call, :call_vararg
@@ -161,6 +159,10 @@ module Laser
             raise NotImplementedError.new("super doesn't work yet")
           when :super_vararg
             raise NotImplementedError.new("super_vararg doesn't work yet")
+          when :declare
+            # do nothing
+          else
+            raise ArgumentError.new("Unexpected instruction type #{insn[0].inspect}")
           end
         end
 

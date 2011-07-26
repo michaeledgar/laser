@@ -134,10 +134,14 @@ module Laser
                 constant_propagation_consider_edge block, succ, blocklist
               end
             end
-          else
+          when :assign, :phi, :super, :super_vararg
             if constant_propagation_evaluate(instruction)
               add_target_uses_to_worklist instruction, worklist
             end
+          when :return, :raise, :declare
+            # don't do shit
+          else
+            raise ArgumentError("Unknown instruction evaluation type: #{instruction.type}")
           end
         end
 
@@ -450,10 +454,8 @@ module Laser
           when :super, :super_vararg
             new_value = VARYING
             new_type = Types::TOP
-          when :return, :raise
-            return false  # not applicable
           else
-            raise ArgumentError("Unknown instruction evaluation type: #{instruction.type}")
+            raise ArgumentError("Invalid evaluate instruction evaluation type: #{instruction.type}")
           end
           if original != new_value
             target.bind! new_value

@@ -807,17 +807,19 @@ module Laser
 
       def yield_type
         return annotated_yield_usage if annotated_yield_usage
+        return @yield_type if @yield_type
         if builtin
           :ignored
         else
           master_cfg.analyze
-          master_cfg.yield_type
+          @yield_type = master_cfg.yield_type
         end
       end
       
       def yield_arity
+        return @yield_arity if @yield_arity
         master_cfg.analyze
-        master_cfg.yield_arity
+        @yield_arity = master_cfg.yield_arity
       end
       
       def raise_frequency_for_types(self_type, arg_types = [], block_type = nil)

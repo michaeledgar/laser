@@ -47,8 +47,8 @@ module Laser
           @name_stack = Hash.new { |hash, temp| hash[temp] = [] }
           @name_count = Hash.new { |hash, temp| hash[temp] = 0 }
           @formals = formal_arguments
-          @yield_type = :required
-          @yield_arity = Set.new([Arity::ANY])
+          @yield_type = nil
+          @yield_arity = nil#Set.new([Arity::ANY])
           @raise_frequency = Frequency::MAYBE
           super()
         end

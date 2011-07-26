@@ -1739,6 +1739,7 @@ module Laser
             end
             if_no_method_block = build_block_with_jump(after) do
               copy_instruct result, const_instruct(nil)
+              declare_instruct(:alias, result, value)
             end
             cond_instruct(has_method, if_has_method_block, if_no_method_block)
           end
@@ -2344,6 +2345,21 @@ module Laser
         def build_array_instruct(components)
           args = components.map { |arg| walk_node(arg, value: true) }
           call_instruct(ClassRegistry['Array'].binding, :[], *args, value: true, raise: false)
+        end
+        
+        # CL-style compiler hint generation.
+        def declare_instruct(kind, *args)
+          verify_declare_instruction(kind, args)
+          add_instruction(:declare, kind, *args)
+        end
+        
+        def verify_declare_instruction(kind, args)
+          case kind
+          when :alias
+            if args.size != 2
+              raise ArgumentError.new("declare :alias requires 2 args")
+            end
+          end
         end
         
         def create_result_if_needed(opts)

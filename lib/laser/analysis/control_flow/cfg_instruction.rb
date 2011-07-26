@@ -168,7 +168,7 @@ module Laser
 
         def operand_range
           case self[0]
-          when :assign, :call_vararg, :super, :super_vararg, :lambda, :phi
+          when :assign, :call_vararg, :super, :super_vararg, :lambda, :phi, :declare
             2..-1
           when :call
             # check for hardcoded call on a constant class. Used by literals.
