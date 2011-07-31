@@ -412,7 +412,7 @@ module Laser
               generic_super_instruct(args, block, opts)
             when :zsuper
               # TODO(adgar): blocks in args & style
-              invoke_super_with_block(*compute_zsuper_arguments(node), false, opts)
+              invoke_super_with_block(*compute_zsuper_arguments, false, opts)
             when :yield
               yield_instruct(node[1], opts)
             when :yield0
@@ -870,7 +870,7 @@ module Laser
         def call_zsuper_with_block(node, block_arg_bindings, block_sexp, opts={})
           opts = {value: true, raise: true}.merge(opts)
           call_with_explicit_block(block_arg_bindings, block_sexp) do |body_value|
-            invoke_super_with_block *compute_zsuper_arguments(node), body_value, opts
+            invoke_super_with_block *compute_zsuper_arguments, body_value, opts
           end
         end
 
@@ -1833,25 +1833,26 @@ module Laser
         # upon the argument list of the method, not a normal arg_ node.
         #
         # returns: (Bindings::Base | [Bindings::Base], Boolean)
-        def compute_zsuper_arguments(node)
-          args_to_walk = node.scope.method.arguments
+        def compute_zsuper_arguments
+          args_to_walk = @formals
           is_vararg = args_to_walk.any? { |arg| arg.kind == :rest }
           if is_vararg
             index_of_star = args_to_walk.index { |arg| arg.kind == :rest }
-            # splatting vararg call. assholes
-            result = call_instruct(ClassRegistry['Array'].binding, :new, value: true)
-            args_to_walk[0...index_of_star].each do |arg|
-              call_instruct(result, :<<, variable_instruct(arg), block: false, value: false)
-            end
-            starred = variable_instruct args_to_walk[index_of_star]
-            starred_converted = rb_check_convert_type(starred, ClassRegistry['Array'].binding, :to_a)
-            call_instruct(result, :concat, starred_converted, value: false)
-            args_to_walk[index_of_star+1 .. -1].each do |arg|
-              call_instruct(result, :<<, variable_instruct(arg), block: false, value: false)
-            end
+            # re-splatting vararg super call. assholes
+            
+            pre_star = args_to_walk[0...index_of_star]
+            result = call_instruct(ClassRegistry['Array'].binding, :[], *pre_star,
+                                   value: true, raise: false)
+            result = call_instruct(result, :+, args_to_walk[index_of_star],
+                                   value: true, raise: false)
+            
+            post_star = args_to_walk[index_of_star+1 .. -1]
+            post_star_temp = call_instruct(ClassRegistry['Array'].binding, :[], *post_star,
+                                           value: true, raise: false)
+            result = call_instruct(result, :+, post_star_temp, value: true, raise: false)
             [result, is_vararg]
           else
-            [args_to_walk.map { |arg| variable_instruct arg }, is_vararg]
+            [args_to_walk, is_vararg]
           end
         end
 
@@ -1930,7 +1931,11 @@ module Laser
         # Looks up the value of a variable and assigns it to a new temporary
         def variable_instruct(var_ref)
           return self_register if var_ref.expanded_identifier == 'self'
-          binding = current_scope.lookup_or_create_local(var_ref.expanded_identifier)
+          var_named_instruct var_ref.expanded_identifier
+        end
+        
+        def var_named_instruct(var_name)
+          binding = current_scope.lookup_or_create_local(var_name)
           result = lookup_or_create_temporary(:var, binding)
           copy_instruct result, binding
           result

@@ -370,4 +370,33 @@ EOF
         Types::TupleType.new([Types::FIXNUM, ClassRegistry['Symbol'].as_type,
                               Types::STRING, Types::HASH]))
   end
+  
+  it 'infers through calls to super' do
+    g = cfg <<-EOF
+class RTI18
+  def foo(x)
+    "Hello \#{x}"
+  end
+end
+class RTI19 < RTI18
+  def foo(x, y)
+    super(y).size
+  end
+end
+class RTI20 < RTI19
+  def foo(x, y)
+    z = super
+    z.to_s
+  end
+end
+EOF
+    ClassRegistry['RTI18'].instance_method('foo').return_type_for_types(
+      ClassRegistry['RTI18'].as_type, [Types::FIXNUM]).should equal_type(Types::STRING)
+    ClassRegistry['RTI19'].instance_method('foo').return_type_for_types(
+      ClassRegistry['RTI19'].as_type, [Types::FIXNUM, Types::STRING]).should equal_type(
+        Types::FIXNUM | Types::BIGNUM)
+    ClassRegistry['RTI20'].instance_method('foo').return_type_for_types(
+      ClassRegistry['RTI20'].as_type, [Types::FIXNUM, Types::STRING]).should equal_type(
+        Types::STRING)
+  end
 end
