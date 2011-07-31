@@ -14,7 +14,7 @@ module Laser
         elsif false == ruby_obj
           return ClassRegistry['FalseClass']
         else
-          name = "Instance:#{ruby_obj}"
+          name = "Instance:#{ruby_obj.inspect}"
           existing = ProtocolRegistry[name].first
           existing || LaserSingletonClass.new(
               ClassRegistry['Class'], Scope::GlobalScope, name, ruby_obj) do |new_singleton_class|

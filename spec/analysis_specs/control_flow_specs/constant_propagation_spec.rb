@@ -547,4 +547,14 @@ CP4 = 10 unless defined?(CPNone)
 EOF
     ClassRegistry['Object'].const_get('CP4').should == 10
   end
+  
+  it 'should handle blocks used in constant propagation' do
+    g = cfg_method <<-EOF
+def foo_blockitized
+  z = %w(a b c).map { |y| y * 2 }
+  10
+end
+EOF
+    g.should have_constant('z').with_value(['aa', 'bb', 'cc'])
+  end
 end

@@ -216,7 +216,7 @@ module Laser
             args = instruction[2..-1]
             opts = Hash === args.last ? args.pop : {}
             fixed_arity = issuper = true
-            components = [*args]
+            components = args.dup
             receiver = cp_self_cell(instruction)
           elsif instruction.type == :super_vararg
             args, opts = instruction[2..3]
@@ -224,6 +224,7 @@ module Laser
             components = [args]
             receiver = cp_self_cell(instruction)
           end
+          components << opts[:block] if opts[:block]
 
           if components.any? { |arg| arg.value == UNDEFINED }
             # cannot evaluate unless all args and receiver are defined
@@ -263,28 +264,11 @@ module Laser
             end
           # All components constant, and never evaluated before.
           elsif original == UNDEFINED
-            if !opts[:block] && method && (method.pure || allow_impure_method?(method))
-              real_receiver = receiver.value
+            if !issuper && method && (method.pure || allow_impure_method?(method))
               arg_array = fixed_arity ? args.map(&:value) : args.value
-              begin
-                if method.builtin
-                  result = real_receiver.send(method_name, *arg_array)
-                else
-                  result = method.simulate_with_args(real_receiver, arg_array, nil, {mutation: true})
-                end
-                new_value = result
-                new_type = Utilities.type_for(result)
-                raised = Frequency::NEVER
-                raise_type = Types::EMPTY
-              rescue BasicObject => err
-                # any exception caught - this is an extremely unsafe rescue handler - means my
-                # simulation *MUST NOT* raise or I will conflate user-level raises
-                # with my own
-                new_value = UNDEFINED
-                new_type = Types::TOP
-                raised = Frequency::ALWAYS
-                raise_type = Types::UnionType.new([Types::ClassObjectType.new(err.class.name)])
-              end
+              block = opts[:block] && opts[:block].value
+              new_value, new_type, raised, raise_type = adapt_simulation_of_method(
+                  instruction, receiver.value, method, arg_array, block, cp_opts)
             else
               new_value = VARYING
               new_type, raised, raise_type = infer_type_and_raising(instruction, receiver, method_name, args, cp_opts)
@@ -315,6 +299,25 @@ module Laser
           [changed, raised, raise_changed]
         end
 
+        # Runs method call simulation from the Simulation modules, and adapts
+        # the output for consumption by constant propagation.
+        def adapt_simulation_of_method(insn, receiver, method, args, block, opts)
+          opts = Simulation::DEFAULT_SIMULATION_OPTS.merge(opts)
+          opts.merge!(current_block: insn.block)
+          begin
+            new_value = simulate_call_dispatch(receiver, method, args, block, opts)
+            new_type = Utilities.type_for(new_value)
+            raised = Frequency::NEVER
+            raise_type = Types::EMPTY
+          rescue Simulation::ExitedAbnormally => err
+            new_value = UNDEFINED
+            new_type = Types::TOP
+            raised = Frequency::ALWAYS
+            raise_type = Types::UnionType.new([Types::ClassObjectType.new(err.error.class.name)])
+          end
+          [new_value, new_type, raised, raise_type]
+        end
+
         def infer_type_and_raising(instruction, receiver, method_name, args, opts)
           begin
             type, raise_freq, raise_type = cpa_call_properties(
@@ -328,6 +331,34 @@ module Laser
                 "No method named #{method_name} with matching types was found", instruction.node))
           end
           [type, raise_freq, raise_type]
+        end
+
+        # Calculates all possible return types, raise types, and the raise
+        # frequency for a method call using CPA.
+        def cpa_call_properties(receiver, method, args, instruction, opts)
+          ignore_privacy, block = instruction.ignore_privacy, instruction.block_operand
+          dispatches = cpa_dispatches(receiver, instruction, method, opts)
+          cartesian = calculate_possible_templates(dispatches, args, block)
+          result = cpa_for_templates(dispatches, cartesian)
+          raise_result, raise_type = raisability_for_templates(dispatches, cartesian, ignore_privacy)
+          if result.empty?
+            raise TypeError.new("No methods named #{method} with matching types were found.")
+          end
+          [Types::UnionType.new(result), raise_result, raise_type]
+        end
+
+        # Calculates all possible (self_type, dispatches) pairs for a call.
+        def cpa_dispatches(receiver, instruction, method, opts)
+          if instruction.type == :call || instruction.type == :call_vararg
+            receiver.expr_type.member_types.map do |type|
+              [type, type.matching_methods(method)]
+            end
+          else
+            dispatches = instruction.possible_methods(opts)
+            receiver.expr_type.member_types.map do |type|
+              [type, dispatches]
+            end
+          end
         end
 
         # Calculates the set of methods potentially invoked in dynamic dispatch,
@@ -439,34 +470,6 @@ module Laser
             raise_type = ClassRegistry['NoMethodError'].as_type
           end
           [raise_freq, raise_type]
-        end
-
-        # Calculates all possible (self_type, dispatches) pairs for a call.
-        def cpa_dispatches(receiver, instruction, method, opts)
-          if instruction.type == :call || instruction.type == :call_vararg
-            receiver.expr_type.member_types.map do |type|
-              [type, type.matching_methods(method)]
-            end
-          else
-            dispatches = instruction.possible_methods(opts)
-            receiver.expr_type.member_types.map do |type|
-              [type, dispatches]
-            end
-          end
-        end
-
-        # Calculates all possible return types, raise types, and the raise
-        # frequency for a method call using CPA.
-        def cpa_call_properties(receiver, method, args, instruction, opts)
-          ignore_privacy, block = instruction.ignore_privacy, instruction.block_operand
-          dispatches = cpa_dispatches(receiver, instruction, method, opts)
-          cartesian = calculate_possible_templates(dispatches, args, block)
-          result = cpa_for_templates(dispatches, cartesian)
-          raise_result, raise_type = raisability_for_templates(dispatches, cartesian, ignore_privacy)
-          if result.empty?
-            raise TypeError.new("No methods named #{method} with matching types were found.")
-          end
-          [Types::UnionType.new(result), raise_result, raise_type]
         end
 
         # Evaluates the instruction, and if the constant value is lowered,
