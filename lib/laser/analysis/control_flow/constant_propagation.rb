@@ -22,11 +22,11 @@ module Laser
           while worklist.any? || blocklist.any?
             while worklist.any?
               constant_propagation_for_instruction(
-                  worklist.pop, blocklist, worklist)
+                  worklist.pop, blocklist, worklist, opts)
             end
             while blocklist.any?
               constant_propagation_for_block(
-                  blocklist.pop, visited, blocklist, worklist)
+                  blocklist.pop, visited, blocklist, worklist, opts)
             end
           end
           teardown_constant_propagation
@@ -55,16 +55,26 @@ module Laser
             h[k].inferred_type = nil
             h[k]
           end
+          @cp_self_cells = Hash.new do |h, k|
+            h[k] = Bindings::TemporaryBinding.new(k.hash.to_s, VARYING)
+            h[k].inferred_type = real_self_type
+            h[k]
+          end
           clear_analyses unless opts[:no_wipe]
           @_cp_fixed_methods = opts[:fixed_methods]
         end
 
         def teardown_constant_propagation
           @cp_private_cells.clear
+          @cp_self_cells.clear
         end
 
         def cp_cell_for(instruction)
           @cp_private_cells[instruction]
+        end
+        
+        def cp_self_cell(instruction)
+          @cp_self_cells[instruction]
         end
 
         # Simulates a block. As we know, phi nodes execute simultaneously
@@ -76,15 +86,15 @@ module Laser
         # instructions, and mark it so it is not visited again.
         #
         # Morgan, p.200
-        def constant_propagation_for_block(block, visited, blocklist, worklist)
+        def constant_propagation_for_block(block, visited, blocklist, worklist, opts)
           block.phi_nodes.each do |phi_node|
             constant_propagation_for_instruction(
-                phi_node, blocklist, worklist)
+                phi_node, blocklist, worklist, opts)
           end
           if visited.add?(block)
             block.natural_instructions.each do |instruction|
               constant_propagation_for_instruction(
-                  instruction, blocklist, worklist)
+                  instruction, blocklist, worklist, opts)
             end
             if block.fall_through_block?
               block.successors.each do |succ|
@@ -95,7 +105,7 @@ module Laser
         end
         private :constant_propagation_for_block
 
-        def constant_propagation_for_instruction(instruction, blocklist, worklist)
+        def constant_propagation_for_instruction(instruction, blocklist, worklist, opts)
           return if instruction.type != :phi && instruction.block.executed_predecessors.empty?
           Laser.debug_p(instruction)
           block = instruction.block
@@ -105,12 +115,8 @@ module Laser
           when :jump, :raise, :return
             succ = block.real_successors.first
             constant_propagation_consider_edge block, succ, blocklist
-          when :call, :call_vararg
-            if instruction.type == :call
-              changed, raised, raise_changed = constant_propagation_for_call(instruction, true)
-            elsif instruction.type == :call_vararg
-              changed, raised, raise_changed = constant_propagation_for_call(instruction, false)
-            end
+          when :call, :call_vararg, :super, :super_vararg
+            changed, raised, raise_changed = constant_propagation_for_call(instruction, opts)
             if changed
               if instruction[1] && instruction[1].value != UNDEFINED
                 add_target_uses_to_worklist instruction, worklist
@@ -134,7 +140,7 @@ module Laser
                 constant_propagation_consider_edge block, succ, blocklist
               end
             end
-          when :assign, :phi, :super, :super_vararg
+          when :assign, :phi
             if constant_propagation_evaluate(instruction)
               add_target_uses_to_worklist instruction, worklist
             end
@@ -152,7 +158,7 @@ module Laser
                  elsif instruction[0] == :call && instruction[3] == :instance_variable_set &&
                     instruction[4] != UNDEFINED && instruction[4] != VARYING
                    receiver = instruction[2]
-                   klass = LaserObject === receiver.value ? receiver.normal_class : receiver.expr_type.possible_classes.first
+                   klass = LaserObject === receiver.value ? receiver.value.normal_class : receiver.expr_type.possible_classes.first
                    klass.instance_variable(instruction[4].value).uses
                  else
                    instruction.explicit_targets.map(&:uses).inject(:|) || []
@@ -192,19 +198,31 @@ module Laser
           end
         end
 
-        def constant_propagation_for_call(instruction, fixed_arity)
+        def constant_propagation_for_call(instruction, cp_opts)
           target = instruction[1] || cp_cell_for(instruction)
           original = target.value
           old_type = target.inferred_type
           old_raise_type = instruction.raise_type
 
-          if fixed_arity
+          if instruction.type == :call
             receiver, method_name, *args = instruction[2..-1]
             opts = Hash === args.last ? args.pop : {}
             components = [receiver, *args]
-          else
+            fixed_arity = true
+          elsif instruction.type == :call_vararg
             receiver, method_name, args, opts = instruction[2..-1]
             components = [receiver, args]
+          elsif instruction.type == :super
+            args = instruction[2..-1]
+            opts = Hash === args.last ? args.pop : {}
+            fixed_arity = issuper = true
+            components = [*args]
+            receiver = cp_self_cell(instruction)
+          elsif instruction.type == :super_vararg
+            args, opts = instruction[2..3]
+            issuper = true
+            components = [args]
+            receiver = cp_self_cell(instruction)
           end
 
           if components.any? { |arg| arg.value == UNDEFINED }
@@ -212,7 +230,7 @@ module Laser
             return [false, :unknown]
           end
           # check purity
-          methods = instruction.possible_methods
+          methods = instruction.possible_methods(cp_opts)
           # Require precise resolution
           method = methods.size == 1 ? methods.first : nil
           if methods.empty?
@@ -237,7 +255,7 @@ module Laser
           elsif components.any? { |arg| arg.value == VARYING }
             new_value = VARYING
             if components.all? { |arg| arg.value != UNDEFINED }
-              new_type, raised, raise_type = infer_type_and_raising(instruction, receiver, method_name, args)
+              new_type, raised, raise_type = infer_type_and_raising(instruction, receiver, method_name, args, cp_opts)
             else
               new_type = Types::TOP
               raised = Frequency::MAYBE
@@ -269,7 +287,7 @@ module Laser
               end
             else
               new_value = VARYING
-              new_type, raised, raise_type = infer_type_and_raising(instruction, receiver, method_name, args)
+              new_type, raised, raise_type = infer_type_and_raising(instruction, receiver, method_name, args, cp_opts)
             end
           else
             # all components constant, nothing changed, shouldn't happen, but okay
@@ -297,10 +315,10 @@ module Laser
           [changed, raised, raise_changed]
         end
 
-        def infer_type_and_raising(instruction, receiver, method_name, args)
+        def infer_type_and_raising(instruction, receiver, method_name, args, opts)
           begin
-            type, raise_freq, raise_type = return_types_for_normal_call(receiver, method_name, args,
-                instruction.ignore_privacy, instruction.block_operand)
+            type, raise_freq, raise_type = cpa_call_properties(
+                receiver, method_name, args, instruction, opts)
           rescue TypeError => err
             type = Types::TOP
             raise_freq = Frequency::ALWAYS
@@ -314,10 +332,7 @@ module Laser
 
         # Calculates the set of methods potentially invoked in dynamic dispatch,
         # and the set of all possible argument type combinations.
-        def calculate_possible_templates(receiver, method, args, block)
-          possible_dispatches = receiver.expr_type.member_types.map do |type|
-            [type, type.matching_methods(method)]
-          end
+        def calculate_possible_templates(possible_dispatches, args, block)
           if Bindings::Base === args && Types::TupleType === args.expr_type
             cartesian_parts = args.element_types
             empty = cartesian_parts.empty?
@@ -338,7 +353,7 @@ module Laser
             end
             cartesian = cartesian_parts[0].product(*cartesian_parts[1..-1])
           end
-          [possible_dispatches, cartesian]
+          cartesian
         end
 
         # Calculates the CPA-based return type of a dynamic call.
@@ -426,11 +441,28 @@ module Laser
           [raise_freq, raise_type]
         end
 
-        # Calculates all possible return types for a method call using CPA.
-        def return_types_for_normal_call(receiver, method, args, ignore_privacy, block)
-          possible_dispatches, cartesian = calculate_possible_templates(receiver, method, args, block)
-          result = cpa_for_templates(possible_dispatches, cartesian)
-          raise_result, raise_type = raisability_for_templates(possible_dispatches, cartesian, ignore_privacy)
+        # Calculates all possible (self_type, dispatches) pairs for a call.
+        def cpa_dispatches(receiver, instruction, method, opts)
+          if instruction.type == :call || instruction.type == :call_vararg
+            receiver.expr_type.member_types.map do |type|
+              [type, type.matching_methods(method)]
+            end
+          else
+            dispatches = instruction.possible_methods(opts)
+            receiver.expr_type.member_types.map do |type|
+              [type, dispatches]
+            end
+          end
+        end
+
+        # Calculates all possible return types, raise types, and the raise
+        # frequency for a method call using CPA.
+        def cpa_call_properties(receiver, method, args, instruction, opts)
+          ignore_privacy, block = instruction.ignore_privacy, instruction.block_operand
+          dispatches = cpa_dispatches(receiver, instruction, method, opts)
+          cartesian = calculate_possible_templates(dispatches, args, block)
+          result = cpa_for_templates(dispatches, cartesian)
+          raise_result, raise_type = raisability_for_templates(dispatches, cartesian, ignore_privacy)
           if result.empty?
             raise TypeError.new("No methods named #{method} with matching types were found.")
           end
@@ -537,14 +569,14 @@ module Laser
             end
           elsif method_name == :instance_variable_get
             if args.first.value != UNDEFINED && args.first.value != VARYING
-              klass = LaserObject === receiver.value ? receiver.normal_class : receiver.expr_type.possible_classes.first
+              klass = LaserObject === receiver.value ? receiver.value.normal_class : receiver.expr_type.possible_classes.first
               ivar = klass.instance_variable(args.first.value)
               ivar.uses.add(instruction)
               return [VARYING, ivar.expr_type]
             end
           elsif method_name == :instance_variable_set
             if args.first.value != UNDEFINED && args.first.value != VARYING
-              klass = LaserObject === receiver.value ? receiver.normal_class : receiver.expr_type.possible_classes.first
+              klass = LaserObject === receiver.value ? receiver.value.normal_class : receiver.expr_type.possible_classes.first
               ivar = klass.instance_variable(args.first.value)
               unless Types.subtype?(args[1].expr_type, ivar.expr_type)
                 ivar.inferred_type = Types::UnionType.new([args[1].expr_type, ivar.expr_type])

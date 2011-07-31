@@ -128,6 +128,25 @@ SimVal8 = Sim7.new.foo(gets)
         ClassRegistry['Sim7'].as_type, [Types::STRING]).should equal_type Types::UnionType.new([Types::FIXNUM])
   end
   
+  it 'should simulate calls to super' do
+    g = cfg %q{
+class Sim8
+  def foo(x, y)
+    x * y
+  end
+end
+class Sim8B < Sim8
+  def foo(x)
+    super(x, 5)
+  end
+end
+fifty = Sim8B.new.foo(10)
+string = Sim8B.new.foo('xx')
+}
+    g.var_named('fifty').value.should == 50
+    g.var_named('string').value.should == 'xxxxxxxxxx'
+  end
+  
   # passes, but takes fucking forever
   # it 'should add an error when simulation fails to terminate' do
   #   input = 'x = 1 while true'

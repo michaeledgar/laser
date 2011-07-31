@@ -135,6 +135,10 @@ module Laser
           end) && (self.edges.sort == other.edges.sort)
         end
 
+        def inspect
+          "<ControlFlowGraph num_verts=#{vertices.size}>"
+        end
+
         def clear_analyses
           all_variables.each do |temp|
             temp.bind! UNDEFINED
@@ -224,7 +228,7 @@ module Laser
             Laser.debug_puts('>>> Finished Simulation <<<')
           else
             Laser.debug_puts('>>> Starting CP <<<')
-            perform_constant_propagation
+            perform_constant_propagation(opts)
             Laser.debug_puts('>>> Finished CP <<<')
             if opts[:optimize]
               Laser.debug_puts('>>> Killing Unexecuted Edges <<<')
@@ -242,7 +246,7 @@ module Laser
 
               if @root.type != :program
                 Laser.debug_puts('>>> Determining Yield Properties <<<')
-                find_yield_properties
+                find_yield_properties(opts)
                 Laser.debug_puts('>>> Finished Determining Yield Properties <<<')
               end
               Laser.debug_puts('>>> Determining Raise Properties <<<')

@@ -70,7 +70,8 @@ module Laser
 
       def laser_simulate(method, args, opts={})
         opts = {self: self, mutation: false}.merge(opts)
-        klass.instance_method(method).master_cfg.dup.simulate(args, opts)
+        method = klass.instance_method(method)
+        method.master_cfg.dup.simulate(args, opts.merge(method: method))
       end
 
       def instance_variable_defined?(var)
@@ -676,6 +677,10 @@ module Laser
         subclasses.delete other
       end
       
+      def parent
+        @superclass
+      end
+      
       def superclass
         current = @superclass
         while current
@@ -814,14 +819,14 @@ module Laser
         if builtin
           :ignored
         else
-          master_cfg.analyze
+          master_cfg.analyze(method: self)
           @yield_type = master_cfg.yield_type
         end
       end
       
       def yield_arity
         return @yield_arity if @yield_arity
-        master_cfg.analyze
+        master_cfg.analyze(method: self)
         @yield_arity = master_cfg.yield_arity
       end
       
@@ -928,7 +933,7 @@ module Laser
           cfg.bind_self_type(self_type)
           cfg.bind_formal_types(arg_types)
           cfg.bind_block_type(block_type)
-          cfg.analyze
+          cfg.analyze(method: self)
         end
       end
 
@@ -937,7 +942,10 @@ module Laser
         formal_types = args.map { |arg| Utilities.type_for(arg) }
         block_type = Utilities.type_for(block)
         cfg_for_types(self_type, formal_types, block_type).dup.simulate(
-            args, opts.merge(self: new_self, block: block, start_block: @proc.start_block))
+            args, opts.merge(self: new_self,
+                           method: self,
+                            block: block,
+                      start_block: @proc.start_block))
       end
 
       # Maps a sequence of objects (one per actual argument) to

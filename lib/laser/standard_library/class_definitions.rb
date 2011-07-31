@@ -198,7 +198,6 @@ module Kernel
   def instance_variable_defined?(name)
   end
   # builtin: true
-  # mutation: true
   def instance_variable_set(name, val)
   end
  private

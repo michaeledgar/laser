@@ -4,7 +4,7 @@ module Laser
       # Finds the properties of how the code yields to a block argument.
       # Should not be used on top-level code, naturally.
       module YieldProperties
-        def find_yield_properties
+        def find_yield_properties(opts)
           kernel_method_to_fix = ClassRegistry['Kernel'].
               instance_method('block_given?')
           proc_method_to_fix   = ClassRegistry['Proc'].singleton_class.
@@ -15,12 +15,12 @@ module Laser
           # Calculate the "no block provided" case
           without_yield = dup
           without_yield.bind_block_type(Types::NILCLASS)
-          without_yield.perform_constant_propagation(
+          without_yield.perform_constant_propagation(opts.merge(
               fixed_methods: { kernel_method_to_fix => false,
-                               proc_method_to_fix   => nil })
+                               proc_method_to_fix   => nil }))
           without_yield.kill_unexecuted_edges
 
-          weak_without_calls = without_yield.potential_block_calls
+          weak_without_calls = without_yield.potential_block_calls(opts)
           yield_pd = without_yield.yield_fail_postdominator
           has_yield_pd = yield_pd && yield_pd.real_predecessors.size > 0
           return_pd = without_yield.return_postdominator
@@ -31,12 +31,12 @@ module Laser
           with_yield = dup
           with_yield.bind_block_type(Types::PROC)
           fake_block = proc { |*args| }
-          with_yield.perform_constant_propagation(
+          with_yield.perform_constant_propagation(opts.merge(
               fixed_methods: { kernel_method_to_fix => true,
                                magic_method_to_fix  => fake_block,
-                               proc_method_to_fix   => fake_block})
+                               proc_method_to_fix   => fake_block}))
           with_yield.kill_unexecuted_edges
-          weak_with_calls = with_yield.potential_block_calls(fake_block)
+          weak_with_calls = with_yield.potential_block_calls(fake_block, opts)
           yields_with_block = weak_with_calls.size > 0
           # if the mere difference in block presence results in no exit path, then
           # we consider this evidence of failure due to lack of block.
@@ -66,16 +66,16 @@ module Laser
           yield_arity
         end
 
-        def initial_block_aliases
+        def initial_block_aliases(opts)
           proc_new_calls = find_method_calls(
-              ClassRegistry['Proc'].singleton_class.instance_method('new'))
+              ClassRegistry['Proc'].singleton_class.instance_method('new'), opts)
           registers = proc_new_calls.map { |insn| insn[1] }
           initial_aliases = Set.new(registers)
           initial_aliases.add(block_register)
         end
 
-        def potential_block_calls(block_value = nil)
-          aliases = weak_local_aliases_for(initial_block_aliases, block_value)
+        def potential_block_calls(block_value = nil, opts)
+          aliases = weak_local_aliases_for(initial_block_aliases(opts), block_value)
           calls = []
           reachable_vertices do |block|
             block.instructions.each do |insn|
@@ -84,7 +84,7 @@ module Laser
                  (insn[3] == :call || insn[3] == :=== || insn[3] == :[]) && aliases.include?(insn[2])
                 calls << insn
               elsif aliases.include?(insn.block_operand)
-                insn.possible_methods.each do |method|
+                insn.possible_methods(opts).each do |method|
                   yield_type = method.yield_type
                   if  block_value.nil? && (yield_type == :required || yield_type == :foolish) ||
                      !block_value.nil? && (yield_type == :required || yield_type == :optional)

@@ -25,7 +25,8 @@ module Laser
              invocation_counts: Hash.new do |h1, block|
                h1[block] = Hash.new { |h2, callsite| h2[callsite] = 0 }
              end,
-             remaining_blocks: MAX_SIMULATION_BLOCKS }
+             remaining_blocks: MAX_SIMULATION_BLOCKS,
+             method: nil }
         # simulates the CFG, with different possible assumptions about
         # how we should treat the global environment/self object.
         def simulate(formal_vals=[], opts={})
@@ -100,15 +101,15 @@ module Laser
           Laser.debug_puts "Simulating exit insn: #{insn.inspect}"
           natural_exit = insn.block.normal_successors.first
           case insn[0]
-          when :jump, nil
+          when :jump
             [opts[:current_block], insn.block.real_successors.first]
           when :branch
             Laser.debug_puts "Branching on: #{insn[1].value.inspect}"
             [opts[:current_block], insn[1].value ? insn.true_successor : insn.false_successor]
-          when :call, :call_vararg
+          when :call, :call_vararg, :super, :super_vararg
             # todo: block edge!
             begin
-              simulate_call_instruction(insn, opts)
+              simulate_instruction(insn, opts)
               if (call_block = insn[-1][:block])
                 block_proc = call_block.value
                 if opts[:invocation_counts][block_proc][opts[:current_block]] > 0
@@ -123,7 +124,7 @@ module Laser
                 [opts[:current_block], natural_exit]
               end
             rescue ExitedAbnormally => err
-              Laser.debug_puts "Exception raised by call, taking abnormal edge. Error: #{err.message}"
+              Laser.debug_puts "Exception raised by call, taking abnormal edge. Error: #{err.error}"
               Laser.debug_pp(err.backtrace)
               [opts[:current_block], insn.block.exception_successors.first]
             end
@@ -131,6 +132,8 @@ module Laser
             raise ExitedNormally.new(insn[1].value)
           when :raise
             raise ExitedAbnormally.new(insn[1].value)
+          else
+            raise ArgumentError.new("Unexpected instruction type #{insn[0].inspect}")
           end 
         end
 
@@ -155,10 +158,12 @@ module Laser
           when :call, :call_vararg
             # cases: special method we intercept, builtin we direct-send, and cfg we simulate
             simulate_call_instruction(insn, opts)
-          when :super
-            raise NotImplementedError.new("super doesn't work yet")
-          when :super_vararg
-            raise NotImplementedError.new("super_vararg doesn't work yet")
+          when :super, :super_vararg
+            if opts[:method].nil?
+              raise ExitedAbnormally.new(NoMethodError.new('super called outside of method'))
+            else
+              simulate_call_instruction(insn, opts)
+            end
           when :declare
             # do nothing
           else
@@ -173,7 +178,12 @@ module Laser
           end
           receiver = insn[2].value
           klass = Utilities.klass_for(receiver)
-          method = klass.instance_method(insn[3].to_s)
+          if insn.type == :call || insn.type == :call_vararg
+            method = klass.instance_method(insn[3].to_s)  # normal method dispatch
+          else
+            # super method dispatch
+            method = opts[:method].owner.parent.instance_method(opts[:method].name)
+          end
           if !method
             simulate_method_missing(insn, klass)
           elsif should_simulate_call(method, opts)
@@ -184,10 +194,23 @@ module Laser
         end
 
         def simulate_call(receiver, method, insn, opts)
-          args = insn[0] == :call ? insn[4..-2].map(&:value) : insn[4].value
+          args = simulate_args(insn)
           block_to_use = insn[-1][:block] && insn[-1][:block].value
           result = simulate_call_dispatch(receiver, method, args, block_to_use, opts)
           insn[1].bind! result if insn[1]
+        end
+        
+        def simulate_args(insn)
+          case insn.type
+          when :call
+            insn[4..-2].map(&:value)
+          when :call_vararg
+            insn[4].value
+          when :super
+            insn[2..-2].map(&:value)
+          when :super_vararg
+            insn[2].value
+          end
         end
 
         def should_simulate_call(method, opts)
@@ -196,6 +219,7 @@ module Laser
         
         def simulate_call_dispatch(receiver, method, args, block, opts)
           Laser.debug_puts("simulate_call(#{receiver.inspect}, #{method.name}, #{args.inspect}, #{block.inspect}, #{opts.inspect})")
+          opts = opts.merge(method: method)
           if block
             new_invocation_sites = opts[:invocation_sites].merge(block => opts[:invocation_sites][block] | Set[opts[:current_block]])
             opts = opts.merge(invocation_sites: new_invocation_sites, on_raise: :raise)
@@ -213,11 +237,11 @@ module Laser
                 end
                 result
               end
-            # Extremely unsafe exception handler: assumes my code does not raise
-            # exceptions!
             rescue ExitedAbnormally => abnormal
               Bootstrap::EXCEPTION_STACK.value.push(abnormal.error)
               raise abnormal
+            # Extremely unsafe exception handler: assumes my code does not raise
+            # exceptions!
             rescue Exception => err
               Laser.debug_puts("Internal exception raised: #{err.message}")
               Laser.debug_pp(err.backtrace)
@@ -226,7 +250,7 @@ module Laser
             end
           else
             Laser.debug_puts "About to simulate #{method.owner.name}##{method.name}"
-            result = method.simulate_with_args(receiver, args, block, mutation: true)
+            result = method.simulate_with_args(receiver, args, block, opts)
             Laser.debug_puts "Finished simulating #{method.owner.name}##{method.name} => #{result.inspect}"
             result
           end

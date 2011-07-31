@@ -102,7 +102,7 @@ module Laser
           end
         end
 
-        def possible_methods
+        def possible_methods(opts)
           require_method_call
           if type == :call || type == :call_vararg
             if Bindings::ConstantBinding === self[2]
@@ -113,7 +113,7 @@ module Laser
               self[2].expr_type.matching_methods(self[3])
             end
           else
-            #TODO(adgar): SUPER
+            [opts[:method].owner.parent.instance_method(opts[:method].name)]
           end
         end
 
