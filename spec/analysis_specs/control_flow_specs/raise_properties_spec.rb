@@ -234,5 +234,77 @@ EOF
         [Types::STRING, Types::FIXNUM, Types::BIGNUM,
          Types::ARRAY, Types::HASH]).should == Frequency::ALWAYS
   end
+
+  it 'can infer guaranteed errors when super provides incorrect arities' do
+    g = cfg <<-EOF
+class RInfer8
+  def foo(a, b=1, c=2, d)
+    a
+  end
+end
+class RInfer8B < RInfer8
+  def foo(*args)
+    super(*args)
+  end
+end
+EOF
+    method = ClassRegistry['RInfer8B'].instance_method('foo')
+    method.raise_frequency_for_types(
+        ClassRegistry['RInfer8B'].as_type).should == Frequency::ALWAYS
+    method.raise_frequency_for_types(
+        ClassRegistry['RInfer8B'].as_type,
+        [Types::STRING]).should == Frequency::ALWAYS
+    method.raise_frequency_for_types(
+        ClassRegistry['RInfer8B'].as_type,
+        [Types::STRING, Types::FIXNUM]).should == Frequency::NEVER
+    method.raise_frequency_for_types(
+        ClassRegistry['RInfer8B'].as_type,
+        [Types::STRING, Types::FIXNUM,
+         Types::BIGNUM]).should == Frequency::NEVER
+    method.raise_frequency_for_types(
+        ClassRegistry['RInfer8B'].as_type,
+        [Types::STRING, Types::FIXNUM,
+         Types::BIGNUM, Types::ARRAY]).should == Frequency::NEVER
+    method.raise_frequency_for_types(
+        ClassRegistry['RInfer8B'].as_type,
+        [Types::STRING, Types::FIXNUM, Types::BIGNUM,
+         Types::ARRAY, Types::HASH]).should == Frequency::ALWAYS
+  end
+
+  it 'can infer guaranteed errors when zsuper provides incorrect arities' do
+    g = cfg <<-EOF
+class RInfer9
+  def foo(a, b=1, c=2, d)
+    a
+  end
+end
+class RInfer9B < RInfer9
+  def foo(*args)
+    super
+  end
+end
+EOF
+    method = ClassRegistry['RInfer9B'].instance_method('foo')
+    method.raise_frequency_for_types(
+        ClassRegistry['RInfer9B'].as_type).should == Frequency::ALWAYS
+    method.raise_frequency_for_types(
+        ClassRegistry['RInfer9B'].as_type,
+        [Types::STRING]).should == Frequency::ALWAYS
+    method.raise_frequency_for_types(
+        ClassRegistry['RInfer9B'].as_type,
+        [Types::STRING, Types::FIXNUM]).should == Frequency::NEVER
+    method.raise_frequency_for_types(
+        ClassRegistry['RInfer9B'].as_type,
+        [Types::STRING, Types::FIXNUM,
+         Types::BIGNUM]).should == Frequency::NEVER
+    method.raise_frequency_for_types(
+        ClassRegistry['RInfer9B'].as_type,
+        [Types::STRING, Types::FIXNUM,
+         Types::BIGNUM, Types::ARRAY]).should == Frequency::NEVER
+    method.raise_frequency_for_types(
+        ClassRegistry['RInfer9B'].as_type,
+        [Types::STRING, Types::FIXNUM, Types::BIGNUM,
+         Types::ARRAY, Types::HASH]).should == Frequency::ALWAYS
+  end
 end
     

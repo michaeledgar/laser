@@ -220,4 +220,82 @@ EOF
         [Types::STRING, Types::FIXNUM, Types::BIGNUM, Types::ARRAY, Types::HASH]).should(
           equal_type(ClassRegistry['ArgumentError'].as_type))
   end
+
+  it 'can infer an ArgumentError when super provides incorrect arities' do
+    g = cfg <<-EOF
+class RTInfer8
+  def foo(a, b=1, c=2, d)
+    a
+  end
+end
+class RTInfer8B < RTInfer8
+  def foo(*args)
+    super(*args)
+  end
+end
+EOF
+    method = ClassRegistry['RTInfer8B'].instance_method('foo')
+    method.raise_type_for_types(
+        ClassRegistry['RTInfer8B'].as_type).should(
+          equal_type(ClassRegistry['ArgumentError'].as_type))
+    method.raise_type_for_types(
+        ClassRegistry['RTInfer8B'].as_type,
+        [Types::STRING]).should(
+          equal_type(ClassRegistry['ArgumentError'].as_type))
+    method.raise_type_for_types(
+        ClassRegistry['RTInfer8B'].as_type,
+        [Types::STRING, Types::FIXNUM]).should(
+          equal_type(Types::EMPTY))
+    method.raise_type_for_types(
+        ClassRegistry['RTInfer8B'].as_type,
+        [Types::STRING, Types::FIXNUM, Types::BIGNUM]).should(
+          equal_type(Types::EMPTY))
+    method.raise_type_for_types(
+        ClassRegistry['RTInfer8B'].as_type,
+        [Types::STRING, Types::FIXNUM, Types::BIGNUM, Types::ARRAY]).should(
+          equal_type(Types::EMPTY))
+    method.raise_type_for_types(
+        ClassRegistry['RTInfer8B'].as_type,
+        [Types::STRING, Types::FIXNUM, Types::BIGNUM, Types::ARRAY, Types::HASH]).should(
+          equal_type(ClassRegistry['ArgumentError'].as_type))
+  end
+
+  it 'can infer an ArgumentError when zsuper provides incorrect arities' do
+    g = cfg <<-EOF
+class RTInfer9
+  def foo(a, b=1, c=2, d)
+    a
+  end
+end
+class RTInfer9B < RTInfer9
+  def foo(*args)
+    super
+  end
+end
+EOF
+    method = ClassRegistry['RTInfer9B'].instance_method('foo')
+    method.raise_type_for_types(
+        ClassRegistry['RTInfer9B'].as_type).should(
+          equal_type(ClassRegistry['ArgumentError'].as_type))
+    method.raise_type_for_types(
+        ClassRegistry['RTInfer9B'].as_type,
+        [Types::STRING]).should(
+          equal_type(ClassRegistry['ArgumentError'].as_type))
+    method.raise_type_for_types(
+        ClassRegistry['RTInfer9B'].as_type,
+        [Types::STRING, Types::FIXNUM]).should(
+          equal_type(Types::EMPTY))
+    method.raise_type_for_types(
+        ClassRegistry['RTInfer9B'].as_type,
+        [Types::STRING, Types::FIXNUM, Types::BIGNUM]).should(
+          equal_type(Types::EMPTY))
+    method.raise_type_for_types(
+        ClassRegistry['RTInfer9B'].as_type,
+        [Types::STRING, Types::FIXNUM, Types::BIGNUM, Types::ARRAY]).should(
+          equal_type(Types::EMPTY))
+    method.raise_type_for_types(
+        ClassRegistry['RTInfer9B'].as_type,
+        [Types::STRING, Types::FIXNUM, Types::BIGNUM, Types::ARRAY, Types::HASH]).should(
+          equal_type(ClassRegistry['ArgumentError'].as_type))
+  end
 end
