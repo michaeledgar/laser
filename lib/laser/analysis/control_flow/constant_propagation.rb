@@ -244,7 +244,7 @@ module Laser
             new_type = Utilities.type_for(result)
             raised = Frequency::NEVER
             raise_type = Types::EMPTY
-          elsif fixed_arity &&
+          elsif fixed_arity && !issuper &&
                 (special_result, special_type =
                  apply_special_case(instruction, receiver, method_name, *args);
                  special_result != INAPPLICABLE)
@@ -262,8 +262,8 @@ module Laser
               raise_type = Types::EMPTY
             end
           # All components constant, and never evaluated before.
-          elsif original == UNDEFINED && (!opts || !opts[:block])
-            if method && (method.pure || allow_impure_method?(method))
+          elsif original == UNDEFINED
+            if !opts[:block] && method && (method.pure || allow_impure_method?(method))
               real_receiver = receiver.value
               arg_array = fixed_arity ? args.map(&:value) : args.value
               begin

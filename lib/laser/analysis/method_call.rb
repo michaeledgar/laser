@@ -59,7 +59,8 @@ module Laser
         when :method_add_block then node[1].method_call.arg_node
         when :call, :var_ref, :vcall, :command_call, :zsuper then nil
         when :command_call then node[4][1]
-        when :super then node[1]
+        when :super
+          node[1].type == :arg_paren ? node[1][1] : node[1]
         end
       end
     end

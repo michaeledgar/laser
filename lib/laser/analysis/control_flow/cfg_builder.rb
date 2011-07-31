@@ -406,13 +406,11 @@ module Laser
                     receiver, method_call.method_name, arg_node, block_arg_bindings, body_sexp, opts)
               end
             when :super
-              args = node[1]
-              args = args[1] if args.type == :arg_paren
-              _, args, block = args
-              generic_super_instruct(args, block, opts)
+              issue_super_call(node)
             when :zsuper
               # TODO(adgar): blocks in args & style
-              invoke_super_with_block(*compute_zsuper_arguments, false, opts)
+              block = rb_check_convert_type(@block_arg, ClassRegistry['Proc'].binding, :to_proc)
+              invoke_super_with_block(*compute_zsuper_arguments, block, opts)
             when :yield
               yield_instruct(node[1], opts)
             when :yield0
@@ -1753,19 +1751,28 @@ module Laser
           result
         end
         
+        def explicit_block_arg(method_call)
+          if (to_proc = method_call.arguments.block_arg)
+            to_proc_val = walk_node(to_proc, value: true)
+            rb_check_convert_type(to_proc_val, ClassRegistry['Proc'].binding, :to_proc)
+          end
+        end
+        
         def issue_call(node, opts={})
           opts = {value: true}.merge(opts)
           method_call = node.method_call
           opts = opts.merge(ignore_privacy: true) if method_call.implicit_receiver?
           receiver = receiver_instruct node
-          if (to_proc = method_call.arguments.block_arg)
-            to_proc_val = walk_node(to_proc, value: true)
-            block = rb_check_convert_type(to_proc_val, ClassRegistry['Proc'].binding, :to_proc)
-          else
-            block = nil
-          end
+          block = explicit_block_arg(method_call)
           generic_call_instruct(receiver, method_call.method_name,
               method_call.arg_node, block, opts)
+        end
+        
+        def issue_super_call(node, opts={})
+          method_call = node.method_call
+          opts = opts.merge(ignore_privacy: true)
+          block = explicit_block_arg(method_call)
+          generic_super_instruct(method_call.arg_node, block, opts)
         end
         
         def receiver_instruct(node)

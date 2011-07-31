@@ -335,4 +335,38 @@ EOF
     method = ClassRegistry['YP6'].instance_method('foobar')
     method.yield_type.should be :required
   end
+  
+  it 'infers yield likelihood through super-delegation' do
+    cfg <<-EOF
+class YP7
+  def each
+    yield 1 if block_given?
+  end
+end
+class YP8 < YP7
+  def each(&blk)
+    super(&blk)
+  end
+end
+EOF
+    method = ClassRegistry['YP8'].instance_method('each')
+    method.yield_type.should be :optional
+  end
+
+  it 'infers yield likelihood through zsuper-delegation' do
+    cfg <<-EOF
+class YP9
+  def each
+    yield 1 if block_given?
+  end
+end
+class YP10 < YP9
+  def each
+    super
+  end
+end
+EOF
+    method = ClassRegistry['YP10'].instance_method('each')
+    method.yield_type.should be :optional
+  end
 end
