@@ -1,5 +1,8 @@
 module Laser
   module Analysis
+    UNDEFINED = PlaceholderObject.new('UNDEFINED')
+    VARYING = PlaceholderObject.new('VARYING')
+
     # This module contains bootstrapping code. This initializes the first classes
     # and modules that build up the meta-model (Class, Module, Object).
     module Bootstrap
@@ -213,7 +216,7 @@ module Laser
       
       def self.stub_global_vars
         Scope::GlobalScope.add_binding!(Bindings::GlobalVariableBinding.new('$:',
-            ['.', File.expand_path(File.join(File.dirname(__FILE__), '..', 'standard_library'))]))
+            ['.', File.expand_path(File.join(Laser::ROOT, 'laser', 'standard_library'))]))
         Scope::GlobalScope.add_binding!(Bindings::GlobalVariableBinding.new('$"', []))
         Scope::GlobalScope.add_binding!(VISIBILITY_STACK)
 

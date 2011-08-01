@@ -55,7 +55,13 @@ require 'laser/analysis/argument_expansion'
 require 'laser/analysis/method_call'
 require 'laser/analysis/bindings'
 require 'laser/analysis/signature'
-require 'laser/analysis/laser_class'
+require 'laser/analysis/bootstrap/laser_object'
+require 'laser/analysis/bootstrap/laser_module'
+require 'laser/analysis/bootstrap/laser_class'
+require 'laser/analysis/bootstrap/laser_module_copy'
+require 'laser/analysis/bootstrap/laser_singleton_class'
+require 'laser/analysis/bootstrap/laser_proc'
+require 'laser/analysis/bootstrap/laser_method'
 require 'laser/analysis/laser_utils.rb'
 require 'laser/analysis/protocol_registry'
 require 'laser/analysis/scope'
@@ -65,7 +71,7 @@ Dir[File.join(File.dirname(__FILE__), 'laser/analysis/special_methods/*.rb')].ea
   require file
 end
 
-require 'laser/analysis/bootstrap'
+require 'laser/analysis/bootstrap/bootstrap'
 # Liftoff Instructions:
 # 1. Tuck in your shirt
 # 2. Remove spurs
@@ -87,7 +93,7 @@ require 'laser/warning'
 require 'laser/scanner'
 
 %w(class_definitions.rb).map do |file|
-  path = File.join(File.dirname(__FILE__), 'laser', 'standard_library', file)
+  path = File.join(Laser::ROOT, 'laser', 'standard_library', file)
   [path, File.read(path)]
 end.tap do |tuples|
   begin
