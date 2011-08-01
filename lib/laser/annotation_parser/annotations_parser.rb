@@ -468,8 +468,13 @@ module Laser
           if r2
             r0 = r2
           else
-            @index = i0
-            r0 = nil
+            r3 = _nt_empty_type
+            if r3
+              r0 = r3
+            else
+              @index = i0
+              r0 = nil
+            end
           end
         end
 
@@ -636,6 +641,37 @@ module Laser
         end
 
         node_cache[:non_union_type][start_index] = r0
+
+        r0
+      end
+
+      module EmptyType0
+        def type
+          Types::EMPTY
+        end
+      end
+
+      def _nt_empty_type
+        start_index = index
+        if node_cache[:empty_type].has_key?(index)
+          cached = node_cache[:empty_type][index]
+          if cached
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            @index = cached.interval.end
+          end
+          return cached
+        end
+
+        if has_terminal?('empty', false, index)
+          r0 = instantiate_node(SyntaxNode,input, index...(index + 5))
+          r0.extend(EmptyType0)
+          @index += 5
+        else
+          terminal_parse_failure('empty')
+          r0 = nil
+        end
+
+        node_cache[:empty_type][start_index] = r0
 
         r0
       end

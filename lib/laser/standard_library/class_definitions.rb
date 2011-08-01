@@ -54,11 +54,13 @@ class Module
   # pure: true
   # raises: never
   # builtin: true
+  # returns: String
   def name
   end
   # pure: true
   # raises: never
   # builtin: true
+  # returns: Boolean
   def ===(other)
   end
   # pure: true
@@ -157,6 +159,7 @@ class Module
   end
   # builtin: true
   # mutation: true
+  # returns: Module
   def alias_method(to, from)
   end
 end
@@ -185,6 +188,7 @@ module Kernel
   # pure: true
   # raises: never
   # builtin: true
+  # returns: Class=
   def class
   end
   # pure: true

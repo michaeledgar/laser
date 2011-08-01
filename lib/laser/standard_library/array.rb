@@ -130,6 +130,7 @@ class Array
   # pure: true
   # builtin: true
   # yield_usage: optional
+  # returns: Array=
   def each
   end
   # pure: true
@@ -209,10 +210,6 @@ class Array
   # pure: true
   # builtin: true
   def last(*arg)
-  end
-  # pure: true
-  # builtin: true
-  def length
   end
   # pure: true
   # builtin: true
@@ -338,6 +335,7 @@ class Array
   # returns: Fixnum=
   def size
   end
+  alias length size
   # pure: true
   # builtin: true
   def slice(*args)
@@ -386,6 +384,7 @@ class Array
   end
   # pure: true
   # builtin: true
+  # returns: String=
   def to_s
   end
   # pure: true

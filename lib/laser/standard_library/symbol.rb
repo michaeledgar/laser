@@ -21,6 +21,7 @@ class Symbol
   end
   # builtin: true
   # pure: true
+  # returns: String=
   def [](arg1, arg2 = :__unset__)
   end
   # builtin: true

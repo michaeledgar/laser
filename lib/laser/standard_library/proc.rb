@@ -25,6 +25,7 @@ class Proc
   # pure: true
   # builtin: true
   # raises: never
+  # returns: empty
   def lexical_self=(val)
   end
 end

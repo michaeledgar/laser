@@ -79,7 +79,7 @@ module Laser
       end
 
       rule type
-        union_type / non_union_type
+        union_type / non_union_type / empty_type
       end
 
       rule union_type
@@ -96,6 +96,14 @@ module Laser
 
       rule non_union_type
         (top / self_type / function_type / class_based_constraint / structural_constraint)
+      end
+      
+      rule empty_type
+        'empty' {
+          def type
+            Types::EMPTY
+          end
+        }
       end
 
       rule top

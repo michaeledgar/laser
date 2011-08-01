@@ -19,6 +19,9 @@ class Fixnum < Integer
   end
   # pure: true
   # builtin: true
+  # overload: (Float) -> Float=
+  # overload: (Fixnum) -> Fixnum= | Bignum=
+  # overload: (Bignum) -> Fixnum= | Bignum=
   def **(num)
   end
   # pure: true
@@ -27,6 +30,9 @@ class Fixnum < Integer
   end
   # pure: true
   # builtin: true
+  # overload: (Float) -> Float=
+  # overload: (Fixnum) -> Fixnum= | Bignum=
+  # overload: (Bignum) -> Fixnum= | Bignum=
   def -(num)
   end
   # pure: true

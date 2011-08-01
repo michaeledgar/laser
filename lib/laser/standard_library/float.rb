@@ -44,10 +44,12 @@ class Float < Numeric
   end
   # pure: true
   # builtin: true
+  # returns: Boolean
   def ==(other)
   end
   # pure: true
   # builtin: true
+  # returns: Boolean
   def ===(other)
   end
   # pure: true
@@ -160,6 +162,7 @@ class Float < Numeric
   end
   # pure: true
   # builtin: true
+  # returns: String=
   def to_s
   end
   # pure: true

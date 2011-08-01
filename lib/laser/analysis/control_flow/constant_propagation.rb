@@ -110,11 +110,10 @@ module Laser
           Laser.debug_p(instruction)
           block = instruction.block
           case instruction.type
-          when :branch
-            constant_propagation_for_branch(instruction, blocklist)
-          when :jump, :raise, :return
-            succ = block.real_successors.first
-            constant_propagation_consider_edge block, succ, blocklist
+          when :assign, :phi
+            if constant_propagation_evaluate(instruction)
+              add_target_uses_to_worklist instruction, worklist
+            end
           when :call, :call_vararg, :super, :super_vararg
             changed, raised, raise_changed = constant_propagation_for_call(instruction, opts)
             if changed
@@ -140,11 +139,12 @@ module Laser
                 constant_propagation_consider_edge block, succ, blocklist
               end
             end
-          when :assign, :phi
-            if constant_propagation_evaluate(instruction)
-              add_target_uses_to_worklist instruction, worklist
-            end
-          when :return, :raise, :declare
+          when :branch
+            constant_propagation_for_branch(instruction, blocklist)
+          when :jump, :raise, :return
+            succ = block.real_successors.first
+            constant_propagation_consider_edge block, succ, blocklist
+          when :declare
             # don't do shit
           else
             raise ArgumentError("Unknown instruction evaluation type: #{instruction.type}")
@@ -205,16 +205,14 @@ module Laser
           old_raise_type = instruction.raise_type
 
           if instruction.type == :call
-            receiver, method_name, *args = instruction[2..-1]
-            opts = Hash === args.last ? args.pop : {}
+            receiver, method_name, *args, opts = instruction[2..-1]
             components = [receiver, *args]
             fixed_arity = true
           elsif instruction.type == :call_vararg
             receiver, method_name, args, opts = instruction[2..-1]
             components = [receiver, args]
           elsif instruction.type == :super
-            args = instruction[2..-1]
-            opts = Hash === args.last ? args.pop : {}
+            *args, opts = instruction[2..-1]
             fixed_arity = issuper = true
             components = args.dup
             receiver = cp_self_cell(instruction)
@@ -255,13 +253,7 @@ module Laser
             raise_type = Types::EMPTY
           elsif components.any? { |arg| arg.value == VARYING }
             new_value = VARYING
-            if components.all? { |arg| arg.value != UNDEFINED }
-              new_type, raised, raise_type = infer_type_and_raising(instruction, receiver, method_name, args, cp_opts)
-            else
-              new_type = Types::TOP
-              raised = Frequency::MAYBE
-              raise_type = Types::EMPTY
-            end
+            new_type, raised, raise_type = infer_type_and_raising(instruction, receiver, method_name, args, cp_opts)
           # All components constant, and never evaluated before.
           elsif original == UNDEFINED
             if !issuper && method && (method.pure || allow_impure_method?(method))

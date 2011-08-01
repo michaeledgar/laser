@@ -210,6 +210,7 @@ class Hash
   end
   # pure: true
   # builtin: true
+  # returns: Array=
   def to_a
   end
   # pure: true
@@ -218,6 +219,7 @@ class Hash
   end
   # pure: true
   # builtin: true
+  # returns: String=
   def to_s
   end
   # pure: true

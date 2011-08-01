@@ -78,12 +78,20 @@ module Laser
         stub_method(magic_class.singleton_class, 'current_argument_range', special: true, annotated_raise_frequency: Frequency::NEVER)
         stub_method(magic_class.singleton_class, 'current_exception', special: true, annotated_raise_frequency: Frequency::NEVER)
         stub_method(magic_class.singleton_class, 'get_just_raised_exception', special: true, annotated_raise_frequency: Frequency::NEVER)
-        stub_method(magic_class.singleton_class, 'push_exception', special: true, mutation: true, annotated_raise_frequency: Frequency::NEVER)
-        stub_method(magic_class.singleton_class, 'pop_exception', special: true, mutation: true, annotated_raise_frequency: Frequency::NEVER)
+        stub_method(magic_class.singleton_class, 'push_exception', special: true, mutation: true, annotated_return: Types::EMPTY, annotated_raise_frequency: Frequency::NEVER)
+        stub_method(magic_class.singleton_class, 'pop_exception', special: true, mutation: true, annotated_return: Types::EMPTY, annotated_raise_frequency: Frequency::NEVER)
         stub_method(magic_class.singleton_class, 'current_self', special: true, annotated_raise_frequency: Frequency::NEVER)
         stub_method(magic_class.singleton_class, 'get_global', special: true, annotated_raise_frequency: Frequency::NEVER)
         stub_method(magic_class.singleton_class, 'set_global', special: true, mutation: true, annotated_raise_frequency: Frequency::NEVER)
         stub_method(magic_class.singleton_class, 'responds?', special: true, annotated_raise_frequency: Frequency::NEVER)
+        
+        ClassRegistry['Module'].instance_method(:const_defined?).annotated_return = Types::BOOLEAN
+        ClassRegistry['Module'].instance_method(:===).annotated_return = Types::BOOLEAN
+        ClassRegistry['Kernel'].instance_method(:eql?).annotated_return = Types::BOOLEAN
+        ClassRegistry['Kernel'].instance_method(:equal?).annotated_return = Types::BOOLEAN
+        ClassRegistry['Kernel'].instance_method(:raise).annotated_return = Types::EMPTY
+        ClassRegistry['Proc'].instance_method(:lexical_self=).annotated_return = Types::EMPTY
+        
         stub_global_vars
       end
       

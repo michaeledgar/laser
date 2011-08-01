@@ -85,7 +85,7 @@ module Laser
       def raise_type_for_types(self_type, arg_types = [], block_type = nil)
         block_type ||= Types::NILCLASS
         Laser.debug_puts("Calculating raise type for #{owner.name}##{name} with types "+
-                         "#{self_type.inspect} #{arg_types.inspect} #{block_type.inspect}")
+                 "#{self_type.inspect} #{arg_types.inspect} #{block_type.inspect}")
         unless arg_types_unify_with_annotations?(arg_types)
           return ClassRegistry['TypeError'].as_type  # needs parameterization later
         end
@@ -111,7 +111,9 @@ module Laser
         unless overloads.empty?
           return overload_for_arg_types(arg_types)
         end
-        return Types::TOP if builtin || special
+        if builtin || special
+          return Types::TOP
+        end
         result = cfg_for_types(self_type, arg_types, block_type).return_type
         check_return_type_against_expectations(result)
         result
