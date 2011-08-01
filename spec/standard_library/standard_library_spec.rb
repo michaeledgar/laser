@@ -51,21 +51,23 @@ describe 'the automatically analyzed Ruby Standard Library' do
     end
     
     %w(! == != equal? __send__ instance_eval instance_exec).each do |method|
+      sym = method.to_sym
       it "should define the instance method #{method}" do
-        @class.instance_method(method).should_not be_nil
+        @class.instance_method(sym).should_not be_nil
       end
       it "should define the instance method #{method} as public" do
-        @class.visibility_table[method].should be :public
+        @class.visibility_table[sym].should be :public
       end
     end
     
     %w(initialize method_missing singleton_method_added singleton_method_removed
        singleton_method_undefined).each do |method|
+      sym = method.to_sym
       it "should define the instance method #{method}" do
-        @class.instance_method(method).should_not be_nil
+        @class.instance_method(sym).should_not be_nil
       end
       it "should define the instance method #{method} as private" do
-        @class.visibility_table[method].should be :private
+        @class.visibility_table[sym].should be :private
       end
     end
     

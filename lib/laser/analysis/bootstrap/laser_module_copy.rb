@@ -53,8 +53,9 @@ module Laser
       end
       
       def instance_method(name)
-        return @delegated.instance_method(name.to_s) ||
-          (@superclass && @superclass.instance_method(name))
+        sym = name.to_sym
+        return @delegated.instance_method(sym) ||
+          (@superclass && @superclass.instance_method(sym))
       end
       
       def visibility_for(method)

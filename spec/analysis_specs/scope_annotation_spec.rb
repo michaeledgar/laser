@@ -256,7 +256,7 @@ describe 'general analyses' do
     tree = annotate_all('def abce(bar, &blk); p blk; end')
     method = Scope::GlobalScope.self_ptr.singleton_class.instance_method('abce')
     method.should_not be_nil
-    Scope::GlobalScope.self_ptr.singleton_class.visibility_table['abce'].should == :private
+    Scope::GlobalScope.self_ptr.singleton_class.visibility_table[:abce].should == :private
     bar = method.arguments[0]
     bar.name.should == 'bar'
     bar.kind.should == :positional
@@ -490,32 +490,32 @@ describe 'general analyses' do
     input = 'class A122; private; def foobar; end; end'
     tree = annotate_all(input)
 
-    ClassRegistry['A122'].visibility_table['foobar'].should == :private
+    ClassRegistry['A122'].visibility_table[:foobar].should == :private
   end
   
   it 'does not switch to private visibility if a local variable is called private' do
     input = 'class A123; private = 5; private; def foobar; end; end'
     tree = annotate_all(input)
 
-    ClassRegistry['A123'].visibility_table['foobar'].should == :public
+    ClassRegistry['A123'].visibility_table[:foobar].should == :public
   end
   
   it 'switches back and forth from public, private, and protected visibility in a class/module' do
     input = 'module A124; def abc; end; private; def foobar; end; protected; def silly; end; private; def priv; end; end'
     tree = annotate_all(input)
 
-    ClassRegistry['A124'].visibility_table['abc'].should == :public
-    ClassRegistry['A124'].visibility_table['foobar'].should == :private
-    ClassRegistry['A124'].visibility_table['silly'].should == :protected
-    ClassRegistry['A124'].visibility_table['priv'].should == :private
+    ClassRegistry['A124'].visibility_table[:abc].should == :public
+    ClassRegistry['A124'].visibility_table[:foobar].should == :private
+    ClassRegistry['A124'].visibility_table[:silly].should == :protected
+    ClassRegistry['A124'].visibility_table[:priv].should == :private
   end
   
   it 'switches to back visibility when re-opening the same class from within (complex edge case)' do
     input = 'class E1; private; class ::E1; def foo; end; end; def bar; end; end'
     tree = annotate_all(input)
 
-    ClassRegistry['E1'].visibility_table['foo'].should == :public
-    ClassRegistry['E1'].visibility_table['bar'].should == :private
+    ClassRegistry['E1'].visibility_table[:foo].should == :public
+    ClassRegistry['E1'].visibility_table[:bar].should == :private
   end
   
   it 'switches to private on module_function and back on public/protected' do
@@ -523,19 +523,19 @@ describe 'general analyses' do
             'def silly; end; public; def priv; end; end'
     tree = annotate_all(input)
 
-    ClassRegistry['A200'].visibility_table['abc'].should == :public
-    ClassRegistry['A200'].visibility_table['foobar'].should == :private
-    ClassRegistry['A200'].visibility_table['silly'].should == :protected
-    ClassRegistry['A200'].visibility_table['priv'].should == :public
+    ClassRegistry['A200'].visibility_table[:abc].should == :public
+    ClassRegistry['A200'].visibility_table[:foobar].should == :private
+    ClassRegistry['A200'].visibility_table[:silly].should == :protected
+    ClassRegistry['A200'].visibility_table[:priv].should == :public
   end
   
   it 'sets all module_function methods to private when specified as arguments' do
     input = 'module A201; def abc; end; def foobar; end; def silly; end; module_function :abc, :silly; end'
     tree = annotate_all(input)
 
-    ClassRegistry['A201'].visibility_table['abc'].should == :private
-    ClassRegistry['A201'].visibility_table['foobar'].should == :public
-    ClassRegistry['A201'].visibility_table['silly'].should == :private
+    ClassRegistry['A201'].visibility_table[:abc].should == :private
+    ClassRegistry['A201'].visibility_table[:foobar].should == :public
+    ClassRegistry['A201'].visibility_table[:silly].should == :private
   end
 
   it 'creates public singleton class methods when module_function is used with no args' do
@@ -547,8 +547,8 @@ describe 'general analyses' do
         ClassRegistry['A202'].instance_method('foobar').body_ast
     ClassRegistry['A202'].singleton_class.instance_method('silly').body_ast.should ==
         ClassRegistry['A202'].instance_method('silly').body_ast
-    ClassRegistry['A202'].singleton_class.visibility_table['foobar'].should == :public
-    ClassRegistry['A202'].singleton_class.visibility_table['silly'].should == :public
+    ClassRegistry['A202'].singleton_class.visibility_table[:foobar].should == :public
+    ClassRegistry['A202'].singleton_class.visibility_table[:silly].should == :public
     ClassRegistry['A202'].singleton_class.instance_method('def').should be nil
     ClassRegistry['A202'].singleton_class.instance_method('priv').should be nil
   end
@@ -562,8 +562,8 @@ describe 'general analyses' do
         ClassRegistry['A203'].instance_method('foobar').body_ast
     ClassRegistry['A203'].singleton_class.instance_method('silly').body_ast.should ==
         ClassRegistry['A203'].instance_method('silly').body_ast
-    ClassRegistry['A203'].singleton_class.visibility_table['foobar'].should == :public
-    ClassRegistry['A203'].singleton_class.visibility_table['silly'].should == :public
+    ClassRegistry['A203'].singleton_class.visibility_table[:foobar].should == :public
+    ClassRegistry['A203'].singleton_class.visibility_table[:silly].should == :public
     ClassRegistry['A203'].singleton_class.instance_method('def').should be nil
     ClassRegistry['A203'].singleton_class.instance_method('priv').should be nil
   end
@@ -573,9 +573,9 @@ describe 'general analyses' do
     tree = annotate_all(input)
 
     singleton = Scope::GlobalScope.self_ptr.singleton_class
-    singleton.visibility_table['t11'].should == :private
-    singleton.visibility_table['t12'].should == :public
-    singleton.visibility_table['t13'].should == :private
+    singleton.visibility_table[:t11].should == :private
+    singleton.visibility_table[:t12].should == :public
+    singleton.visibility_table[:t13].should == :private
   end
   
   it 'raises an error if you try to use protected at the top level' do
@@ -587,18 +587,18 @@ describe 'general analyses' do
     
     # recovers by not changing visibility
     # singleton = Scope::GlobalScope.self_ptr.singleton_class
-    # singleton.visibility_table['t14'].should == :private
-    # singleton.visibility_table['t15'].should == :private
-    # singleton.visibility_table['t16'].should == :public
+    # singleton.visibility_table[:t14].should == :private
+    # singleton.visibility_table[:t15].should == :private
+    # singleton.visibility_table[:t16].should == :public
   end
   
   it 'allows specifying private/public/protected for individual methods at the class level' do
     input = 'class A125; def t17; end; def t18; end; def t19; end; private *[:t17, :t19]; end'
     tree = annotate_all(input)
 
-    ClassRegistry['A125'].visibility_table['t17'].should == :private
-    ClassRegistry['A125'].visibility_table['t18'].should == :public
-    ClassRegistry['A125'].visibility_table['t19'].should == :private
+    ClassRegistry['A125'].visibility_table[:t17].should == :private
+    ClassRegistry['A125'].visibility_table[:t18].should == :public
+    ClassRegistry['A125'].visibility_table[:t19].should == :private
   end
   
   
@@ -608,9 +608,9 @@ describe 'general analyses' do
 
     # recovers by not changing visibility
     singleton = Scope::GlobalScope.self_ptr.singleton_class
-    singleton.visibility_table['t17'].should == :public
-    singleton.visibility_table['t18'].should == :private
-    singleton.visibility_table['t19'].should == :public
+    singleton.visibility_table[:t17].should == :public
+    singleton.visibility_table[:t18].should == :private
+    singleton.visibility_table[:t19].should == :public
   end
   
   it 'can resolve constant aliasing with superclasses' do
@@ -999,7 +999,7 @@ end
         generic.instance_method(method).should_not be_nil
         generic.visibility_table[method].should == :public
       end
-      kw_binding.visibility_table['bind!'].should == :private
+      kw_binding.visibility_table[:bind!].should == :private
       init_method = generic.instance_method('initialize')
       init_method.arguments.size.should == 2
       init_method.arguments.map(&:name).should == ['name', 'value']

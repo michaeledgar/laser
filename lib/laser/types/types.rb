@@ -88,12 +88,12 @@ module Laser
       end
 
       def public_matching_methods(name)
-        name = name.to_s
+        name = name.to_sym
         member_types.map { |type| type.public_matching_methods(name) }.flatten.uniq
       end
 
       def matching_methods(name)
-        name = name.to_s
+        name = name.to_sym
         member_types.map { |type| type.matching_methods(name) }.flatten.uniq
       end
     end
@@ -173,14 +173,14 @@ module Laser
       end
 
       def public_matching_methods(name)
-        name = name.to_s
+        name = name.to_sym
         possible_classes.map do |klass|
           klass.instance_method(name) if klass.visibility_table[name] == :public
         end.compact.uniq
       end
       
       def matching_methods(name)
-        name = name.to_s
+        name = name.to_sym
         possible_classes.map { |klass| klass.instance_method(name) }.compact.uniq
       end
       
@@ -251,13 +251,13 @@ module Laser
       end
       
       def public_matching_methods(name)
-        name = name.to_s
+        name = name.to_sym
         case name
-        when '[]'
+        when :[]
           [TupleIndexMethod.new(self)]
-        when 'to_a', 'to_ary'
+        when :to_a, :to_ary
           [TupleSelfMethod.new(self, name)]
-        when '+'
+        when :+
           [TuplePlusMethod.new(self)]
         else
           Types::ARRAY.public_matching_methods(name)
@@ -265,13 +265,13 @@ module Laser
       end
       
       def matching_methods(name)
-        name = name.to_s
+        name = name.to_sym
         case name
-        when '[]'
+        when :[]
           [TupleIndexMethod.new(self)]
-        when 'to_a', 'to_ary'
+        when :to_a, :to_ary
           [TupleSelfMethod.new(self, name)]
-        when '+'
+        when :+
           [TuplePlusMethod.new(self)]
         else
           Types::ARRAY.matching_methods(name)

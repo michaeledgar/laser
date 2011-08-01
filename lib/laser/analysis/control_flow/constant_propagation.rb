@@ -618,7 +618,7 @@ module Laser
                 Types::TupleType === receiver.expr_type.member_types.first
             tuple_type = receiver.expr_type.member_types.first
             # switch on method object
-            case tuple_type.matching_methods(method_name.to_s)[0]
+            case tuple_type.matching_methods(method_name)[0]
             when ClassRegistry['Array'].instance_method('size')
               size = tuple_type.size
               return [size, Utilities.type_for(size)]

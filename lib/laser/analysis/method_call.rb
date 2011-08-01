@@ -21,12 +21,12 @@ module Laser
       def method_name
         case node.type
         when :super, :zsuper then 'super'
-        when :aref then '[]'
-        when :unary then node[1].to_s
-        when :binary then node[2].to_s
-        when :fcall, :command, :vcall then node[1].expanded_identifier
-        when :call, :command_call then node[3].expanded_identifier
-        when :var_ref then node.expanded_identifier
+        when :aref then :[]
+        when :unary then node[1]
+        when :binary then node[2]
+        when :fcall, :command, :vcall then node[1].expanded_identifier.to_sym
+        when :call, :command_call then node[3].expanded_identifier.to_sym
+        when :var_ref then node.expanded_identifier.to_sym
         when :method_add_block, :method_add_arg then node[1].method_call.method_name
         end
       end

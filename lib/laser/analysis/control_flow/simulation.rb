@@ -179,7 +179,7 @@ module Laser
           receiver = insn[2].value
           klass = Utilities.klass_for(receiver)
           if insn.type == :call || insn.type == :call_vararg
-            method = klass.instance_method(insn[3].to_s)  # normal method dispatch
+            method = klass.instance_method(insn[3])  # normal method dispatch
           else
             # super method dispatch
             method = opts[:method].owner.parent.instance_method(opts[:method].name)

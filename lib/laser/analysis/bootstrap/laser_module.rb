@@ -110,15 +110,16 @@ module Laser
       end
       
       def add_instance_method!(method)
-        @instance_methods[method.name] = method
-        @visibility_table[method.name] = :public
+        @instance_methods[method.name.to_sym] = method
+        @visibility_table[method.name.to_sym] = :public
         method.owner = self
       end
 
       def instance_method(name)
-        if @instance_methods.has_key?(name.to_s)
-        then @instance_methods[name.to_s]
-        else @superclass && @superclass.instance_method(name)
+        lookup = name.to_sym
+        if @instance_methods.has_key?(lookup)
+        then @instance_methods[lookup]
+        else @superclass && @superclass.instance_method(lookup)
         end
       end
       
@@ -132,41 +133,37 @@ module Laser
       end
 
       def __all_instance_methods(include_super = true)
-        mine = @instance_methods.keys.map(&:to_sym)
+        mine = @instance_methods.keys
         if include_super && @superclass
         then @superclass.instance_methods | mine
         else mine
         end
       end
 
-      def instance_methods(include_super = true)
+      def __instance_methods_with_privacy(include_super, *allowed)
         methods = __all_instance_methods(include_super)
         table = visibility_table
-        methods.select { |name| table[name.to_s] == :public || table[name.to_s] == :protected }
+        methods.select { |name| allowed.include?(table[name.to_sym]) }
+      end
+
+      def instance_methods(include_super = true)
+        __instance_methods_with_privacy(include_super, :public, :protected)
       end
 
       def public_instance_methods(include_super = true)
-        methods = __all_instance_methods(include_super)
-        table = visibility_table
-        methods.select { |name| table[name.to_s] == :public }
+        __instance_methods_with_privacy(include_super, :public)
       end
       
       def protected_instance_methods(include_super = true)
-        methods = __all_instance_methods(include_super)
-        table = visibility_table
-        methods.select { |name| table[name.to_s] == :protected }
+        __instance_methods_with_privacy(include_super, :protected)
       end
       
       def protected_method_defined?(name)
-        methods = __all_instance_methods(include_super)
-        table = visibility_table
-        methods.select { |name| table[name.to_s] == :protected }
+        !!__instance_methods_with_privacy(include_super, :protected)
       end
       
       def private_instance_methods(include_super = true)
-        methods = __all_instance_methods(include_super)
-        table = visibility_table
-        methods.select { |name| table[name.to_s] == :private }
+        __instance_methods_with_privacy(include_super, :private)
       end
 
       def ivar_type(name)
@@ -193,8 +190,9 @@ module Laser
       end
       
       def visibility_for(method)
-        return @visibility_table[method] ||
-          (@superclass && @superclass.visibility_for(method))
+        lookup = method.to_sym
+        return @visibility_table[lookup] ||
+          (@superclass && @superclass.visibility_for(lookup))
       end
       
       def visibility_table
@@ -318,8 +316,9 @@ module Laser
       end
 
       def define_method(name, proc)
-        name = name.to_s
-        new_method = LaserMethod.new(name, proc)
+        str_name = name.to_s
+        name = name.to_sym
+        new_method = LaserMethod.new(str_name, proc)
         new_method.owner = self
         @instance_methods[name] = new_method
         if Bootstrap::VISIBILITY_STACK.value.last == :module_function
@@ -336,18 +335,22 @@ module Laser
       end
 
       def undef_method(symbol)
-        @instance_methods[symbol.to_s] = nil
-        @visibility_table[symbol.to_s] = :undefined
+        sym = symbol.to_sym
+        @instance_methods[sym] = nil
+        @visibility_table[sym] = :undefined
       end
 
       def remove_method(symbol)
-        @instance_methods.delete(symbol.to_s)
-        @visibility_table.delete(symbol.to_s)
+        sym = symbol.to_sym
+        @instance_methods.delete(sym)
+        @visibility_table.delete(sym)
       end
 
       def alias_method(new, old)
-        @instance_methods[new.to_s] = @instance_methods[old.to_s]
-        @visibility_table[new.to_s] = @visibility_table[old.to_s]
+        newsym = new.to_sym
+        oldsym = old.to_sym
+        @instance_methods[newsym] = @instance_methods[oldsym]
+        @visibility_table[newsym] = @visibility_table[oldsym]
       end
       
       def include(*mods)
@@ -362,7 +365,7 @@ module Laser
         if args.empty?
           Bootstrap::VISIBILITY_STACK.value[-1] = kind
         else
-          args.each { |method| set_visibility!(method.to_s, kind) }
+          args.each { |method| set_visibility!(method.to_sym, kind) }
         end
         self
       end
@@ -389,7 +392,7 @@ module Laser
       def module_function(*args)
         if args.any?
           args.each do |method|
-            __make_module_function__(method.to_s)
+            __make_module_function__(method.to_sym)
           end
         else
           Bootstrap::VISIBILITY_STACK.value[-1] = :module_function

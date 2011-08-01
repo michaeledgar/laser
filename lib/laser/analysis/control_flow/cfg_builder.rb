@@ -1729,7 +1729,7 @@ module Laser
           if_not_klass_block = build_block_with_jump do
             # TODO(adgar): if method does not exist, return nil.
             has_method = call_instruct(ClassRegistry['Laser#Magic'].binding, :responds?,
-                value, const_instruct(method.to_s), value: true, raise: false)
+                value, const_instruct(method), value: true, raise: false)
 
             if_has_method_block = build_block_with_jump(after) do
               conversion_result = call_instruct(value, method, value: true)
