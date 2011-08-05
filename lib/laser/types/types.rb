@@ -349,34 +349,33 @@ module Laser
           resulting_choices = Set.new
           element_types = tuple_type.element_types
           if arg_types.size == 1
-            Laser.debug_puts "computing return type of tuple#[]"
-            arg_types[0].member_types.each do |member_type|
-              member_type.possible_classes.each do |klass|
-                Laser.debug_puts "potential arg klass: #{klass.inspect}"
-                if Analysis::LaserSingletonClass === klass && klass < Analysis::ClassRegistry['Fixnum']
-                  Laser.debug_puts "specific fixnum: #{klass.get_instance}"
-                  Laser.debug_puts "indexes into #{tuple_type.inspect} to get #{element_types[klass.get_instance].inspect}"
-                  resulting_choices << (element_types[klass.get_instance] || Types::NILCLASS)
-                elsif Analysis::LaserSingletonClass === klass && klass < Analysis::ClassRegistry['Range']
-                  Laser.debug_puts 'specific range'
-                  if element_types[klass.get_instance]  
-                    resulting_choices << TupleType.new(element_types[klass.get_instance])
-                  else  # invalid ranges (arr = [1, 2]; arr[-3..3]) return nil
-                    resulting_choices << Types::NILCLASS
-                  end
-                elsif klass == Analysis::ClassRegistry['Fixnum']
-                  Laser.debug_puts 'unknown fixnum'
-                  resulting_choices.merge(element_types)
+            arg_types[0].possible_classes.each do |klass|
+              if Analysis::LaserSingletonClass === klass && klass < Analysis::ClassRegistry['Fixnum']
+                resulting_choices << (element_types[klass.get_instance] || Types::NILCLASS)
+              elsif Analysis::LaserSingletonClass === klass && klass < Analysis::ClassRegistry['Range']
+                if element_types[klass.get_instance]  
+                  resulting_choices << TupleType.new(element_types[klass.get_instance])
+                else  # invalid ranges (arr = [1, 2]; arr[-3..3]) return nil
                   resulting_choices << Types::NILCLASS
-                elsif klass == Analysis::ClassRegistry['Range']
-                  Laser.debug_puts 'unknown range'
-                  # no idea, just say "all arrays"
-                  resulting_choices << Types::ARRAY
                 end
+              elsif klass == Analysis::ClassRegistry['Fixnum']
+                resulting_choices.merge(element_types)
+                resulting_choices << Types::NILCLASS
+              elsif klass == Analysis::ClassRegistry['Range']
+                # no idea, just say "all arrays"
+                resulting_choices << Types::ARRAY
               end
             end
           elsif arg_types.size == 2  # start, length
-            
+            arg_types[0].possible_classes.each do |klass_1|
+              arg_types[1].possible_classes.each do |klass_2|
+                if Analysis::LaserSingletonClass === klass_1 && klass_1 < Analysis::ClassRegistry['Fixnum'] &&
+                   Analysis::LaserSingletonClass === klass_2 && klass_2 < Analysis::ClassRegistry['Fixnum']
+                  new_elts = element_types[klass_1.get_instance, klass_2.get_instance]
+                  resulting_choices << TupleType.new(new_elts)
+                end
+              end
+            end
           else
             # error, should never reach
           end

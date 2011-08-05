@@ -168,8 +168,13 @@ module Laser
 
         def operand_range
           case self[0]
-          when :assign, :call_vararg, :super, :super_vararg, :lambda, :phi, :declare
+          when :assign, :call_vararg, :super, :super_vararg, :lambda, :phi
             2..-1
+          when :declare
+            case self[1]
+            when :alias then 2..-1
+            when :expect_tuple_size then 4..-1
+            end
           when :call
             # check for hardcoded call on a constant class. Used by literals.
             if Bindings::ConstantBinding === self[2]

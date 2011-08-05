@@ -1499,6 +1499,7 @@ module Laser
             elsif Sexp === lhs[0] && rhs.type != :mrhs_new_from_args
               rhs_val = walk_node(rhs, value: true)
               rhs_array = rb_ary_to_ary(rhs_val)
+              declare_instruct(:expect_tuple_size, :==, lhs.size, rhs_array)
               lhs.each_with_index do |node, idx|
                 assigned_val = call_instruct(rhs_array, :[], const_instruct(idx),
                     value: true, raise: false)
@@ -1515,7 +1516,6 @@ module Laser
             # calculate RHS: array of unknown length
             rhs_val = walk_node(rhs, value: true)
             rhs_array = rb_ary_to_ary(rhs_val)
-            
             assign_splat_mlhs_to_varying(lhs[1], lhs[2], lhs[3] || [], rhs_array)
           # a, *b, c = 1, 2, 3, 4, 5
           # also easy/precise
@@ -1573,8 +1573,10 @@ module Laser
             lhs_size = lhs.size
             fixed, varying = compute_fixed_and_varying_rhs(rhs)
             fixed_size = fixed.size
-            if fixed_size == lhs_size
+            if fixed_size >= lhs_size
               wasted_rhs_splat(rhs)
+            else
+              declare_instruct(:expect_tuple_size, :<, lhs_size - fixed_size + 1, varying)
             end
             fixed[0...lhs_size].each_with_index do |val, idx|
               single_assign_instruct(lhs[idx], val)
@@ -1615,6 +1617,7 @@ module Laser
           # next, extract star_node. run-time version of below
           star_start = const_instruct(pre_star.size)
           fixed_size = const_instruct(pre_star.size + post_star.size)
+          declare_instruct(:expect_tuple_size, :>, pre_star.size + post_star.size, rhs_array)
           # calculate star_end at runtime without loops
           rhs_arr_size = call_instruct(rhs_array, :size,
               value: true, raise: false)
@@ -2418,6 +2421,10 @@ module Laser
           when :alias
             if args.size != 2
               raise ArgumentError.new("declare :alias requires 2 args")
+            end
+          when :expect_tuple_size
+            if args.size != 3
+              raise ArgumentError.new('declare :expect_tuple_size requires 3 args')
             end
           end
         end

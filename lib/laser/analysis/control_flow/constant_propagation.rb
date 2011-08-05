@@ -145,6 +145,11 @@ module Laser
             succ = block.real_successors.first
             constant_propagation_consider_edge block, succ, blocklist
           when :declare
+            case instruction[1]
+            when :expect_tuple_size
+              # check array/tuple size against expectation - issue warning if fail
+              validate_tuple_expectation(instruction)
+            end
             # don't do shit
           else
             raise ArgumentError("Unknown instruction evaluation type: #{instruction.type}")
@@ -707,6 +712,25 @@ module Laser
             end
           end
           [INAPPLICABLE, nil]
+        end
+
+        def validate_tuple_expectation(instruction)
+          expect_type, val, array = instruction[2..-1]
+          return if array.value == UNDEFINED
+          node = instruction.node
+          array.expr_type.member_types.each do |type|
+            if Types::TupleType === type
+              if type.size < val && expect_type == :==
+                node.add_error(UnassignedLHSError.new('LHS never assigned - defaults to nil', node))
+              elsif type.size <= val && expect_type == :>
+                node.add_error(UnassignedLHSError.new('LHS splat is always empty ([]) - not useful', node))
+              elsif type.size > val && expect_type == :==
+                node.add_error(DiscardedRHSError.new('RHS value being discarded', node))
+              elsif type.size >= val && expect_type == :<
+                node.add_error(DiscardedRHSError.new('RHS splat expanded and then discarded', node))
+              end
+            end
+          end
         end
       end  # ConstantPropagation
     end  # ControlFlow
