@@ -1439,6 +1439,10 @@ module Laser
           end
         end
 
+        def wasted_rhs_splat(val)
+          val.add_error(DiscardedRHSError.new("RHS splat expanded and then discarded", val))
+        end
+
         def issue_wasted_val_warnings(list)
           list.each { |val| wasted_val(val) }
         end
@@ -1568,10 +1572,13 @@ module Laser
             # for building the final array
             lhs_size = lhs.size
             fixed, varying = compute_fixed_and_varying_rhs(rhs)
+            fixed_size = fixed.size
+            if fixed_size == lhs_size
+              wasted_rhs_splat(rhs)
+            end
             fixed[0...lhs_size].each_with_index do |val, idx|
               single_assign_instruct(lhs[idx], val)
             end
-            fixed_size = fixed.size
             fixed_size.upto(lhs_size - 1) do |idx|
               looked_up = call_instruct(varying, :[], const_instruct(idx - fixed_size), value: true, raise: false)
               single_assign_instruct(lhs[idx], looked_up)
