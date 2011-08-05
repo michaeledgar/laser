@@ -4,7 +4,7 @@ module Laser
       # Finds unused variables in the control-flow graph. See thesis for
       # the algorithm and proof of correctness.
       module UnusedVariables
-        IGNORED_VARS = Set.new(%w(self t#current_exception t#current_block t#exit_exception $!))
+        IGNORED_VARS = Set.new(%w(self t#current_exception t#current_block t#exit_exception t#exception_value $!))
         
         # Adds unused variable warnings to all nodes which define a variable
         # that is not used.

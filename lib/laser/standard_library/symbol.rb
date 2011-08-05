@@ -99,7 +99,8 @@ class Symbol
   end
   # pure: true
   def to_proc
-    proc { |x| x.send(self) }
+    sym = self
+    proc { |*args| args.shift.__send__(sym, *args) }
   end
   # builtin: true
   # pure: true

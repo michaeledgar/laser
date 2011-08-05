@@ -1,4 +1,3 @@
-# Warning for rescuing "Exception" or "Object".
 class Laser::SexpErrorWarning < Laser::FileWarning
   type :dangerous
   short_desc "Error"

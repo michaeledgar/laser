@@ -13,7 +13,7 @@ module Laser
         if top.variance == :invariant
           klass = top.possible_classes.first
           sub.possible_classes.all? do |sub_class|
-            if LaserSingletonClass === sub_class
+            if Analysis::LaserSingletonClass === sub_class
               sub_class <= klass
             else
               sub_class == klass
@@ -243,7 +243,7 @@ module Laser
       end
       
       def possible_classes
-        ::Set[ClassRegistry['Array']]
+        ::Set[Analysis::ClassRegistry['Array']]
       end
 
       def member_types
@@ -290,7 +290,7 @@ module Laser
         end
 
         def method_missing(method, *args, &blk)
-          ClassRegistry['Array'].instance_method(name).send(method, *args, &blk)
+          Analysis::ClassRegistry['Array'].instance_method(name).send(method, *args, &blk)
         end
       end
       
@@ -353,22 +353,22 @@ module Laser
             arg_types[0].member_types.each do |member_type|
               member_type.possible_classes.each do |klass|
                 Laser.debug_puts "potential arg klass: #{klass.inspect}"
-                if LaserSingletonClass === klass && klass < ClassRegistry['Fixnum']
+                if Analysis::LaserSingletonClass === klass && klass < Analysis::ClassRegistry['Fixnum']
                   Laser.debug_puts "specific fixnum: #{klass.get_instance}"
                   Laser.debug_puts "indexes into #{tuple_type.inspect} to get #{element_types[klass.get_instance].inspect}"
                   resulting_choices << (element_types[klass.get_instance] || Types::NILCLASS)
-                elsif LaserSingletonClass === klass && klass < ClassRegistry['Range']
+                elsif Analysis::LaserSingletonClass === klass && klass < Analysis::ClassRegistry['Range']
                   Laser.debug_puts 'specific range'
                   if element_types[klass.get_instance]  
                     resulting_choices << TupleType.new(element_types[klass.get_instance])
                   else  # invalid ranges (arr = [1, 2]; arr[-3..3]) return nil
                     resulting_choices << Types::NILCLASS
                   end
-                elsif klass == ClassRegistry['Fixnum']
+                elsif klass == Analysis::ClassRegistry['Fixnum']
                   Laser.debug_puts 'unknown fixnum'
                   resulting_choices.merge(element_types)
                   resulting_choices << Types::NILCLASS
-                elsif klass == ClassRegistry['Range']
+                elsif klass == Analysis::ClassRegistry['Range']
                   Laser.debug_puts 'unknown range'
                   # no idea, just say "all arrays"
                   resulting_choices << Types::ARRAY

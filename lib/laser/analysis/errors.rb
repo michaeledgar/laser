@@ -120,4 +120,12 @@ module Laser
   class ImproperOverloadTypeError < Laser::Error
     severity TRICKY_ERROR
   end
+
+  class DiscardedRHSError < Laser::Error
+    severity SIMPLE_ERROR
+  end
+
+  class UnassignedLHSError < Laser::Error
+    severity SIMPLE_ERROR
+  end
 end

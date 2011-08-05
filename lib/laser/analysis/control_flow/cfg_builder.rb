@@ -141,7 +141,7 @@ module Laser
           reset_visibility_stack
           build_exception_blocks
           if @sexp.type != :program
-            dynamic_context = Scope::ClosedScope.new(current_scope, current_self)
+            dynamic_context = ClosedScope.new(current_scope, current_self)
             @scope_stack = [dynamic_context]
             @block_arg = call_instruct(ClassRegistry['Laser#Magic'].binding,
                 :current_block, value: true, raise: false)
@@ -1417,6 +1417,36 @@ module Laser
           end
         end
 
+        def wasted_val(val)
+          val.add_error(DiscardedRHSError.new("RHS value being discarded", val))
+        end
+
+        def wasted_var(var)
+          if var.type == :field || var.type == :aref_field || var.type == :mlhs_paren
+            var.add_error(UnassignedLHSError.new("LHS never assigned - defaults to nil", var))
+          else
+            var.add_error(UnassignedLHSError.new("LHS (#{var.expanded_identifier}) never assigned - defaults to nil", var))
+          end
+        end
+
+        def wasted_lhs_splat(var, attachment_node)
+          if var.nil?
+            attachment_node.add_error(UnassignedLHSError.new("Unnamed LHS splat is always empty ([]) - not useful", attachment_node))
+          elsif var.type == :field || var.type == :aref_field || var.type == :mlhs_paren
+            var.add_error(UnassignedLHSError.new("LHS splat is always empty ([]) - not useful", var))
+          else
+            var.add_error(UnassignedLHSError.new("LHS splat (#{var.expanded_identifier}) is always empty ([]) - not useful", var))
+          end
+        end
+
+        def issue_wasted_val_warnings(list)
+          list.each { |val| wasted_val(val) }
+        end
+
+        def issue_wasted_var_warnings(list)
+          list.each { |val| wasted_var(val) }
+        end
+
         # Expands a multiple-assignment as optimally as possible. Without any
         # splats, will expand to sequential assignments.
         def multiple_assign_instruct(lhs, rhs, opts={})
@@ -1428,7 +1458,14 @@ module Laser
             # precise assignments to improve analysis.
             if Sexp === lhs[0] && rhs.type == :mrhs_new_from_args
               rhs = rhs[1] + [rhs[2]]  # i assume some parser silliness does this
+              # issue warnings
+              if lhs.size < rhs.size
+                issue_wasted_val_warnings(rhs[lhs.size..-1])
+              elsif lhs.size > rhs.size
+                issue_wasted_var_warnings(lhs[rhs.size..-1])
+              end
               # pair them up. Enumerable#zip in 1.9.2 doesn't support unmatched lengths
+              
               pairs = (0...[lhs.size, rhs.size].max).map do |idx|
                 need_temp = opts[:value] || (lhs[idx] && rhs[idx])
                 { lhs: lhs[idx], rhs: rhs[idx], need_temp: need_temp }
@@ -1491,6 +1528,10 @@ module Laser
             star_start = pre_star.size
             star_end   = [star_start, rhs_arr.size - post_star.size].max
             star_range = star_start...star_end
+
+            if star_range.entries.empty?
+              wasted_lhs_splat(star_node, lhs)
+            end
 
             # all RHS are ALWAYS consumed. But if the star is unnamed, star values can be
             # discarded.
