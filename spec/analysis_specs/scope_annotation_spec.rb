@@ -31,7 +31,7 @@ describe 'general analyses' do
   it 'defines methods on the current Module, if inside a module lexically' do
     tree = annotate_all('module M13; def silly(*rest); p rest; end; end; class C13; include M13; end')
     # now make sure the method got created in the M13 module!
-    method = ClassRegistry['M13'].instance_method('silly')
+    method = ClassRegistry['M13'].instance_method(:silly)
     method.should_not be_nil
     rest = method.arguments[0]
     rest.name.should == 'rest'
@@ -59,7 +59,7 @@ describe 'general analyses' do
   it "allows singleton method declarations on a Module's self" do
     tree = annotate_all('module M49; def self.silly(a, b=a); end; end')
     
-    method = ClassRegistry['M49'].singleton_class.instance_method('silly')
+    method = ClassRegistry['M49'].singleton_class.instance_method(:silly)
     method.should_not be_nil
     a = method.arguments[0]
     a.name.should == 'a'
@@ -92,7 +92,7 @@ describe 'general analyses' do
   it "allows singleton method declarations on a Module's self using sclass opening" do
     tree = annotate_all('module M50; class << self; def silly(a, b=a); end; end; end')
     
-    method = ClassRegistry['M50'].singleton_class.instance_method('silly')
+    method = ClassRegistry['M50'].singleton_class.instance_method(:silly)
     method.should_not be_nil
     a = method.arguments[0]
     a.name.should == 'a'
@@ -125,7 +125,7 @@ describe 'general analyses' do
   it "allows singleton method declarations on a Module's self using sclass opening" do
     tree = annotate_all('class C51; end; class << C51; def silly(a, b=a); end; end')
     
-    method = ClassRegistry['C51'].singleton_class.instance_method('silly')
+    method = ClassRegistry['C51'].singleton_class.instance_method(:silly)
     method.should_not be_nil
     a = method.arguments[0]
     a.name.should == 'a'
@@ -207,7 +207,7 @@ describe 'general analyses' do
     tree = annotate_all('class Alpha; def do_xyz(a, b=a); p b; end; end; class B22 < Alpha; end')
     # now make sure the method got created in the M13 module!
     ['Alpha', 'B22'].each do |klass|
-      method = ClassRegistry[klass].instance_method('do_xyz')
+      method = ClassRegistry[klass].instance_method(:do_xyz)
       method.should_not be_nil
       a = method.arguments[0]
       a.name.should == 'a'
@@ -222,20 +222,20 @@ describe 'general analyses' do
 
   it 'removes methods via #remove_method' do
     annotate_all('class RM1; def do_xyz(a); end; end')
-    ClassRegistry['RM1'].instance_method('do_xyz').should be_a(LaserMethod)
+    ClassRegistry['RM1'].instance_method(:do_xyz).should be_a(LaserMethod)
     annotate_all('class RM1; remove_method :do_xyz; end')
-    ClassRegistry['RM1'].instance_method('do_xyz').should be nil
+    ClassRegistry['RM1'].instance_method(:do_xyz).should be nil
   end
   
   it 'passes resolution to superclasses after #remove_method' do
     annotate_all('class RM2; def do_xyz(a); end; end; class RMSub < RM2; def do_xyz(b); end; end')
-    ClassRegistry['RMSub'].instance_method('do_xyz').should be_a(LaserMethod)
-    ClassRegistry['RMSub'].instance_method('do_xyz').should_not ==
-        ClassRegistry['RM2'].instance_method('do_xyz')
+    ClassRegistry['RMSub'].instance_method(:do_xyz).should be_a(LaserMethod)
+    ClassRegistry['RMSub'].instance_method(:do_xyz).should_not ==
+        ClassRegistry['RM2'].instance_method(:do_xyz)
 
     annotate_all('class RMSub; remove_method :do_xyz; end')
-    ClassRegistry['RMSub'].instance_method('do_xyz').should ==
-        ClassRegistry['RM2'].instance_method('do_xyz')
+    ClassRegistry['RMSub'].instance_method(:do_xyz).should ==
+        ClassRegistry['RM2'].instance_method(:do_xyz)
   end
 
   # [:program,
@@ -254,7 +254,7 @@ describe 'general analyses' do
   #     nil, nil, nil]]]]
   it 'defines method on the main object, if no scope is otherwise enclosing a method definition' do
     tree = annotate_all('def abce(bar, &blk); p blk; end')
-    method = Scope::GlobalScope.self_ptr.singleton_class.instance_method('abce')
+    method = Scope::GlobalScope.self_ptr.singleton_class.instance_method(:abce)
     method.should_not be_nil
     Scope::GlobalScope.self_ptr.singleton_class.visibility_table[:abce].should == :private
     bar = method.arguments[0]
@@ -285,7 +285,7 @@ describe 'general analyses' do
   #    nil, nil, nil]]]]
   it 'defines singleton methods on the main object, if no scope is otherwise enclosing a method definition' do
     tree = annotate_all('def self.abcd(bar, &blk); p blk; end')
-    method = Scope::GlobalScope.self_ptr.singleton_class.instance_method('abcd')
+    method = Scope::GlobalScope.self_ptr.singleton_class.instance_method(:abcd)
     method.should_not be_nil
     bar = method.arguments[0]
     bar.name.should == 'bar'
@@ -543,14 +543,14 @@ describe 'general analyses' do
             'def silly; /regex/; end; public; def priv; end; end'
     tree = annotate_all(input)
 
-    ClassRegistry['A202'].singleton_class.instance_method('foobar').body_ast.should ==
-        ClassRegistry['A202'].instance_method('foobar').body_ast
-    ClassRegistry['A202'].singleton_class.instance_method('silly').body_ast.should ==
-        ClassRegistry['A202'].instance_method('silly').body_ast
+    ClassRegistry['A202'].singleton_class.instance_method(:foobar).body_ast.should ==
+        ClassRegistry['A202'].instance_method(:foobar).body_ast
+    ClassRegistry['A202'].singleton_class.instance_method(:silly).body_ast.should ==
+        ClassRegistry['A202'].instance_method(:silly).body_ast
     ClassRegistry['A202'].singleton_class.visibility_table[:foobar].should == :public
     ClassRegistry['A202'].singleton_class.visibility_table[:silly].should == :public
-    ClassRegistry['A202'].singleton_class.instance_method('def').should be nil
-    ClassRegistry['A202'].singleton_class.instance_method('priv').should be nil
+    ClassRegistry['A202'].singleton_class.instance_method(:def).should be nil
+    ClassRegistry['A202'].singleton_class.instance_method(:priv).should be nil
   end
   
   it 'creates public singleton class methods when module_function is used with args' do
@@ -558,14 +558,14 @@ describe 'general analyses' do
             'def silly; /regex/; end; public; def priv; end; module_function :foobar, :silly; end'
     tree = annotate_all(input)
 
-    ClassRegistry['A203'].singleton_class.instance_method('foobar').body_ast.should ==
-        ClassRegistry['A203'].instance_method('foobar').body_ast
-    ClassRegistry['A203'].singleton_class.instance_method('silly').body_ast.should ==
-        ClassRegistry['A203'].instance_method('silly').body_ast
+    ClassRegistry['A203'].singleton_class.instance_method(:foobar).body_ast.should ==
+        ClassRegistry['A203'].instance_method(:foobar).body_ast
+    ClassRegistry['A203'].singleton_class.instance_method(:silly).body_ast.should ==
+        ClassRegistry['A203'].instance_method(:silly).body_ast
     ClassRegistry['A203'].singleton_class.visibility_table[:foobar].should == :public
     ClassRegistry['A203'].singleton_class.visibility_table[:silly].should == :public
-    ClassRegistry['A203'].singleton_class.instance_method('def').should be nil
-    ClassRegistry['A203'].singleton_class.instance_method('priv').should be nil
+    ClassRegistry['A203'].singleton_class.instance_method(:def).should be nil
+    ClassRegistry['A203'].singleton_class.instance_method(:priv).should be nil
   end
   
   it 'uses a default private scope at the top level but can switch to public and private' do
@@ -740,17 +740,17 @@ describe 'general analyses' do
   it 'observes aliases and sets the corresponding instance methods correctly' do
     input = 'class SA99; def foo; end; alias silly foo; end'
     annotate_all(input)
-    ClassRegistry['SA99'].instance_method('silly').should be(
-        ClassRegistry['SA99'].instance_method('foo'))
+    ClassRegistry['SA99'].instance_method(:silly).should be(
+        ClassRegistry['SA99'].instance_method(:foo))
   end
   
   it 'observes undefs and sets the corresponding instance method to nil' do
     input = 'class SA100; def foo; end; end; class SA101 < SA100; undef foo, :inspect; end'
     annotate_all(input)
-    ClassRegistry['SA100'].instance_method('foo').should_not be nil
-    ClassRegistry['SA100'].instance_method('inspect').should_not be nil
-    ClassRegistry['SA101'].instance_method('foo').should be nil
-    ClassRegistry['SA101'].instance_method('inspect').should be nil
+    ClassRegistry['SA100'].instance_method(:foo).should_not be nil
+    ClassRegistry['SA100'].instance_method(:inspect).should_not be nil
+    ClassRegistry['SA101'].instance_method(:foo).should be nil
+    ClassRegistry['SA101'].instance_method(:inspect).should be nil
   end
 end
   
@@ -1000,22 +1000,22 @@ end
         generic.visibility_table[method].should == :public
       end
       kw_binding.visibility_table[:bind!].should == :private
-      init_method = generic.instance_method('initialize')
+      init_method = generic.instance_method(:initialize)
       init_method.arguments.size.should == 2
       init_method.arguments.map(&:name).should == ['name', 'value']
       
-      arg_binding_method = arg_binding.instance_method('initialize')
+      arg_binding_method = arg_binding.instance_method(:initialize)
       arg_binding_method.arguments.size.should == 4
       arg_binding_method.arguments.map(&:name).should == ['name', 'value', 'kind', 'default_value']
       
       
-      generic.instance_method('initialize').arity.should == (2..2)
-      generic.instance_method('bind!').arity.should == (1..1)
-      generic.instance_method('<=>').arity.should == (1..1)
-      generic.instance_method('scope').arity.should == (0..0)
-      generic.instance_method('class_used').arity.should == (0..0)
-      class_binding.instance_method('bind!').arity.should == (1..2)
-      arg_binding.instance_method('initialize').arity.should == (3..4)
+      generic.instance_method(:initialize).arity.should == (2..2)
+      generic.instance_method(:bind!).arity.should == (1..1)
+      generic.instance_method(:<=>).arity.should == (1..1)
+      generic.instance_method(:scope).arity.should == (0..0)
+      generic.instance_method(:class_used).arity.should == (0..0)
+      class_binding.instance_method(:bind!).arity.should == (1..2)
+      arg_binding.instance_method(:initialize).arity.should == (3..4)
     end
   end
 end

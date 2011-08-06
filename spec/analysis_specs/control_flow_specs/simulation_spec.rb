@@ -17,7 +17,7 @@ class Sim2
   end
 end
 EOF
-    ClassRegistry['Sim2'].instance_method('foo').should_not be_nil
+    ClassRegistry['Sim2'].instance_method(:foo).should_not be_nil
   end
   
   it 'should simulate toplevel alias_method calls' do
@@ -28,8 +28,8 @@ class Sim3
   alias_method :bar, :foo
 end
 EOF
-    ClassRegistry['Sim3'].instance_method('foo').should ==
-        ClassRegistry['Sim3'].instance_method('bar')
+    ClassRegistry['Sim3'].instance_method(:foo).should ==
+        ClassRegistry['Sim3'].instance_method(:bar)
   end
 
   it 'should simulate toplevel general calls' do
@@ -48,15 +48,15 @@ class Sim4
   end
 end
 }
-    old_foo = ClassRegistry['Sim4'].instance_method('foo')
-    new_foo = ClassRegistry['Sim4'].instance_method('foo_with_fun')
+    old_foo = ClassRegistry['Sim4'].instance_method(:foo)
+    new_foo = ClassRegistry['Sim4'].instance_method(:foo_with_fun)
     g2 = cfg %q{
 class Sim4
   alias_method_chain :foo, :fun
 end
 }
-    ClassRegistry['Sim4'].instance_method('foo_without_fun').should == old_foo
-    ClassRegistry['Sim4'].instance_method('foo').should == new_foo
+    ClassRegistry['Sim4'].instance_method(:foo_without_fun).should == old_foo
+    ClassRegistry['Sim4'].instance_method(:foo).should == new_foo
   end
   
   it 'should simulate ruby-level attr_{reader,writer,accessor} calls' do
@@ -101,10 +101,10 @@ class Sim6
   end
 end
 }
-    method = ClassRegistry['Sim6'].instance_method('times_1')
+    method = ClassRegistry['Sim6'].instance_method(:times_1)
     method.should be_a(LaserMethod)
     method.arity.should == Arity.new(1..1)
-    method = ClassRegistry['Sim6'].instance_method('times_1')
+    method = ClassRegistry['Sim6'].instance_method(:times_1)
     method.should be_a(LaserMethod)
     method.arity.should == Arity.new(1..1)
   end
@@ -122,9 +122,9 @@ class Sim7
 end
 SimVal8 = Sim7.new.foo(gets)
 }
-    ClassRegistry['Sim7'].instance_method('bar').return_type_for_types(
+    ClassRegistry['Sim7'].instance_method(:bar).return_type_for_types(
         ClassRegistry['Sim7'].as_type, [Types::STRING]).should equal_type Types::UnionType.new([Types::ARRAY])
-    ClassRegistry['Sim7'].instance_method('foo').return_type_for_types(
+    ClassRegistry['Sim7'].instance_method(:foo).return_type_for_types(
         ClassRegistry['Sim7'].as_type, [Types::STRING]).should equal_type Types::UnionType.new([Types::FIXNUM])
   end
   

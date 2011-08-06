@@ -67,7 +67,7 @@ module RInfer1
   end
 end
 EOF
-    method = ClassRegistry['RInfer1'].singleton_class.instance_method('multiply')
+    method = ClassRegistry['RInfer1'].singleton_class.instance_method(:multiply)
     method.raise_frequency_for_types(
         Utilities.type_for(ClassRegistry['RInfer1']), 
         [Types::FIXNUM], 
@@ -89,7 +89,7 @@ def make_rinfer_2(x)
   RInfer2.new(x)
 end
 EOF
-    method = ClassRegistry['Object'].instance_method('make_rinfer_2')
+    method = ClassRegistry['Object'].instance_method(:make_rinfer_2)
     # call make_rinfer_2 should raise for a fixnum
     method.raise_frequency_for_types(
         Types::STRING,  # doesn't matter
@@ -127,7 +127,7 @@ def make_RInfer_3(x)
   RInfer3.new(x)
 end
 EOF
-    method = ClassRegistry['Object'].instance_method('make_RInfer_3')
+    method = ClassRegistry['Object'].instance_method(:make_RInfer_3)
     # call make_rinfer_2 should raise for a fixnum
     method.raise_frequency_for_types(
         Types::STRING,  # doesn't matter
@@ -155,7 +155,7 @@ class RInfer4
   end
 end
 EOF
-    method = ClassRegistry['RInfer4'].instance_method('silly')
+    method = ClassRegistry['RInfer4'].instance_method(:silly)
     method.raise_frequency_for_types(
         Utilities.type_for(ClassRegistry['RInfer4']),
         [Types::STRING],
@@ -178,7 +178,7 @@ class RInfer5
   end
 end
 EOF
-    method = ClassRegistry['RInfer5'].instance_method('bar')
+    method = ClassRegistry['RInfer5'].instance_method(:bar)
     method.raise_frequency_for_types(
         Utilities.type_for(ClassRegistry['RInfer5'])).should == Frequency::ALWAYS
   end
@@ -196,7 +196,7 @@ class RInfer6
   end
 end
 EOF
-    method = ClassRegistry['RInfer6'].instance_method('bar')
+    method = ClassRegistry['RInfer6'].instance_method(:bar)
     method.raise_frequency_for_types(
         Utilities.type_for(ClassRegistry['RInfer6'])).should == Frequency::MAYBE
   end
@@ -212,7 +212,7 @@ class RInfer7
   end
 end
 EOF
-    method = ClassRegistry['RInfer7'].instance_method('foo')
+    method = ClassRegistry['RInfer7'].instance_method(:foo)
     method.raise_frequency_for_types(
         ClassRegistry['RInfer7'].as_type).should == Frequency::ALWAYS
     method.raise_frequency_for_types(
@@ -248,7 +248,7 @@ class RInfer8B < RInfer8
   end
 end
 EOF
-    method = ClassRegistry['RInfer8B'].instance_method('foo')
+    method = ClassRegistry['RInfer8B'].instance_method(:foo)
     method.raise_frequency_for_types(
         ClassRegistry['RInfer8B'].as_type).should == Frequency::ALWAYS
     method.raise_frequency_for_types(
@@ -284,7 +284,7 @@ class RInfer9B < RInfer9
   end
 end
 EOF
-    method = ClassRegistry['RInfer9B'].instance_method('foo')
+    method = ClassRegistry['RInfer9B'].instance_method(:foo)
     method.raise_frequency_for_types(
         ClassRegistry['RInfer9B'].as_type).should == Frequency::ALWAYS
     method.raise_frequency_for_types(

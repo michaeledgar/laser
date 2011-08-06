@@ -210,7 +210,7 @@ module Laser
             elsif arg_class <= ClassRegistry['Exception']
               arg_class.as_type
             elsif arg_class.instance_method_defined?('exception')
-              arg_class.instance_method('exception').return_type_for_types(arg_class.as_type)
+              arg_class.instance_method(:exception).return_type_for_types(arg_class.as_type)
             end
           end)
         end

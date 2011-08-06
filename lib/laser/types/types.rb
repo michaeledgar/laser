@@ -251,14 +251,8 @@ module Laser
       end
       
       def public_matching_methods(name)
-        name = name.to_sym
-        case name
-        when :[]
-          [TupleIndexMethod.new(self)]
-        when :to_a, :to_ary
-          [TupleSelfMethod.new(self, name)]
-        when :+
-          [TuplePlusMethod.new(self)]
+        if ClassRegistry['Array'].visibility_for(name) == :public
+          matching_methods(name)
         else
           Types::ARRAY.public_matching_methods(name)
         end
@@ -273,6 +267,8 @@ module Laser
           [TupleSelfMethod.new(self, name)]
         when :+
           [TuplePlusMethod.new(self)]
+        when :*
+          [TupleTimesMethod.new(self)]
         else
           Types::ARRAY.matching_methods(name)
         end
@@ -324,11 +320,44 @@ module Laser
           if arg_types.first.member_types.one?
             other_type = arg_types.first.member_types.first
           end
-          if Types::TupleType === arg_types.first
-            Types::TupleType.new(tuple_type.element_types + arg_types.first.element_types)
+          if Types::TupleType === other_type
+            Types::TupleType.new(tuple_type.element_types + other_type.element_types)
           else
             Types::ARRAY
           end
+        end
+        
+        def raise_frequency_for_types(self_type, arg_types = [], block_type = nil)
+          Frequency::MAYBE
+        end
+        
+        def raise_type_for_types(self_type, arg_types = [], block_type = nil)
+          Types::UnionType.new([Types::ClassType.new('ArgumentError', :invariant)])
+        end
+      end
+      
+      class TupleTimesMethod < TupleMethod
+        def name
+          '*'
+        end
+        
+        def return_type_for_types(self_type, arg_types = [], block_type = nil)
+          resulting_choices = Set.new
+          element_types = tuple_type.element_types
+
+          arg_types[0].possible_classes.each do |klass|
+            if Analysis::LaserSingletonClass === klass &&
+               (klass < Analysis::ClassRegistry['Integer'] || klass < Analysis::ClassRegistry['Float'])
+              factor = klass.get_instance.to_i
+              if factor >= 0
+                resulting_choices << TupleType.new(element_types * klass.get_instance)
+              end
+            elsif klass < Analysis::ClassRegistry['Numeric']
+              resulting_choices << Types::ARRAY
+            end
+          end
+
+          Types::UnionType.new(resulting_choices)
         end
         
         def raise_frequency_for_types(self_type, arg_types = [], block_type = nil)

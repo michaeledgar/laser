@@ -10,7 +10,7 @@ class RI1
   end
 end
 EOF
-    method = ClassRegistry['RI1'].instance_method('tap_10')
+    method = ClassRegistry['RI1'].instance_method(:tap_10)
     method.raise_type_for_types(
         Utilities.type_for(ClassRegistry['RI1'])).should equal_type(
           Types::UnionType.new([Types::ClassType.new('LocalJumpError', :invariant)]))
@@ -24,7 +24,7 @@ class RI2
   end
 end
 EOF
-    method = ClassRegistry['RI2'].instance_method('raise_string')
+    method = ClassRegistry['RI2'].instance_method(:raise_string)
     method.raise_type_for_types(
         Utilities.type_for(ClassRegistry['RI2'])).should equal_type(
           Types::UnionType.new([Types::ClassType.new('RuntimeError', :invariant)]))
@@ -38,7 +38,7 @@ class RI3
   end
 end
 EOF
-    method = ClassRegistry['RI3'].instance_method('raise_class')
+    method = ClassRegistry['RI3'].instance_method(:raise_class)
     method.raise_type_for_types(
         Utilities.type_for(ClassRegistry['RI3'])).should equal_type(
           Types::UnionType.new([Types::ClassType.new('TypeError', :invariant)]))
@@ -52,7 +52,7 @@ class RI4
   end
 end
 EOF
-    method = ClassRegistry['RI4'].instance_method('raise_instance')
+    method = ClassRegistry['RI4'].instance_method(:raise_instance)
     method.raise_type_for_types(
         Utilities.type_for(ClassRegistry['RI4'])).should equal_type(
           Types::UnionType.new([Types::ClassType.new('ArgumentError', :invariant)]))
@@ -69,7 +69,7 @@ def make_rtinfer_2(x)
   RTInfer2.new(x)
 end
 EOF
-    method = ClassRegistry['Object'].instance_method('make_rtinfer_2')
+    method = ClassRegistry['Object'].instance_method(:make_rtinfer_2)
     # call make_rinfer_2 should raise for a fixnum
     method.raise_type_for_types(
         Types::STRING,  # doesn't matter
@@ -107,7 +107,7 @@ def make_rtinfer_3(x)
   RTInfer3.new(x)
 end
 EOF
-    method = ClassRegistry['Object'].instance_method('make_rtinfer_3')
+    method = ClassRegistry['Object'].instance_method(:make_rtinfer_3)
     # call make_rinfer_2 should raise for a fixnum
     method.raise_type_for_types(
         Types::STRING,  # doesn't matter
@@ -135,7 +135,7 @@ class RTInfer4
   end
 end
 EOF
-    method = ClassRegistry['RTInfer4'].instance_method('silly')
+    method = ClassRegistry['RTInfer4'].instance_method(:silly)
     method.raise_type_for_types(
         Utilities.type_for(ClassRegistry['RTInfer4']),
         [Types::STRING],
@@ -159,7 +159,7 @@ class RTInfer5
   end
 end
 EOF
-    method = ClassRegistry['RTInfer5'].instance_method('bar')
+    method = ClassRegistry['RTInfer5'].instance_method(:bar)
     method.raise_type_for_types(
         Utilities.type_for(ClassRegistry['RTInfer5'])).should(
           equal_type(ClassRegistry['NoMethodError'].as_type))
@@ -178,7 +178,7 @@ class RTInfer6
   end
 end
 EOF
-    method = ClassRegistry['RTInfer6'].instance_method('bar')
+    method = ClassRegistry['RTInfer6'].instance_method(:bar)
     method.raise_type_for_types(
         Utilities.type_for(ClassRegistry['RTInfer6'])).should(
           equal_type(ClassRegistry['NoMethodError'].as_type))
@@ -195,7 +195,7 @@ class RTInfer7
   end
 end
 EOF
-    method = ClassRegistry['RTInfer7'].instance_method('foo')
+    method = ClassRegistry['RTInfer7'].instance_method(:foo)
     method.raise_type_for_types(
         ClassRegistry['RTInfer7'].as_type).should(
           equal_type(ClassRegistry['ArgumentError'].as_type))
@@ -234,7 +234,7 @@ class RTInfer8B < RTInfer8
   end
 end
 EOF
-    method = ClassRegistry['RTInfer8B'].instance_method('foo')
+    method = ClassRegistry['RTInfer8B'].instance_method(:foo)
     method.raise_type_for_types(
         ClassRegistry['RTInfer8B'].as_type).should(
           equal_type(ClassRegistry['ArgumentError'].as_type))
@@ -273,7 +273,7 @@ class RTInfer9B < RTInfer9
   end
 end
 EOF
-    method = ClassRegistry['RTInfer9B'].instance_method('foo')
+    method = ClassRegistry['RTInfer9B'].instance_method(:foo)
     method.raise_type_for_types(
         ClassRegistry['RTInfer9B'].as_type).should(
           equal_type(ClassRegistry['ArgumentError'].as_type))

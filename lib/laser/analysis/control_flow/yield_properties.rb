@@ -6,11 +6,11 @@ module Laser
       module YieldProperties
         def find_yield_properties(opts)
           kernel_method_to_fix = ClassRegistry['Kernel'].
-              instance_method('block_given?')
+              instance_method(:block_given?)
           proc_method_to_fix   = ClassRegistry['Proc'].singleton_class.
-              instance_method('new')
+              instance_method(:new)
           magic_method_to_fix  = ClassRegistry['Laser#Magic'].singleton_class.
-              instance_method('current_block')
+              instance_method(:current_block)
 
           # Calculate the "no block provided" case
           without_yield = dup
@@ -68,7 +68,7 @@ module Laser
 
         def initial_block_aliases(opts)
           proc_new_calls = find_method_calls(
-              ClassRegistry['Proc'].singleton_class.instance_method('new'), opts)
+              ClassRegistry['Proc'].singleton_class.instance_method(:new), opts)
           registers = proc_new_calls.map { |insn| insn[1] }
           initial_aliases = Set.new(registers)
           initial_aliases.add(block_register)

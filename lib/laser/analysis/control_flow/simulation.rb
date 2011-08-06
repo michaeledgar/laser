@@ -266,17 +266,17 @@ module Laser
         
         def simulate_special_method(receiver, method, args, block, opts)
           case method
-          when ClassRegistry['Class'].instance_method('allocate')
+          when ClassRegistry['Class'].instance_method(:allocate)
             LaserObject.new(receiver, nil)
-          when ClassRegistry['Class'].singleton_class.instance_method('new')
+          when ClassRegistry['Class'].singleton_class.instance_method(:new)
             LaserClass.new(ClassRegistry['Class'], nil) do |klass|
               klass.superclass = args.first
             end
-          when ClassRegistry['Module'].singleton_class.instance_method('new')
+          when ClassRegistry['Module'].singleton_class.instance_method(:new)
             LaserModule.new
-          when ClassRegistry['Kernel'].instance_method('require')
+          when ClassRegistry['Kernel'].instance_method(:require)
             simulate_require(args)
-          when ClassRegistry['Kernel'].instance_method('send')
+          when ClassRegistry['Kernel'].instance_method(:send)
             method_name, *actual_args = args
             klass = Utilities.klass_for(receiver)
             method = klass.instance_method(method_name)
@@ -285,37 +285,37 @@ module Laser
             else
               raise NonDeterminismHappened.new("Nondeterministic call: #{method.inspect}")
             end
-          when ClassRegistry['Module'].instance_method('define_method')
+          when ClassRegistry['Module'].instance_method(:define_method)
             simulate_define_method(receiver, args, block)
-          when ClassRegistry['Module'].instance_method('module_eval')
+          when ClassRegistry['Module'].instance_method(:module_eval)
             simulate_module_eval(receiver, args, block)
-          when ClassRegistry['Laser#Magic'].singleton_class.instance_method('get_global')
+          when ClassRegistry['Laser#Magic'].singleton_class.instance_method(:get_global)
             Scope::GlobalScope.lookup(args.first).value
-          when ClassRegistry['Laser#Magic'].singleton_class.instance_method('set_global')
+          when ClassRegistry['Laser#Magic'].singleton_class.instance_method(:set_global)
             Scope::GlobalScope.lookup(args[0]).bind!(args[1])
-          when ClassRegistry['Laser#Magic'].singleton_class.instance_method('current_self')
+          when ClassRegistry['Laser#Magic'].singleton_class.instance_method(:current_self)
             opts[:self]
-          when ClassRegistry['Laser#Magic'].singleton_class.instance_method('current_block')
+          when ClassRegistry['Laser#Magic'].singleton_class.instance_method(:current_block)
             opts[:block]
-          when ClassRegistry['Laser#Magic'].singleton_class.instance_method('current_arity')
+          when ClassRegistry['Laser#Magic'].singleton_class.instance_method(:current_arity)
             opts[:formals].size
-          when ClassRegistry['Laser#Magic'].singleton_class.instance_method('current_argument')
+          when ClassRegistry['Laser#Magic'].singleton_class.instance_method(:current_argument)
             opts[:formals][args.first]
-          when ClassRegistry['Laser#Magic'].singleton_class.instance_method('current_argument_range')
+          when ClassRegistry['Laser#Magic'].singleton_class.instance_method(:current_argument_range)
             opts[:formals][args[0], args[1]]
-          when ClassRegistry['Laser#Magic'].singleton_class.instance_method('current_exception'),
-               ClassRegistry['Laser#Magic'].singleton_class.instance_method('get_just_raised_exception')
+          when ClassRegistry['Laser#Magic'].singleton_class.instance_method(:current_exception),
+               ClassRegistry['Laser#Magic'].singleton_class.instance_method(:get_just_raised_exception)
             Bootstrap::EXCEPTION_STACK.value.last
-          when ClassRegistry['Laser#Magic'].singleton_class.instance_method('push_exception')
+          when ClassRegistry['Laser#Magic'].singleton_class.instance_method(:push_exception)
             Bootstrap::EXCEPTION_STACK.value.push args[0]
-          when ClassRegistry['Laser#Magic'].singleton_class.instance_method('pop_exception')
+          when ClassRegistry['Laser#Magic'].singleton_class.instance_method(:pop_exception)
             Bootstrap::EXCEPTION_STACK.value.pop
-          when ClassRegistry['Laser#Magic'].singleton_class.instance_method('responds?')
+          when ClassRegistry['Laser#Magic'].singleton_class.instance_method(:responds?)
             receiver, method_name = args
             Utilities.klass_for(receiver).instance_method(method_name)
-          when Scope::GlobalScope.self_ptr.singleton_class.instance_method('private')
+          when Scope::GlobalScope.self_ptr.singleton_class.instance_method(:private)
             ClassRegistry['Object'].private(*args)
-          when Scope::GlobalScope.self_ptr.singleton_class.instance_method('public')
+          when Scope::GlobalScope.self_ptr.singleton_class.instance_method(:public)
             ClassRegistry['Object'].public(*args)
           end
         end

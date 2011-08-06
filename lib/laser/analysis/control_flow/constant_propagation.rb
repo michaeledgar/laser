@@ -542,10 +542,12 @@ module Laser
                (args.first.value == 0 && is_numeric?(receiver))
               return [0, Types::FIXNUM]
             elsif (args.first.value == 0 &&
-                   uses_method?(receiver, ClassRegistry['String'].instance_method('*')))
+                   uses_method?(receiver, ClassRegistry['String'].instance_method(:*)))
               return ['', Types::STRING]
             elsif (args.first.value == 0 &&
-                   uses_method?(receiver, ClassRegistry['Array'].instance_method('*')))
+                   receiver.expr_type.member_types.all? { |t|
+                     Types::TupleType === t || t.matching_methods(:*) == [ClassRegistry['Array'].instance_method(:*)]
+                   })
               return [[], Types::ARRAY]
             end
           elsif method_name == :**
@@ -590,7 +592,7 @@ module Laser
             end
           elsif (receiver.value == ClassRegistry['Proc'] && method_name == :new) ||
                 ((method_name == :block_given? || method_name == :iterable?) &&
-                 (uses_method?(receiver, ClassRegistry['Kernel'].instance_method('block_given?')))) # and check no block
+                 (uses_method?(receiver, ClassRegistry['Kernel'].instance_method(:block_given?)))) # and check no block
             return cp_magic(instruction, :current_block)
           elsif receiver.value == ClassRegistry['Array'] && method_name == :[]
             if args.all? { |arg| arg.value != UNDEFINED }
@@ -616,7 +618,7 @@ module Laser
             tuple_type = receiver.expr_type.member_types.first
             # switch on method object
             case tuple_type.matching_methods(method_name)[0]
-            when ClassRegistry['Array'].instance_method('size')
+            when ClassRegistry['Array'].instance_method(:size)
               size = tuple_type.size
               return [size, Utilities.type_for(size)]
             end
@@ -643,7 +645,7 @@ module Laser
         end
         
         def allow_impure_method?(method)
-          method == ClassRegistry['Module'].instance_method('const_get')
+          method == ClassRegistry['Module'].instance_method(:const_get)
         end
         
         def cp_magic(instruction, method_name, *args)

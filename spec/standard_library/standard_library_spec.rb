@@ -269,7 +269,7 @@ describe 'the automatically analyzed Ruby Standard Library' do
     
     describe '#==' do
       it 'should be pure' do
-        @class.instance_method('==').pure.should be true
+        @class.instance_method(:==).pure.should be true
       end
     end
     
