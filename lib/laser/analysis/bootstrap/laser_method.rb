@@ -4,15 +4,17 @@ module Laser
     # collide with ::Method.
     class LaserMethod
       extend ModuleExtensions
+      cattr_accessor_with_default :default_dispatched, true
       attr_reader :name, :proc, :arglist
       alias arguments arglist
-      attr_accessor :body_ast, :owner, :arity
+      attr_accessor :owner, :arity
 
       def initialize(name, base_proc)
         @name = name
         @type_instantiations = {}
         @proc = base_proc
         @argument_annotations = nil
+        @dispatched = LaserMethod.default_dispatched
         if base_proc  # always true except some ugly test cases
           @arglist = base_proc.arguments
           @arity = Arity.for_arglist(@arglist)
@@ -164,6 +166,14 @@ module Laser
         end
       end
 
+      def dispatched?
+        @dispatched
+      end
+
+      def been_used!
+        @dispatched = true
+      end
+
       def master_cfg
         @master_cfg ||= @proc.ssa_cfg.tap do |cfg|
           cfg.bind_self_type(Types::ClassType.new(owner.path, :covariant))
@@ -229,7 +239,6 @@ module Laser
 
       def dup
         result = LaserMethod.new(name, proc)
-        result.body_ast = self.body_ast
         result.owner = self.owner
         result.arity = self.arity
         result

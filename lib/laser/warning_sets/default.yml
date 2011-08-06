@@ -9,4 +9,5 @@
 - "RescueExceptionWarning"
 - "SemicolonWarning"
 - "UselessDoubleQuotesWarning"
+- "HashSymbol19Warning"
 - "SexpErrorWarning"

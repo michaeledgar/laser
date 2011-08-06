@@ -197,7 +197,8 @@ module Laser
             annotated_raise_frequency: Frequency::NEVER)
         stub_method(kernel_module, 'singleton_class', builtin: true, pure: true,
             annotated_raise_frequency: Frequency::NEVER)
-        send_method = stub_custom_method(kernel_module, SpecialMethods::SendMethod, 'send', :any, special: true)
+        stub_custom_method(kernel_module, SpecialMethods::SendMethod, 'send', :any, special: true)
+        stub_custom_method(kernel_module, SpecialMethods::SendMethod, 'public_send', :public, special: true)
 
         raise_method = stub_method(kernel_module, 'raise', builtin: true, pure: true,
             annotated_raise_frequency: Frequency::ALWAYS)
@@ -237,6 +238,32 @@ module Laser
         stub_global_type("$'", Types.optional(Types::STRING))
       end
       
+      def self.load_standard_library
+        LaserMethod.default_dispatched = true
+          %w(class_definitions.rb).map do |file|
+            path = File.join(Laser::ROOT, 'laser', 'standard_library', file)
+            [path, File.read(path)]
+          end.tap do |tuples|
+          begin
+            trees = Annotations.annotate_inputs(tuples, optimize: false)
+            trees.each do |filename, tree|
+              if tree.all_errors != []
+                $stderr.puts "Default file #{filename} had these errors:"
+                PP.pp(tree.all_errors, $stderr)
+                exit 1
+              end
+            end
+          rescue StandardError => err
+            puts "Loading class definitions failed:"
+            p err.message
+            pp err
+            pp err.backtrace
+          end
+        end
+        # All methods from here on out will need to be used, or a warning will be issued.
+        LaserMethod.default_dispatched = false
+      end
+
       def self.stub_method(klass, name, opts={})
         stub_custom_method(klass, LaserMethod, name, nil, opts)
       end

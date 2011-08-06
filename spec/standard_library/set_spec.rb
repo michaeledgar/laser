@@ -4,7 +4,7 @@ describe 'the Set module' do
   before(:all) do
     @tree = annotate_all('require "set"')
   end
-  
+
   it 'should have no errors from the inclusion' do
     @tree.all_errors.should be_empty
   end

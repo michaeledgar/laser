@@ -419,7 +419,19 @@ module Laser
               if !seen_invalid_arity && !method.valid_arity?(arity)
                 seen_invalid_arity = true
               end
-                
+              if !ignore_privacy
+                self_type.possible_classes.each do |self_class|
+                  if self_class.visibility_for(method.name) == :public
+                    seen_public = true
+                    method.been_used! if method.valid_arity?(arity)
+                  end
+                  if !seen_private
+                    seen_private = (self_class.visibility_for(method.name) != :public)
+                  end
+                end
+              else
+                method.been_used! if method.valid_arity?(arity)
+              end
               cartesian.each do |*type_list, block_type|
                 raise_frequency = method.raise_frequency_for_types(self_type, type_list, block_type)
                 if raise_frequency > Frequency::NEVER
@@ -427,16 +439,6 @@ module Laser
                   raise_type = raise_type | method.raise_type_for_types(self_type, type_list, block_type)
                 end
                 seen_succeed = raise_frequency < Frequency::ALWAYS if !seen_succeed
-                if !ignore_privacy
-                  self_type.possible_classes.each do |self_class|
-                    if !seen_public
-                      seen_public = (self_class.visibility_for(method.name) == :public)
-                    end
-                    if !seen_private
-                      seen_private = (self_class.visibility_for(method.name) != :public)
-                    end
-                  end
-                end
               end
             end
           end

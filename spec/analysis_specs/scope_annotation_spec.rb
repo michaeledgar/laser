@@ -543,10 +543,6 @@ describe 'general analyses' do
             'def silly; /regex/; end; public; def priv; end; end'
     tree = annotate_all(input)
 
-    ClassRegistry['A202'].singleton_class.instance_method(:foobar).body_ast.should ==
-        ClassRegistry['A202'].instance_method(:foobar).body_ast
-    ClassRegistry['A202'].singleton_class.instance_method(:silly).body_ast.should ==
-        ClassRegistry['A202'].instance_method(:silly).body_ast
     ClassRegistry['A202'].singleton_class.visibility_table[:foobar].should == :public
     ClassRegistry['A202'].singleton_class.visibility_table[:silly].should == :public
     ClassRegistry['A202'].singleton_class.instance_method(:def).should be nil
@@ -558,10 +554,6 @@ describe 'general analyses' do
             'def silly; /regex/; end; public; def priv; end; module_function :foobar, :silly; end'
     tree = annotate_all(input)
 
-    ClassRegistry['A203'].singleton_class.instance_method(:foobar).body_ast.should ==
-        ClassRegistry['A203'].instance_method(:foobar).body_ast
-    ClassRegistry['A203'].singleton_class.instance_method(:silly).body_ast.should ==
-        ClassRegistry['A203'].instance_method(:silly).body_ast
     ClassRegistry['A203'].singleton_class.visibility_table[:foobar].should == :public
     ClassRegistry['A203'].singleton_class.visibility_table[:silly].should == :public
     ClassRegistry['A203'].singleton_class.instance_method(:def).should be nil

@@ -85,6 +85,7 @@ require 'laser/annotation_parser/parsers'
 
 require 'laser/analysis/visitor'
 require 'laser/analysis/annotations'
+require 'laser/analysis/unused_methods'
 # Runners
 require 'laser/runner'
 require 'laser/rake/task'
@@ -92,23 +93,5 @@ require 'laser/rake/task'
 require 'laser/warning'
 require 'laser/scanner'
 
-%w(class_definitions.rb).map do |file|
-  path = File.join(Laser::ROOT, 'laser', 'standard_library', file)
-  [path, File.read(path)]
-end.tap do |tuples|
-  begin
-    trees = Laser::Analysis::Annotations.annotate_inputs(tuples, optimize: false)
-    trees.each do |filename, tree|
-      if tree.all_errors != []
-        $stderr.puts "Default file #{filename} had these errors:"
-        PP.pp(tree.all_errors, $stderr)
-        exit 1
-      end
-    end
-  rescue StandardError => err
-    puts "Loading class definitions failed:"
-    p err.message
-    pp err
-    pp err.backtrace
-  end
-end
+# All methods created from the stdlib should never be marked as unused.
+Laser::Analysis::Bootstrap.load_standard_library

@@ -208,7 +208,6 @@ class String
   alias each_byte bytes
   alias each_char chars
   alias each_codepoint codepoints
-  alias each_line lines
   # pure: true
   # builtin: true
   # returns: Boolean
@@ -330,6 +329,7 @@ class String
   # raises: never
   def lines(separator = $/)
   end
+  alias each_line lines
   # pure: true
   # builtin: true
   # returns: String=

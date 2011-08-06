@@ -22,13 +22,22 @@ module Laser
           arg_type.possible_classes.each do |target_klass|
             if LaserSingletonClass === target_klass
               target_method_name = target_klass.get_instance.to_s
-              self_type.matching_methods(target_method_name).each do |method|
-                yield(method)
+              self_type.possible_classes.each do |self_class|
+                if passes_visibility?(self_class, target_method_name)
+                  method = self_class.instance_method(target_method_name)
+                  method.been_used!
+                  yield(method)
+                end
               end
             end
           end
         end
         
+        def passes_visibility?(klass, name)
+          return true if @privacy == :any
+          klass.visibility_for(name) == @privacy
+        end
+
         def collect_type_from_targets(to_call, self_type, arg_types, block_type)
           result_type = Types::UnionType.new([])
           each_target_method(self_type, arg_types[0]) do |method|

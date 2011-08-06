@@ -15,6 +15,9 @@ module Laser
 end
 
 include Laser::Analysis
+# Turn off method-is-used- checking until we explicitly test
+# it - it just muddies up stuff
+LaserMethod.default_dispatched = true
 
 RSpec::Matchers.define :equal_type do |type|
   match do |orig|

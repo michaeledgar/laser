@@ -224,6 +224,7 @@ module Laser
             new_invocation_sites = opts[:invocation_sites].merge(block => opts[:invocation_sites][block] | Set[opts[:current_block]])
             opts = opts.merge(invocation_sites: new_invocation_sites, on_raise: :raise)
           end
+          method.been_used!
           if method.special
             simulate_special_method(receiver, method, args, block, opts)
           elsif method.builtin
