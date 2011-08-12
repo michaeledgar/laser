@@ -9,6 +9,6 @@ gem 'trollop', '~> 1.16.2'
 
 group :development do
   gem 'rake', '~> 0.9.0'
-  gem 'rspec', '~> 2.3.0'
+  gem 'rspec', '~> 2.4.0'
   gem 'cucumber', '>= 0.10.0'
 end
