@@ -1,5 +1,7 @@
 #!/usr/bin/env ruby
+require 'rubygems'
+require 'bundler/setup'
+Bundler.require(:default)
 $:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 require 'laser'
-
-Laser::Runner.new(ARGV).run
+Laser::Runner.new(ARGV.dup).run

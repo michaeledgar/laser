@@ -4,7 +4,7 @@ class Laser::InlineCommentSpaceWarning < Laser::LineWarning
   DEFAULT_SPACE = 2
   type :style
   short_desc 'Inline comment spacing error'
-  desc { "Inline comments must be at least #{@settings[OPTION_KEY]} spaces from code." }
+  desc { "Inline comments must be exactly #{@settings[OPTION_KEY]} spaces from code." }
   opt OPTION_KEY, 'Number of spaces between code and inline comments', default: DEFAULT_SPACE
   fixable true
 

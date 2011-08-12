@@ -63,15 +63,74 @@ Installing
 
 To install LASER, use the following command:
 
-    $ gem install laser
+    $ gem install laser --prerelease
     
-(Add `sudo` if you're installing under a POSIX system as root)
+(Add `sudo` if you're installing to a directory requiring root privileges to write)
                                                                               
 Usage
 -----
 
 There are a couple of ways to use LASER. It has a command-line implementation,
-and a Rake task. They will be documented further in the future.
+and a Rake task.
+
+The command-line implementation is still having its flags worked out for usability -
+right now, there's some flexibility, but they're a huge pain to use. Also, the style-related
+analyses are handled slightly differently from semantic analyses. So bear with me.
+
+When analyzing for semantic issues, `require`s and `load`s are *always* followed. This
+may become a command-line flag in the future, but it isn't now.
+
+When analyzing for style issues, the file in question must be listed on the command line.
+
+Example runs:
+
+```
+$ cat temp.rb
+class Foo
+  def initialize(x, *args)
+    a, b = args[1..2]
+  end
+end
+Foo.new(gets, gets)
+
+$ laser temp.rb
+4 warnings found. 0 are fixable.
+================================
+(stdin):3 Error (4) - Variable defined but not used: x
+(stdin):3 Error (6) - LHS never assigned - defaults to nil
+(stdin):3 Error (4) - Variable defined but not used: a
+(stdin):3 Error (4) - Variable defined but not used: b
+```
+
+Cool! If you want to specify a set of warnings to consider, you can use the `--only` flag. And
+if you want style errors to be fixed, use `--fix`. For example:
+
+```
+$ cat tempstyle.rb
+x = 0
+x+=10 # extra space at the end of this line   
+# blank lines following
+
+
+$ laser --only OperatorSpacing,ExtraBlankLinesWarning,InlineCommentSpaceWarning,ExtraWhitespaceWarning --fix tempstyle.rb
+
+$ cat tempstyle.rb
+x = 0
+x += 10  # extra space at the end of this line   
+# blank lines following$ (prompt)
+```
+
+What happened there is:
+
+1. Inline comments were set to 2 spaces away from their line of code. This will be configurable in the future.
+2. The `+=` operator was properly spaced.
+3. The extra spaces at the end of line 2 were removed
+4. The blank lines at the end of the file were removed.
+
+Cool! Of course, all those would have happened if you just ran `laser --fix tempstyle.rb`, but I wanted to demonstrate
+how to specify individual warnings. Again, that's going to have to be made a lot easier - I've experimented with giving
+each warning a "short name" that gets emitted alongside the warning, but that has some discoverability issues. We'll see
+where that goes.
 
 Changelog
 ---------

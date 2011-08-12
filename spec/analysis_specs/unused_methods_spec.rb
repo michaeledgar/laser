@@ -58,7 +58,7 @@ UnusedMethod3.new.foo(gets)
 EOF
     @methods = UnusedMethodDetection.unused_methods
 
-    Set[@methods].should ==
+    Set.new(@methods).should ==
       Set[ClassRegistry['UnusedMethod2'].instance_method(:foo),
           ClassRegistry['UnusedMethod3'].instance_method(:baz)]
   end

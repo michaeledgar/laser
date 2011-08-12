@@ -1576,7 +1576,7 @@ module Laser
             if fixed_size >= lhs_size
               wasted_rhs_splat(rhs)
             else
-              declare_instruct(:expect_tuple_size, :<, lhs_size - fixed_size + 1, varying)
+              declare_instruct(:expect_tuple_size, :==, lhs_size - fixed_size, varying)
             end
             fixed[0...lhs_size].each_with_index do |val, idx|
               single_assign_instruct(lhs[idx], val)

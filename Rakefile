@@ -1,6 +1,25 @@
 require 'rubygems'
 require 'rake'
 
+# switch to false if the gem can't load
+if true
+  begin
+    require 'laser'
+    Laser::Rake::LaserTask.new(:laser) do |laser|
+      laser.libs << 'lib' << 'spec'
+      laser.using << :all << Laser::LineLengthMaximum(100) << Laser::LineLengthWarning(80)
+      laser.options = '--debug --fix'
+      laser.fix << Laser::ExtraBlankLinesWarning << Laser::ExtraWhitespaceWarning << Laser::LineLengthWarning(80)
+    end
+  rescue LoadError,Exception => err
+    $:.unshift(File.dirname(__FILE__))
+    require 'lib/laser/version'
+    task :laser do
+      abort 'Laser is not available. In order to run laser, you must: sudo gem install laser'
+    end
+  end
+end
+
 begin
   require 'jeweler'
   Jeweler::Tasks.new do |gem|
@@ -11,7 +30,7 @@ begin
     gem.homepage = 'http://github.com/michaeledgar/laser'
     gem.authors = ['Michael Edgar']
     gem.extensions = ['ext/laser/extconf.rb']
-    
+    gem.version = Laser::Version::STRING
     # gem is a Gem::Specification... see http://www.rubygems.org/read/chapter/20 for additional settings
   end
   Jeweler::GemcutterTasks.new
@@ -38,23 +57,6 @@ require 'cucumber/rake/task'
 
 Cucumber::Rake::Task.new(:features) do |t|
   t.cucumber_opts = "features --format pretty"
-end
-
-# switch to false if the gem can't load
-if false
-  begin
-    require 'laser'
-    Laser::Rake::LaserTask.new(:laser) do |laser|
-      laser.libs << 'lib' << 'spec'
-      laser.using << :all << Laser::LineLengthMaximum(100) << Laser::LineLengthWarning(80)
-      laser.options = '--debug --fix'
-      laser.fix << Laser::ExtraBlankLinesWarning << Laser::ExtraWhitespaceWarning << Laser::LineLengthWarning(80)
-    end
-  rescue LoadError => err
-    task :laser do
-      abort 'Laser is not available. In order to run laser, you must: sudo gem install laser'
-    end
-  end
 end
 
 task rebuild: [:gemspec, :build, :install] do

@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{laser}
-  s.version = "0.6.0"
+  s.version = "0.7.0.pre1"
 
-  s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
+  s.required_rubygems_version = Gem::Requirement.new("> 1.3.1") if s.respond_to? :required_rubygems_version=
   s.authors = [%q{Michael Edgar}]
-  s.date = %q{2011-07-26}
+  s.date = %q{2011-08-12}
   s.description = %q{Laser is an advanced static analysis tool for Ruby.}
   s.email = %q{michael.j.edgar@dartmouth.edu}
   s.executables = [%q{laser}]
@@ -55,7 +55,14 @@ Gem::Specification.new do |s|
     "lib/laser/analysis/argument_expansion.rb",
     "lib/laser/analysis/arity.rb",
     "lib/laser/analysis/bindings.rb",
-    "lib/laser/analysis/bootstrap.rb",
+    "lib/laser/analysis/bootstrap/bootstrap.rb",
+    "lib/laser/analysis/bootstrap/laser_class.rb",
+    "lib/laser/analysis/bootstrap/laser_method.rb",
+    "lib/laser/analysis/bootstrap/laser_module.rb",
+    "lib/laser/analysis/bootstrap/laser_module_copy.rb",
+    "lib/laser/analysis/bootstrap/laser_object.rb",
+    "lib/laser/analysis/bootstrap/laser_proc.rb",
+    "lib/laser/analysis/bootstrap/laser_singleton_class.rb",
     "lib/laser/analysis/comments.rb",
     "lib/laser/analysis/control_flow.rb",
     "lib/laser/analysis/control_flow/alias_analysis.rb",
@@ -73,7 +80,6 @@ Gem::Specification.new do |s|
     "lib/laser/analysis/control_flow/unused_variables.rb",
     "lib/laser/analysis/control_flow/yield_properties.rb",
     "lib/laser/analysis/errors.rb",
-    "lib/laser/analysis/laser_class.rb",
     "lib/laser/analysis/laser_utils.rb",
     "lib/laser/analysis/lexical_analysis.rb",
     "lib/laser/analysis/method_call.rb",
@@ -86,6 +92,7 @@ Gem::Specification.new do |s|
     "lib/laser/analysis/sexp_extensions/type_inference.rb",
     "lib/laser/analysis/signature.rb",
     "lib/laser/analysis/special_methods/send.rb",
+    "lib/laser/analysis/unused_methods.rb",
     "lib/laser/analysis/visitor.rb",
     "lib/laser/annotation_parser/annotations.treetop",
     "lib/laser/annotation_parser/annotations_parser.rb",
@@ -119,7 +126,6 @@ Gem::Specification.new do |s|
     "lib/laser/standard_library/comparable.rb",
     "lib/laser/standard_library/complex.rb",
     "lib/laser/standard_library/enumerable.rb",
-    "lib/laser/standard_library/errno.rb",
     "lib/laser/standard_library/exceptions.rb",
     "lib/laser/standard_library/fixnum.rb",
     "lib/laser/standard_library/float.rb",
@@ -171,6 +177,7 @@ Gem::Specification.new do |s|
     "lib/laser/warnings/rescue_exception.rb",
     "lib/laser/warnings/semicolon.rb",
     "lib/laser/warnings/sexp_errors.rb",
+    "lib/laser/warnings/uncalled_method_warning.rb",
     "lib/laser/warnings/useless_double_quotes.rb",
     "spec/analysis_specs/annotations_spec.rb",
     "spec/analysis_specs/annotations_specs/comment_attachment_spec.rb",
@@ -188,6 +195,7 @@ Gem::Specification.new do |s|
     "spec/analysis_specs/control_flow_specs/return_type_inference_spec.rb",
     "spec/analysis_specs/control_flow_specs/simulation_spec.rb",
     "spec/analysis_specs/control_flow_specs/spec_helper.rb",
+    "spec/analysis_specs/control_flow_specs/tuple_misuse_inference_spec.rb",
     "spec/analysis_specs/control_flow_specs/unreachability_analysis_spec.rb",
     "spec/analysis_specs/control_flow_specs/unused_variable_spec.rb",
     "spec/analysis_specs/control_flow_specs/yield_properties_spec.rb",
@@ -204,6 +212,7 @@ Gem::Specification.new do |s|
     "spec/analysis_specs/sexp_extension_specs/type_inference_spec.rb",
     "spec/analysis_specs/sexp_spec.rb",
     "spec/analysis_specs/spec_helper.rb",
+    "spec/analysis_specs/unused_methods_spec.rb",
     "spec/analysis_specs/visitor_spec.rb",
     "spec/annotation_parser_specs/annotations_parser_spec.rb",
     "spec/annotation_parser_specs/class_annotation_parser_spec.rb",

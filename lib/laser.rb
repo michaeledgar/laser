@@ -93,5 +93,6 @@ require 'laser/rake/task'
 require 'laser/warning'
 require 'laser/scanner'
 
+require 'laser/version'
 # All methods created from the stdlib should never be marked as unused.
 Laser::Analysis::Bootstrap.load_standard_library
