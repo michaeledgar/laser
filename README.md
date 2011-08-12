@@ -145,6 +145,8 @@ Changelog
 the changelog.
 - **Jun.15.11**: [Thesis](http://www.cs.dartmouth.edu/reports/abstracts/TR2011-686/) published
 based on Laser. License officially switching to AGPLv3 with commercial exceptions.
+- **Aug.12.11**: First prerelease gem published, version 0.7.0pre1. Expect several iterations
+before 0.7 is finalized, and please report all bugs! Not all Ruby code will work!
 
 Copyright
 ---------
