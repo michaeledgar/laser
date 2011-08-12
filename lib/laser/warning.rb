@@ -11,6 +11,8 @@ module Laser
 
     desc { "#{self.class.name} #{file}:#{line_number} (#{severity})" }
 
+    @@all_types = nil
+
     # This tracks all subclasses (and subclasses of subclasses, etc). Plus, this
     # method is inherited, so Laser::LineWarning.all_subclasses will have all
     # subclasses of Laser::LineWarning!
@@ -34,7 +36,7 @@ module Laser
     # All types should be shared and modified by *all* subclasses. This makes
     # Laser::Warning.all_types a global registry.
     def self.all_types
-      $all_types ||= Hash.new {|h,k| h[k] = []}
+      @@all_types ||= Hash.new {|h,k| h[k] = []}
     end
 
     # When a Warning subclass is subclassed, store the subclass and inform the
