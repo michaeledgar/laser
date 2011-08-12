@@ -162,6 +162,7 @@ Gem::Specification.new do |s|
     "lib/laser/third_party/rgl/transitivity.rb",
     "lib/laser/third_party/rgl/traversal.rb",
     "lib/laser/types/types.rb",
+    "lib/laser/version.rb",
     "lib/laser/warning.rb",
     "lib/laser/warning_sets/default.yml",
     "lib/laser/warnings/assignment_in_condition.rb",

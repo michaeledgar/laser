@@ -45,7 +45,8 @@ module Laser
       end
       if (only_name = settings[:only])
         @fix = @using = Warning.concrete_warnings.select do |w|
-          (w.name && only_name.index(w.name)) || (w.short_name && w.short_name.index(only_name))
+          classname = w.name && w.name.split('::').last
+          (classname && only_name.index(classname)) || (w.short_name && w.short_name.index(only_name))
         end
       end
       if settings[:profile]

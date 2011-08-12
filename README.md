@@ -113,6 +113,12 @@ x+=10 # extra space at the end of this line
 
 
 $ laser --only OperatorSpacing,ExtraBlankLinesWarning,InlineCommentSpaceWarning,ExtraWhitespaceWarning --fix tempstyle.rb
+4 warnings found. 4 are fixable.
+================================
+tempstyle.rb:0 Extra blank lines (1) - This file has 3 blank lines at the end of it.
+tempstyle.rb:2 Inline comment spacing error () - Inline comments must be exactly 2 spaces from code.
+tempstyle.rb:2 Extra Whitespace (2) - The line has trailing whitespace.
+tempstyle.rb:2 No operator spacing (5) - Insufficient spacing around +=
 
 $ cat tempstyle.rb
 x = 0
