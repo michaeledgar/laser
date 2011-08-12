@@ -7,7 +7,7 @@ LASER: Lexically- and Semantically-Enriched Ruby
 **Author**:       Michael Edgar    
 **Copyright**:    2011   
 **License**:      AGPL v3.0 w/ Commercial Exceptions. See below.    
-**Latest Version**: 0.5.2    
+**Latest Version**: 0.7.0pre1    
 **Release Date**: None, yet.
 
 Synopsis
