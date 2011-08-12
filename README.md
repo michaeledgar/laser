@@ -6,7 +6,7 @@ LASER: Lexically- and Semantically-Enriched Ruby
 **Git**:          [http://github.com/michaeledgar/laser](http://github.com/michaeledgar/laser)   
 **Author**:       Michael Edgar    
 **Copyright**:    2011   
-**License**:      AGPL v3.0 w/ Commercial Exceptions    
+**License**:      AGPL v3.0 w/ Commercial Exceptions. See below.    
 **Latest Version**: 0.5.2    
 **Release Date**: None, yet.
 
@@ -151,5 +151,8 @@ before 0.7 is finalized, and please report all bugs! Not all Ruby code will work
 Copyright
 ---------
 
-LASER &copy; 2011 by [Michael Edgar](mailto:adgar@carboni.ca). See {file:LICENSE}
-for licensing details.
+LASER &copy; 2011 by [Michael Edgar](mailto:adgar@carboni.ca).
+By default, LASER is licensed under the AGPLv3;
+see {file:LICENSE} for licensing details.
+Alternative licensing arrangements are also possible;
+contact [Michael Edgar](mailto:adgar@carboni.ca) to discuss your needs.
