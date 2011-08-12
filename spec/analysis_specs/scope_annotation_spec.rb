@@ -955,7 +955,7 @@ end
 }
     end
     
-    it 'correctly resolves many bindings, creates new modules and classes, and defines methods' do
+    pending 'correctly resolves many bindings, creates new modules and classes, and defines methods' do
       tree = annotate_all(@input)      
       
       bindings_mod = 'Laser::Analysis::Bindings'
