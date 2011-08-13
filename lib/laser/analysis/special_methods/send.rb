@@ -18,48 +18,39 @@ module Laser
           @privacy = privacy
         end
 
-        def each_target_method(self_type, arg_type)
+        def all_target_methods(self_type, arg_type)
+          collection = Set[]
           arg_type.possible_classes.each do |target_klass|
             if LaserSingletonClass === target_klass
               target_method_name = target_klass.get_instance.to_s
               self_type.possible_classes.each do |self_class|
-                if passes_visibility?(self_class, target_method_name)
-                  method = self_class.instance_method(target_method_name)
-                  method.been_used!
-                  yield(method)
-                end
+                method = self_class.instance_method(target_method_name)
+                collection << method
               end
             end
           end
-        end
-        
-        def passes_visibility?(klass, name)
-          return true if @privacy == :any
-          klass.visibility_for(name) == @privacy
+          collection
         end
 
-        def collect_type_from_targets(to_call, self_type, arg_types, block_type)
-          result_type = Types::UnionType.new([])
-          each_target_method(self_type, arg_types[0]) do |method|
-            result_type |= method.send(to_call, self_type, arg_types[1..-1], block_type)
-          end
-          result_type
+        def dispatch_results(self_type, arg_types, block_type)
+          methods = all_target_methods(self_type, arg_types[0])
+          cartesian = [[*arg_types[1..-1], block_type]]
+          ignore_privacy = @privacy == :any
+          results = DispatchResults.new
+          results.add_samples_from_dispatch(methods, self_type, cartesian, ignore_privacy)
+          results
         end
 
         def return_type_for_types(self_type, arg_types, block_type)
-          collect_type_from_targets(:return_type_for_types, self_type, arg_types, block_type)
+          dispatch_results(self_type, arg_types, block_type).result_type
         end
 
         def raise_type_for_types(self_type, arg_types, block_type)
-          collect_type_from_targets(:raise_type_for_types, self_type, arg_types, block_type)
+          dispatch_results(self_type, arg_types, block_type).raise_type
         end
 
         def raise_frequency_for_types(self_type, arg_types, block_type)
-          all_frequencies = []
-          each_target_method(self_type, arg_types[0]) do |method|
-            all_frequencies << method.raise_frequency_for_types(self_type, arg_types[1..-1], block_type)
-          end
-          Frequency.combine_samples(all_frequencies)
+          dispatch_results(self_type, arg_types, block_type).raise_frequency
         end
       end
     end

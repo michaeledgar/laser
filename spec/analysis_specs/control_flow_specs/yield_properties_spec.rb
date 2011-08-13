@@ -256,10 +256,11 @@ rescue RuntimeError
   2
 end
 EOF
+
     g.yield_type.should be :required
     g.yield_arity.should == Set[1]
   end
-  
+
   it 'infers yield likelihood with to_proc block syntax' do
     cfg <<-EOF
 class YP1

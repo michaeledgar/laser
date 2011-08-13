@@ -335,13 +335,9 @@ module Laser
         def cpa_call_properties(receiver, method, args, instruction, opts)
           ignore_privacy, block = instruction.ignore_privacy, instruction.block_operand
           dispatches = cpa_dispatches(receiver, instruction, method, opts)
-          cartesian = calculate_possible_templates(dispatches, args, block)
-          result = cpa_for_templates(dispatches, cartesian)
-          raise_result, raise_type = raisability_for_templates(dispatches, cartesian, ignore_privacy)
-          if result.empty?
-            raise TypeError.new("No methods named #{method} with matching types were found.")
-          end
-          [Types::UnionType.new(result), raise_result, raise_type]
+          cartesian = calculate_possible_templates(args, block)
+          results = collect_dispatch_results(dispatches, cartesian, ignore_privacy)
+          [results.result_type, results.raise_frequency, results.raise_type]
         end
 
         # Calculates all possible (self_type, dispatches) pairs for a call.
@@ -360,18 +356,16 @@ module Laser
 
         # Calculates the set of methods potentially invoked in dynamic dispatch,
         # and the set of all possible argument type combinations.
-        def calculate_possible_templates(possible_dispatches, args, block)
+        def calculate_possible_templates(args, block)
           if Bindings::Base === args && Types::TupleType === args.expr_type
             cartesian_parts = args.element_types
-            empty = cartesian_parts.empty?
           elsif Bindings::Base === args && Types::UnionType === args.expr_type &&
                 Types::TupleType === args.expr_type.member_types.first
             cartesian_parts = args.expr_type.member_types.first.element_types.map { |x| [x] }
-            empty = cartesian_parts.empty?
           else
             cartesian_parts = args.map(&:expr_type).map(&:member_types).map(&:to_a)
-            empty = args.empty?
           end
+          empty = cartesian_parts.empty?
           if empty && !block
             cartesian = [ [Types::NILCLASS] ]
           else
@@ -384,91 +378,12 @@ module Laser
           cartesian
         end
 
-        # Calculates the CPA-based return type of a dynamic call.
-        def cpa_for_templates(possible_dispatches, cartesian)
-          result = Set.new
-          possible_dispatches.each do |self_type, methods|
-            result |= methods.map do |method|
-              cartesian.map do |*type_list, block_type|
-                begin
-                  method.return_type_for_types(self_type, type_list, block_type)
-                rescue TypeError => err
-                  Laser.debug_puts("Invalid argument types found.")
-                  nil
-                end
-              end.compact
-            end.flatten
+        def collect_dispatch_results(dispatches, cartesian, ignore_privacy)
+          results = DispatchResults.new
+          dispatches.each do |self_type, methods|
+            results.add_samples_from_dispatch(methods, self_type, cartesian, ignore_privacy)
           end
-          result
-        end
-        
-        # TODO(adgar): Optimize this. Use lattice-style expression of raisability
-        # until types need to be added too.
-        def raisability_for_templates(possible_dispatches, cartesian, ignore_privacy)
-          raise_type = Types::EMPTY
-          seen_public = seen_private = seen_raise = seen_succeed = seen_any = seen_missing = false
-          seen_valid_arity = seen_invalid_arity = false
-          arity = cartesian.first.size - 1  # -1 for block arg
-          possible_dispatches.each do |self_type, methods|
-            seen_any = true if methods.size > 0 && !seen_any
-            seen_missing = true if methods.empty? && !seen_missing
-            methods.each do |method|
-              if !seen_valid_arity && method.valid_arity?(arity)
-                seen_valid_arity = true
-              end
-              if !seen_invalid_arity && !method.valid_arity?(arity)
-                seen_invalid_arity = true
-              end
-              if !ignore_privacy
-                self_type.possible_classes.each do |self_class|
-                  if self_class.visibility_for(method.name) == :public
-                    seen_public = true
-                    method.been_used! if method.valid_arity?(arity)
-                  end
-                  if !seen_private
-                    seen_private = (self_class.visibility_for(method.name) != :public)
-                  end
-                end
-              else
-                method.been_used! if method.valid_arity?(arity)
-              end
-              cartesian.each do |*type_list, block_type|
-                raise_frequency = method.raise_frequency_for_types(self_type, type_list, block_type)
-                if raise_frequency > Frequency::NEVER
-                  seen_raise = true
-                  raise_type = raise_type | method.raise_type_for_types(self_type, type_list, block_type)
-                end
-                seen_succeed = raise_frequency < Frequency::ALWAYS if !seen_succeed
-              end
-            end
-          end
-
-          if seen_any
-            fails_lookup = seen_missing ? Frequency::MAYBE : Frequency::NEVER
-            fails_privacy = if ignore_privacy
-                            then Frequency::NEVER
-                            else Frequency.for_samples(seen_private, seen_public)
-                            end
-            failed_arity = Frequency.for_samples(seen_invalid_arity, seen_valid_arity)
-            if fails_privacy == Frequency::ALWAYS
-              raise_type = ClassRegistry['NoMethodError'].as_type
-            elsif failed_arity == Frequency::ALWAYS
-              raise_type = ClassRegistry['ArgumentError'].as_type
-            else
-              if fails_lookup > Frequency::NEVER || fails_privacy > Frequency::NEVER
-                raise_type |= ClassRegistry['NoMethodError'].as_type
-              end
-              if failed_arity > Frequency::NEVER
-                raise_type |= ClassRegistry['ArgumentError'].as_type
-              end
-            end
-            raised = Frequency.for_samples(seen_raise, seen_succeed)
-            raise_freq = [fails_privacy, raised, fails_lookup, failed_arity].max
-          else
-            raise_freq = Frequency::ALWAYS  # no method!
-            raise_type = ClassRegistry['NoMethodError'].as_type
-          end
-          [raise_freq, raise_type]
+          results
         end
 
         # Evaluates the instruction, and if the constant value is lowered,

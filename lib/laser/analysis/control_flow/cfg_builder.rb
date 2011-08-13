@@ -956,10 +956,8 @@ module Laser
           
           start_block no_block
           message = const_instruct('no block given (yield)')
-          file_name = const_instruct(@current_node.file_name)
-          line_number = const_instruct(@current_node.line_number || 0)
           raise_instance_of_instruct(
-              ClassRegistry['LocalJumpError'].binding, message, file_name, line_number,
+              ClassRegistry['LocalJumpError'].binding, message,
               target: current_yield_fail)
           
           start_block if_block
