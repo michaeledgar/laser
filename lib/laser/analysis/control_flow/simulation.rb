@@ -197,7 +197,12 @@ module Laser
           args = simulate_args(insn)
           block_to_use = insn[-1][:block] && insn[-1][:block].value
           result = simulate_call_dispatch(receiver, method, args, block_to_use, opts)
-          insn[1].bind! result if insn[1]
+          if insn[1] 
+            insn[1].bind! result
+            if method == ClassRegistry['Array'].singleton_class.instance_method(:[])
+              insn[1].inferred_type = Types::TupleType.new(result.map { |x| Utilities.type_for(x) })
+            end
+          end
         end
         
         def simulate_args(insn)

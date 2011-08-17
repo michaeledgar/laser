@@ -21,11 +21,20 @@ module Laser
         def all_target_methods(self_type, arg_type)
           collection = Set[]
           arg_type.possible_classes.each do |target_klass|
-            if LaserSingletonClass === target_klass
-              target_method_name = target_klass.get_instance.to_s
-              self_type.possible_classes.each do |self_class|
-                method = self_class.instance_method(target_method_name)
-                collection << method
+            if target_klass <= Analysis::ClassRegistry['String'] ||
+               target_klass <= Analysis::ClassRegistry['Symbol']
+              if LaserSingletonClass === target_klass &&
+                target_method_name = target_klass.get_instance.to_s
+                self_type.possible_classes.each do |self_class|
+                  collection << self_class.instance_method(target_method_name)
+                end
+              else
+                getter = @privacy == :any ? :instance_methods : :public_instance_methods
+                self_type.possible_classes.each do |self_class|
+                  self_class.send(getter).each do |method_name|
+                    collection << self_class.instance_method(method_name)
+                  end
+                end
               end
             end
           end
