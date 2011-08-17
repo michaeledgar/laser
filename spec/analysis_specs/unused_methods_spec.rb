@@ -132,4 +132,50 @@ EOF
       Set[ClassRegistry['UnusedMethod6'].instance_method(:private_two),
           ClassRegistry['UnusedMethod6'].instance_method(:protected_two)]
   end
+
+  it 'works with non-constant send, respecting arity' do
+cfg <<-EOF
+class UnusedMethod7
+  def zero
+  end
+  def one_or_two(a, b=1)
+  end
+  def two(a, b)
+  end
+  def three(a, b, c)
+  end
+  def any(*rest)
+  end
+end
+UnusedMethod7.new.send(gets, gets, gets)
+EOF
+    @methods = UnusedMethodDetection.unused_methods
+
+    Set.new(@methods).should ==
+      Set[ClassRegistry['UnusedMethod7'].instance_method(:zero),
+          ClassRegistry['UnusedMethod7'].instance_method(:three)]
+  end
+
+  it 'works with non-constants public_send, respecting privacy' do
+    cfg <<-EOF
+class UnusedMethod8
+  def public_one_or_two(a, b=1)
+  end
+  def public_two(a, b)
+  end
+ private
+  def private_two(a, b)
+  end
+ protected
+  def protected_two(a, b)
+  end
+end
+UnusedMethod8.new.public_send(gets, gets, gets)
+EOF
+    @methods = UnusedMethodDetection.unused_methods
+
+    Set.new(@methods).should ==
+      Set[ClassRegistry['UnusedMethod8'].instance_method(:private_two),
+          ClassRegistry['UnusedMethod8'].instance_method(:protected_two)]
+  end
 end
