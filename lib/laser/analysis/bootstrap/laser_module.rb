@@ -349,8 +349,8 @@ module Laser
       def alias_method(new, old)
         newsym = new.to_sym
         oldsym = old.to_sym
-        @instance_methods[newsym] = @instance_methods[oldsym]
-        @visibility_table[newsym] = @visibility_table[oldsym]
+        @instance_methods[newsym] = instance_method(oldsym)
+        @visibility_table[newsym] = visibility_for(oldsym)
       end
       
       def include(*mods)

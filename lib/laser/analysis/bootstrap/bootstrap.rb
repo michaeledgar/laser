@@ -197,23 +197,30 @@ module Laser
             annotated_raise_frequency: Frequency::NEVER)
         stub_method(kernel_module, 'singleton_class', builtin: true, pure: true,
             annotated_raise_frequency: Frequency::NEVER)
-        stub_custom_method(kernel_module, SpecialMethods::SendMethod, 'send', :any, special: true)
-        stub_custom_method(kernel_module, SpecialMethods::SendMethod, 'public_send', :public, special: true)
-
+        
+        send_method = stub_custom_method(kernel_module, SpecialMethods::SendMethod, 'send', :any, special: true)
+        send_method.arity = Arity.new(1..Float::INFINITY)
+        send_method = stub_custom_method(kernel_module, SpecialMethods::SendMethod, 'public_send', :public, special: true)
+        send_method.arity = Arity.new(1..Float::INFINITY)
+        
         raise_method = stub_method(kernel_module, 'raise', builtin: true, pure: true,
             annotated_raise_frequency: Frequency::ALWAYS)
         def raise_method.raise_type_for_types(self_type, arg_types, block_type)
-          Types::UnionType.new(arg_types[0].possible_classes.map do |arg_class|
-            if arg_class <= ClassRegistry['String']
-              ClassRegistry['RuntimeError'].as_type
-            elsif LaserSingletonClass === arg_class && arg_class < ClassRegistry['Class']
-              arg_class.get_instance.as_type
-            elsif arg_class <= ClassRegistry['Exception']
-              arg_class.as_type
-            elsif arg_class.instance_method_defined?('exception')
-              arg_class.instance_method(:exception).return_type_for_types(arg_class.as_type)
-            end
-          end)
+          if arg_types.size == 0
+            ClassRegistry['RuntimeError'].as_type
+          else
+            Types::UnionType.new(arg_types[0].possible_classes.map do |arg_class|
+              if arg_class <= ClassRegistry['String']
+                ClassRegistry['RuntimeError'].as_type
+              elsif LaserSingletonClass === arg_class && arg_class < ClassRegistry['Class']
+                arg_class.get_instance.as_type
+              elsif arg_class <= ClassRegistry['Exception']
+                arg_class.as_type
+              elsif arg_class.instance_method_defined?('exception')
+                arg_class.instance_method(:exception).return_type_for_types(arg_class.as_type)
+              end
+            end)
+          end
         end
         stub_method(array_class, 'push', builtin: true, mutation: true, annotated_raise_frequency: Frequency::NEVER)
         stub_method(array_class, 'pop', builtin: true, mutation: true, annotated_raise_frequency: Frequency::NEVER)

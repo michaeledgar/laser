@@ -51,15 +51,27 @@ module Laser
         end
 
         def return_type_for_types(self_type, arg_types, block_type)
-          dispatch_results(self_type, arg_types, block_type).result_type
+          if arg_types.size >= 1
+            dispatch_results(self_type, arg_types, block_type).result_type
+          else
+            Types::EMPTY
+          end
         end
 
         def raise_type_for_types(self_type, arg_types, block_type)
-          dispatch_results(self_type, arg_types, block_type).raise_type
+          if arg_types.size >= 1
+            dispatch_results(self_type, arg_types, block_type).raise_type
+          else
+            Frequency::ALWAYS
+          end
         end
 
         def raise_frequency_for_types(self_type, arg_types, block_type)
-          dispatch_results(self_type, arg_types, block_type).raise_frequency
+          if arg_types.size >= 1
+            dispatch_results(self_type, arg_types, block_type).raise_frequency
+          else
+            ClassRegistry['ArgumentError'].as_type
+          end
         end
       end
     end

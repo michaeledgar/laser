@@ -152,8 +152,7 @@ EOF
     @methods = UnusedMethodDetection.unused_methods
 
     Set.new(@methods).should ==
-      Set[ClassRegistry['UnusedMethod7'].instance_method(:zero),
-          ClassRegistry['UnusedMethod7'].instance_method(:three)]
+      Set[ClassRegistry['UnusedMethod7'].instance_method(:three)]
   end
 
   it 'works with non-constants public_send, respecting privacy' do
