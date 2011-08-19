@@ -47,7 +47,7 @@ visibility, etc). This requires an annotation syntax, which of course will lead 
 wars. So I'll be including the syntax *I* would like, as well as a parser for YARD-style
 annotations.  
 **6. Ruby 1.9+ only** - Yep, LASER will only run on Ruby 1.9, and it'll expect its target
-code is Ruby 1.9. Of course, since any 1.8 code will still parse just fine, the only issues
+code is Ruby 1.9. Of course, since almost any 1.8 code will still parse just fine, the only issues
 that will come up is API differences (looking at you, `String`).  
 **7. Reusable Semantic Information** - I don't want a new AST format. I don't like the one
 provided by RubyParser and co. So I'm sticking with Ripper's AST format. It has quirks, but
