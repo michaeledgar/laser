@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
 
   s.required_rubygems_version = Gem::Requirement.new("> 1.3.1") if s.respond_to? :required_rubygems_version=
   s.authors = [%q{Michael Edgar}]
-  s.date = %q{2011-08-12}
+  s.date = %q{2011-08-19}
   s.description = %q{Laser is an advanced static analysis tool for Ruby.}
   s.email = %q{michael.j.edgar@dartmouth.edu}
   s.executables = [%q{laser}]
@@ -22,6 +22,7 @@ Gem::Specification.new do |s|
     ".document",
     ".rspec",
     "Gemfile",
+    "Gemfile.lock",
     "LICENSE",
     "README.md",
     "Rakefile",
@@ -56,6 +57,7 @@ Gem::Specification.new do |s|
     "lib/laser/analysis/arity.rb",
     "lib/laser/analysis/bindings.rb",
     "lib/laser/analysis/bootstrap/bootstrap.rb",
+    "lib/laser/analysis/bootstrap/dispatch_results.rb",
     "lib/laser/analysis/bootstrap/laser_class.rb",
     "lib/laser/analysis/bootstrap/laser_method.rb",
     "lib/laser/analysis/bootstrap/laser_module.rb",
@@ -353,8 +355,8 @@ Gem::Specification.new do |s|
       s.add_runtime_dependency(%q<stream>, ["= 0.5"])
       s.add_runtime_dependency(%q<object_regex>, ["~> 1.0"])
       s.add_runtime_dependency(%q<trollop>, ["~> 1.16.2"])
-      s.add_development_dependency(%q<rake>, ["~> 0.9.0"])
-      s.add_development_dependency(%q<rspec>, ["~> 2.3.0"])
+      s.add_runtime_dependency(%q<rake>, ["~> 0.9.0"])
+      s.add_development_dependency(%q<rspec>, ["~> 2.4.0"])
       s.add_development_dependency(%q<cucumber>, [">= 0.10.0"])
     else
       s.add_dependency(%q<treetop>, ["~> 1.4"])
@@ -364,7 +366,7 @@ Gem::Specification.new do |s|
       s.add_dependency(%q<object_regex>, ["~> 1.0"])
       s.add_dependency(%q<trollop>, ["~> 1.16.2"])
       s.add_dependency(%q<rake>, ["~> 0.9.0"])
-      s.add_dependency(%q<rspec>, ["~> 2.3.0"])
+      s.add_dependency(%q<rspec>, ["~> 2.4.0"])
       s.add_dependency(%q<cucumber>, [">= 0.10.0"])
     end
   else
@@ -375,7 +377,7 @@ Gem::Specification.new do |s|
     s.add_dependency(%q<object_regex>, ["~> 1.0"])
     s.add_dependency(%q<trollop>, ["~> 1.16.2"])
     s.add_dependency(%q<rake>, ["~> 0.9.0"])
-    s.add_dependency(%q<rspec>, ["~> 2.3.0"])
+    s.add_dependency(%q<rspec>, ["~> 2.4.0"])
     s.add_dependency(%q<cucumber>, [">= 0.10.0"])
   end
 end
