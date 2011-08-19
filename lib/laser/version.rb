@@ -3,7 +3,7 @@ module Laser
     MAJOR = 0
     MINOR = 7
     PATCH = 0
-    BUILD = 'pre1'
+    BUILD = 'pre2'
 
     if BUILD.empty?
       STRING = [MAJOR, MINOR, PATCH].compact.join('.')
