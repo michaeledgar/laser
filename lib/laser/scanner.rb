@@ -115,10 +115,10 @@ module Laser
     end
 
     def unused_method_warnings
-      methods = Analysis::UnusedMethodDetection.unused_methods
-      methods.map do |method| 
-        ast_node = method.proc.ast_node
-        UncalledMethodWarning.new(ast_node.file_name, ast_node.line_number, method: method)
+      Analysis::UnusedMethodDetection.unused_methods.map do |method| 
+        warning = UncalledMethodWarning.new(method.proc.ast_node.file_name, '', method: method)
+        warning.line_number = method.proc.line_number
+        warning
       end
     end
 

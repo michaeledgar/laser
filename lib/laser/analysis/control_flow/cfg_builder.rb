@@ -305,14 +305,16 @@ module Laser
               name, args, body = node.children
               name = const_instruct(name.expanded_identifier.to_sym)
               parsed_args = Signature.arg_list_for_arglist(args)
-              def_instruct(current_namespace, name, parsed_args, body, opts)
+              def_opts =  opts.merge(line_number: node.line_number)
+              def_instruct(current_namespace, name, parsed_args, body, def_opts)
             when :defs
               recv, _, name, args, body = node.children
-              name = const_instruct(name.expanded_identifier)
+              name = const_instruct(name.expanded_identifier.to_sym)
               receiver = walk_node(recv, value: true)
               singleton = call_instruct(receiver, :singleton_class, value: true)
               parsed_args = Signature.arg_list_for_arglist(args)
-              def_instruct(singleton, name, parsed_args, body, opts)
+              def_opts =  opts.merge(line_number: node.line_number)
+              def_instruct(singleton, name, parsed_args, body, def_opts)
             when :alias
               lhs, rhs = node.children
               lhs_val = const_instruct(lhs[1].expanded_identifier.to_sym)
@@ -1332,6 +1334,7 @@ module Laser
           opts = {value: false}.merge(opts)
           body.scope = current_scope
           block, new_proc = create_block_temporary(args, body)
+          new_proc.line_number = opts[:line_number]
           new_proc.annotations = body.parent.comment.annotation_map if body.parent.comment
           call_instruct(receiver, 'define_method', name, block, raise: false)
           const_instruct(nil) if opts[:value]

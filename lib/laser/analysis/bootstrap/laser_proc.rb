@@ -3,7 +3,7 @@ module Laser
     
     class LaserProc < LaserObject
       attr_accessor :ast_node, :arguments, :cfg, :exit_block, :lexical_self
-      attr_accessor :annotations
+      attr_accessor :annotations, :line_number
       def initialize(arguments, ast_node, cfg = nil, callsite_block = nil)
         @ast_node = ast_node
         @arguments = arguments
