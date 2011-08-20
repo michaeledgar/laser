@@ -8,6 +8,9 @@ describe Analysis do
       def initialize(body)
         self.body = body
       end
+      def file
+        '(stdin)'
+      end
     end
   end
 

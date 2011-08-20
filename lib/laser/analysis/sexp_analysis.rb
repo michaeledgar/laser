@@ -18,7 +18,7 @@ module Laser
     # @return [Sexp, NilClass] the sexp representing the input text.
     def parse(body = self.body)
       return PARSING_CACHE[body] if PARSING_CACHE[body]
-      pairs = Analysis.analyze_inputs([['(stdin)', body]])
+      pairs = Analysis.analyze_inputs([[file, body]])
       PARSING_CACHE[body] = pairs[0][1]
     end
     
