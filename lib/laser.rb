@@ -2,7 +2,14 @@ module Laser
   VERSION = "0.5.0"
   TESTS_ACTIVATED = false
   ROOT = File.expand_path(File.dirname(__FILE__))
-  SETTINGS = {}
+  SETTINGS = {load_path: []}
+  def self.load_path
+    SETTINGS[:load_path] + [ENV['LASER_RUBYPATH'], ENV['RUBYPATH']].map do |str|
+      if str
+        str.split(':')
+      end
+    end.compact.flatten + $:
+  end
   def self.debug_puts(*args)
     puts *args if debug?
   end

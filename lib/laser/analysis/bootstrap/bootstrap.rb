@@ -230,9 +230,12 @@ module Laser
         stub_method(proc_class, 'lexical_self=', builtin: true, mutation: true, annotated_raise_frequency: Frequency::NEVER)
       end
       
+      def self.bootstrapped_load_path
+        ['.', File.expand_path(File.join(Laser::ROOT, 'laser', 'standard_library'))] + Laser.load_path
+      end
+
       def self.stub_global_vars
-        Scope::GlobalScope.add_binding!(Bindings::GlobalVariableBinding.new('$:',
-            ['.', File.expand_path(File.join(Laser::ROOT, 'laser', 'standard_library'))]))
+        Scope::GlobalScope.add_binding!(Bindings::GlobalVariableBinding.new('$:', bootstrapped_load_path))
         Scope::GlobalScope.add_binding!(Bindings::GlobalVariableBinding.new('$"', []))
         Scope::GlobalScope.add_binding!(VISIBILITY_STACK)
 

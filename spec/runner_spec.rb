@@ -13,6 +13,7 @@ describe Runner do
                            InlineCommentSpaceWarning::OPTION_KEY => 2,
                            :"line-length" => nil, only: nil, stdin: false,
                            display: true, :"list-modules" => false, profile: false,
+                           S: false, include: [],
                            __using__: Warning.all_warnings,
                            __fix__: Warning.all_warnings}
       scanner = mock(:scanner)
@@ -48,6 +49,7 @@ describe Runner do
                            :"line-length" => nil, only: 'UselessDoubleQuotesWarning',
                            stdin: true, stdin_given: true, only_given: true,
                            display: true, :"list-modules" => false, profile: false,
+                           S: false, include: [],
                            __using__: [UselessDoubleQuotesWarning],
                            __fix__: [UselessDoubleQuotesWarning]}
       scanner = mock(:scanner)
