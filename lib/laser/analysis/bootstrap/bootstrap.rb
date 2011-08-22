@@ -264,10 +264,12 @@ module Laser
               end
             end
           rescue StandardError => err
+            require 'pp'
             puts "Loading class definitions failed:"
             p err.message
             pp err
             pp err.backtrace
+            raise
           end
         end
         # All methods from here on out will need to be used, or a warning will be issued.

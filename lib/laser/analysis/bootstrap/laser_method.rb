@@ -187,7 +187,7 @@ module Laser
         return unless overridden
         if OverrideSafetyInfo.warn_on_any_override?(overridden)
           @proc.ast_node.add_error(DangerousOverrideError.new(
-            OverrideSafetyInfo.warning_message(overridden),
+            OverrideSafetyInfo.warning_message(overridden, name),
             @proc.ast_node))
         end
       end

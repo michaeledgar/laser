@@ -48,8 +48,9 @@ module Laser
           @name_count = Hash.new { |hash, temp| hash[temp] = 0 }
           @formals = formal_arguments
           @yield_type = nil
-          @yield_arity = nil#Set.new([Arity::ANY])
+          @yield_arity = nil
           @raise_frequency = Frequency::MAYBE
+          @analyzed = false
           super()
         end
         
@@ -210,6 +211,9 @@ module Laser
         DEFAULT_ANALYSIS_OPTS = {optimize: true, simulate: true}
         # Runs full analysis on the CFG. Puts it in SSA then searches for warnings.
         def analyze(opts={})
+          return if @analyzed
+          @analyzed = true
+
           opts = DEFAULT_ANALYSIS_OPTS.merge(opts)
           # kill obvious dead code now.
           perform_dead_code_discovery(true)

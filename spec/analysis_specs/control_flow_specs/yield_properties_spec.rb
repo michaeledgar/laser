@@ -52,33 +52,41 @@ EOF
     g.yield_type.should be :required
     g.yield_arity.should == Set[0]
   end
-  ['block_given?', 'defined?(yield)', 'defined?(yield($., *$*))', 'Proc.new', 'iterator?'].each do |guard|
+  ['block_given?', 'defined?(yield)', 'defined?(yield($., *$*))', 'Proc.new', 'iterator?'].each_with_index do |guard, idx|
+    opt_class = "YP#{100 + idx}"
     it "denotes the method optional when yield is guarded by #{guard}" do
-      g = cfg_method <<-EOF
-def one
-  if #{guard}
-    yield 1
-  else
-    1
+      cfg <<-EOF
+class #{opt_class}
+  def one
+    if #{guard}
+      yield 1
+    else
+      1
+    end
   end
 end
 EOF
-      g.yield_type.should be :optional
-      g.yield_arity.should == Set[1]
+      method = ClassRegistry[opt_class].instance_method(:one)
+      method.yield_type.should be :optional
+      method.yield_arity.should == Set[1]
     end
 
+    fool_class = "YP#{120 + idx}"
     it "denotes the method foolish when yield is not guarded by #{guard}, but the block is unused when given" do
-      g = cfg_method <<-EOF
-def one
-  if #{guard}
-    1
-  else
-    yield 1
+      g = cfg <<-EOF
+class #{fool_class}
+  def one
+    if #{guard}
+      1
+    else
+      yield 1
+    end
   end
 end
 EOF
-      g.yield_type.should be :foolish
-      g.yield_arity.should == Set[]
+      method = ClassRegistry[fool_class].instance_method(:one)
+      method.yield_type.should be :foolish
+      method.yield_arity.should == Set[]
     end
   end
 

@@ -198,7 +198,21 @@ class OverI6
 end
 EOF
       ClassRegistry["OverI6"].singleton_class.instance_method(method).proc.ast_node.should(
-          have_error(DangerousOverrideError))
+          have_error(DangerousOverrideError).with_message(/#{method}/))
+    end
+  end
+
+  %w(block_given? iterator? binding callcc caller __method__ __callee__).each do |method|
+    it "should warn when the visibility method Kernel##{method} is overridden" do
+      g = cfg <<-EOF
+class OverI7
+  def #{method}(*args)
+    super
+  end
+end
+EOF
+      ClassRegistry["OverI7"].instance_method(method).proc.ast_node.should(
+          have_error(DangerousOverrideError).with_message(/#{method}/))
     end
   end
 end
