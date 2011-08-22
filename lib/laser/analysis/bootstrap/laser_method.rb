@@ -163,6 +163,12 @@ module Laser
           @proc.ast_node.add_error(ImproperOverloadTypeError.new(
             "All methods named #{self.name} should return a subtype of #{expectation.inspect}",
             @proc.ast_node))
+        elsif self.name.end_with?('?')
+          if !Types.subtype?(return_type, Types::BOOL_OR_NIL)
+            @proc.ast_node.add_error(ImproperOverloadTypeError.new(
+              "All methods whose name ends in ? should return a subtype of TrueClass | FalseClass | NilClass",
+              @proc.ast_node))
+          end
         end
       end
 

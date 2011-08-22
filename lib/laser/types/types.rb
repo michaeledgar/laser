@@ -217,6 +217,7 @@ module Laser
     FALSECLASS = ClassObjectType.new('FalseClass')
     FALSY = UnionType.new([FALSECLASS, NILCLASS])
     BOOLEAN = UnionType.new([TRUECLASS, FALSECLASS])
+    BOOL_OR_NIL = UnionType.new([BOOLEAN, NILCLASS])
     BLOCK = UnionType.new([PROC, NILCLASS])
     EMPTY = UnionType.new([])
 

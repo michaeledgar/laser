@@ -143,7 +143,7 @@ EOF
         have_error(ImproperOverloadTypeError).with_message(/\!/))
   end
 
-    it "should not warn against a method named ! that always returns a boolean" do
+  it "should not warn against a method named ! that always returns a boolean" do
     g = cfg <<-EOF
 class OverI3
   def !
@@ -155,6 +155,36 @@ EOF
         return_type_for_types(
           ClassRegistry["OverI3"].as_type)  # force calculation
     ClassRegistry["OverI3"].instance_method(:!).proc.ast_node.should_not(
+        have_error(ImproperOverloadTypeError))
+  end
+
+  it 'should warn when a method whose name ends in ? does not return a bool | nil' do
+    g = cfg <<-EOF
+class OverI4
+  def silly?(x, y)
+    x == y && y  # whoops, returns y's type. How about a boolean?
+  end
+end
+EOF
+    ClassRegistry["OverI4"].instance_method(:silly?).
+        return_type_for_types(
+          ClassRegistry["OverI4"].as_type, [Types::FIXNUM, Types::FIXNUM])
+    ClassRegistry["OverI4"].instance_method(:silly?).proc.ast_node.should(
+        have_error(ImproperOverloadTypeError))
+  end
+
+  it 'should not warn when a method whose name ends in ? does return a bool | nil' do
+    g = cfg <<-EOF
+class OverI5
+  def silly?(x, y)
+    x == y || nil
+  end
+end
+EOF
+    ClassRegistry["OverI5"].instance_method(:silly?).
+        return_type_for_types(
+          ClassRegistry["OverI5"].as_type, [Types::FIXNUM, Types::FIXNUM])
+    ClassRegistry["OverI5"].instance_method(:silly?).proc.ast_node.should_not(
         have_error(ImproperOverloadTypeError))
   end
 end
