@@ -133,21 +133,6 @@ EOF
           Utilities.type_for(ClassRegistry['RTI8'])).should equal_type(
             Types::UnionType.new([Types::STRING, Types::NILCLASS]))
   end
-  
-  it 'should warn against certain methods with improper return types' do
-    g = cfg <<-EOF
-class RTI8
-  def to_s
-    gets.strip!  # whoops, ! means nil sometimes
-  end
-end
-EOF
-    ClassRegistry['RTI8'].instance_method(:to_s).
-        return_type_for_types(
-          ClassRegistry['RTI8'].as_type)  # force calculation
-    ClassRegistry['RTI8'].instance_method(:to_s).proc.ast_node.should(
-        have_error(ImproperOverloadTypeError).with_message(/to_s/))
-  end
 
   it 'should collect inferred types in global variables' do
     g = cfg <<-EOF

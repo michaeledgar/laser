@@ -23,7 +23,9 @@ module Laser
           sub.possible_classes.subset?(top.possible_classes)
         end
       when UnionType
-        top.member_types.any? { |member| subtype?(sub, member) }
+        sub.member_types.all? do |submember|
+          top.member_types.any? { |topmember| subtype?(submember, topmember) }
+        end
       else
         sub.possible_classes.subset?(top.possible_classes)
       end

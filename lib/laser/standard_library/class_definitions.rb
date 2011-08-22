@@ -167,11 +167,13 @@ module Kernel
   # pure: true
   # builtin: true
   # raises: never
+  # returns: Boolean
   def eql?(other)
   end
   # pure: true
   # builtin: true
   # raises: never
+  # returns: Boolean
   def equal?(other)
   end
   # builtin: true
