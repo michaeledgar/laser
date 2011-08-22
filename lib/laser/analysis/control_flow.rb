@@ -12,6 +12,7 @@ require 'laser/analysis/control_flow/yield_properties'
 require 'laser/analysis/control_flow/method_call_search'
 require 'laser/analysis/control_flow/alias_analysis'
 require 'laser/analysis/control_flow/raise_properties'
+require 'laser/analysis/control_flow/guaranteed_super_detection'
 require 'laser/analysis/control_flow/cfg_builder'
 require 'laser/analysis/control_flow/control_flow_graph'
 

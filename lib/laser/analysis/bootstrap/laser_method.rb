@@ -189,6 +189,12 @@ module Laser
           @proc.ast_node.add_error(DangerousOverrideError.new(
             OverrideSafetyInfo.warning_message(overridden, name),
             @proc.ast_node))
+        elsif OverrideSafetyInfo.needs_super_on_override?(overridden)
+          unless master_cfg.guaranteed_super_on_success?
+            @proc.ast_node.add_error(OverrideWithoutSuperError.new(
+              OverrideSafetyInfo.warning_message(overridden, name),
+              @proc.ast_node))
+          end
         end
       end
 

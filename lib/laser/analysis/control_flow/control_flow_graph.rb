@@ -15,6 +15,7 @@ module Laser
         include MethodCallSearch
         include RaiseProperties
         include Simulation
+        include GuaranteedSuperDetection
         
         RETURN_POSTDOMINATOR_NAME = 'Return'
         YIELD_POSTDOMINATOR_NAME = 'YieldWithoutBlock'
@@ -25,7 +26,7 @@ module Laser
         attr_reader :formals, :uses, :definition, :constants, :live, :globals
         attr_reader :yield_type, :raise_frequency, :in_ssa, :yield_arity
         attr_reader :self_type, :formal_types, :block_type
-        attr_reader :all_cached_variables
+        attr_reader :all_cached_variables, :analyzed
         # postdominator blocks for: all non-failed-yield exceptions, yield-failing
         # exceptions, and all failure types.
         

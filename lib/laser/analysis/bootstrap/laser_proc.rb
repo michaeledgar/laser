@@ -71,7 +71,12 @@ module Laser
       end
 
       def ssa_cfg
-        @ssa_cfg ||= compiled_cfg.static_single_assignment_form
+        @ssa_cfg ||= compiled_cfg.tap do |cfg|
+          cfg.perform_dead_code_discovery(true)
+          Laser.debug_puts('>>> Starting SSA Transformation <<<')
+          cfg.static_single_assignment_form
+          Laser.debug_puts('>>> Finished SSA Transformation <<<')
+        end
       end
 
       def klass

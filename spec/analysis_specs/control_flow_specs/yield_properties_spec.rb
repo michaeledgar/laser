@@ -14,18 +14,21 @@ EOF
   end
 
   it 'should recognize non-yielding methods via CP' do
-    g = cfg_method <<-EOF
-def foo(x)
-  x = 2 ** 16
-  if x == 65536
-    puts x
-  else
-    yield
+    cfg <<-EOF
+class YP20
+  def foo(x)
+    x = 2 ** 16
+    if x == 65536
+      puts x
+    else
+      yield
+    end
   end
 end
 EOF
-    g.yield_type.should be :ignored
-    g.yield_arity.should == Set[]
+    method = ClassRegistry['YP20'].instance_method(:foo)
+    method.yield_type.should be :ignored
+    method.yield_arity.should == Set[]
   end
 
   it 'should recognize simple required-yield methods' do

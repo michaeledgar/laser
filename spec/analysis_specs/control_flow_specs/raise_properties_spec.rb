@@ -2,14 +2,18 @@ require_relative 'spec_helper'
 
 describe ControlFlow::RaiseProperties do
   it 'should recognize simple methods that raise no exceptions due to constants' do
-    g = cfg_method <<-EOF
-def foo(x)
-  y = 'hello' * 2
-  p(y)
-  y.singleton_class
+    cfg <<-EOF
+class RInfer100
+  def foo(x)
+    y = 'hello' * 2
+    p(y)
+    y.singleton_class
+  end
 end
 EOF
-    g.raise_frequency.should be Frequency::NEVER
+    method = ClassRegistry['RInfer100'].instance_method(:foo)
+    method.raise_frequency_for_types(ClassRegistry['RInfer100'].as_type, [Types::FIXNUM]).
+           should be Frequency::NEVER
   end
 
   it 'should recognize simple methods that unconditionally raise' do

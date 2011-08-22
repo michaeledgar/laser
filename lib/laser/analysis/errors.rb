@@ -125,6 +125,10 @@ module Laser
     severity TRICKY_ERROR
   end
 
+  class OverrideWithoutSuperError < Laser::Error
+    severity TRICKY_ERROR
+  end
+
   class DiscardedRHSError < Laser::Error
     severity SIMPLE_ERROR
   end

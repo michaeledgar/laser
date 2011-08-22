@@ -43,7 +43,85 @@ module Kernel
   end
  private
 
+  # raises: never
+  # yield_usage: maybe
+  # builtin: true
+  # special: true
+  # returns: Fixnum= | NilClass=
+  def fork
+  end
+
+  # raises: never
+  # yield_usage: maybe
+  # builtin: true
+  # special: true
+  # returns: Fixnum= | NilClass=
+  def fork
+  end
+
+  # raises: never
+  # builtin: true
+  # special: true
+  # returns: empty
+  def exec(env={}, *parts)
+  end
+
+  # raises: never
+  # builtin: true
+  # returns: NilClass=
+  def warn(msg)
+  end
+
+  # should benefit from CP seriously!
+
+  # raises: maybe
+  # builtin: true
+  # returns: Time= | Boolean= | NilClass= | Fixnum=
+  def test(cmd, file1, file2=nil)
+  end
+
+  # raises: maybe
+  # raises: ArgumentError=
+  # returns: Proc= | NilClass=
+  # builtin: true
+  # special: true
+  def trap(sig, cmd)
+  end
+
+  # raises: never
+  # returns: empty
+  # builtin: true
+  # special: true
+  def throw(tag, obj=nil)
+  end
   
+  # yield_usage: always
+  # builtin: true
+  # special: true
+  def catch(obj=nil)
+  end
+
+  # raises: maybe
+  # raises: NameError
+  # builtin: true
+  # returns: Method=
+  def method(which)
+  end
+
+  # raises: never
+  # builtin: true
+  # returns: Array=
+  def methods
+  end
+
+  # raises: never
+  # duration: Float= | Fixnum= | Bignum-
+  # returns: Fixnum=
+  # builtin: true
+  # special: true
+  def sleep(duration=nil)
+  end
+
   # raises: never
   # returns: Symbol= | NilClass=
   # builtin: true
@@ -72,9 +150,40 @@ module Kernel
   # special: true
   def callcc
   end
- 
+
+  def loop
+    while true
+      yield
+    end
+  end
+
+  # raises: always
+  # raises: SystemExitException
+  # builtin: true
+  # returns: empty
+  def exit(status=true)
+  end
+
+  # raises: always
+  # builtin: true
+  # returns: empty
+  def exit!(status=false)
+  end
+
+  def abort(msg=nil)
+    exit(false)
+  end
+
   # yield_usage: required
   def proc
+    unless block_given?
+      raise ArgumentError.new('tried to create Proc object without a block')
+    end
+    Proc.new
+  end
+
+  # yield_usage: required
+  def lambda
     unless block_given?
       raise ArgumentError.new('tried to create Proc object without a block')
     end

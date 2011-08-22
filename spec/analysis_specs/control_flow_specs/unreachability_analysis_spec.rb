@@ -14,16 +14,19 @@ EOF
 
   %w{next break redo}.each do |keyword|
     it "should find code that follows a #{keyword}" do
-      g = cfg_method <<-EOF
-def foo(x)
-while y = gets() * 2
-  p y
-  #{keyword}
-  z = y.foo
+      g = cfg <<-EOF
+class Unreach1
+  def foo(x)
+    while y = gets() * 2
+      p y
+      #{keyword}
+      z = y.foo
+    end
+  end
 end
-end
+Unreach1.new.foo(gets)
 EOF
-      g.should have_error(Laser::DeadCodeWarning).on_line(5)
+      g.root.should have_error(Laser::DeadCodeWarning).on_line(6)
     end
   end
 
@@ -45,19 +48,23 @@ EOF
   end
 
   it 'should find code that never runs due to constant propagation' do
-    g = cfg_method <<-EOF
-def foo(x)
-y = 'hello' * 3
-if y == 'hellohellohello'
-  puts gets
-  z = 3
-else
-  z = 10
+    cfg <<-EOF
+class Unreach2
+  def foo(x)
+    y = 'hello' * 3
+    if y == 'hellohellohello'
+      puts gets
+      z = 3
+    else
+      z = 10
+    end
+    a = z
+  end
 end
-a = z
-end
+Unreach2.new.foo(gets)
 EOF
-    g.should have_error(Laser::DeadCodeWarning).on_line(7)
+    method = ClassRegistry['Unreach2'].instance_method(:foo)
+    method.proc.ast_node.should have_error(Laser::DeadCodeWarning).on_line(8)
   end
   
   it 'should find code that never runs due to CP + local type inference' do

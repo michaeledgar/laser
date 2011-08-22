@@ -162,6 +162,7 @@ class Module
   # returns: Module
   def alias_method(to, from)
   end
+  alias attr attr_reader
 end
 
 module Kernel
