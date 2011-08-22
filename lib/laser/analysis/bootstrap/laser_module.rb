@@ -209,7 +209,11 @@ module Laser
       def superclass=(new_superclass)
         @superclass = new_superclass
       end
-      
+
+      def parent
+        @superclass
+      end
+
       # The set of all superclasses (including the class itself)
       def ancestors
         if @superclass.nil?

@@ -5,9 +5,9 @@ module Laser
     class LaserMethod
       extend ModuleExtensions
       cattr_accessor_with_default :default_dispatched, true
-      attr_reader :name, :proc, :arglist
+      attr_reader :name, :proc, :arglist, :owner
       alias arguments arglist
-      attr_accessor :owner, :arity
+      attr_accessor :arity
 
       def initialize(name, base_proc)
         @name = name
@@ -25,6 +25,16 @@ module Laser
         yield self if block_given?
       end
       
+      def owner=(mod)
+        @owner = mod
+        verify_override_safety
+      end
+
+      # Returns the method this method overrides: what gets called by `super`.
+      def super_method
+        owner.parent && owner.parent.instance_method(name)
+      end
+
       ################## Potentially Annotated Properties ######################
       
       %w(special pure builtin predictable mutation annotated_return annotated_yield_usage
@@ -160,15 +170,25 @@ module Laser
       def check_return_type_against_expectations(return_type)
         if (expectation = Types::EXPECTATIONS[self.name]) &&
             !Types.subtype?(return_type, expectation)
-          @proc.ast_node.add_error(ImproperOverloadTypeError.new(
+          @proc.ast_node.add_error(ImproperOverrideTypeError.new(
             "All methods named #{self.name} should return a subtype of #{expectation.inspect}",
             @proc.ast_node))
         elsif self.name.end_with?('?')
           if !Types.subtype?(return_type, Types::BOOL_OR_NIL)
-            @proc.ast_node.add_error(ImproperOverloadTypeError.new(
+            @proc.ast_node.add_error(ImproperOverrideTypeError.new(
               "All methods whose name ends in ? should return a subtype of TrueClass | FalseClass | NilClass",
               @proc.ast_node))
           end
+        end
+      end
+
+      def verify_override_safety
+        overridden = super_method
+        return unless overridden
+        if OverrideSafetyInfo.warn_on_any_override?(overridden)
+          @proc.ast_node.add_error(DangerousOverrideError.new(
+            OverrideSafetyInfo.warning_message(overridden),
+            @proc.ast_node))
         end
       end
 

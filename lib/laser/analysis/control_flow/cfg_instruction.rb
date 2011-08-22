@@ -113,7 +113,7 @@ module Laser
               self[2].expr_type.matching_methods(self[3])
             end
           else
-            [opts[:method].owner.parent.instance_method(opts[:method].name)]
+            [opts[:method].super_method]
           end
         end
 

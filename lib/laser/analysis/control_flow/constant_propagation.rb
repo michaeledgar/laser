@@ -346,7 +346,7 @@ module Laser
             receiver.expr_type.member_types.map do |type|
               [type, type.matching_methods(method)]
             end
-          else
+          else # super, super_vararg
             dispatches = instruction.possible_methods(opts)
             receiver.expr_type.member_types.map do |type|
               [type, dispatches]

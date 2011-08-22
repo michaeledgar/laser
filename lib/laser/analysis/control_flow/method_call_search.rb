@@ -23,4 +23,3 @@ module Laser
     end  # ControlFlow
   end  # Analysis
 end  #
-

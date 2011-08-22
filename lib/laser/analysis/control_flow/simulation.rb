@@ -182,7 +182,7 @@ module Laser
             method = klass.instance_method(insn[3])  # normal method dispatch
           else
             # super method dispatch
-            method = opts[:method].owner.parent.instance_method(opts[:method].name)
+            method = opts[:method].super_method
           end
           if !method
             simulate_method_missing(insn, klass)

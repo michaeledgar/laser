@@ -14,7 +14,7 @@ EOF
           return_type_for_types(
             ClassRegistry["OverI1#{method}"].as_type)  # force calculation
       ClassRegistry["OverI1#{method}"].instance_method(method).proc.ast_node.should(
-          have_error(ImproperOverloadTypeError).with_message(/#{method}/))
+          have_error(ImproperOverrideTypeError).with_message(/#{method}/))
     end
 
     it "should not warn against a method named #{method} that always returns a string" do
@@ -29,7 +29,7 @@ EOF
           return_type_for_types(
             ClassRegistry["OverI3#{method}"].as_type)  # force calculation
       ClassRegistry["OverI3#{method}"].instance_method(method).proc.ast_node.should_not(
-          have_error(ImproperOverloadTypeError))
+          have_error(ImproperOverrideTypeError))
     end
   end
 
@@ -46,7 +46,7 @@ EOF
           return_type_for_types(
             ClassRegistry["OverI2#{method}"].as_type)  # force calculation
       ClassRegistry["OverI2#{method}"].instance_method(method).proc.ast_node.should(
-          have_error(ImproperOverloadTypeError).with_message(/#{method}/))
+          have_error(ImproperOverrideTypeError).with_message(/#{method}/))
     end
 
     it "should not warn against a method named #{method} that always returns an integer" do
@@ -61,7 +61,7 @@ EOF
           return_type_for_types(
             ClassRegistry["OverI3#{method}"].as_type)  # force calculation
       ClassRegistry["OverI3#{method}"].instance_method(method).proc.ast_node.should_not(
-          have_error(ImproperOverloadTypeError))
+          have_error(ImproperOverrideTypeError))
     end
   end
 
@@ -78,7 +78,7 @@ EOF
           return_type_for_types(
             ClassRegistry["OverI2#{method}"].as_type)  # force calculation
       ClassRegistry["OverI2#{method}"].instance_method(method).proc.ast_node.should(
-          have_error(ImproperOverloadTypeError).with_message(/#{method}/))
+          have_error(ImproperOverrideTypeError).with_message(/#{method}/))
     end
 
     it "should not warn against a method named #{method} that always returns an array" do
@@ -93,7 +93,7 @@ EOF
           return_type_for_types(
             ClassRegistry["OverI3#{method}"].as_type)  # force calculation
       ClassRegistry["OverI3#{method}"].instance_method(method).proc.ast_node.should_not(
-          have_error(ImproperOverloadTypeError))
+          have_error(ImproperOverrideTypeError))
     end
   end
 
@@ -109,7 +109,7 @@ EOF
         return_type_for_types(
           ClassRegistry["OverI2to_f"].as_type)  # force calculation
     ClassRegistry["OverI2to_f"].instance_method(:to_f).proc.ast_node.should(
-        have_error(ImproperOverloadTypeError).with_message(/to_f/))
+        have_error(ImproperOverrideTypeError).with_message(/to_f/))
   end
 
 
@@ -125,7 +125,7 @@ EOF
         return_type_for_types(
           ClassRegistry["OverI3"].as_type)  # force calculation
     ClassRegistry["OverI3"].instance_method(:to_f).proc.ast_node.should_not(
-        have_error(ImproperOverloadTypeError))
+        have_error(ImproperOverrideTypeError))
   end
 
   it "should warn against a method named ! that doesn't always return a boolean" do
@@ -140,7 +140,7 @@ EOF
         return_type_for_types(
           ClassRegistry["OverI2"].as_type)  # force calculation
     ClassRegistry["OverI2"].instance_method(:!).proc.ast_node.should(
-        have_error(ImproperOverloadTypeError).with_message(/\!/))
+        have_error(ImproperOverrideTypeError).with_message(/\!/))
   end
 
   it "should not warn against a method named ! that always returns a boolean" do
@@ -155,7 +155,7 @@ EOF
         return_type_for_types(
           ClassRegistry["OverI3"].as_type)  # force calculation
     ClassRegistry["OverI3"].instance_method(:!).proc.ast_node.should_not(
-        have_error(ImproperOverloadTypeError))
+        have_error(ImproperOverrideTypeError))
   end
 
   it 'should warn when a method whose name ends in ? does not return a bool | nil' do
@@ -170,7 +170,7 @@ EOF
         return_type_for_types(
           ClassRegistry["OverI4"].as_type, [Types::FIXNUM, Types::FIXNUM])
     ClassRegistry["OverI4"].instance_method(:silly?).proc.ast_node.should(
-        have_error(ImproperOverloadTypeError))
+        have_error(ImproperOverrideTypeError))
   end
 
   it 'should not warn when a method whose name ends in ? does return a bool | nil' do
@@ -185,6 +185,20 @@ EOF
         return_type_for_types(
           ClassRegistry["OverI5"].as_type, [Types::FIXNUM, Types::FIXNUM])
     ClassRegistry["OverI5"].instance_method(:silly?).proc.ast_node.should_not(
-        have_error(ImproperOverloadTypeError))
+        have_error(ImproperOverrideTypeError))
+  end
+
+  %w(public private protected module_function).each do |method|
+    it "should warn when the visibility method Module##{method} is overridden" do
+      g = cfg <<-EOF
+class OverI6
+  def self.#{method}(*args)
+    super
+  end
+end
+EOF
+      ClassRegistry["OverI6"].singleton_class.instance_method(method).proc.ast_node.should(
+          have_error(DangerousOverrideError))
+    end
   end
 end

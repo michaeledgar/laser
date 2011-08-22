@@ -117,7 +117,11 @@ module Laser
     severity TRICKY_ERROR
   end
   
-  class ImproperOverloadTypeError < Laser::Error
+  class ImproperOverrideTypeError < Laser::Error
+    severity TRICKY_ERROR
+  end
+
+  class DangerousOverrideError < Laser::Error
     severity TRICKY_ERROR
   end
 

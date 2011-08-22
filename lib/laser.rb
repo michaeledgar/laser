@@ -70,6 +70,7 @@ require 'laser/analysis/bootstrap/laser_singleton_class'
 require 'laser/analysis/bootstrap/laser_proc'
 require 'laser/analysis/bootstrap/laser_method'
 require 'laser/analysis/bootstrap/dispatch_results'
+require 'laser/analysis/override_safety_info'
 require 'laser/analysis/laser_utils.rb'
 require 'laser/analysis/protocol_registry'
 require 'laser/analysis/scope'
@@ -104,3 +105,4 @@ require 'laser/scanner'
 require 'laser/version'
 # All methods created from the stdlib should never be marked as unused.
 Laser::Analysis::Bootstrap.load_standard_library
+# override info needs stdlib methods to be instantiated

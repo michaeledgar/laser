@@ -44,10 +44,6 @@ module Laser
         subclasses.delete other
       end
       
-      def parent
-        @superclass
-      end
-      
       def superclass
         current = @superclass
         while current

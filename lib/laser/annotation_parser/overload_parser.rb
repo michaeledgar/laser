@@ -164,4 +164,3 @@ module Laser
 
   end
 end
-

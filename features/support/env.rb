@@ -11,4 +11,3 @@ def swizzling_io
 ensure
   $stdout = old_stdout
 end
-  

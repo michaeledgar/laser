@@ -307,4 +307,3 @@ EOF
          Types::ARRAY, Types::HASH]).should == Frequency::ALWAYS
   end
 end
-    
