@@ -69,8 +69,8 @@ module Laser
 
       # Combines all known return types for this method into one union type.
       def combined_return_type
-        Types::UnionType.new(@type_instantiations.keys.map do |argtypes|
-          return_type_for_types(*argtypes)
+        Types::UnionType.new(@type_instantiations.keys.map do |self_type, *argtypes, blk_type|
+          return_type_for_types(self_type, argtypes, blk_type)
         end)
       end
 

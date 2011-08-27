@@ -172,8 +172,8 @@ EOF
     ClassRegistry["OverI4"].instance_method(:silly?).
         return_type_for_types(
           ClassRegistry["OverI4"].as_type, [Types::STRING, Types::FIXNUM])
-    ClassRegistry["OverI4"].instance_method(:silly?).proc.ast_node.should(
-        have_error(ImproperOverrideTypeError))
+    MethodAnalysis.incorrect_predicate_methods.should include(
+        ClassRegistry["OverI4"].instance_method(:silly?))
   end
 
   it 'should not warn when a method whose name ends in ? does return a bool | nil' do
@@ -187,8 +187,8 @@ EOF
     ClassRegistry["OverI5"].instance_method(:silly?).
         return_type_for_types(
           ClassRegistry["OverI5"].as_type, [Types::FIXNUM, Types::FIXNUM])
-    ClassRegistry["OverI5"].instance_method(:silly?).proc.ast_node.should_not(
-        have_error(ImproperOverrideTypeError))
+    MethodAnalysis.incorrect_predicate_methods.should_not include(
+        ClassRegistry["OverI5"].instance_method(:silly?))
   end
 
   %w(public private protected module_function).each do |method|

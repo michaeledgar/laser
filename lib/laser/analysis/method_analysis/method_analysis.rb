@@ -1,9 +1,11 @@
+require_relative 'incorrect_predicate_method_detection'
 require_relative 'unused_methods'
 module Laser
   module Analysis
     # General-purpose method analysis functions.
     module MethodAnalysis
       extend UnusedMethodDetection
+      extend IncorrectPredicateMethodDetection
       def self.each_user_method
         return enum_for(__method__) unless block_given?
         classes = Set[]
