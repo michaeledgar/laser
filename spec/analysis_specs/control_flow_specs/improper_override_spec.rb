@@ -158,17 +158,20 @@ EOF
         have_error(ImproperOverrideTypeError))
   end
 
-  it 'should warn when a method whose name ends in ? does not return a bool | nil' do
+  it 'should warn when a method whose name ends in ? does not return both truthy and falsy at some point' do
     cfg <<-EOF
 class OverI4
   def silly?(x, y)
-    x == y && y  # whoops, returns y's type. How about a boolean?
+    x
   end
 end
 EOF
     ClassRegistry["OverI4"].instance_method(:silly?).
         return_type_for_types(
           ClassRegistry["OverI4"].as_type, [Types::FIXNUM, Types::FIXNUM])
+    ClassRegistry["OverI4"].instance_method(:silly?).
+        return_type_for_types(
+          ClassRegistry["OverI4"].as_type, [Types::STRING, Types::FIXNUM])
     ClassRegistry["OverI4"].instance_method(:silly?).proc.ast_node.should(
         have_error(ImproperOverrideTypeError))
   end

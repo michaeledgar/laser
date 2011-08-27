@@ -67,6 +67,13 @@ module Laser
           end
       end
 
+      # Combines all known return types for this method into one union type.
+      def combined_return_type
+        Types::UnionType.new(@type_instantiations.keys.map do |argtypes|
+          return_type_for_types(*argtypes)
+        end)
+      end
+
       def yield_type
         return annotated_yield_usage if annotated_yield_usage
         return @yield_type if @yield_type
@@ -173,12 +180,6 @@ module Laser
           @proc.ast_node.add_error(ImproperOverrideTypeError.new(
             "All methods named #{self.name} should return a subtype of #{expectation.inspect}",
             @proc.ast_node))
-        elsif self.name.end_with?('?')
-          if !Types.subtype?(return_type, Types::BOOL_OR_NIL)
-            @proc.ast_node.add_error(ImproperOverrideTypeError.new(
-              "All methods whose name ends in ? should return a subtype of TrueClass | FalseClass | NilClass",
-              @proc.ast_node))
-          end
         end
       end
 

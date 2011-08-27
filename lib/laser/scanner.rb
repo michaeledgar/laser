@@ -115,11 +115,15 @@ module Laser
     end
 
     def unused_method_warnings
-      Analysis::UnusedMethodDetection.unused_methods.map do |method| 
+      Analysis::MethodAnalysis.unused_methods.map do |method| 
         warning = UncalledMethodWarning.new(method.proc.ast_node.file_name, '', method: method)
         warning.line_number = method.proc.line_number
         warning
       end
+    end
+
+    def method_expectation_warnings
+      
     end
 
     # Gets the current indent size

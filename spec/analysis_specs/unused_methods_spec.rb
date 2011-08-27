@@ -1,6 +1,6 @@
 require_relative 'spec_helper'
 
-describe UnusedMethodDetection do
+describe MethodAnalysis do
   before(:all) do
     Laser::Analysis::LaserMethod.default_dispatched = false
   end
@@ -30,7 +30,7 @@ class UnusedMethod1
 end
 UnusedMethod1.new.foo(gets)
 EOF
-    @methods = UnusedMethodDetection.unused_methods
+    @methods = MethodAnalysis.unused_methods
     @methods.should == [ClassRegistry['UnusedMethod1'].instance_method(:baz)]
   end
 
@@ -56,7 +56,7 @@ class UnusedMethod3 < UnusedMethod2
 end
 UnusedMethod3.new.foo(gets)
 EOF
-    @methods = UnusedMethodDetection.unused_methods
+    @methods = MethodAnalysis.unused_methods
 
     Set.new(@methods).should ==
       Set[ClassRegistry['UnusedMethod2'].instance_method(:foo),
@@ -78,7 +78,7 @@ inst = UnusedMethod4.new
 inst.foo(gets)  # marks foo as used
 inst.baz(gets, gets, gets, gets, gets)  # marks baz, but not bar
 EOF
-    @methods = UnusedMethodDetection.unused_methods
+    @methods = MethodAnalysis.unused_methods
 
     Set.new(@methods).should ==
       Set[ClassRegistry['UnusedMethod4'].instance_method(:bar)]
@@ -101,7 +101,7 @@ end
 choice = [:zero, :one_or_two, :two, :three, :any][gets.to_i]
 UnusedMethod5.new.send(choice, gets, gets)
 EOF
-    @methods = UnusedMethodDetection.unused_methods
+    @methods = MethodAnalysis.unused_methods
 
     Set.new(@methods).should ==
       Set[ClassRegistry['UnusedMethod5'].instance_method(:zero),
@@ -126,7 +126,7 @@ choice = [:public_one_or_two, :public_two,
           :private_two, :protected_two][gets.to_i]
 UnusedMethod6.new.public_send(choice, gets, gets)
 EOF
-    @methods = UnusedMethodDetection.unused_methods
+    @methods = MethodAnalysis.unused_methods
 
     Set.new(@methods).should ==
       Set[ClassRegistry['UnusedMethod6'].instance_method(:private_two),
@@ -149,7 +149,7 @@ class UnusedMethod7
 end
 UnusedMethod7.new.send(gets, gets, gets)
 EOF
-    @methods = UnusedMethodDetection.unused_methods
+    @methods = MethodAnalysis.unused_methods
 
     Set.new(@methods).should ==
       Set[ClassRegistry['UnusedMethod7'].instance_method(:three)]
@@ -171,7 +171,7 @@ class UnusedMethod8
 end
 UnusedMethod8.new.public_send(gets, gets, gets)
 EOF
-    @methods = UnusedMethodDetection.unused_methods
+    @methods = MethodAnalysis.unused_methods
 
     Set.new(@methods).should ==
       Set[ClassRegistry['UnusedMethod8'].instance_method(:private_two),

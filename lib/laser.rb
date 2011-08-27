@@ -94,7 +94,7 @@ require 'laser/annotation_parser/parsers'
 
 require 'laser/analysis/visitor'
 require 'laser/analysis/annotations'
-require 'laser/analysis/unused_methods'
+require 'laser/analysis/method_analysis/method_analysis'
 # Runners
 require 'laser/runner'
 require 'laser/rake/task'
