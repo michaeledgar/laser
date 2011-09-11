@@ -9,6 +9,7 @@ class Laser::RescueExceptionWarning < Laser::FileWarning
 
   def match?(body = self.body)
     find_sexps(:rescue).map do |_, types, name|
+      next if types.nil?
       case types[0]
       when :mrhs_new_from_args
         list = types[1] + types[2..-1]
@@ -23,8 +24,8 @@ class Laser::RescueExceptionWarning < Laser::FileWarning
           warning.line_number = type[1][2][1]
           warning
         end
-      end.compact
-    end.flatten
+      end
+    end.flatten.compact
   end
 
   def fix(body = self.body)

@@ -37,6 +37,10 @@ describe RescueExceptionWarning do
     RescueExceptionWarning.should_not warn('begin; puts x; rescue StandardError, StandardError => err; end')
   end
 
+  it 'does not match when a rescue has no types listed' do
+    RescueExceptionWarning.should_not warn('begin; puts x; rescue; end')
+  end
+
   describe '#fix' do
     it 'fixes a rescue of Exception as the only type' do
       input = <<-EOF
