@@ -45,9 +45,11 @@ module Laser::Analysis
           str = self[1]
           pos = self.parent.parent.source_begin
           first_two = lines[pos[0]-1][pos[1],2]
-          if first_two[0,1] == '"' || first_two == '%Q'
+          if first_two[0,1] == '"'
             eval(%Q{"#{str}"})
-          else   
+          elsif first_two == '%Q'
+            eval("%Q{#{str}}")
+          else
             str
           end
         when :string_content

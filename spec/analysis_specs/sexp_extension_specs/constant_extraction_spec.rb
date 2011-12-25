@@ -93,6 +93,14 @@ describe Sexp do
         list[0][2].is_constant.should be true
         list[0][2].constant_value.should == 'abc \n \x12def'
       end
+
+      it 'should not be fooled by quotes inside %Q{}' do
+        input = 'a = %Q{"}'
+        tree = annotate_all(input)
+        list = tree[1]
+        list[0][2].is_constant.should be true
+        list[0][2].constant_value.should == '"'
+      end
     end
 
     describe 'handling integer literals' do
