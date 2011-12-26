@@ -75,7 +75,7 @@ module Laser
         opt :stdin, 'Read Ruby code from standard input', short: '-s'
         opt :'list-modules', 'Print the discovered, loaded modules'
         opt :profile, 'Run the profiler during execution'
-        opt :include, 'specify $LOAD_PATH directory (may be used more than once)', short: '-I', multi: true#, type: :string
+        opt :include, 'specify $LOAD_PATH directory (may be used more than once)', short: '-I', multi: true, type: :string
         opt :S, 'look for scripts using PATH environment variable', short: '-S'
         warning_opts.each { |warning| opt(*warning) }
       end
