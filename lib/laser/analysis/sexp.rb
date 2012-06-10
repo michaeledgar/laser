@@ -98,14 +98,18 @@ module Laser
       # Performs a DFS on the node, yielding each subnode (including the given node)
       # in DFS order.
       def dfs
-        yield self
-        self.children.each do |child|
-          next unless is_sexp?(child)
-          case child[0]
-          when Array
-            child.each { |x| x.dfs { |y| yield y}}
-          when ::Symbol
-            child.dfs { |y| yield y }
+        stack = [self]
+        while node = stack.pop
+          yield node
+
+          node.children.reverse.each do |child|
+            next unless is_sexp?(child)
+            case child[0]
+            when Array
+              child.reverse.each { |x| stack.push(x) }
+            when ::Symbol
+              stack.push(child)
+            end
           end
         end
       end

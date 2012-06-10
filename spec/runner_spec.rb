@@ -141,6 +141,12 @@ describe Runner do
       settings[:"report-fixed"].should be_true
       settings[:"report-fixed_given"].should be_true
     end
+
+    it 'has a --include option' do
+      runner = Runner.new(['--include=/some/path', '-I', '/another/path'])
+      settings = runner.swizzling_argv { runner.get_settings }
+      settings[:include].should == ["/some/path", "/another/path"]
+    end
   end
 
   describe '#handle_global_options' do
