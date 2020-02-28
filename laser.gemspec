@@ -354,7 +354,7 @@ Gem::Specification.new do |s|
       s.add_runtime_dependency(%q<stream>, ["= 0.5"])
       s.add_runtime_dependency(%q<object_regex>, ["~> 1.0"])
       s.add_runtime_dependency(%q<trollop>, ["~> 1.16.2"])
-      s.add_runtime_dependency(%q<rake>, ["~> 0.9.0"])
+      s.add_runtime_dependency(%q<rake>, ">= 0.9", "< 13.1")
       s.add_development_dependency(%q<rspec>, ["~> 2.4.0"])
       s.add_development_dependency(%q<cucumber>, [">= 0.10.0"])
     else
@@ -364,7 +364,7 @@ Gem::Specification.new do |s|
       s.add_dependency(%q<stream>, ["= 0.5"])
       s.add_dependency(%q<object_regex>, ["~> 1.0"])
       s.add_dependency(%q<trollop>, ["~> 1.16.2"])
-      s.add_dependency(%q<rake>, ["~> 0.9.0"])
+      s.add_dependency(%q<rake>, ">= 0.9", "< 13.1")
       s.add_dependency(%q<rspec>, ["~> 2.4.0"])
       s.add_dependency(%q<cucumber>, [">= 0.10.0"])
     end
@@ -375,7 +375,7 @@ Gem::Specification.new do |s|
     s.add_dependency(%q<stream>, ["= 0.5"])
     s.add_dependency(%q<object_regex>, ["~> 1.0"])
     s.add_dependency(%q<trollop>, ["~> 1.16.2"])
-    s.add_dependency(%q<rake>, ["~> 0.9.0"])
+    s.add_dependency(%q<rake>, ">= 0.9", "< 13.1")
     s.add_dependency(%q<rspec>, ["~> 2.4.0"])
     s.add_dependency(%q<cucumber>, [">= 0.10.0"])
   end
